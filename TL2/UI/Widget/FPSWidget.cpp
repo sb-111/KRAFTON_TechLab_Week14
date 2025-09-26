@@ -82,10 +82,6 @@ void UFPSWidget::RenderWidget()
 		PreviousTime = TotalGameTime;
 	}
 
-	ImGui::Text("FPS: %.1f (%.2f ms)", PrintFPS, PrintDeltaTime);
-
-	// Game Time 출력
-	ImGui::Text("Game Time: %.1f s", TotalGameTime);
 	ImGui::Checkbox("Show Details", &bShowGraph);
 
 	// Details

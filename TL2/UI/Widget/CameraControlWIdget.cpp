@@ -149,11 +149,6 @@ void UCameraControlWidget::RenderWidget()
 
 	ImGui::Spacing();
 	ImGui::Separator();
-	
-	// 카메라 정보 표시
-	ImGui::Text("Camera Info:");
-	ImGui::Text("  Position: (%.2f, %.2f, %.2f)", Location.X, Location.Y, Location.Z);
-	ImGui::Text("  Rotation: (%.1f, %.1f, %.1f)", Rotation.X, Rotation.Y, Rotation.Z);
 }
 
 void UCameraControlWidget::SyncFromCamera()
