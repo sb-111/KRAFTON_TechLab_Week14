@@ -6,6 +6,7 @@
 #include "../../Actor.h"
 #include "../../InputManager.h"
 #include "../../World.h"
+#include <EditorEngine.h>
 
 //// UE_LOG 대체 매크로
 //#define UE_LOG(fmt, ...)
@@ -122,7 +123,8 @@ void UActorTerminationWidget::DeleteSelectedActor()
 	UIManager->ClearTransformWidgetSelection();
 
 	// 기즈모가 이 액터를 타겟으로 잡고 있다면 해제
-	if (AGizmoActor* Gizmo = UIManager->GetGizmoActor())
+	extern UEditorEngine GEngine;
+	if (AGizmoActor* Gizmo = GEngine.GetDefaultWorld()->GetGizmoActor())
 	{
 		if (Gizmo->GetTargetActor() == ActorToDelete)
 		{

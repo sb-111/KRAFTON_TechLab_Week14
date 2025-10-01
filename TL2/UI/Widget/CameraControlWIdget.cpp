@@ -9,6 +9,7 @@
 #include "GridActor.h"
 #include "GizmoActor.h"
 #include <algorithm>
+#include <EditorEngine.h>
 
 //// UE_LOG 대체 매크로
 //#define UE_LOG(fmt, ...)
@@ -38,23 +39,20 @@ void UCameraControlWidget::Initialize()
 		UIManager->RegisterCameraControlWidget(this);
 	}
 	// GizmoActor 참조 획득
-	GizmoActor = UIManager->GetGizmoActor();
-
-	// 초기 기즈모 스페이스 모드 설정
-	if (GizmoActor)
+	extern UEditorEngine GEngine;
+	if (AGizmoActor* Gizmo = GEngine.GetDefaultWorld()->GetGizmoActor())
 	{
-		CurrentGizmoSpace = GizmoActor->GetSpace();
+		CurrentGizmoSpace = Gizmo->GetSpace();
 	}
 }
 
 void UCameraControlWidget::Update()
 {
-	// 필요시 카메라 상태 업데이트 로직 추가
-	
-		// GizmoActor 참조 업데이트
-	if (!GizmoActor && UIManager)
+	// GizmoActor 참조 업데이트
+	extern UEditorEngine GEngine;
+	if (AGizmoActor* Gizmo = GEngine.GetDefaultWorld()->GetGizmoActor())
 	{
-		GizmoActor = UIManager->GetGizmoActor();
+		GizmoActor = Gizmo;
 	}
 	// 월드 정보 업데이트 (옵션)
 	if (UIManager && UIManager->GetWorld())

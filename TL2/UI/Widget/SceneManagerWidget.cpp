@@ -12,6 +12,7 @@
 #include "GizmoActor.h"
 #include <algorithm>
 #include <string>
+#include <EditorEngine.h>
 
 //// UE_LOG 대체 매크로
 //#define UE_LOG(fmt, ...)
@@ -373,10 +374,10 @@ void USceneManagerWidget::HandleActorSelection(AActor* Actor)
     {
         UIManager->SetPickedActor(Actor);
         
-        // If there's a gizmo actor, position it at the selected actor
-        if (UIManager->GetGizmoActor() && Actor)
+        extern UEditorEngine GEngine;
+        if (AGizmoActor* Gizmo = GEngine.GetDefaultWorld()->GetGizmoActor())
         {
-            UIManager->GetGizmoActor()->SetActorLocation(Actor->GetActorLocation());
+            Gizmo->SetActorLocation(Actor->GetActorLocation());
         }
     }
     
