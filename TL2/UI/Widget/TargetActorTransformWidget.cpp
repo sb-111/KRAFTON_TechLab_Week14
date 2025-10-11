@@ -965,6 +965,14 @@ void UTargetActorTransformWidget::RenderWidget()
 					}
 				}
 			}
+
+
+			ImGui::Separator();
+			ImGui::Text("Set Opacity");
+
+			float DecalBlendFactor = DecalCmp->GetOpacity();
+			ImGui::SliderFloat("Blend Factor", &DecalBlendFactor, 0.0f, 1.0f);
+			DecalCmp->SetOpacity(DecalBlendFactor);
 		}
 	}
 }

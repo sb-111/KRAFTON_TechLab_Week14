@@ -49,7 +49,7 @@ private:
 	FVector EditLocation = {0.0f, 0.0f, 0.0f};
 	FVector EditRotation = {0.0f, 0.0f, 0.0f};
 	FVector EditScale = {1.0f, 1.0f, 1.0f};
-	
+
 	// UI 변경 플래그
 	bool bScaleChanged = false;
 	bool bRotationChanged = false;
