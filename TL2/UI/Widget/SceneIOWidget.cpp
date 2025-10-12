@@ -8,11 +8,11 @@
 #include <filesystem>
 #include <exception>
 #include "../UIManager.h"
-#include "../../SceneLoader.h"
 #include "../../Object.h"
 #include "../../Level.h"
 #include "CameraActor.h"
 #include "CameraComponent.h"
+#include "JsonSerializer.h"
 
 USceneIOWidget::USceneIOWidget()
 	: UWidget("Scene IO Widget")
@@ -193,7 +193,7 @@ void USceneIOWidget::UpdateStatusMessage(float DeltaTime)
  * @brief Save current scene to specified file path
  * @param InFilePath File path to save to (empty for quick save)
  */
-void USceneIOWidget::SaveLevel(const FString& InFilePath)
+void USceneIOWidget::SaveLevel(const FString& InSceneName)
 {
 	try
 	{
@@ -204,17 +204,17 @@ void USceneIOWidget::SaveLevel(const FString& InFilePath)
 			return;
 		}
 
-		if (InFilePath.empty())
+		if (InSceneName.empty())
 		{
 			// Quick Save: 이름만 넘김. Scene 경로/확장자는 FSceneLoader::Save가 처리
-			ULevelService::SaveLevel(CurrentWorld->GetLevel(), CurrentWorld->GetCameraActor(), "QuickSave");
+			/*ULevelService::SaveLevel(CurrentWorld->GetLevel(), CurrentWorld->GetCameraActor(), "QuickSave");
 			UE_LOG("SceneIO: Quick Save executed to Scene/QuickSave.Scene");
-			SetStatusMessage("Quick Save completed: Scene/QuickSave.Scene");
+			SetStatusMessage("Quick Save completed: Scene/QuickSave.Scene");*/
 		}
 		else
 		{
 			// 파일 경로에서 베이스 이름만 추출하여 넘김
-			FString SceneName = InFilePath;
+			/*FString SceneName = InSceneName;
 			size_t LastSlash = SceneName.find_last_of("\\/");
 			if (LastSlash != std::string::npos) 
 			{
@@ -223,11 +223,17 @@ void USceneIOWidget::SaveLevel(const FString& InFilePath)
 			size_t LastDot = SceneName.find_last_of(".");
 			{
 				if (LastDot != std::string::npos) SceneName = SceneName.substr(0, LastDot);
-			}
+			}*/
 
-			ULevelService::SaveLevel(CurrentWorld->GetLevel(), CurrentWorld->GetCameraActor(), SceneName);
-			UE_LOG("SceneIO: Scene saved: %s", SceneName.c_str());
-			SetStatusMessage("Scene saved: Scene/" + SceneName + ".Scene");
+			FString FilePath = "Scene/" + InSceneName + ".Scene";
+
+			//ULevelService::SaveLevel(CurrentWorld->GetLevel(), CurrentWorld->GetCameraActor(), SceneName);
+			JSON LevelJson;
+			CurrentWorld->GetLevel()->Serialize(false, LevelJson);
+			bool bSuccess = FJsonSerializer::SaveJsonToFile(LevelJson, FilePath);
+
+			UE_LOG("SceneIO: Scene saved: %s", InSceneName.c_str());
+			SetStatusMessage("Scene saved: Scene/" + InSceneName + ".Scene");
 		}
 	}
 	catch (const std::exception& Exception)
@@ -272,24 +278,25 @@ void USceneIOWidget::LoadLevel(const FString& InFilePath)
 		UUIManager::GetInstance().ResetPickedActor();
 
 		// 2) 레벨 서비스로 로드 후 월드에 적용
-		FLoadedLevel Loaded = ULevelService::LoadLevel(SceneName);
-		CurrentWorld->SetLevel(std::move(Loaded.Level));
 
-		// 카메라 적용
-		if (ACameraActor* CamActor = CurrentWorld->GetCameraActor())
+		//FLoadedLevel Loaded = ULevelService::LoadLevel(SceneName);
+
+		std::unique_ptr<ULevel> NewLevel = ULevelService::CreateNewLevel();
+		//FString FilePath = "Scene/" + InFilePath + ".Scene";
+		JSON LevelJsonData;
+		if (FJsonSerializer::LoadJsonFromFile(LevelJsonData, InFilePath))
 		{
-			FPerspectiveCameraData& CamData = Loaded.Camera;
-			CamActor->SetActorLocation(CamData.Location);
-			CamActor->SetRotationFromEulerAngles(CamData.Rotation);
-			if (auto* CamComp = CamActor->GetCameraComponent())
-			{
-				CamComp->SetFOV(CamData.FOV);
-				CamComp->SetClipPlanes(CamData.NearClip, CamData.FarClip);
-			}
+			NewLevel->Serialize(true, LevelJsonData);
 		}
+		else
+		{
+			UE_LOG("LevelManager: Failed To Load Level From: %s", InFilePath.c_str());
+			return;
+		}
+		CurrentWorld->SetLevel(std::move(NewLevel));
 
-		UE_LOG("SceneIO: Scene loaded successfully: %s", SceneName.c_str());
-		SetStatusMessage("Scene loaded successfully: " + SceneName);
+		UE_LOG("SceneIO: Scene loaded successfully: %s", InFilePath.c_str());
+		SetStatusMessage("Scene loaded successfully: " + InFilePath);
 	}
 	catch (const std::exception& Exception)
 	{
