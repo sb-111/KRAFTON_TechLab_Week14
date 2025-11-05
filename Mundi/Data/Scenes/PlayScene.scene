@@ -1,9 +1,9 @@
 {
   "Actors" : {
-    "778" : {
+    "781" : {
       "Name" : "스태틱 메시_0",
       "OwnedComponents" : [{
-          "Id" : 780,
+          "Id" : 783,
           "MaterialSlots" : [{
               "AssetPath" : "terrain_mtl",
               "Type" : "UMaterial"
@@ -21,23 +21,16 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 780,
+      "RootComponentId" : 783,
       "Tag" : "",
       "Type" : "AStaticMeshActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "781" : {
+    "784" : {
       "Name" : "스태틱 메시_0",
       "OwnedComponents" : [{
-          "PivotTranslation" : [0.000000, 0.000000, 0.000000],
-          "RotationRate" : [10.000000, 0.000000, 0.000000],
-          "Type" : "URotatingMovementComponent",
-          "bIsActive" : true,
-          "bRotationInLocalSpace" : true,
-          "bTickEnabled" : true
-        }, {
-          "Id" : 783,
+          "Id" : 786,
           "MaterialSlots" : [{
               "AssetPath" : "texture",
               "Type" : "UMaterial"
@@ -55,18 +48,25 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }, {
+          "PivotTranslation" : [0.000000, 0.000000, 0.000000],
+          "RotationRate" : [10.000000, 0.000000, 0.000000],
+          "Type" : "URotatingMovementComponent",
+          "bIsActive" : true,
+          "bRotationInLocalSpace" : true,
+          "bTickEnabled" : true
+        }, {
           "ScriptFilePath" : "Data/Scripts/CGCAttack.lua",
           "Type" : "ULuaScriptComponent",
           "bIsActive" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 783,
+      "RootComponentId" : 786,
       "Tag" : "",
       "Type" : "AStaticMeshActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "786" : {
+    "789" : {
       "Name" : "하이트 포그 액터_0",
       "OwnedComponents" : [{
           "FogCutoffDistance" : 10300.000000,
@@ -75,7 +75,7 @@
           "FogInscatteringColor" : [0.806950, 0.227441, 0.227441, 1.000000],
           "FogMaxOpacity" : 0.600000,
           "HeightFogShader" : "Shaders/PostProcess/HeightFog_PS.hlsl",
-          "Id" : 789,
+          "Id" : 792,
           "ParentId" : 0,
           "RelativeLocation" : [-3.786875, 7.579581, -203.815994],
           "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
@@ -87,32 +87,48 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 789,
+      "RootComponentId" : 792,
       "Tag" : "",
       "Type" : "AHeightFogActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "790" : {
+    "793" : {
       "Name" : "스태틱 메시_0",
       "OwnedComponents" : [{
-          "ScriptFilePath" : "Data/Scripts/SHC.lua",
-          "Type" : "ULuaScriptComponent",
-          "bIsActive" : true,
-          "bTickEnabled" : true
-        }, {
           "ScriptFilePath" : "Data/Scripts/coach.lua",
           "Type" : "ULuaScriptComponent",
           "bIsActive" : true,
           "bTickEnabled" : true
         }, {
-          "Id" : 793,
+          "Id" : 842,
+          "ParentId" : 797,
+          "Pitch" : 1.000000,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Sounds" : ["Data/Audio/CGC1.wav", "Data/Audio/CGC2.wav", "Data/Audio/SHC1.wav", "Data/Audio/SHC2.wav"],
+          "Type" : "UAudioComponent",
+          "Volume" : 1.000000,
+          "bAutoPlay" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsLooping" : false,
+          "bIsVisible" : true,
+          "bTickEnabled" : true
+        }, {
+          "ScriptFilePath" : "Data/Scripts/SHC.lua",
+          "Type" : "ULuaScriptComponent",
+          "bIsActive" : true,
+          "bTickEnabled" : true
+        }, {
+          "Id" : 797,
           "MaterialSlots" : [{
               "AssetPath" : "Material_0.001",
               "Type" : "UMaterial"
             }],
           "ParentId" : 0,
-          "RelativeLocation" : [0.481880, -63.902054, 1.554702],
+          "RelativeLocation" : [0.481880, -63.902054, 1.463622],
           "RelativeRotationEuler" : [0.000000, -0.000000, 103.842461],
           "RelativeScale" : [30.000000, 30.000000, 30.000000],
           "StaticMesh" : "Data/Model/SHC.obj",
@@ -123,13 +139,28 @@
           "bIsActive" : true,
           "bIsVisible" : true,
           "bTickEnabled" : true
+        }],
+      "RootComponentId" : 797,
+      "Tag" : "",
+      "Type" : "AStaticMeshActor",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "798" : {
+      "Name" : "스태틱 메시_0",
+      "OwnedComponents" : [{
+          "ScriptFilePath" : "Data/Scripts/coach.lua",
+          "Type" : "ULuaScriptComponent",
+          "bIsActive" : true,
+          "bTickEnabled" : true
         }, {
-          "Id" : 1751,
-          "ParentId" : 793,
+          "Id" : 802,
+          "ParentId" : 801,
           "Pitch" : 1.000000,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Sounds" : ["Data/Audio/CGC1.wav", "Data/Audio/CGC2.wav", "Data/Audio/SHC1.wav", "Data/Audio/SHC2.wav"],
           "Type" : "UAudioComponent",
           "Volume" : 1.000000,
           "bAutoPlay" : true,
@@ -138,23 +169,14 @@
           "bIsLooping" : false,
           "bIsVisible" : true,
           "bTickEnabled" : true
-        }],
-      "RootComponentId" : 793,
-      "Tag" : "",
-      "Type" : "AStaticMeshActor",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "795" : {
-      "Name" : "스태틱 메시_0",
-      "OwnedComponents" : [{
-          "Id" : 797,
+        }, {
+          "Id" : 801,
           "MaterialSlots" : [{
               "AssetPath" : "Material_0",
               "Type" : "UMaterial"
             }],
           "ParentId" : 0,
-          "RelativeLocation" : [-18.671343, 56.164707, 2.190370],
+          "RelativeLocation" : [-18.940022, 56.164707, 2.190370],
           "RelativeRotationEuler" : [0.000000, 0.000000, -49.951996],
           "RelativeScale" : [20.000000, 20.000000, 20.000000],
           "StaticMesh" : "Data/Model/CGC.obj",
@@ -165,34 +187,14 @@
           "bIsActive" : true,
           "bIsVisible" : true,
           "bTickEnabled" : true
-        }, {
-          "ScriptFilePath" : "Data/Scripts/coach.lua",
-          "Type" : "ULuaScriptComponent",
-          "bIsActive" : true,
-          "bTickEnabled" : true
-        }, {
-          "Id" : 1752,
-          "ParentId" : 797,
-          "Pitch" : 1.000000,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "UAudioComponent",
-          "Volume" : 1.000000,
-          "bAutoPlay" : true,
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsLooping" : false,
-          "bIsVisible" : true,
-          "bTickEnabled" : true
         }],
-      "RootComponentId" : 797,
+      "RootComponentId" : 801,
       "Tag" : "",
       "Type" : "AStaticMeshActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "799" : {
+    "803" : {
       "Name" : "Directional Light Actor",
       "OwnedComponents" : [{
           "CascadedAreaColorDebugValue" : 0.000000,
@@ -200,7 +202,7 @@
           "CascadedCount" : 8,
           "CascadedLinearBlendingValue" : 0.000000,
           "CascadedOverlapValue" : 0.200000,
-          "Id" : 801,
+          "Id" : 805,
           "Intensity" : 1.000000,
           "LightColor" : [0.772201, 0.354795, 0.722241, 1.000000],
           "ParentId" : 0,
@@ -221,16 +223,16 @@
           "bOverrideCameraLightPerspective" : false,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 801,
+      "RootComponentId" : 805,
       "Tag" : "",
       "Type" : "ADirectionalLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "802" : {
+    "806" : {
       "Name" : "Ambient Light Actor",
       "OwnedComponents" : [{
-          "Id" : 804,
+          "Id" : 808,
           "Intensity" : 0.100000,
           "LightColor" : [1.000000, 1.000000, 1.000000, 1.000000],
           "ParentId" : 0,
@@ -249,16 +251,21 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 804,
+      "RootComponentId" : 808,
       "Tag" : "",
       "Type" : "AAmbientLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "805" : {
+    "809" : {
       "Name" : "액터_1",
       "OwnedComponents" : [{
-          "Id" : 807,
+          "ScriptFilePath" : "Data/Scripts/TileMap.lua",
+          "Type" : "ULuaScriptComponent",
+          "bIsActive" : true,
+          "bTickEnabled" : true
+        }, {
+          "Id" : 811,
           "ParentId" : 0,
           "RelativeLocation" : [-8.607930, 11.745107, 5.080332],
           "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
@@ -268,29 +275,19 @@
           "bIsActive" : true,
           "bIsVisible" : true,
           "bTickEnabled" : true
-        }, {
-          "ScriptFilePath" : "Data/Scripts/TileMap.lua",
-          "Type" : "ULuaScriptComponent",
-          "bIsActive" : true,
-          "bTickEnabled" : true
         }],
-      "RootComponentId" : 807,
+      "RootComponentId" : 811,
       "Tag" : "",
       "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "808" : {
+    "812" : {
       "Name" : "액터_0",
       "OwnedComponents" : [{
-          "ScriptFilePath" : "Data/Scripts/FireballManager.lua",
-          "Type" : "ULuaScriptComponent",
-          "bIsActive" : true,
-          "bTickEnabled" : true
-        }, {
-          "Id" : 810,
+          "Id" : 813,
           "ParentId" : 0,
-          "RelativeLocation" : [-2.246344, 1.998549, 0.053925],
+          "RelativeLocation" : [-2.246344, 1.999817, 0.053925],
           "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
           "Type" : "USceneComponent",
@@ -298,14 +295,19 @@
           "bIsActive" : true,
           "bIsVisible" : true,
           "bTickEnabled" : true
+        }, {
+          "ScriptFilePath" : "Data/Scripts/FireballManager.lua",
+          "Type" : "ULuaScriptComponent",
+          "bIsActive" : true,
+          "bTickEnabled" : true
         }],
-      "RootComponentId" : 810,
+      "RootComponentId" : 813,
       "Tag" : "",
       "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "811" : {
+    "815" : {
       "Name" : "액터_0",
       "OwnedComponents" : [{
           "ScriptFilePath" : "Data/Scripts/PlayerSpawner.lua",
@@ -313,7 +315,7 @@
           "bIsActive" : true,
           "bTickEnabled" : true
         }, {
-          "Id" : 813,
+          "Id" : 817,
           "ParentId" : 0,
           "RelativeLocation" : [-10.858653, -39.284267, 17.186506],
           "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
@@ -324,19 +326,19 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 813,
+      "RootComponentId" : 817,
       "Tag" : "",
       "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "814" : {
+    "818" : {
       "Name" : "Player Camera Manager",
       "OwnedComponents" : [{
-          "Id" : 815,
+          "Id" : 819,
           "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeLocation" : [0.000000, 0.000000, -0.055540],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
           "Type" : "USceneComponent",
           "bHiddenInGame" : false,
@@ -344,13 +346,13 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 815,
+      "RootComponentId" : 819,
       "Tag" : "",
       "Type" : "APlayerCameraManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "816" : {
+    "820" : {
       "CameraMoveSpeed" : 48.099998,
       "CameraPitchDeg" : 0.000000,
       "CameraYawDeg" : 0.000000,
@@ -360,7 +362,7 @@
           "AspectRatio" : 1.000000,
           "FarClip" : 100.000000,
           "FieldOfView" : 60.000000,
-          "Id" : 818,
+          "Id" : 822,
           "NearClip" : 0.100000,
           "ParentId" : 0,
           "ProjectionMode" : 0,
@@ -375,16 +377,16 @@
           "bTickEnabled" : true
         }],
       "PerspectiveCameraInput" : false,
-      "RootComponentId" : 818,
+      "RootComponentId" : 822,
       "Tag" : "",
       "Type" : "ACameraActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "819" : {
+    "823" : {
       "Name" : "액터_0",
       "OwnedComponents" : [{
-          "Id" : 821,
+          "Id" : 824,
           "ParentId" : 0,
           "RelativeLocation" : [-6.993967, -2.258153, 4.770872],
           "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
@@ -395,35 +397,36 @@
           "bIsVisible" : true,
           "bTickEnabled" : true
         }, {
-          "Id" : 1750,
-          "ParentId" : 821,
+          "Id" : 825,
+          "ParentId" : 824,
           "Pitch" : 1.000000,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Sounds" : ["Data/Audio/MainBGM.wav"],
           "Type" : "UAudioComponent",
-          "Volume" : 0.100000,
+          "Volume" : 0.200000,
           "bAutoPlay" : true,
           "bHiddenInGame" : false,
           "bIsActive" : true,
-          "bIsLooping" : false,
+          "bIsLooping" : true,
           "bIsVisible" : true,
           "bTickEnabled" : true
         }],
-      "RootComponentId" : 821,
+      "RootComponentId" : 824,
       "Tag" : "",
       "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     }
   },
-  "NextUUID" : 1753,
+  "NextUUID" : 843,
   "PerspectiveCamera" : {
     "FOV" : [60.000000],
     "FarClip" : [505.000000],
-    "Location" : [-125.834671, -33.314220, 155.794357],
+    "Location" : [-113.084610, -35.271107, 82.663750],
     "NearClip" : [0.100000],
-    "Rotation" : [0.000000, 53.570251, 11.533756]
+    "Rotation" : [0.000000, 44.870445, 12.533814]
   },
   "Version" : 1
 }

@@ -1,14 +1,19 @@
 {
   "Name" : "스태틱 메시_0",
   "OwnedComponents" : [{
-      "Id" : 4306,
+      "ScriptFilePath" : "Data/Scripts/coach.lua",
+      "Type" : "ULuaScriptComponent",
+      "bIsActive" : true,
+      "bTickEnabled" : true
+    }, {
+      "Id" : 802,
       "MaterialSlots" : [{
           "AssetPath" : "Material_0",
           "Type" : "UMaterial"
         }],
       "ParentId" : 0,
-      "RelativeLocation" : [-43.865955, 56.164707, 2.190370],
-      "RelativeRotationEuler" : [-0.226494, 0.174790, -52.342075],
+      "RelativeLocation" : [-18.940022, 56.164707, 2.190370],
+      "RelativeRotationEuler" : [0.000000, 0.000000, -49.951996],
       "RelativeScale" : [20.000000, 20.000000, 20.000000],
       "StaticMesh" : "Data/Model/CGC.obj",
       "Type" : "UStaticMeshComponent",
@@ -19,44 +24,25 @@
       "bIsVisible" : true,
       "bTickEnabled" : true
     }, {
-      "Id" : 4307,
-      "MaterialSlots" : [{
-          "AssetPath" : "texture",
-          "Type" : "UMaterial"
-        }],
-      "ParentId" : 4306,
-      "RelativeLocation" : [0.500000, 0.000000, 1.499749],
-      "RelativeRotationEuler" : [-31.001650, 1.740373, -87.106621],
+      "Id" : 842,
+      "ParentId" : 802,
+      "Pitch" : 1.000000,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "StaticMesh" : "Data/cube-tex.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bGenerateOverlapEvents" : true,
+      "Sounds" : ["Data/Audio/CGC1.wav", "Data/Audio/CGC2.wav", "Data/Audio/SHC1.wav", "Data/Audio/SHC2.wav"],
+      "Type" : "UAudioComponent",
+      "Volume" : 1.000000,
+      "bAutoPlay" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
-      "bIsVisible" : true,
-      "bTickEnabled" : true
-    }, {
-      "Id" : 4308,
-      "MaterialSlots" : [{
-          "AssetPath" : "texture",
-          "Type" : "UMaterial"
-        }],
-      "ParentId" : 4306,
-      "RelativeLocation" : [0.500000, 1.500000, -0.700000],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "StaticMesh" : "Data/cube-tex.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
+      "bIsLooping" : false,
       "bIsVisible" : true,
       "bTickEnabled" : true
     }],
-  "RootComponentId" : 4306,
+  "RootComponentId" : 802,
   "Tag" : "",
   "Type" : "AStaticMeshActor",
-  "bActorHiddenInGame" : false
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
 }

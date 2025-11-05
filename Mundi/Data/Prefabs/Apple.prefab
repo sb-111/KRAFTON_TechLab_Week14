@@ -1,12 +1,7 @@
 {
   "Name" : "스태틱 메시_0",
   "OwnedComponents" : [{
-      "ScriptFilePath" : "Data/Scripts/Apple.lua",
-      "Type" : "ULuaScriptComponent",
-      "bIsActive" : true,
-      "bTickEnabled" : true
-    }, {
-      "Id" : 77105,
+      "Id" : 847,
       "MaterialSlots" : [{
           "AssetPath" : "MatID_1",
           "Type" : "UMaterial"
@@ -24,6 +19,11 @@
       "bIsVisible" : true,
       "bTickEnabled" : true
     }, {
+      "ScriptFilePath" : "Data/Scripts/Apple.lua",
+      "Type" : "ULuaScriptComponent",
+      "bIsActive" : true,
+      "bTickEnabled" : true
+    }, {
       "PivotTranslation" : [0.000000, 0.000000, 0.000000],
       "RotationRate" : [0.000000, 300.000000, 0.000000],
       "Type" : "URotatingMovementComponent",
@@ -31,8 +31,8 @@
       "bRotationInLocalSpace" : true,
       "bTickEnabled" : true
     }, {
-      "Id" : 77107,
-      "ParentId" : 77105,
+      "Id" : 848,
+      "ParentId" : 847,
       "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -46,8 +46,24 @@
       "bShapeHiddenInGame" : true,
       "bShapeIsVisible" : true,
       "bTickEnabled" : true
+    }, {
+      "Id" : 849,
+      "ParentId" : 847,
+      "Pitch" : 1.000000,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Sounds" : ["Data/Audio/HitFireball.wav"],
+      "Type" : "UAudioComponent",
+      "Volume" : 1.000000,
+      "bAutoPlay" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsLooping" : false,
+      "bIsVisible" : true,
+      "bTickEnabled" : true
     }],
-  "RootComponentId" : 77105,
+  "RootComponentId" : 847,
   "Tag" : "",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

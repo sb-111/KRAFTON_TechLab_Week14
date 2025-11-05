@@ -6,7 +6,7 @@
       "bIsActive" : true,
       "bTickEnabled" : true
     }, {
-      "Id" : 1689,
+      "Id" : 846,
       "MaterialSlots" : [{
           "AssetPath" : "Pantaln",
           "Type" : "UMaterial"
@@ -51,12 +51,28 @@
       "bIsVisible" : true,
       "bTickEnabled" : true
     }, {
-      "Id" : 1690,
+      "Id" : 848,
+      "ParentId" : 846,
+      "Pitch" : 1.000000,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Sounds" : ["Data/Audio/Die.wav"],
+      "Type" : "UAudioComponent",
+      "Volume" : 1.000000,
+      "bAutoPlay" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsLooping" : false,
+      "bIsVisible" : true,
+      "bTickEnabled" : true
+    }, {
+      "Id" : 847,
       "MaterialSlots" : [{
           "AssetPath" : "GatlingGun_Turret_Mat",
           "Type" : "UMaterial"
         }],
-      "ParentId" : 1689,
+      "ParentId" : 846,
       "RelativeLocation" : [0.046674, -0.031837, 3.014768],
       "RelativeRotationEuler" : [8.360693, -0.166903, -90.098228],
       "RelativeScale" : [0.500000, 0.700000, 0.500000],
@@ -69,12 +85,12 @@
       "bIsVisible" : true,
       "bTickEnabled" : true
     }, {
-      "BoxExtent" : [1.107728, 3.415435, 1.661384],
-      "Id" : 1691,
-      "ParentId" : 1689,
-      "RelativeLocation" : [-0.003928, 0.026435, 1.300055],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 0.538478, 1.000000],
+      "BoxExtent" : [1.107728, 1.839137, 1.661384],
+      "Id" : 849,
+      "ParentId" : 846,
+      "RelativeLocation" : [0.000000, 0.000000, 1.600000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
@@ -85,7 +101,7 @@
       "bShapeIsVisible" : true,
       "bTickEnabled" : true
     }],
-  "RootComponentId" : 1689,
+  "RootComponentId" : 846,
   "Tag" : "player",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
