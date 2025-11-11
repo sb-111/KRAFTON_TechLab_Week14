@@ -10,9 +10,9 @@
 
 // IMPLEMENT_CLASS(ASkeletalMeshActor) expansion
 namespace {
-    struct ASkinnedMeshActorFactoryRegister
+    struct ASkeletalMeshActorFactoryRegister
     {
-        ASkinnedMeshActorFactoryRegister()
+        ASkeletalMeshActorFactoryRegister()
         {
             ObjectFactory::RegisterClassType(
                 ASkeletalMeshActor::StaticClass(),
@@ -20,8 +20,8 @@ namespace {
             );
         }
     };
-    static ASkinnedMeshActorFactoryRegister GRegister_ASkinnedMeshActor;
-    static bool bIsRegistered_ASkinnedMeshActor = [](){ ASkeletalMeshActor::StaticClass(); return true; }();
+    static ASkeletalMeshActorFactoryRegister GRegister_ASkeletalMeshActor;
+    static bool bIsRegistered_ASkeletalMeshActor = [](){ ASkeletalMeshActor::StaticClass(); return true; }();
 }
 
 // Static member initialization for reflection registration
@@ -34,13 +34,13 @@ const bool ASkeletalMeshActor::bPropertiesRegistered = []() {
 // ===== Property Reflection =====
 
 BEGIN_PROPERTIES(ASkeletalMeshActor)
-    MARK_AS_SPAWNABLE("스킨드 메시", "스켈레탈(스킨드) 메시를 배치하는 액터입니다")
+    MARK_AS_SPAWNABLE("스켈레탈 메시", "스켈레탈 메시를 배치하는 액터입니다")
 END_PROPERTIES()
 
 
 // ===== Lua Binding =====
 
-extern "C" void LuaBind_Anchor_ASkinnedMeshActor() {}
+extern "C" void LuaBind_Anchor_ASkeletalMeshActor() {}
 
 LUA_BIND_BEGIN(ASkeletalMeshActor)
 {
