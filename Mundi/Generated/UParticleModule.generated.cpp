@@ -36,6 +36,8 @@ const bool UParticleModule::bPropertiesRegistered = []() {
 BEGIN_PROPERTIES(UParticleModule)
     MARK_AS_COMPONENT("파티클 모듈", "파티클 이미터의 동작을 정의하는 베이스 모듈입니다")
     ADD_PROPERTY(bool, bEnabled, "Particle Module", true)
+    ADD_PROPERTY(bool, bSpawnModule, "Particle Module", true)
+    ADD_PROPERTY(bool, bUpdateModule, "Particle Module", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -44,5 +46,9 @@ LUA_BIND_BEGIN(UParticleModule)
 {
     AddProperty<UParticleModule, bool>(
         T, "bEnabled", &UParticleModule::bEnabled);
+    AddProperty<UParticleModule, bool>(
+        T, "bSpawnModule", &UParticleModule::bSpawnModule);
+    AddProperty<UParticleModule, bool>(
+        T, "bUpdateModule", &UParticleModule::bUpdateModule);
 }
 LUA_BIND_END()
