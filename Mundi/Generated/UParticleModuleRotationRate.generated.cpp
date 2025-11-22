@@ -36,6 +36,9 @@ const bool UParticleModuleRotationRate::bPropertiesRegistered = []() {
 BEGIN_PROPERTIES(UParticleModuleRotationRate)
     MARK_AS_COMPONENT("회전 속도", "파티클의 회전 속도를 설정하는 모듈입니다")
     ADD_PROPERTY(float, StartRotationRate, "Rotation", true)
+    ADD_PROPERTY(float, RotationRateRandomness, "Rotation", true)
+    ADD_PROPERTY(bool, bUseRotationRateOverLife, "Rotation", true)
+    ADD_PROPERTY(float, EndRotationRate, "Rotation", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -44,5 +47,11 @@ LUA_BIND_BEGIN(UParticleModuleRotationRate)
 {
     AddProperty<UParticleModuleRotationRate, float>(
         T, "StartRotationRate", &UParticleModuleRotationRate::StartRotationRate);
+    AddProperty<UParticleModuleRotationRate, float>(
+        T, "RotationRateRandomness", &UParticleModuleRotationRate::RotationRateRandomness);
+    AddProperty<UParticleModuleRotationRate, bool>(
+        T, "bUseRotationRateOverLife", &UParticleModuleRotationRate::bUseRotationRateOverLife);
+    AddProperty<UParticleModuleRotationRate, float>(
+        T, "EndRotationRate", &UParticleModuleRotationRate::EndRotationRate);
 }
 LUA_BIND_END()

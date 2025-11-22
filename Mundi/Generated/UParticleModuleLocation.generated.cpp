@@ -37,6 +37,10 @@ BEGIN_PROPERTIES(UParticleModuleLocation)
     MARK_AS_COMPONENT("위치 모듈", "파티클의 초기 위치를 결정하는 모듈입니다")
     ADD_PROPERTY(FVector, StartLocation, "Location", true)
     ADD_PROPERTY(FVector, StartLocationRange, "Location", true)
+    ADD_PROPERTY(int32, DistributionShape, "Location", true)
+    ADD_PROPERTY(float, SphereRadius, "Location", true)
+    ADD_PROPERTY(float, CylinderHeight, "Location", true)
+    ADD_PROPERTY(bool, bSurfaceOnly, "Location", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -47,5 +51,13 @@ LUA_BIND_BEGIN(UParticleModuleLocation)
         T, "StartLocation", &UParticleModuleLocation::StartLocation);
     AddProperty<UParticleModuleLocation, FVector>(
         T, "StartLocationRange", &UParticleModuleLocation::StartLocationRange);
+    AddProperty<UParticleModuleLocation, int32>(
+        T, "DistributionShape", &UParticleModuleLocation::DistributionShape);
+    AddProperty<UParticleModuleLocation, float>(
+        T, "SphereRadius", &UParticleModuleLocation::SphereRadius);
+    AddProperty<UParticleModuleLocation, float>(
+        T, "CylinderHeight", &UParticleModuleLocation::CylinderHeight);
+    AddProperty<UParticleModuleLocation, bool>(
+        T, "bSurfaceOnly", &UParticleModuleLocation::bSurfaceOnly);
 }
 LUA_BIND_END()

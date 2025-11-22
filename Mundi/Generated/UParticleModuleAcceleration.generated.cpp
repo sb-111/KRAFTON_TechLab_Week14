@@ -38,6 +38,10 @@ BEGIN_PROPERTIES(UParticleModuleAcceleration)
     ADD_PROPERTY(FVector, Acceleration, "Acceleration", true)
     ADD_PROPERTY(bool, bApplyGravity, "Acceleration", true)
     ADD_PROPERTY(float, GravityScale, "Acceleration", true)
+    ADD_PROPERTY(bool, bUseAccelerationOverLife, "Acceleration", true)
+    ADD_PROPERTY(float, AccelerationMultiplierAtStart, "Acceleration", true)
+    ADD_PROPERTY(float, AccelerationMultiplierAtEnd, "Acceleration", true)
+    ADD_PROPERTY(FVector, AccelerationRandomness, "Acceleration", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -50,5 +54,13 @@ LUA_BIND_BEGIN(UParticleModuleAcceleration)
         T, "bApplyGravity", &UParticleModuleAcceleration::bApplyGravity);
     AddProperty<UParticleModuleAcceleration, float>(
         T, "GravityScale", &UParticleModuleAcceleration::GravityScale);
+    AddProperty<UParticleModuleAcceleration, bool>(
+        T, "bUseAccelerationOverLife", &UParticleModuleAcceleration::bUseAccelerationOverLife);
+    AddProperty<UParticleModuleAcceleration, float>(
+        T, "AccelerationMultiplierAtStart", &UParticleModuleAcceleration::AccelerationMultiplierAtStart);
+    AddProperty<UParticleModuleAcceleration, float>(
+        T, "AccelerationMultiplierAtEnd", &UParticleModuleAcceleration::AccelerationMultiplierAtEnd);
+    AddProperty<UParticleModuleAcceleration, FVector>(
+        T, "AccelerationRandomness", &UParticleModuleAcceleration::AccelerationRandomness);
 }
 LUA_BIND_END()
