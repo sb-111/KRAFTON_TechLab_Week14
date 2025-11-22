@@ -37,6 +37,8 @@ BEGIN_PROPERTIES(UParticleModuleSize)
     MARK_AS_COMPONENT("크기 모듈", "파티클의 크기를 설정하는 모듈입니다")
     ADD_PROPERTY(FVector, StartSize, "Size", true)
     ADD_PROPERTY(FVector, StartSizeRange, "Size", true)
+    ADD_PROPERTY(FVector, EndSize, "Size", true)
+    ADD_PROPERTY(bool, bUseSizeOverLife, "Size", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -47,5 +49,9 @@ LUA_BIND_BEGIN(UParticleModuleSize)
         T, "StartSize", &UParticleModuleSize::StartSize);
     AddProperty<UParticleModuleSize, FVector>(
         T, "StartSizeRange", &UParticleModuleSize::StartSizeRange);
+    AddProperty<UParticleModuleSize, FVector>(
+        T, "EndSize", &UParticleModuleSize::EndSize);
+    AddProperty<UParticleModuleSize, bool>(
+        T, "bUseSizeOverLife", &UParticleModuleSize::bUseSizeOverLife);
 }
 LUA_BIND_END()

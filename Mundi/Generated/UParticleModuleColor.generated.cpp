@@ -37,6 +37,7 @@ BEGIN_PROPERTIES(UParticleModuleColor)
     MARK_AS_COMPONENT("색상 모듈", "파티클의 색상을 정의하며, 시간에 따른 색상 변화를 설정할 수 있습니다")
     ADD_PROPERTY(FLinearColor, StartColor, "Color", true)
     ADD_PROPERTY(FLinearColor, EndColor, "Color", true)
+    ADD_PROPERTY(float, ColorRandomness, "Color", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -47,5 +48,7 @@ LUA_BIND_BEGIN(UParticleModuleColor)
         T, "StartColor", &UParticleModuleColor::StartColor);
     AddProperty<UParticleModuleColor, FLinearColor>(
         T, "EndColor", &UParticleModuleColor::EndColor);
+    AddProperty<UParticleModuleColor, float>(
+        T, "ColorRandomness", &UParticleModuleColor::ColorRandomness);
 }
 LUA_BIND_END()
