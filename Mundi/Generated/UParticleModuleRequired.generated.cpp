@@ -37,6 +37,9 @@ BEGIN_PROPERTIES(UParticleModuleRequired)
     MARK_AS_COMPONENT("필수 모듈", "이미터에 필수적인 설정을 포함하는 모듈입니다")
     ADD_PROPERTY(FString, EmitterName, "Required", true)
     ADD_PROPERTY_MATERIAL(class UMaterialInterface*, Material, "Required", true)
+    ADD_PROPERTY(int32, ScreenAlignment, "Required", true)
+    ADD_PROPERTY(bool, bOrientZAxisTowardCamera, "Required", true)
+    ADD_PROPERTY(int32, SortMode, "Required", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -47,5 +50,11 @@ LUA_BIND_BEGIN(UParticleModuleRequired)
         T, "EmitterName", &UParticleModuleRequired::EmitterName);
     AddPropertyPtr<UParticleModuleRequired, class UMaterialInterface>(
         T, "Material", &UParticleModuleRequired::Material);
+    AddProperty<UParticleModuleRequired, int32>(
+        T, "ScreenAlignment", &UParticleModuleRequired::ScreenAlignment);
+    AddProperty<UParticleModuleRequired, bool>(
+        T, "bOrientZAxisTowardCamera", &UParticleModuleRequired::bOrientZAxisTowardCamera);
+    AddProperty<UParticleModuleRequired, int32>(
+        T, "SortMode", &UParticleModuleRequired::SortMode);
 }
 LUA_BIND_END()
