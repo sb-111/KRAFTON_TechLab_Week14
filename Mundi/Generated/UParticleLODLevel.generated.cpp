@@ -40,6 +40,7 @@ BEGIN_PROPERTIES(UParticleLODLevel)
     ADD_PROPERTY(UParticleModuleRequired*, RequiredModule, "Modules", true)
     ADD_PROPERTY_ARRAY(EPropertyType::ObjectPtr, Modules, "Modules", true)
     ADD_PROPERTY(UParticleModuleTypeDataBase*, TypeDataModule, "Modules", true)
+    ADD_PROPERTY(UParticleModuleSpawn*, SpawnModule, "Modules", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -56,5 +57,7 @@ LUA_BIND_BEGIN(UParticleLODLevel)
         T, "Modules", &UParticleLODLevel::Modules);
     AddPropertyPtr<UParticleLODLevel, UParticleModuleTypeDataBase>(
         T, "TypeDataModule", &UParticleLODLevel::TypeDataModule);
+    AddPropertyPtr<UParticleLODLevel, UParticleModuleSpawn>(
+        T, "SpawnModule", &UParticleLODLevel::SpawnModule);
 }
 LUA_BIND_END()
