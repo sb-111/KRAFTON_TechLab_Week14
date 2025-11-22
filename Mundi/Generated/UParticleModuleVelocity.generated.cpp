@@ -37,6 +37,7 @@ BEGIN_PROPERTIES(UParticleModuleVelocity)
     MARK_AS_COMPONENT("속도 모듈", "파티클의 초기 속도와 방향을 설정하는 모듈입니다")
     ADD_PROPERTY(FVector, StartVelocity, "Velocity", true)
     ADD_PROPERTY(FVector, StartVelocityRange, "Velocity", true)
+    ADD_PROPERTY(float, VelocityDamping, "Velocity", true)
 END_PROPERTIES()
 
 // ===== Lua Binding =====
@@ -47,5 +48,7 @@ LUA_BIND_BEGIN(UParticleModuleVelocity)
         T, "StartVelocity", &UParticleModuleVelocity::StartVelocity);
     AddProperty<UParticleModuleVelocity, FVector>(
         T, "StartVelocityRange", &UParticleModuleVelocity::StartVelocityRange);
+    AddProperty<UParticleModuleVelocity, float>(
+        T, "VelocityDamping", &UParticleModuleVelocity::VelocityDamping);
 }
 LUA_BIND_END()
