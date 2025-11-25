@@ -1,0 +1,76 @@
+{
+  "Emitters" : [{
+      "LODDistances" : [],
+      "LODLevels" : [{
+          "Level" : 0,
+          "Modules" : [{
+              "MaxLifetime" : 1.000000,
+              "MinLifetime" : 1.000000,
+              "Type" : "UParticleModuleLifetime",
+              "bEnabled" : true,
+              "bSpawnModule" : true,
+              "bUpdateModule" : false
+            }, {
+              "EndSize" : [1.000000, 1.000000, 1.000000],
+              "StartSize" : [1.000000, 1.000000, 1.000000],
+              "StartSizeRange" : [1.000000, 1.000000, 1.000000],
+              "Type" : "UParticleModuleSize",
+              "bEnabled" : true,
+              "bSpawnModule" : true,
+              "bUpdateModule" : false,
+              "bUseSizeOverLife" : false
+            }, {
+              "StartVelocity" : [1.000000, 1.000000, 10.000000],
+              "StartVelocityRange" : [1.000000, 1.000000, 11.000000],
+              "Type" : "UParticleModuleVelocity",
+              "VelocityDamping" : 0.000000,
+              "bEnabled" : true,
+              "bSpawnModule" : true,
+              "bUpdateModule" : true
+            }, {
+              "ColorRandomness" : 0.000000,
+              "EndColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "StartColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "Type" : "UParticleModuleColor",
+              "bEnabled" : true,
+              "bSpawnModule" : true,
+              "bUpdateModule" : true
+            }],
+          "RequiredModule" : {
+            "EmitterDelay" : 0.000000,
+            "EmitterDelayLow" : 0.000000,
+            "EmitterDuration" : 0.000000,
+            "EmitterDurationLow" : 0.000000,
+            "EmitterLoops" : 0,
+            "EmitterName" : "Emitter",
+            "EmitterOrigin" : [0.000000, 0.000000, 0.000000],
+            "EmitterRotation" : [0.000000, 0.000000, 0.000000],
+            "Material" : "",
+            "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
+            "MaterialTexture" : "Data/Textures/Particles/OrientParticle.png",
+            "ScreenAlignment" : 0,
+            "SortMode" : 0,
+            "bDelayFirstLoopOnly" : false,
+            "bEnabled" : true,
+            "bOrientZAxisTowardCamera" : false,
+            "bSpawnModule" : false,
+            "bUpdateModule" : false
+          },
+          "SpawnModule" : {
+            "BurstCount" : 0,
+            "SpawnRate" : 20.000000,
+            "bEnabled" : true,
+            "bSpawnModule" : true,
+            "bUpdateModule" : false
+          },
+          "TypeDataModule" : {
+            "Type" : "UParticleModuleTypeDataSprite",
+            "bEnabled" : true,
+            "bSpawnModule" : false,
+            "bUpdateModule" : false
+          },
+          "bEnabled" : true
+        }],
+      "bUseLOD" : true
+    }]
+}
