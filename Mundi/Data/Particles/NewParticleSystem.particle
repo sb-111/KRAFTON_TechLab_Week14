@@ -13,8 +13,8 @@
               "EmitterOrigin" : [0.000000, 0.000000, 0.000000],
               "EmitterRotation" : [0.000000, 0.000000, 0.000000],
               "Material" : "",
-              "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
-              "MaterialTexture" : "Data/Textures/Particles/OrientParticle.png",
+              "MaterialShader" : "Shaders/Particle/ParticleMesh.hlsl",
+              "MaterialTexture" : "Data/cube_texture.png",
               "ScreenAlignment" : 0,
               "SortMode" : 0,
               "Type" : "UParticleModuleRequired",
@@ -73,11 +73,6 @@
               "Type" : "UParticleModuleSpawn",
               "bEnabled" : true,
               "bSpawnModule" : true,
-              "bUpdateModule" : false
-            }, {
-              "Type" : "UParticleModuleTypeDataSprite",
-              "bEnabled" : true,
-              "bSpawnModule" : false,
               "bUpdateModule" : false
             }, {
               "Lifetime" : {
@@ -289,6 +284,12 @@
               "bEnabled" : true,
               "bSpawnModule" : true,
               "bUpdateModule" : true
+            }, {
+              "Mesh" : "Data/cube-tex.obj",
+              "Type" : "UParticleModuleTypeDataMesh",
+              "bEnabled" : true,
+              "bSpawnModule" : false,
+              "bUpdateModule" : false
             }],
           "bEnabled" : true
         }],
