@@ -12,7 +12,7 @@
               "EmitterName" : "Emitter",
               "EmitterOrigin" : [0.000000, 0.000000, 0.000000],
               "EmitterRotation" : [0.000000, 0.000000, 0.000000],
-              "Material" : "Shaders/Particle/ParticleSprite.hlsl",
+              "Material" : "",
               "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
               "MaterialTexture" : "Data/Textures/Particles/OrientParticle.png",
               "ScreenAlignment" : 0,
