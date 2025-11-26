@@ -10,7 +10,7 @@
               "EmitterDurationLow" : 0.000000,
               "EmitterLoops" : 0,
               "EmitterName" : "Emitter",
-              "EmitterOrigin" : [5.000000, 5.000000, 0.000000],
+              "EmitterOrigin" : [0.000000, 0.000000, 0.000000],
               "EmitterRotation" : [0.000000, 0.000000, 0.000000],
               "Material" : "",
               "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
@@ -24,26 +24,27 @@
               "bSpawnModule" : false,
               "bUpdateModule" : false
             }, {
-              "BurstCount" : {
+              "BurstList" : [],
+              "BurstScale" : {
                 "ConstantCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "ConstantValue" : 0.000000,
+                "ConstantValue" : 1.000000,
                 "MaxCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MaxValue" : 0.000000,
+                "MaxValue" : 1.000000,
                 "MinCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MinValue" : 0.000000,
-                "ParameterDefaultValue" : 0.000000,
+                "MinValue" : 1.000000,
+                "ParameterDefaultValue" : 1.000000,
                 "ParameterName" : "",
                 "Type" : 0
               },
@@ -288,6 +289,15 @@
               "Type" : "UParticleModuleColor",
               "bEnabled" : true,
               "bSpawnModule" : true,
+              "bUpdateModule" : true
+            }, {
+              "MaxScaleX" : 5.000000,
+              "MaxScaleY" : 5.000000,
+              "SpeedScaleX" : 2.000000,
+              "SpeedScaleY" : 2.000000,
+              "Type" : "UParticleModuleSizeScaleBySpeed",
+              "bEnabled" : true,
+              "bSpawnModule" : false,
               "bUpdateModule" : true
             }],
           "bEnabled" : true
