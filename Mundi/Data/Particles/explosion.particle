@@ -940,7 +940,7 @@
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "ConstantValue" : [0.500000, 0.500000, 0.300000],
+                "ConstantValue" : [0.300000, 0.300000, 0.300000],
                 "MaxCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
@@ -1003,7 +1003,7 @@
                 "ParameterName" : "",
                 "Type" : 0
               },
-              "ParticleRadius" : 5.000000,
+              "ParticleRadius" : 0.200000,
               "Type" : "UParticleModuleCollision",
               "bEnabled" : true,
               "bGenerateCollisionEvents" : true,
