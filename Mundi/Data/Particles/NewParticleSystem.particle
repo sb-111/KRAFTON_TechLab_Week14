@@ -12,7 +12,7 @@
               "EmitterName" : "Emitter",
               "EmitterOrigin" : [0.000000, 0.000000, 0.000000],
               "EmitterRotation" : [0.000000, 0.000000, 0.000000],
-              "Material" : "Shaders/Particle/ParticleSprite.hlsl",
+              "Material" : "",
               "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
               "MaterialTexture" : "Data/Textures/Particles/OrientParticle.png",
               "ScreenAlignment" : 0,
@@ -24,26 +24,27 @@
               "bSpawnModule" : false,
               "bUpdateModule" : false
             }, {
-              "BurstCount" : {
+              "BurstList" : [],
+              "BurstScale" : {
                 "ConstantCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "ConstantValue" : 0.000000,
+                "ConstantValue" : 1.000000,
                 "MaxCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MaxValue" : 0.000000,
+                "MaxValue" : 1.000000,
                 "MinCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MinValue" : 0.000000,
-                "ParameterDefaultValue" : 0.000000,
+                "MinValue" : 1.000000,
+                "ParameterDefaultValue" : 1.000000,
                 "ParameterName" : "",
                 "Type" : 0
               },
@@ -163,7 +164,19 @@
               "StartVelocity" : {
                 "ConstantCurve" : {
                   "LoopKeyOffset" : 0.000000,
-                  "Points" : [],
+                  "Points" : [{
+                      "ArriveTangent" : [0.000000, 0.000000, 0.000000],
+                      "InVal" : 5.000000,
+                      "InterpMode" : 0,
+                      "LeaveTangent" : [0.000000, 0.000000, 0.000000],
+                      "OutVal" : [0.000000, 0.000000, 0.000000]
+                    }, {
+                      "ArriveTangent" : [0.000000, 0.000000, 0.000000],
+                      "InVal" : 10.000000,
+                      "InterpMode" : 0,
+                      "LeaveTangent" : [0.000000, 0.000000, 0.000000],
+                      "OutVal" : [0.000000, 0.000000, 0.000000]
+                    }],
                   "bIsLooped" : false
                 },
                 "ConstantValue" : [0.000000, 0.000000, 0.000000],
@@ -181,7 +194,7 @@
                 "MinValue" : [0.000000, 0.000000, 0.000000],
                 "ParameterDefaultValue" : [0.000000, 0.000000, 0.000000],
                 "ParameterName" : "",
-                "Type" : 1
+                "Type" : 2
               },
               "Type" : "UParticleModuleVelocity",
               "VelocityDamping" : 0.000000,
