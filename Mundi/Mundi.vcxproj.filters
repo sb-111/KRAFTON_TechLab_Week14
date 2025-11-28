@@ -1101,6 +1101,8 @@
     <ClCompile Include="Generated\ARibbonActor.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsSystem.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\BodyInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2306,6 +2308,9 @@
     <ClInclude Include="Generated\ARibbonActor.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsSystem.h" />
+    <ClInclude Include="Source\Runtime\Core\Misc\PhysxConverter.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\BodyInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py">

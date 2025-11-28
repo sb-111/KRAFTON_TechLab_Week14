@@ -33,6 +33,7 @@
 #include "PlayerCameraManager.h"
 #include "Hash.h"
 #include "ParticleEventManager.h"
+#include "PhysicsSystem.h"
 
 IMPLEMENT_CLASS(UWorld)
 
@@ -293,6 +294,10 @@ void UWorld::Tick(float DeltaSeconds)
 	// 지연 삭제 처리
 	ProcessPendingKillActors();
 
+	if (bPie)
+	{
+		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
+	}
 	// 충돌 BVH 업데이트 (에디터/PIE 모두에서 호출 - Partition과 동일)
 	if (CollisionManager)
 	{

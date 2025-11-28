@@ -3,10 +3,33 @@
 #include "SceneComponent.h"
 #include "Actor.h"
 #include "WorldPartitionManager.h"
+#include "BodyInstance.h"
+
 // IMPLEMENT_CLASS is now auto-generated in .generated.cpp
 UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
 {
 }
+
+
+void UPrimitiveComponent::ApplyPhysicsResult()
+{
+    if (BodyInstance || BodyInstance->RigidActor)
+    {
+        physx::PxTransform PhysicsTransform = BodyInstance->RigidActor->getGlobalPose();
+
+        FTransform Transform = PhysxConverter::ToFTransform(PhysicsTransform);
+
+        Transform.Scale3D = GetWorldScale();
+
+        SetWorldTransform(Transform);
+    }
+}
+
+physx::PxGeometryHolder UPrimitiveComponent::GetGeometry()
+{
+    return physx::PxGeometryHolder();
+}
+
 
 void UPrimitiveComponent::OnRegister(UWorld* InWorld)
 {
@@ -33,6 +56,19 @@ void UPrimitiveComponent::OnUnregister()
     }
 
     Super::OnUnregister();
+}
+
+void UPrimitiveComponent::BeginPlay()
+{
+}
+
+void UPrimitiveComponent::EndPlay()
+{
+    if (BodyInstance)
+    {
+        delete BodyInstance;
+        BodyInstance = nullptr;
+    }
 }
 
 void UPrimitiveComponent::SetMaterialByName(uint32 InElementIndex, const FString& InMaterialName)
