@@ -12,7 +12,8 @@ class URenderer;
 struct FMeshBatchElement;
 class FSceneView;
 
-enum class ECollisionType
+UENUM(DisplayName = "충돌 옵션")
+enum class ECollisionType :uint8
 {
     None,
     QueryOnly,  // 레이캐스트 처리
@@ -49,8 +50,8 @@ public:
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bSimulatePhysics = false;
 
-    UPROPERTY(EditAnywhere, Category= "Physics")
-    ECollisionType CollisionType = ECollisionType::PhysicsAndQuery;
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    ECollisionType CollisionType = ECollisionType::None;
 
     FBodyInstance* BodyInstance = nullptr;
 
