@@ -1,6 +1,6 @@
-﻿#pragma once
+#pragma once
 
-#include "Object.h"
+#include "BodySetupCore.h"
 #include "AggregateGeometry.h"
 #include "UBodySetup.generated.h"
 
@@ -25,18 +25,14 @@ enum class ECollisionEnabled : uint8
 
 // ===== Body Setup =====
 // Physics body configuration for a single bone
-UCLASS(DisplayName="Body Setup", Description = "하나의 본에 대한 설정")
-class UBodySetup : public UObject
+// Inherits BoneName from UBodySetupCore
+UCLASS(DisplayName="Body Setup", Description = "하나의 본에 대한 물리 설정")
+class UBodySetup : public UBodySetupCore
 {
     GENERATED_REFLECTION_BODY()
 public:
-
-    // Bone name this body is attached to
-    UPROPERTY(EditAnywhere, Category="Bone")
-    FName BoneName;
-
-    // Collision geometry
-    UPROPERTY(EditAnywhere, Category="Collision")
+    // Collision geometry (Primitives)
+    UPROPERTY(EditAnywhere, Category="Primitives")
     FKAggregateGeom AggGeom;
 
     // Physics type

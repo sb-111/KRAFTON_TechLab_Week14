@@ -1121,6 +1121,12 @@
     <ClCompile Include="Generated\FKSphylElem.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Generated\UPhysicsAsset.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\UBodySetupCore.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2331,11 +2337,13 @@
     <ClInclude Include="Source\Runtime\Engine\Physics\BodyInstance.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\AggregateGeometry.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetup.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\BodySetupCore.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKBoxElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKConvexElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphylElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsAsset.h" />
     <ClInclude Include="Generated\UBodySetup.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
@@ -2352,6 +2360,12 @@
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\FKSphylElem.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UPhysicsAsset.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UBodySetupCore.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>

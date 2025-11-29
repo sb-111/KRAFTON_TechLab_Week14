@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "ResourceBase.h"
 
+class UPhysicsAsset;
+
 class USkeletalMesh : public UResourceBase
 {
 public:
@@ -49,4 +51,12 @@ private:
     
     // CPU 리소스
     FSkeletalMeshData* Data = nullptr;
+
+    // Physics Asset (Ragdoll, 충돌체 설정)
+    UPhysicsAsset* PhysicsAsset = nullptr;
+
+public:
+    // Physics Asset getter/setter
+    UPhysicsAsset* GetPhysicsAsset() const { return PhysicsAsset; }
+    void SetPhysicsAsset(UPhysicsAsset* InPhysicsAsset) { PhysicsAsset = InPhysicsAsset; }
 };

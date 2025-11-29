@@ -5,6 +5,8 @@
 
 class UStaticMeshComponent;
 class FMeshBVH;
+class UBodySetup;
+
 class UStaticMesh : public UResourceBase
 {
 public:
@@ -66,5 +68,13 @@ private:
 
     // 로컬 AABB. (스태틱메시 액터 전체 경계 계산에 사용. StaticMeshAsset 로드할 때마다 갱신)
     FAABB LocalBound;
+
+    // Body Setup (충돌체 설정)
+    UBodySetup* BodySetup = nullptr;
+
+public:
+    // Body Setup getter/setter
+    UBodySetup* GetBodySetup() const { return BodySetup; }
+    void SetBodySetup(UBodySetup* InBodySetup) { BodySetup = InBodySetup; }
 };
 
