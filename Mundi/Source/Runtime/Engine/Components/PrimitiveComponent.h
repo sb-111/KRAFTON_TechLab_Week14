@@ -6,10 +6,20 @@
 
 // 전방 선언
 struct FSceneCompData;
+struct FBodyInstance;
 
 class URenderer;
 struct FMeshBatchElement;
 class FSceneView;
+
+UENUM(DisplayName = "충돌 옵션")
+enum class ECollisionType :uint8
+{
+    None,
+    QueryOnly,  // 레이캐스트 처리
+    PhysicsOnly, // 물리처리만 함
+    PhysicsAndQuery
+};
 
 struct FOverlapInfo
 {
@@ -34,11 +44,35 @@ public:
     UPROPERTY(EditAnywhere, Category="Shape")
     bool bBlockComponent;
 
+    // ───── 충돌 관련 ────────────────────────────
+
+    // 독립적인 물리 액터인지 결정(false인 경우 그냥 하나의 엑터에 셰입들이 용접됨)
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    bool bSimulatePhysics = false;
+
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    ECollisionType CollisionType = ECollisionType::None;
+
+    FBodyInstance* BodyInstance = nullptr;
+
+    // 유령, 이벤트 처리만 하고 충돌 처리는 안 함, 위의 CollisionType보다 우선적으로 적용됨.
+    // 충돌시에 이벤트 처리 하는 것은 Hit Event라고 따로 있음
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    bool bIsTrigger = false;
+
+    void ApplyPhysicsResult();
+
+    virtual physx::PxGeometryHolder GetGeometry();
+
     UPrimitiveComponent();
     virtual ~UPrimitiveComponent() = default;
 
     void OnRegister(UWorld* InWorld) override;
     void OnUnregister() override;
+
+    void BeginPlay() override;
+
+    virtual void EndPlay() override;
 
     virtual FAABB GetWorldAABB() const { return FAABB(); }
 
@@ -87,6 +121,5 @@ public:
 protected:
     bool bIsCulled = false;
      
-    // ───── 충돌 관련 ────────────────────────────
-
+  
 };

@@ -1,4 +1,4 @@
-// ────────────────────────────────────────────────────────────────────────────
+﻿// ────────────────────────────────────────────────────────────────────────────
 // BoxComponent.cpp
 // Box 형태의 충돌 컴포넌트 구현 (Week09 기반, Week12 적응)
 // ────────────────────────────────────────────────────────────────────────────
@@ -214,6 +214,11 @@ void UBoxComponent::RenderDebugVolume(URenderer* Renderer) const
 // ────────────────────────────────────────────────────────────────────────────
 // Box 전용 충돌 감지 함수
 // ────────────────────────────────────────────────────────────────────────────
+
+physx::PxGeometryHolder UBoxComponent::GetGeometry()
+{
+	return physx::PxBoxGeometry(PhysxConverter::ToPxVec3(BoxExtent));
+}
 
 bool UBoxComponent::IsOverlappingBox(const UBoxComponent* OtherBox) const
 {

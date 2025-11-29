@@ -1101,19 +1101,21 @@
     <ClCompile Include="Generated\ARibbonActor.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsSystem.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\BodyInstance.cpp" />
     <ClCompile Include="Generated\UBodySetup.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
     <ClCompile Include="Generated\FKAggregateGeom.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
-    <ClCompile Include="Generated\FKSphereElem.generated.cpp">
-      <Filter>Generated</Filter>
-    </ClCompile>
     <ClCompile Include="Generated\FKBoxElem.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
     <ClCompile Include="Generated\FKConvexElem.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\FKSphereElem.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
     <ClCompile Include="Generated\FKSphylElem.generated.cpp">
@@ -2324,22 +2326,29 @@
     <ClInclude Include="Generated\ARibbonActor.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsSystem.h" />
+    <ClInclude Include="Source\Runtime\Core\Misc\PhysxConverter.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\BodyInstance.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\AggregateGeometry.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetup.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKBoxElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKConvexElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKSphylElem.h" />
     <ClInclude Include="Generated\UBodySetup.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\FKAggregateGeom.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
-    <ClInclude Include="Generated\FKSphereElem.generated.h">
-      <Filter>Generated</Filter>
-    </ClInclude>
     <ClInclude Include="Generated\FKBoxElem.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\FKConvexElem.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\FKSphereElem.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\FKSphylElem.generated.h">

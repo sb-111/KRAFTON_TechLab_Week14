@@ -48,6 +48,7 @@
 #include <cassert>
 
 // Core Project Headers
+#include "PxPhysicsAPI.h"
 #include "Vector.h"
 #include "ResourceData.h"
 #include "VertexData.h"
@@ -62,6 +63,7 @@
 #include "D3D11RHI.h"
 #include "World.h"
 #include "ConstantBufferType.h"
+#include "PhysxConverter.h"
 // d3dtk
 #include "SimpleMath.h"
 

@@ -5,6 +5,7 @@
 #include "FAudioDevice.h"
 #include "FbxLoader.h"
 #include "PlatformCrashHandler.h"
+#include "PhysicsSystem.h"
 #include <ObjManager.h>
 
 float UEditorEngine::ClientWidth = 1024.0f;
@@ -201,6 +202,7 @@ bool UEditorEngine::Startup(HINSTANCE hInstance)
     WorldContexts.Add(FWorldContext(NewObject<UWorld>(), EWorldType::Editor));
     GWorld = WorldContexts[0].World;
     WorldContexts[0].World->Initialize();
+    FPhysicsSystem::GetInstance();
     ///////////////////////////////////
 
     // 슬레이트 매니저 (singleton)
@@ -353,6 +355,7 @@ void UEditorEngine::Shutdown()
     // AudioDevice 종료
     FAudioDevice::Shutdown();
      
+    FPhysicsSystem::Destroy();
     // IMPORTANT: Explicitly release Renderer before RHIDevice destructor runs
     // Renderer may hold references to D3D resources
     Renderer.reset();

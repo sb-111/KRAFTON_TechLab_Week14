@@ -11,6 +11,7 @@
 #include "World.h"
 #include "PrimitiveComponent.h"
 #include "GameObject.h"
+#include "BodyInstance.h"
 
 	/*BEGIN_PROPERTIES(AActor)
 	ADD_PROPERTY(FName, ObjectName, "[액터]", true, "액터의 이름입니다")
@@ -51,6 +52,19 @@ void AActor::BeginPlay()
 		if (Comp)
 		{
 			Comp->BeginPlay();
+		}
+
+		if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Comp))
+		{
+			if (PrimitiveComponent->CollisionType == ECollisionType::None)
+			{
+				continue;
+			}
+
+			if (PrimitiveComponent == RootComponent || PrimitiveComponent->bSimulatePhysics)
+			{
+				FBodyInstance::InitPhysics(PrimitiveComponent);
+			}
 		}
 	}
 }
