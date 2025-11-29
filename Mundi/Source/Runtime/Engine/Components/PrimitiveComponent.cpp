@@ -13,9 +13,9 @@ UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
 
 void UPrimitiveComponent::ApplyPhysicsResult()
 {
-    if (BodyInstance && BodyInstance->RigidActor)
+    if (BodyInstance.RigidActor)
     {
-        physx::PxTransform PhysicsTransform = BodyInstance->RigidActor->getGlobalPose();
+        physx::PxTransform PhysicsTransform = BodyInstance.RigidActor->getGlobalPose();
 
         FTransform Transform = PhysxConverter::ToFTransform(PhysicsTransform);
 
@@ -105,11 +105,6 @@ void UPrimitiveComponent::BeginPlay()
 
 void UPrimitiveComponent::EndPlay()
 {
-    if (BodyInstance)
-    {
-        delete BodyInstance;
-        BodyInstance = nullptr;
-    }
 }
 
 void UPrimitiveComponent::SetMaterialByName(uint32 InElementIndex, const FString& InMaterialName)

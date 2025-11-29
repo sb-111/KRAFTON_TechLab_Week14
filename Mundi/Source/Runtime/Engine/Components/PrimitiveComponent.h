@@ -3,10 +3,9 @@
 #include "SceneComponent.h"
 #include "Material.h"
 #include "UPrimitiveComponent.generated.h"
-
+#include "BodyInstance.h"
 // 전방 선언
 struct FSceneCompData;
-struct FBodyInstance;
 
 class URenderer;
 struct FMeshBatchElement;
@@ -56,7 +55,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "Physics")
     float Mass = false;
 
-    FBodyInstance* BodyInstance = nullptr;
+    FBodyInstance BodyInstance;
 
     // 유령, 이벤트 처리만 하고 충돌 처리는 안 함, 위의 CollisionType보다 우선적으로 적용됨.
     // 충돌시에 이벤트 처리 하는 것은 Hit Event라고 따로 있음

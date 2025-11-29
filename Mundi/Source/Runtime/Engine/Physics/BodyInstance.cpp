@@ -6,11 +6,6 @@
 
 using namespace physx;
 
-FBodyInstance::FBodyInstance(UPrimitiveComponent* InOwnerComponent)
-	:OwnerComponent(InOwnerComponent)
-{
-}
-
 FBodyInstance::~FBodyInstance()
 {
 	if (RigidActor)
@@ -26,17 +21,12 @@ FBodyInstance::~FBodyInstance()
 
 void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 {
-	if (!InOwnerComponent || 
-		InOwnerComponent->BodyInstance ||	// 이미 인스턴스 존재
-		InOwnerComponent->CollisionType == ECollisionEnabled::None)
+	if (RigidActor || InOwnerComponent->CollisionType == ECollisionEnabled::None)
 	{
 		return;
 	}
 
-	FBodyInstance* NewInstance = new FBodyInstance(InOwnerComponent);
-
-	// 소멸자 호출, 업데이트 데이터 가져오는 용도
-	InOwnerComponent->BodyInstance = NewInstance;
+	OwnerComponent = InOwnerComponent;
 	
 	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
 
@@ -57,8 +47,8 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	AddShapesRecursively(InOwnerComponent, InOwnerComponent, NewActor);
 
 	// 시뮬레이션 액터에 인스턴스를 참조시켜서 이벤트 처리 시 인스턴스 호출하게 하고 인스턴스가 컴포넌트 호출.
-	NewActor->userData = (void*)NewInstance;
-	NewInstance->RigidActor = NewActor;
+	NewActor->userData = (void*)this;
+	RigidActor = NewActor;
 
 	PhysicsSystem.GetScene()->addActor(*NewActor);
 }
