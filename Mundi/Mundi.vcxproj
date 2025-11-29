@@ -100,7 +100,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 /bigobj /MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -136,7 +136,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXFoundation_
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 /bigobj /MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -174,7 +174,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Debug\PhysXFoundation_64.dll" "$(
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 /bigobj /MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -214,7 +214,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXFoundation_
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 /bigobj /MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -687,6 +687,12 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Generated\FParticleBurst.generated.cpp" />
     <ClCompile Include="Generated\UParticleModuleTrailSource.generated.cpp" />
     <ClCompile Include="Generated\ARibbonActor.generated.cpp" />
+    <ClCompile Include="Generated\UBodySetup.generated.cpp" />
+    <ClCompile Include="Generated\FKAggregateGeom.generated.cpp" />
+    <ClCompile Include="Generated\FKSphereElem.generated.cpp" />
+    <ClCompile Include="Generated\FKBoxElem.generated.cpp" />
+    <ClCompile Include="Generated\FKConvexElem.generated.cpp" />
+    <ClCompile Include="Generated\FKSphylElem.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -924,6 +930,13 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleEventTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleRandomStream.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleStats.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\AggregateGeometry.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\BodySetup.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKBoxElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKConvexElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\FKSphylElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Scripting\GameObject.h" />
     <ClInclude Include="Source\Runtime\Engine\Scripting\LuaArrayProxy.h" />
     <ClInclude Include="Source\Runtime\Engine\Scripting\LuaBindHelpers.h" />
@@ -1207,6 +1220,12 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Generated\FParticleBurst.generated.h" />
     <ClInclude Include="Generated\UParticleModuleTrailSource.generated.h" />
     <ClInclude Include="Generated\ARibbonActor.generated.h" />
+    <ClInclude Include="Generated\UBodySetup.generated.h" />
+    <ClInclude Include="Generated\FKAggregateGeom.generated.h" />
+    <ClInclude Include="Generated\FKSphereElem.generated.h" />
+    <ClInclude Include="Generated\FKBoxElem.generated.h" />
+    <ClInclude Include="Generated\FKConvexElem.generated.h" />
+    <ClInclude Include="Generated\FKSphylElem.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />
