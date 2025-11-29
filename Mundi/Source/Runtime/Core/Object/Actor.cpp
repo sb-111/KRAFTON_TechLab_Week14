@@ -56,7 +56,7 @@ void AActor::BeginPlay()
 
 		if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Comp))
 		{
-			if (PrimitiveComponent->CollisionType == ECollisionType::None)
+			if (PrimitiveComponent->CollisionType == ECollisionEnabled::None)
 			{
 				continue;
 			}

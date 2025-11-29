@@ -12,14 +12,7 @@ class URenderer;
 struct FMeshBatchElement;
 class FSceneView;
 
-UENUM(DisplayName = "충돌 옵션")
-enum class ECollisionType :uint8
-{
-    None,
-    QueryOnly,  // 레이캐스트 처리
-    PhysicsOnly, // 물리처리만 함
-    PhysicsAndQuery
-};
+
 
 struct FOverlapInfo
 {
@@ -46,12 +39,22 @@ public:
 
     // ───── 충돌 관련 ────────────────────────────
 
-    // 독립적인 물리 액터인지 결정(false인 경우 그냥 하나의 엑터에 셰입들이 용접됨)
+    // 부모가 Movable인데 자식 Static 불가능
+    // 부모가 Static인데 자식 Movable 가능
+    // 둘다 static, 둘다 movable 가능.
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    EMobilityType MobilityType = EMobilityType::Static;
+
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    ECollisionEnabled CollisionType = ECollisionEnabled::None;
+
+    // 독립적인 물리 액터인지 결정
+    // 키네마틱 여부(false인 경우 정해진 동작만 수행함)
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bSimulatePhysics = false;
 
     UPROPERTY(EditAnywhere, Category = "Physics")
-    ECollisionType CollisionType = ECollisionType::None;
+    float Mass = false;
 
     FBodyInstance* BodyInstance = nullptr;
 
@@ -61,6 +64,10 @@ public:
     bool bIsTrigger = false;
 
     void ApplyPhysicsResult();
+
+    bool ShouldWelding();
+
+    UPrimitiveComponent* GetPrimitiveParent();
 
     virtual physx::PxGeometryHolder GetGeometry();
 

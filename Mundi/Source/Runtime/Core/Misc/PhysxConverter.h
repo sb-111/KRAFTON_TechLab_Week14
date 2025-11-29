@@ -1,5 +1,22 @@
 ﻿#pragma once
 
+//physics
+UENUM(DisplayName = "충돌 옵션")
+enum class ECollisionEnabled : uint8
+{
+	None,
+	QueryOnly,  // 레이캐스트 처리
+	PhysicsOnly, // 물리처리만 함
+	PhysicsAndQuery
+};
+
+UENUM(DisplayName = "모빌리티")
+enum class EMobilityType : uint8
+{
+	Static,
+	Movable
+};
+
 namespace PhysxConverter
 {
 	inline physx::PxVec3 ToPxVec3(const FVector& InVector)

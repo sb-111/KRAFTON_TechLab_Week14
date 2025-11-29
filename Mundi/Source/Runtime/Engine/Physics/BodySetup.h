@@ -4,25 +4,6 @@
 #include "AggregateGeometry.h"
 #include "UBodySetup.generated.h"
 
-// Physics body type
-UENUM(DisplayName = "물리 바디 타입")
-enum class EPhysicsType : uint8
-{
-    Default,      // Use parent setting
-    Kinematic,    // Animation driven (before Ragdoll)
-    Simulated     // Physics simulation
-};
-
-// Collision enabled type
-UENUM(DisplayName = "충돌 허용 타입")
-enum class ECollisionEnabled : uint8
-{
-    NoCollision,
-    QueryOnly,        // Raycast, Overlap only
-    PhysicsOnly,      // Physics only
-    QueryAndPhysics   // Both
-};
-
 // ===== Body Setup =====
 // Physics body configuration for a single bone
 UCLASS(DisplayName="Body Setup", Description = "하나의 본에 대한 설정")
@@ -41,11 +22,11 @@ public:
 
     // Physics type
     UPROPERTY(EditAnywhere, Category="Physics")
-    EPhysicsType PhysicsType = EPhysicsType::Default;
+    bool bSimulatePhysics = false;
 
     // Collision enabled
     UPROPERTY(EditAnywhere, Category="Physics")
-    ECollisionEnabled CollisionEnabled = ECollisionEnabled::QueryAndPhysics;
+    ECollisionEnabled CollisionEnabled = ECollisionEnabled::PhysicsAndQuery;
 
     // Mass in kg
     UPROPERTY(EditAnywhere, Category="Physics")
