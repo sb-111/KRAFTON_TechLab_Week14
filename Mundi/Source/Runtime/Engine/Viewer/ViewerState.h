@@ -97,6 +97,36 @@ public:
     bool bWasGizmoDragging = false;
 };
 
+// Physics Asset 에디터 상태
+struct PhysicsAssetEditorState : public ViewerState
+{
+    // 편집 중인 에셋
+    class UPhysicsAsset* EditingAsset = nullptr;
+
+    // 선택 상태
+    int32 SelectedBodyIndex = -1;
+    int32 SelectedConstraintIndex = -1;
+    int32 SelectedShapeIndex = -1;
+
+    // 선택 소스 (트리/뷰포트 vs 그래프)
+    enum class ESelectionSource { TreeOrViewport, Graph };
+    ESelectionSource SelectionSource = ESelectionSource::TreeOrViewport;
+
+    // 표시 옵션
+    bool bShowBodies = true;
+    bool bShowConstraints = true;
+    bool bShowMesh = true;
+    bool bShowBoneNames = false;
+
+    // Graph View 상태
+    FVector2D GraphOffset = FVector2D::Zero();
+    float GraphZoom = 1.0f;
+
+    // 파일 상태
+    FString CurrentFilePath;
+    // bIsDirty는 부모 클래스에 있음
+};
+
 // 파티클 에디터 상태
 struct ParticleEditorState : public ViewerState
 {
