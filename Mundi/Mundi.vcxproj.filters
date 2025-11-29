@@ -1127,6 +1127,9 @@
     <ClCompile Include="Generated\UBodySetupCore.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Generated\FConstraintInstance.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2339,6 +2342,7 @@
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetup.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetupCore.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\ConstraintInstance.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKBoxElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKConvexElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
@@ -2366,6 +2370,9 @@
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\UBodySetupCore.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\FConstraintInstance.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>
