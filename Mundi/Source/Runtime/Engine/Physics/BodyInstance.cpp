@@ -28,7 +28,7 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 {
 	if (!InOwnerComponent || 
 		InOwnerComponent->BodyInstance ||	// 이미 인스턴스 존재
-		InOwnerComponent->CollisionType == ECollisionType::None)
+		InOwnerComponent->CollisionType == ECollisionEnabled::None)
 	{
 		return;
 	}
@@ -42,8 +42,17 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(InOwnerComponent->GetWorldTransform());
 
-	// RigidDynamic: 움직이는 강체
-	PxRigidDynamic* NewActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+	PxRigidActor* NewActor = nullptr;
+	if (InOwnerComponent->MobilityType == EMobilityType::Movable)
+	{
+		// RigidDynamic: 움직이는 강체
+		NewActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+	}
+	else
+	{
+		NewActor = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
+	}
+
 
 	AddShapesRecursively(InOwnerComponent, InOwnerComponent, NewActor);
 
@@ -52,48 +61,56 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	NewInstance->RigidActor = NewActor;
 
 	PhysicsSystem.GetScene()->addActor(*NewActor);
-	NewActor->wakeUp();
 }
 
-void FBodyInstance::AddShapesRecursively(UPrimitiveComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidDynamic* PhysicsActor)
+void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor)
 {
 	FTransform WorldTransform = CurrentComponent->GetWorldTransform();
 	FTransform RootWorldTransform = RootComponent->GetWorldTransform();
 	FTransform LocalTransform = RootWorldTransform.GetRelativeTransform(WorldTransform);
 
 	PxShape* Shape = nullptr;
-	if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(CurrentComponent))
+	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CurrentComponent))
 	{
-		// TODO: 에셋화한 지오매트리 필요, 일단 구현 패스
-		return;
+		if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PrimitiveComponent))
+		{
+			// TODO: 에셋화한 지오매트리 필요, 일단 구현 패스
+		}
+		else
+		{
+			// Shape을 감싸는 홀더, 어떤 Shape이든 저장하고 받기 위함
+			PxGeometryHolder Geometry = PrimitiveComponent->GetGeometry();
+
+			if (Geometry.getType() != PxGeometryType::eINVALID)
+			{
+				PxMaterial* Material = FPhysicsSystem::GetInstance().GetDefaultMaterial();
+
+				// 실제 Shape, Exclusive: Actor가 독점하는 Shape -> Actor 소멸시 같이 소멸, Material은 공유자원이라 소멸하지 않음
+				Shape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, Geometry.any(), *Material);
+
+				Shape->setLocalPose(PhysxConverter::ToPxTransform(LocalTransform));
+
+				SetCollisionType(Shape, PrimitiveComponent);
+			}
+		}
 	}
-	else
-	{
-		// Shape을 감싸는 홀더, 어떤 Shape이든 저장하고 받기 위함
-		PxGeometryHolder Geomerty = CurrentComponent->GetGeometry();
-
-		PxMaterial* Material = FPhysicsSystem::GetInstance().GetDefaultMaterial();
-
-		// 실제 Shape, Exclusive: Actor가 독점하는 Shape -> Actor 소멸시 같이 소멸, Material은 공유자원이라 소멸하지 않음
-		Shape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, Geomerty.any(), *Material);
-	}
-	
-
-	Shape->setLocalPose(PhysxConverter::ToPxTransform(LocalTransform));
-
-	SetCollisionType(Shape, CurrentComponent);
 
 	const TArray<USceneComponent*>& Children = CurrentComponent->GetAttachChildren();
 	for (int Index = 0; Index < Children.Num(); Index++)
 	{
 		if (UPrimitiveComponent* Child = Cast<UPrimitiveComponent>(Children[Index]))
 		{
-			if (Child->CollisionType == ECollisionType::None || Child->bSimulatePhysics)
+			if (Child->CollisionType == ECollisionEnabled::None)
 			{
 				continue;
 			}
-			AddShapesRecursively(Child, RootComponent, PhysicsActor);
+			if (!Child->ShouldWelding())
+			{
+				continue;
+			}
 		}
+		// 씬컴 자식도 프컴일 수 있어서 테스트해야됌
+		AddShapesRecursively(Children[Index], RootComponent, PhysicsActor);
 	}
 }
 
@@ -101,21 +118,21 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 {
 	switch (Component->CollisionType)
 	{
-	case ECollisionType::QueryOnly:
+	case ECollisionEnabled::QueryOnly:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 	}
 	break;
-	case ECollisionType::PhysicsOnly:
+	case ECollisionEnabled::PhysicsOnly:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
 		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 	}
 	break;
-	case ECollisionType::PhysicsAndQuery:
+	case ECollisionEnabled::PhysicsAndQuery:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);

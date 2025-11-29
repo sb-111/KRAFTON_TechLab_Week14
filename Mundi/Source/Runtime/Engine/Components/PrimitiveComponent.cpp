@@ -13,7 +13,7 @@ UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
 
 void UPrimitiveComponent::ApplyPhysicsResult()
 {
-    if (BodyInstance || BodyInstance->RigidActor)
+    if (BodyInstance && BodyInstance->RigidActor)
     {
         physx::PxTransform PhysicsTransform = BodyInstance->RigidActor->getGlobalPose();
 
@@ -23,6 +23,47 @@ void UPrimitiveComponent::ApplyPhysicsResult()
 
         SetWorldTransform(Transform);
     }
+}
+
+// true인 경우 하나의 엑터에 셰입들이 용접됨. 
+bool UPrimitiveComponent::ShouldWelding()
+{
+    UPrimitiveComponent* PrimitiveParent = GetPrimitiveParent();
+    
+    if (PrimitiveParent)
+    {
+        if (PrimitiveParent->MobilityType == EMobilityType::Movable && MobilityType == EMobilityType::Static)
+        {
+            UE_LOG("부모가 Movable인데 자식이 Static일 수 없습니다, 자식을 Movable로 변환합니다");
+            MobilityType = EMobilityType::Movable;
+        }
+        if (bSimulatePhysics && MobilityType == EMobilityType::Static)
+        {
+            UE_LOG("Static이면서 동시에 SimulatePhysics할 수 없습니다, SimulatePhysics를 Off합니다");
+            bSimulatePhysics = false;
+        }
+        // 자식이 독립적으로 시뮬레이션 되지 않고 부모와 모빌리티가 같을때만 용접
+        if (PrimitiveParent->MobilityType == MobilityType && !bSimulatePhysics)
+        {
+            return true;
+        }
+        
+    }
+}
+
+UPrimitiveComponent* UPrimitiveComponent::GetPrimitiveParent()
+{
+    USceneComponent* Parent = AttachParent;
+
+    while (Parent)
+    {
+        if (UPrimitiveComponent* PrimitiveParent = Cast<UPrimitiveComponent>(Parent))
+        {
+            return PrimitiveParent;
+        }
+        Parent = Parent->GetAttachParent();
+    }
+    return nullptr;
 }
 
 physx::PxGeometryHolder UPrimitiveComponent::GetGeometry()

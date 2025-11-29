@@ -81,7 +81,7 @@ void FPhysicsSystem::Initialize()
 	SceneDesc.filterShader = PxDefaultSimulationFilterShader;
 	// Persistent contact manifold: 지속적인 접촉 시 떨림 완화
 	// ENABLE_ACTIVE_ACTORS: 움직인 엑터만 명단 뽑아놓음
-	SceneDesc.flags |= (PxSceneFlag::eENABLE_PCM | PxSceneFlag::eENABLE_ACTIVE_ACTORS);
+	SceneDesc.flags |=  PxSceneFlag::eENABLE_PCM | PxSceneFlag::eENABLE_ACTIVE_ACTORS;
 
 	Scene = Physics->createScene(SceneDesc);
 

@@ -19,7 +19,7 @@ struct FBodyInstance
 
 	static void InitPhysics(UPrimitiveComponent* Component);
 
-	static void AddShapesRecursively(UPrimitiveComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidDynamic* PhysicsActor);
+	static void AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor);
 
 	static void SetCollisionType(PxShape* Shape, UPrimitiveComponent* Component);
 };
