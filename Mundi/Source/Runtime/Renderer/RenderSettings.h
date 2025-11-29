@@ -39,6 +39,19 @@ public:
     void SetFXAAQualityIterations(int32 Value) { FXAAQualityIterations = Value; }
     int32 GetFXAAQualityIterations() const { return FXAAQualityIterations; }
 
+    // Depth of Field parameters
+    void SetDOFFocalDistance(float Value) { DOFFocalDistance = Value; }
+    float GetDOFFocalDistance() const { return DOFFocalDistance; }
+
+    void SetDOFNearTransitionRange(float Value) { DOFNearTransitionRange = Value; }
+    float GetDOFNearTransitionRange() const { return DOFNearTransitionRange; }
+
+    void SetDOFFarTransitionRange(float Value) { DOFFarTransitionRange = Value; }
+    float GetDOFFarTransitionRange() const { return DOFFarTransitionRange; }
+
+    void SetDOFMaxCoCRadius(float Value) { DOFMaxCoCRadius = Value; }
+    float GetDOFMaxCoCRadius() const { return DOFMaxCoCRadius; }
+
     // Tile-based light culling
     void SetTileSize(uint32 Value) { TileSize = Value; }
     uint32 GetTileSize() const { return TileSize; }
@@ -65,6 +78,12 @@ private:
     float FXAAEdgeThresholdMax = 0.166f;    // 엣지 감지 최대 휘도 차이 (권장: 0.166)
     float FXAAQualitySubPix = 0.75f;        // 서브픽셀 품질 (낮을수록 부드러움, 권장: 0.75)
     int32 FXAAQualityIterations = 12;       // 엣지 탐색 반복 횟수 (권장: 12)
+
+    // Depth of Field parameters
+    float DOFFocalDistance = 10.0f;          // 포커스 거리 (미터, 기본값: 10.0)
+    float DOFNearTransitionRange = 5.0f;     // 포그라운드 전환 범위 (미터, 기본값: 5.0)
+    float DOFFarTransitionRange = 10.0f;     // 백그라운드 전환 범위 (미터, 기본값: 10.0)
+    float DOFMaxCoCRadius = 8.0f;            // 최대 CoC 반경 (픽셀, 기본값: 8.0)
 
     // Tile-based light culling
     uint32 TileSize = 16;                   // 타일 크기 (픽셀, 기본값: 16)

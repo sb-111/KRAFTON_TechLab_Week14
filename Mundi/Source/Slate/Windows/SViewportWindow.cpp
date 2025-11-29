@@ -1893,6 +1893,89 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 			ImGui::SetTooltip("FXAA 상세 설정");
 		}
 
+		// Depth of Field
+		bool bDepthOfField = RenderSettings.IsShowFlagEnabled(EEngineShowFlags::SF_DepthOfField);
+		if (ImGui::Checkbox("##DepthOfField", &bDepthOfField))
+		{
+			RenderSettings.ToggleShowFlag(EEngineShowFlags::SF_DepthOfField);
+		}
+		ImGui::SameLine();
+		ImGui::Text("피사계 심도 (DOF)");
+
+		// 서브메뉴
+		if (ImGui::BeginMenu(" 피사계 심도 설정"))
+		{
+			ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "피사계 심도 (Depth of Field)");
+			ImGui::Separator();
+
+			// FocalDistance 슬라이더
+			float focalDist = RenderSettings.GetDOFFocalDistance();
+			ImGui::Text("포커스 거리");
+			if (ImGui::SliderFloat("##FocalDist", &focalDist, 0.1f, 100.0f, "%.1fm"))
+			{
+				RenderSettings.SetDOFFocalDistance(focalDist);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("선명하게 표시될 거리입니다.");
+			}
+
+			// NearTransitionRange 슬라이더
+			float nearRange = RenderSettings.GetDOFNearTransitionRange();
+			ImGui::Text("전경 전환 범위");
+			if (ImGui::SliderFloat("##NearRange", &nearRange, 0.1f, 50.0f, "%.1fm"))
+			{
+				RenderSettings.SetDOFNearTransitionRange(nearRange);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("포커스 거리보다 가까운 영역이 흐려지는 범위입니다.");
+			}
+
+			// FarTransitionRange 슬라이더
+			float farRange = RenderSettings.GetDOFFarTransitionRange();
+			ImGui::Text("배경 전환 범위");
+			if (ImGui::SliderFloat("##FarRange", &farRange, 0.1f, 50.0f, "%.1fm"))
+			{
+				RenderSettings.SetDOFFarTransitionRange(farRange);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("포커스 거리보다 먼 영역이 흐려지는 범위입니다.");
+			}
+
+			// MaxCoCRadius 슬라이더
+			float maxCoC = RenderSettings.GetDOFMaxCoCRadius();
+			ImGui::Text("최대 블러 반경");
+			if (ImGui::SliderFloat("##MaxCoC", &maxCoC, 1.0f, 16.0f, "%.1f"))
+			{
+				RenderSettings.SetDOFMaxCoCRadius(maxCoC);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("흐림 효과의 최대 크기입니다. 높을수록 더 흐릿해집니다.");
+			}
+
+			ImGui::Separator();
+
+			// CoC Visualization 체크박스
+			bool bCoCVis = RenderSettings.IsShowFlagEnabled(EEngineShowFlags::SF_CoCVisualization);
+			if (ImGui::Checkbox(" CoC 디버그 시각화", &bCoCVis))
+			{
+				RenderSettings.ToggleShowFlag(EEngineShowFlags::SF_CoCVisualization);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("포커스 범위를 시각화합니다.\n녹색=전경, 빨강=배경, 흰색=선명");
+			}
+
+			ImGui::EndMenu();
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip("피사계 심도 상세 설정");
+		}
+
 		// Tile-Based Light Culling
 		bool bTileCulling = RenderSettings.IsShowFlagEnabled(EEngineShowFlags::SF_TileCulling);
 		if (ImGui::Checkbox("##TileCulling", &bTileCulling))

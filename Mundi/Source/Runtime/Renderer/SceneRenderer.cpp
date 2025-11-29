@@ -144,6 +144,9 @@ void FSceneRenderer::Render()
 		RenderOverayEditorPrimitivesPass();	// 기즈모 출력
 	}
 
+	// Depth of Field 후처리 적용 (FXAA 이전)
+	ApplyDepthOfFieldPass();
+
 	// FXAA 등 화면에서 최종 이미지 품질을 위해 적용되는 효과를 적용
 	ApplyScreenEffectsPass();
 
@@ -1827,6 +1830,297 @@ void FSceneRenderer::ApplyScreenEffectsPass()
 	// 모든 작업이 성공적으로 끝났으므로 Commit 호출
 	// 이제 소멸자는 버퍼 스왑을 되돌리지 않고, SRV 해제 작업만 수행함
 	SwapGuard.Commit();
+}
+
+void FSceneRenderer::ApplyDepthOfFieldPass()
+{
+	// ShowFlag 체크
+	if (!World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_DepthOfField))
+	{
+		return;
+	}
+
+	URenderSettings& RenderSettings = World->GetRenderSettings();
+
+	// 카메라 파라미터
+	float nearClip = View->NearClip;
+	float farClip = View->FarClip;
+	int isOrtho = (View->ProjectionMode == ECameraProjectionMode::Orthographic) ? 1 : 0;
+
+	FVector2D projAB;
+	if (isOrtho)
+	{
+		projAB = FVector2D(nearClip, farClip);
+	}
+	else
+	{
+		projAB.X = farClip / (farClip - nearClip);
+		projAB.Y = (-farClip * nearClip) / (farClip - nearClip);
+	}
+
+	// 해상도 계산
+	uint32 fullWidth = RHIDevice->GetViewportWidth();
+	uint32 fullHeight = RHIDevice->GetViewportHeight();
+	uint32 halfWidth = fullWidth / 2;
+	uint32 halfHeight = fullHeight / 2;
+
+	// 임시 렌더 타겟들 (Half resolution)
+	ID3D11Texture2D* halfResColorCoCTexture = nullptr;
+	ID3D11RenderTargetView* halfResColorCoCRTV = nullptr;
+	ID3D11ShaderResourceView* halfResColorCoCSRV = nullptr;
+
+	ID3D11Texture2D* halfResBlurTempTexture = nullptr;
+	ID3D11RenderTargetView* halfResBlurTempRTV = nullptr;
+	ID3D11ShaderResourceView* halfResBlurTempSRV = nullptr;
+
+	ID3D11Texture2D* halfResBlurredTexture = nullptr;
+	ID3D11RenderTargetView* halfResBlurredRTV = nullptr;
+	ID3D11ShaderResourceView* halfResBlurredSRV = nullptr;
+
+	// 임시 렌더 타겟 생성 (Half resolution, R16G16B16A16_FLOAT)
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Width = halfWidth;
+	texDesc.Height = halfHeight;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.CPUAccessFlags = 0;
+	texDesc.MiscFlags = 0;
+
+	// 3개의 Half resolution 렌더 타겟 생성
+	HRESULT hr;
+	hr = RHIDevice->GetDevice()->CreateTexture2D(&texDesc, nullptr, &halfResColorCoCTexture);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCTexture 생성 실패\n"); return; }
+
+	hr = RHIDevice->GetDevice()->CreateTexture2D(&texDesc, nullptr, &halfResBlurTempTexture);
+	if (FAILED(hr)) { halfResColorCoCTexture->Release(); UE_LOG("DOF: halfResBlurTempTexture 생성 실패\n"); return; }
+
+	hr = RHIDevice->GetDevice()->CreateTexture2D(&texDesc, nullptr, &halfResBlurredTexture);
+	if (FAILED(hr)) { halfResColorCoCTexture->Release(); halfResBlurTempTexture->Release(); UE_LOG("DOF: halfResBlurredTexture 생성 실패\n"); return; }
+
+	// RTV 및 SRV 생성
+	hr = RHIDevice->GetDevice()->CreateRenderTargetView(halfResColorCoCTexture, nullptr, &halfResColorCoCRTV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCRTV 생성 실패\n"); goto cleanup; }
+
+	hr = RHIDevice->GetDevice()->CreateShaderResourceView(halfResColorCoCTexture, nullptr, &halfResColorCoCSRV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCSRV 생성 실패\n"); goto cleanup; }
+
+	hr = RHIDevice->GetDevice()->CreateRenderTargetView(halfResBlurTempTexture, nullptr, &halfResBlurTempRTV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResBlurTempRTV 생성 실패\n"); goto cleanup; }
+
+	hr = RHIDevice->GetDevice()->CreateShaderResourceView(halfResBlurTempTexture, nullptr, &halfResBlurTempSRV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResBlurTempSRV 생성 실패\n"); goto cleanup; }
+
+	hr = RHIDevice->GetDevice()->CreateRenderTargetView(halfResBlurredTexture, nullptr, &halfResBlurredRTV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResBlurredRTV 생성 실패\n"); goto cleanup; }
+
+	hr = RHIDevice->GetDevice()->CreateShaderResourceView(halfResBlurredTexture, nullptr, &halfResBlurredSRV);
+	if (FAILED(hr)) { UE_LOG("DOF: halfResBlurredSRV 생성 실패\n"); goto cleanup; }
+
+	// ===== Pass 1: DownsampleCoC =====
+	{
+		// 렌더 타겟 설정
+		RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &halfResColorCoCRTV, nullptr);
+
+		// 셰이더 로드
+		UShader* FullScreenTriangleVS = UResourceManager::GetInstance().Load<UShader>("Shaders/Utility/FullScreenTriangle_VS.hlsl");
+		UShader* DownsampleCoCPS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_DownsampleCoC_PS.hlsl");
+		if (!FullScreenTriangleVS || !FullScreenTriangleVS->GetVertexShader() || !DownsampleCoCPS || !DownsampleCoCPS->GetPixelShader())
+		{
+			UE_LOG("DOF: DownsampleCoC 셰이더 없음!\n");
+			goto cleanup;
+		}
+
+		// SRV 바인딩 (t0: SceneColorSource, t1: SceneDepth)
+		ID3D11ShaderResourceView* Srvs[2] = {
+			RHIDevice->GetSRV(RHI_SRV_Index::SceneColorSource),
+			RHIDevice->GetSRV(RHI_SRV_Index::SceneDepth)
+		};
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 2, Srvs);
+
+		// Sampler 바인딩
+		ID3D11SamplerState* Samplers[2] = {
+			RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp),
+			RHIDevice->GetSamplerState(RHI_Sampler_Index::PointClamp)
+		};
+		RHIDevice->GetDeviceContext()->PSSetSamplers(0, 2, Samplers);
+
+		// 상수 버퍼 업데이트
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho
+		));
+
+		// 셰이더 준비 및 드로우
+		RHIDevice->PrepareShader(FullScreenTriangleVS, DownsampleCoCPS);
+		RHIDevice->DrawFullScreenQuad();
+
+		// SRV 해제
+		ID3D11ShaderResourceView* nullSRVs[2] = { nullptr, nullptr };
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 2, nullSRVs);
+	}
+
+	// ===== Pass 2: BlurH (수평) =====
+	{
+		// 렌더 타겟 설정
+		RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &halfResBlurTempRTV, nullptr);
+
+		// 셰이더 로드
+		UShader* FullScreenTriangleVS = UResourceManager::GetInstance().Load<UShader>("Shaders/Utility/FullScreenTriangle_VS.hlsl");
+		UShader* BlurHPS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_BlurH_PS.hlsl");
+		if (!FullScreenTriangleVS || !FullScreenTriangleVS->GetVertexShader() || !BlurHPS || !BlurHPS->GetPixelShader())
+		{
+			UE_LOG("DOF: BlurH 셰이더 없음!\n");
+			goto cleanup;
+		}
+
+		// SRV 바인딩 (t0: halfResColorCoC)
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &halfResColorCoCSRV);
+
+		// Sampler 바인딩
+		ID3D11SamplerState* LinearSampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
+		RHIDevice->GetDeviceContext()->PSSetSamplers(0, 1, &LinearSampler);
+
+		// 상수 버퍼 업데이트 (BlurDirection = (1, 0))
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho,
+			FVector2D(1.0f, 0.0f), // BlurDirection: 수평
+			FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
+		));
+
+		// 셰이더 준비 및 드로우
+		RHIDevice->PrepareShader(FullScreenTriangleVS, BlurHPS);
+		RHIDevice->DrawFullScreenQuad();
+
+		// SRV 해제
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &nullSRV);
+	}
+
+	// ===== Pass 3: BlurV (수직) =====
+	{
+		// 렌더 타겟 설정
+		RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &halfResBlurredRTV, nullptr);
+
+		// 셰이더 로드
+		UShader* FullScreenTriangleVS = UResourceManager::GetInstance().Load<UShader>("Shaders/Utility/FullScreenTriangle_VS.hlsl");
+		UShader* BlurVPS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_BlurV_PS.hlsl");
+		if (!FullScreenTriangleVS || !FullScreenTriangleVS->GetVertexShader() || !BlurVPS || !BlurVPS->GetPixelShader())
+		{
+			UE_LOG("DOF: BlurV 셰이더 없음!\n");
+			goto cleanup;
+		}
+
+		// SRV 바인딩 (t0: halfResBlurTemp)
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &halfResBlurTempSRV);
+
+		// Sampler 바인딩
+		ID3D11SamplerState* LinearSampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
+		RHIDevice->GetDeviceContext()->PSSetSamplers(0, 1, &LinearSampler);
+
+		// 상수 버퍼 업데이트 (BlurDirection = (0, 1))
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho,
+			FVector2D(0.0f, 1.0f), // BlurDirection: 수직
+			FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
+		));
+
+		// 셰이더 준비 및 드로우
+		RHIDevice->PrepareShader(FullScreenTriangleVS, BlurVPS);
+		RHIDevice->DrawFullScreenQuad();
+
+		// SRV 해제
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &nullSRV);
+	}
+
+	// ===== Pass 4: Composite 또는 CoCVisualize =====
+	{
+		FSwapGuard SwapGuard(RHIDevice, 0, 3);  // t0, t1, t2 해제
+
+		RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithoutDepth);
+
+		// CoC Visualization 모드 체크
+		UShader* CompositePS;
+		if (World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_CoCVisualization))
+		{
+			CompositePS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_CoCVisualize_PS.hlsl");
+		}
+		else
+		{
+			CompositePS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Composite_PS.hlsl");
+		}
+
+		UShader* FullScreenTriangleVS = UResourceManager::GetInstance().Load<UShader>("Shaders/Utility/FullScreenTriangle_VS.hlsl");
+		if (!FullScreenTriangleVS || !FullScreenTriangleVS->GetVertexShader() || !CompositePS || !CompositePS->GetPixelShader())
+		{
+			UE_LOG("DOF: Composite 셰이더 없음!\n");
+			goto cleanup;
+		}
+
+		// SRV 바인딩
+		ID3D11ShaderResourceView* Srvs[3] = {
+			RHIDevice->GetSRV(RHI_SRV_Index::SceneColorSource),  // t0: 원본
+			halfResBlurredSRV,                                   // t1: 흐린 이미지
+			RHIDevice->GetSRV(RHI_SRV_Index::SceneDepth)         // t2: 깊이
+		};
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 3, Srvs);
+
+		// Sampler 바인딩
+		ID3D11SamplerState* Samplers[2] = {
+			RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp),
+			RHIDevice->GetSamplerState(RHI_Sampler_Index::PointClamp)
+		};
+		RHIDevice->GetDeviceContext()->PSSetSamplers(0, 2, Samplers);
+
+		// 상수 버퍼 업데이트
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho
+		));
+
+		// 셰이더 준비 및 드로우
+		RHIDevice->PrepareShader(FullScreenTriangleVS, CompositePS);
+		RHIDevice->DrawFullScreenQuad();
+
+		SwapGuard.Commit();
+	}
+
+cleanup:
+	// 임시 렌더 타겟 해제
+	if (halfResBlurredSRV) halfResBlurredSRV->Release();
+	if (halfResBlurredRTV) halfResBlurredRTV->Release();
+	if (halfResBlurredTexture) halfResBlurredTexture->Release();
+
+	if (halfResBlurTempSRV) halfResBlurTempSRV->Release();
+	if (halfResBlurTempRTV) halfResBlurTempRTV->Release();
+	if (halfResBlurTempTexture) halfResBlurTempTexture->Release();
+
+	if (halfResColorCoCSRV) halfResColorCoCSRV->Release();
+	if (halfResColorCoCRTV) halfResColorCoCRTV->Release();
+	if (halfResColorCoCTexture) halfResColorCoCTexture->Release();
 }
 
 // 최종 결과물의 실제 BackBuffer에 그리는 함수

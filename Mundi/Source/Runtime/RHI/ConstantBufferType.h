@@ -112,6 +112,37 @@ struct FXAABufferType // b2
     int32_t QualityIterations; // 엣지 탐색 반복 횟수 (12 권장)
 };
 
+struct DOFBufferType // b2
+{
+    float FocalDistance;          // 포커스 거리 (월드 단위)
+    float NearTransitionRange;    // 포그라운드 전환 범위
+    float FarTransitionRange;     // 백그라운드 전환 범위
+    float MaxCoCRadius;           // 최대 CoC 반경 (픽셀 단위)
+
+    FVector2D ProjectionAB;       // 깊이 복원용 (Near/Far plane)
+    int32_t IsOrthographic;       // 0 = Perspective, 1 = Orthographic
+    float Padding;
+
+    FVector2D BlurDirection;      // Blur pass용 방향 (1,0) or (0,1)
+    FVector2D TexelSize;          // 1 / HalfResSize
+
+    DOFBufferType() = default;
+
+    DOFBufferType(float InFocalDistance, float InNearRange, float InFarRange, float InMaxCoC,
+                  FVector2D InProjAB, int32_t InIsOrtho,
+                  FVector2D InBlurDir = FVector2D(0,0), FVector2D InTexelSize = FVector2D(0,0))
+        : FocalDistance(InFocalDistance)
+        , NearTransitionRange(InNearRange)
+        , FarTransitionRange(InFarRange)
+        , MaxCoCRadius(InMaxCoC)
+        , ProjectionAB(InProjAB)
+        , IsOrthographic(InIsOrtho)
+        , Padding(0.0f)
+        , BlurDirection(InBlurDir)
+        , TexelSize(InTexelSize)
+    {}
+};
+
 // b0 in PS
 struct FMaterialInPs
 {
@@ -233,6 +264,7 @@ MACRO(FFadeInOutBufferType)         \
 MACRO(FGammaCorrectionBufferType)   \
 MACRO(FVinetteBufferType)           \
 MACRO(FXAABufferType)               \
+MACRO(DOFBufferType)                \
 MACRO(FPixelConstBufferType)        \
 MACRO(ViewProjBufferType)           \
 MACRO(ColorBufferType)              \
@@ -258,6 +290,7 @@ CONSTANT_BUFFER_INFO(FFadeInOutBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FGammaCorrectionBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FVinetteBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FXAABufferType, 2, false, true)
+CONSTANT_BUFFER_INFO(DOFBufferType, 2, false, true)  // b2, PS only - Depth of Field
 CONSTANT_BUFFER_INFO(ColorBufferType, 3, true, true)   // b3 color
 CONSTANT_BUFFER_INFO(FPixelConstBufferType, 4, true, true) // GOURAUD에도 사용되므로 VS도 true
 CONSTANT_BUFFER_INFO(DecalBufferType, 6, true, true)
