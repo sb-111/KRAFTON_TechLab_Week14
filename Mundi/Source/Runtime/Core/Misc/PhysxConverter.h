@@ -19,14 +19,16 @@ enum class EMobilityType : uint8
 
 namespace PhysxConverter
 {
+	// 왼손 zUp xForward -> 오른손 yUp zForward
 	inline physx::PxVec3 ToPxVec3(const FVector& InVector)
 	{
-		return physx::PxVec3(InVector.X, InVector.Y, InVector.Z);
+		return physx::PxVec3(InVector.Y, InVector.Z, -InVector.X);
 	}
 
+	// 쿼터니언은 축에 더해 회전 방향도 달라지므로 허수부 부호 반전
 	inline physx::PxQuat ToPxQuat(const FQuat& InQuat)
 	{
-		return physx::PxQuat(InQuat.X, InQuat.Y, InQuat.Z, InQuat.W);
+		return physx::PxQuat(-InQuat.Y, -InQuat.Z, InQuat.X, InQuat.W);
 	}
 
 	inline physx::PxTransform ToPxTransform(const FTransform& InTransform)
@@ -34,14 +36,15 @@ namespace PhysxConverter
 		return physx::PxTransform(ToPxVec3(InTransform.Translation), ToPxQuat(InTransform.Rotation));
 	}
 
+	// 오른손 yUp zBack -> 왼손 zUp xForward  
 	inline FVector ToFVector(const physx::PxVec3& InVector)
 	{
-		return FVector(InVector.x, InVector.y, InVector.z);
+		return FVector(-InVector.z, InVector.x, InVector.y);
 	}
 
 	inline FQuat ToFQuat(const physx::PxQuat& InQuat)
 	{
-		return FQuat(InQuat.x, InQuat.y, InQuat.z, InQuat.w);
+		return FQuat(InQuat.z, -InQuat.x, -InQuat.y, InQuat.w);
 	}
 
 	inline FTransform ToFTransform(const physx::PxTransform& InTransform)

@@ -171,14 +171,19 @@ void UBoxComponent::RenderDebugVolume(URenderer* Renderer) const
 
 	// Box의 8개 꼭짓점 계산
 	FVector Corners[8];
-	Corners[0] = Center + FVector(-Extent.X, -Extent.Y, -Extent.Z);
-	Corners[1] = Center + FVector(+Extent.X, -Extent.Y, -Extent.Z);
-	Corners[2] = Center + FVector(+Extent.X, +Extent.Y, -Extent.Z);
-	Corners[3] = Center + FVector(-Extent.X, +Extent.Y, -Extent.Z);
-	Corners[4] = Center + FVector(-Extent.X, -Extent.Y, +Extent.Z);
-	Corners[5] = Center + FVector(+Extent.X, -Extent.Y, +Extent.Z);
-	Corners[6] = Center + FVector(+Extent.X, +Extent.Y, +Extent.Z);
-	Corners[7] = Center + FVector(-Extent.X, +Extent.Y, +Extent.Z);
+	Corners[0] = FVector(-Extent.X, -Extent.Y, -Extent.Z);
+	Corners[1] = FVector(+Extent.X, -Extent.Y, -Extent.Z);
+	Corners[2] = FVector(+Extent.X, +Extent.Y, -Extent.Z);
+	Corners[3] = FVector(-Extent.X, +Extent.Y, -Extent.Z);
+	Corners[4] = FVector(-Extent.X, -Extent.Y, +Extent.Z);
+	Corners[5] = FVector(+Extent.X, -Extent.Y, +Extent.Z);
+	Corners[6] = FVector(+Extent.X, +Extent.Y, +Extent.Z);
+	Corners[7] = FVector(-Extent.X, +Extent.Y, +Extent.Z);
+
+	for (int Index = 0; Index < 8; Index++)
+	{
+		Corners[Index] = GetWorldRotation().RotateVector(Corners[Index]) + Center;
+	}
 
 	// 라인 데이터 준비
 	TArray<FVector> StartPoints;
@@ -217,7 +222,12 @@ void UBoxComponent::RenderDebugVolume(URenderer* Renderer) const
 
 physx::PxGeometryHolder UBoxComponent::GetGeometry()
 {
-	return physx::PxBoxGeometry(PhysxConverter::ToPxVec3(BoxExtent));
+	physx::PxVec3 ExtentAbs = PhysxConverter::ToPxVec3(GetScaledBoxExtent());
+	// 축변환 때문에 절댓값 한번 더 구해야함
+	ExtentAbs.x = std::abs(ExtentAbs.x);
+	ExtentAbs.y = std::abs(ExtentAbs.y);
+	ExtentAbs.z = std::abs(ExtentAbs.z);
+	return physx::PxBoxGeometry(ExtentAbs);
 }
 
 bool UBoxComponent::IsOverlappingBox(const UBoxComponent* OtherBox) const

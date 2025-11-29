@@ -73,7 +73,7 @@ void FPhysicsSystem::Initialize()
 	Cooking = PxCreateCooking(PX_PHYSICS_VERSION, *Foundation, PxCookingParams(PxTolerancesScale()));
 
 	PxSceneDesc SceneDesc(Physics->getTolerancesScale());
-	SceneDesc.gravity = PxVec3(0.0f, 0.0f, -9.81f);
+	SceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 
 	Dispatcher = PxDefaultCpuDispatcherCreate(3);
 	SceneDesc.cpuDispatcher = Dispatcher;
