@@ -1,7 +1,9 @@
 ﻿#include "pch.h"
 #include "SkeletalMesh.h"
 
-
+#include "PhysicsAsset.h"
+#include "BodySetup.h"
+#include "FKSphylElem.h"
 #include "FbxLoader.h"
 #include "WindowsBinReader.h"
 #include "WindowsBinWriter.h"
@@ -97,4 +99,56 @@ void USkeletalMesh::CreateIndexBuffer(FSkeletalMeshData* InSkeletalMesh, ID3D11D
 {
     HRESULT hr = D3D11RHI::CreateIndexBuffer(InDevice, InSkeletalMesh, &IndexBuffer);
     assert(SUCCEEDED(hr));
+}
+
+void USkeletalMesh::AutoGeneratePhysicsAsset()
+{
+    if (!Data || Data->Skeleton.Bones.empty())
+    {
+        UE_LOG("AutoGeneratePhysicsAsset: No skeleton data");
+        return;
+    }
+
+    // 이미 PhysicsAsset이 있으면 스킵
+    if (PhysicsAsset && PhysicsAsset->Bodies.Num() > 0)
+    {
+        UE_LOG("AutoGeneratePhysicsAsset: Already has PhysicsAsset");
+        return;
+    }
+
+    // 새 PhysicsAsset 생성
+    PhysicsAsset = new UPhysicsAsset();
+
+    const FSkeleton& Skeleton = Data->Skeleton;
+
+    // 각 본에 대해 BodySetup 생성
+    for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
+    {
+        const FBone& Bone = Skeleton.Bones[i];
+
+        UBodySetup* BodySetup = new UBodySetup();
+        BodySetup->BoneName = FName(Bone.Name);
+
+        // 기본 캡슐 Shape 추가
+        FKSphylElem Capsule;
+        Capsule.Name = FName(Bone.Name);
+        Capsule.Center = FVector::Zero();
+        Capsule.Rotation = FVector::Zero();
+        Capsule.Radius = 0.1f;   // 테스트용 기본값
+        Capsule.Length = 0.1f;  // 테스트용 기본값
+
+        BodySetup->AggGeom.SphylElems.Add(Capsule);
+
+        // 기본 물리 속성
+        BodySetup->MassInKg = 1.0f;
+        BodySetup->Friction = 0.5f;
+        BodySetup->Restitution = 0.3f;
+        BodySetup->LinearDamping = 0.1f;
+        BodySetup->AngularDamping = 0.1f;
+
+        PhysicsAsset->Bodies.Add(BodySetup);
+    }
+
+    UE_LOG("AutoGeneratePhysicsAsset: Generated %d bodies for skeleton '%s'",
+           PhysicsAsset->Bodies.Num(), Skeleton.Name.c_str());
 }

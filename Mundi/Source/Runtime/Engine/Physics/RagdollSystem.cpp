@@ -141,10 +141,10 @@ FRagdollInstance* FRagdollSystem::CreateRagdollFromPhysicsAsset(
     NewInstance->UserData = InUserData;
 
     // 1단계: 각 BodySetup에서 RigidDynamic 생성
-    int32 NumBodySetups = PhysicsAsset->SkeletalBodySetups.Num();
+    int32 NumBodySetups = PhysicsAsset->Bodies.Num();
     for (int32 i = 0; i < NumBodySetups; ++i)
     {
-        UBodySetup* BodySetup = PhysicsAsset->SkeletalBodySetups[i];
+        UBodySetup* BodySetup = PhysicsAsset->Bodies[i];
         if (!BodySetup) continue;
 
         FRagdollBone Bone;
@@ -315,21 +315,17 @@ void FRagdollSystem::CreateJoint(FRagdollBone& Bone, FRagdollBone& ParentBone)
     Joint->setMotion(PxD6Axis::eY, PxD6Motion::eLOCKED);
     Joint->setMotion(PxD6Axis::eZ, PxD6Motion::eLOCKED);
 
-    // Angular DOF: 제한 (Ragdoll 관절 움직임)
-    Joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eLIMITED);
-    Joint->setMotion(PxD6Axis::eSWING1, PxD6Motion::eLIMITED);
-    Joint->setMotion(PxD6Axis::eSWING2, PxD6Motion::eLIMITED);
+    // Angular DOF: FREE로 설정 (일단 크래시 방지용, 나중에 LIMIT으로 변경)
+    Joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
+    Joint->setMotion(PxD6Axis::eSWING1, PxD6Motion::eFREE);
+    Joint->setMotion(PxD6Axis::eSWING2, PxD6Motion::eFREE);
 
-    // 각도 제한 설정
-    const FRagdollJointLimit& Limit = Bone.JointLimit;
-
-    // Twist limit (축 회전)
-    PxJointAngularLimitPair TwistLimit(Limit.TwistLimitLow, Limit.TwistLimitHigh, 0.05f);
-    Joint->setTwistLimit(TwistLimit);
-
-    // Swing limit (원뿔 형태 제한)
-    PxJointLimitCone SwingLimit(Limit.Swing1Limit, Limit.Swing2Limit, 0.05f);
-    Joint->setSwingLimit(SwingLimit);
+    // TODO: 각도 제한 설정 (현재 FREE로 비활성화)
+    // const FRagdollJointLimit& Limit = Bone.JointLimit;
+    // PxJointAngularLimitPair TwistLimit(Limit.TwistLimitLow, Limit.TwistLimitHigh, 0.05f);
+    // Joint->setTwistLimit(TwistLimit);
+    // PxJointLimitCone SwingLimit(Limit.Swing1Limit, Limit.Swing2Limit, 0.05f);
+    // Joint->setSwingLimit(SwingLimit);
 
     Bone.Joint = Joint;
 }
@@ -486,10 +482,13 @@ void FRagdollSystem::RenderDebugAll(URenderer* Renderer) const
 {
     if (!Renderer) return;
 
+    UE_LOG("[Ragdoll Debug] RenderDebugAll called, ActiveRagdolls count: %d", ActiveRagdolls.Num());
+
     for (const FRagdollInstance* Instance : ActiveRagdolls)
     {
         if (Instance && Instance->bIsActive)
         {
+            UE_LOG("[Ragdoll Debug] Rendering instance with %d bones", Instance->Bones.Num());
             FRagdollDebugRenderer::RenderRagdoll(Renderer, Instance);
         }
     }

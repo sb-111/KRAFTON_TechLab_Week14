@@ -35,6 +35,9 @@
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
 #include "RagdollSystem.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMesh.h"
+#include "PhysicsAsset.h"
 
 IMPLEMENT_CLASS(UWorld)
 
@@ -61,6 +64,13 @@ UWorld::UWorld() : Partition(nullptr)  // Will be created in Initialize() based 
 UWorld::~UWorld()
 {
 	bIsTearingDown = true;	// 월드 삭제 중에는 새로운 액터 생성을 방지하기 위해
+
+	// PIE 월드가 삭제될 때 Ragdoll 시스템 정리
+	if (bPie)
+	{
+		FRagdollSystem::GetInstance().Shutdown();
+		FRagdollSystem::GetInstance().Initialize();  // 다음 PIE를 위해 재초기화
+	}
 
 	if (Level)
 	{
@@ -295,10 +305,67 @@ void UWorld::Tick(float DeltaSeconds)
 	// 지연 삭제 처리
 	ProcessPendingKillActors();
 
+	// PIE 모드에서만 물리 시뮬레이션 업데이트
 	if (bPie)
 	{
 		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
 		FRagdollSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
+	}
+
+	// [테스트용] G키로 래그돌 생성 (에디터/PIE 모두에서 동작)
+	// 에디터 모드: 충돌체 크기 확인용 (시뮬레이션 없음)
+	// PIE 모드: 실제 물리 시뮬레이션 동작
+	{
+		static bool bGKeyWasPressed = false;
+		bool bGKeyPressed = (GetAsyncKeyState('G') & 0x8000) != 0;
+
+		if (bGKeyPressed && !bGKeyWasPressed)
+		{
+			// 모든 SkeletalMeshComponent를 찾아서 래그돌 생성
+			for (AActor* Actor : Level->GetActors())
+			{
+				if (!Actor) continue;
+
+				// SkeletalMeshComponent 찾기
+				USkeletalMeshComponent* SkelMeshComp = nullptr;
+				for (UActorComponent* Comp : Actor->GetOwnedComponents())
+				{
+					SkelMeshComp = static_cast<USkeletalMeshComponent*>(Comp);
+					if (SkelMeshComp) break;
+				}
+				if (!SkelMeshComp) continue;
+
+				USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
+				if (!SkelMesh) continue;
+
+				// PhysicsAsset 자동 생성 (없으면)
+				if (!SkelMesh->GetPhysicsAsset())
+				{
+					SkelMesh->AutoGeneratePhysicsAsset();
+				}
+
+				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
+				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
+
+				// 현재 본 Transform들 수집
+				TArray<FTransform> BoneTransforms;
+				const FSkeleton* Skeleton = SkelMesh->GetSkeleton();
+				if (Skeleton)
+				{
+					for (int32 i = 0; i < Skeleton->Bones.Num(); ++i)
+					{
+						BoneTransforms.Add(SkelMeshComp->GetBoneWorldTransform(i));
+					}
+				}
+
+				// 래그돌 생성
+				FRagdollSystem::GetInstance().CreateRagdollFromPhysicsAsset(
+					PhysAsset, BoneTransforms, SkelMeshComp);
+
+				UE_LOG("[Ragdoll Test] Created ragdoll for actor: %s", Actor->GetName().c_str());
+			}
+		}
+		bGKeyWasPressed = bGKeyPressed;
 	}
 	// 충돌 BVH 업데이트 (에디터/PIE 모두에서 호출 - Partition과 동일)
 	if (CollisionManager)

@@ -1508,8 +1508,7 @@ void FSceneRenderer::RenderDebugPass()
 		}
 	}
 
-	// Ragdoll Debug draw
-	if (World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_Ragdoll))
+	// Ragdoll Debug draw (임시: Show Flag 체크 없이 항상 렌더링)
 	{
 		FRagdollSystem& RagdollSys = FRagdollSystem::GetInstance();
 		RagdollSys.RenderDebugAll(OwnerRenderer);
