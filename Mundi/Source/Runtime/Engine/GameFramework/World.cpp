@@ -34,6 +34,7 @@
 #include "Hash.h"
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
+#include "RagdollSystem.h"
 
 IMPLEMENT_CLASS(UWorld)
 
@@ -297,6 +298,7 @@ void UWorld::Tick(float DeltaSeconds)
 	if (bPie)
 	{
 		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
+		FRagdollSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
 	}
 	// 충돌 BVH 업데이트 (에디터/PIE 모두에서 호출 - Partition과 동일)
 	if (CollisionManager)

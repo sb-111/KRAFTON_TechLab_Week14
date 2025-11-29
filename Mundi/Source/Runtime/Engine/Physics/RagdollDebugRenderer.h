@@ -1,0 +1,81 @@
+#pragma once
+
+#include "pch.h"
+#include <PxPhysicsAPI.h>
+
+using namespace physx;
+
+class URenderer;
+class FRagdollInstance;
+struct FKAggregateGeom;
+struct FKSphereElem;
+struct FKBoxElem;
+struct FKSphylElem;
+
+// ===== Ragdoll Debug Renderer =====
+// Ragdoll Shape 및 Joint 디버그 시각화
+class FRagdollDebugRenderer
+{
+public:
+    // Ragdoll 전체 렌더링
+    static void RenderRagdoll(
+        URenderer* Renderer,
+        const FRagdollInstance* Instance,
+        const FVector4& BoneColor = FVector4(0.0f, 1.0f, 0.0f, 1.0f),
+        const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
+    );
+
+private:
+    // FKAggregateGeom 기반 Shape 렌더링
+    static void RenderAggGeom(
+        URenderer* Renderer,
+        const FKAggregateGeom& AggGeom,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+    // Sphere 렌더링 (와이어프레임 원)
+    static void RenderSphere(
+        const FKSphereElem& Sphere,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+    // Box 렌더링 (12개 엣지)
+    static void RenderBox(
+        const FKBoxElem& Box,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+    // Capsule 렌더링 (원기둥 + 반구)
+    static void RenderCapsule(
+        const FKSphylElem& Capsule,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+    // 헬퍼: 원 렌더링 (세그먼트 수 지정)
+    static void AddCircle(
+        const FVector& Center,
+        const FVector& Normal,
+        float Radius,
+        int32 NumSegments,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+};

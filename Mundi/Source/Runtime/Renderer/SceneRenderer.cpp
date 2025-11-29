@@ -50,6 +50,8 @@
 #include "FbxLoader.h"
 #include "CollisionManager.h"
 #include "ShapeComponent.h"
+#include "RagdollSystem.h"
+#include "RagdollDebugRenderer.h"
 #include "SkinnedMeshComponent.h"
 #include "ParticleSystemComponent.h"
 #include "ParticleStats.h"
@@ -1504,6 +1506,13 @@ void FSceneRenderer::RenderDebugPass()
 				}
 			}
 		}
+	}
+
+	// Ragdoll Debug draw
+	if (World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_Ragdoll))
+	{
+		FRagdollSystem& RagdollSys = FRagdollSystem::GetInstance();
+		RagdollSys.RenderDebugAll(OwnerRenderer);
 	}
 
 	// 수집된 라인을 출력하고 정리
