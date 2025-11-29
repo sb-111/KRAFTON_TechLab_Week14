@@ -1,8 +1,11 @@
 // Depth of Field - CoC Visualization Pass
 // Visualizes Circle of Confusion for debugging
 
-Texture2D g_DepthTexture : register(t0);
+Texture2D g_SceneTexture : register(t0);      // Full res 원본 (미사용이지만 슬롯 맞춤)
+Texture2D g_BlurredTexture : register(t1);    // Half res 흐림 (미사용이지만 슬롯 맞춤)
+Texture2D g_DepthTexture : register(t2);      // Full res 깊이
 
+SamplerState g_LinearSampler : register(s0);
 SamplerState g_PointSampler : register(s1);
 
 struct PS_INPUT
@@ -26,7 +29,8 @@ cbuffer DOFParametersCB : register(b2)
     float2 TexelSize;
 };
 
-// 선형 깊이 변환
+// 선형 깊이 변환 (SceneDepth_PS.hlsl과 동일한 방식)
+// ProjectionAB.x = Near, ProjectionAB.y = Far
 float LinearDepth(float zBufferDepth)
 {
     if (IsOrthographic == 1)
@@ -35,7 +39,8 @@ float LinearDepth(float zBufferDepth)
     }
     else
     {
-        return ProjectionAB.y / (zBufferDepth - ProjectionAB.x);
+        // SceneDepth_PS.hlsl과 동일한 공식
+        return ProjectionAB.x * ProjectionAB.y / (ProjectionAB.y - zBufferDepth * (ProjectionAB.y - ProjectionAB.x));
     }
 }
 
@@ -62,7 +67,7 @@ float4 mainPS(PS_INPUT input) : SV_Target
     // CoC 시각화 with color coding
     // Green tint: 포그라운드 흐림 (Near)
     // Red tint: 백그라운드 흐림 (Far)
-    // White: 선명 (Focused)
+    // Blue: 선명 (Focused)
 
     float nearStart = FocalDistance - NearTransitionRange;
     float nearBlur = saturate((nearStart - linearDepth) / max(NearTransitionRange, 0.01f));
@@ -82,8 +87,8 @@ float4 mainPS(PS_INPUT input) : SV_Target
     }
     else
     {
-        // 선명한 영역: 흰색
-        color = float3(1.0f, 1.0f, 1.0f);
+        // 선명한 영역: 파란색
+        color = float3(0.0f, 0.0f, 1.0f);
     }
 
     return float4(color, 1.0f);

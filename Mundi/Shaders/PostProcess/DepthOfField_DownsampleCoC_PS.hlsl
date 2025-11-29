@@ -28,7 +28,8 @@ cbuffer DOFParametersCB : register(b2)
     float2 TexelSize;              // Blur pass용 (이 pass에서는 미사용)
 };
 
-// 선형 깊이 변환
+// 선형 깊이 변환 (SceneDepth_PS.hlsl과 동일한 방식)
+// ProjectionAB.x = Near, ProjectionAB.y = Far
 float LinearDepth(float zBufferDepth)
 {
     if (IsOrthographic == 1)
@@ -38,10 +39,9 @@ float LinearDepth(float zBufferDepth)
     }
     else
     {
-        // 원근: 역 프로젝션
-        // ProjectionAB.x = Far / (Far - Near)
-        // ProjectionAB.y = (-Far * Near) / (Far - Near)
-        return ProjectionAB.y / (zBufferDepth - ProjectionAB.x);
+        // 원근: SceneDepth_PS.hlsl과 동일한 공식
+        // zView = Near * Far / (Far - depth * (Far - Near))
+        return ProjectionAB.x * ProjectionAB.y / (ProjectionAB.y - zBufferDepth * (ProjectionAB.y - ProjectionAB.x));
     }
 }
 
