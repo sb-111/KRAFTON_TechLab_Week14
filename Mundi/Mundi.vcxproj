@@ -699,6 +699,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Generated\FKSphylElem.generated.cpp" />
     <ClCompile Include="Generated\UPhysicsAsset.generated.cpp" />
     <ClCompile Include="Generated\UBodySetupCore.generated.cpp" />
+    <ClCompile Include="Generated\FConstraintInstance.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -942,6 +943,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetup.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\BodySetupCore.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\CollisionShapes.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\ConstraintInstance.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKBoxElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKConvexElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
@@ -1242,6 +1244,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Generated\FKSphylElem.generated.h" />
     <ClInclude Include="Generated\UPhysicsAsset.generated.h" />
     <ClInclude Include="Generated\UBodySetupCore.generated.h" />
+    <ClInclude Include="Generated\FConstraintInstance.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />
