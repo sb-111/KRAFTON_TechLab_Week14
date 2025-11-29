@@ -1966,7 +1966,7 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 			}
 			if (ImGui::IsItemHovered())
 			{
-				ImGui::SetTooltip("포커스 범위를 시각화합니다.\n녹색=전경, 빨강=배경, 흰색=선명");
+				ImGui::SetTooltip("포커스 범위를 시각화합니다.\n초록=전경 블러, 빨강=배경 블러, 파랑=초점 영역");
 			}
 
 			ImGui::EndMenu();

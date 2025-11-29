@@ -14,6 +14,13 @@ struct PS_INPUT
     float2 texCoord : TEXCOORD0;
 };
 
+// ViewportConstants (b10) - FullScreenTriangle_VS와 동일
+cbuffer ViewportConstants : register(b10)
+{
+    float4 ViewportRect;  // x: MinX, y: MinY, z: Width, w: Height
+    float4 ScreenSize;    // x: Width, y: Height, z: 1/Width, w: 1/Height
+}
+
 cbuffer DOFParametersCB : register(b2)
 {
     float FocalDistance;
@@ -70,9 +77,16 @@ float4 mainPS(PS_INPUT input) : SV_Target
     // CoC 계산
     float coc = CalculateCoC(linearDepth);
 
+    // Half resolution 텍스처를 위한 UV 변환
+    // input.texCoord는 ViewRect 영역의 UV ([ViewStartUV, ViewStartUV + ViewUVSpan] 범위)
+    // Half resolution 텍스처는 [0,1]이 ViewRect 전체에 대응
+    // 따라서 ViewRect UV → [0,1]로 변환 필요
+    float2 ViewportStartUV = ViewportRect.xy * ScreenSize.zw;
+    float2 ViewportUVSpan = ViewportRect.zw * ScreenSize.zw;
+    float2 halfResUV = (uv - ViewportStartUV) / ViewportUVSpan;
+
     // 흐린 이미지 샘플링 (Half resolution → Bilinear upsampling)
-    // Linear Sampler를 사용하여 자동으로 부드러운 업샘플링 수행
-    float3 blurredColor = g_BlurredTexture.Sample(g_LinearSampler, uv).rgb;
+    float3 blurredColor = g_BlurredTexture.Sample(g_LinearSampler, halfResUV).rgb;
 
     // CoC에 따라 선형 보간
     // CoC = 0: 완전히 선명 (sharpColor)
