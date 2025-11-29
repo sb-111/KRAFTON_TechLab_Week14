@@ -63,7 +63,7 @@ void AActor::BeginPlay()
 
 			if (PrimitiveComponent == RootComponent || PrimitiveComponent->bSimulatePhysics)
 			{
-				FBodyInstance::InitPhysics(PrimitiveComponent);
+				PrimitiveComponent->BodyInstance.InitPhysics(PrimitiveComponent);
 			}
 		}
 	}

@@ -13,11 +13,11 @@ struct FBodyInstance
 	// RigidActor 참조 이유: 업데이트 or 물리 명령 시뮬레이션 액터에 보내야 함.
 	PxRigidActor* RigidActor = nullptr;
 
-	FBodyInstance(UPrimitiveComponent* InOwnerComponent);
+	FBodyInstance() = default;
 
 	~FBodyInstance();
 
-	static void InitPhysics(UPrimitiveComponent* Component);
+	void InitPhysics(UPrimitiveComponent* Component);
 
 	static void AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor);
 
