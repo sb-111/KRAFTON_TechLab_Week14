@@ -549,8 +549,9 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
             FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
             FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
 
-            // 단위 캡슐(Radius=1, HalfHeight=1) × Scale = 값 그대로 사용
-            float HalfHeight = Capsule.Length * 0.5f;
+            // 언리얼 방식: HalfHeight = CylinderHalfHeight + Radius
+            // Capsule.Length는 실린더 부분의 전체 길이이므로, 반구 포함 HalfHeight로 변환
+            float HalfHeight = (Capsule.Length * 0.5f) + Capsule.Radius;
 
             float HitT;
             if (IntersectRayCapsule(Ray, ShapeCenter, FinalRotation, Capsule.Radius, HalfHeight, HitT))
@@ -1417,7 +1418,8 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
             FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
             FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
             FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
-            float HalfHeight = Capsule.Length * 0.5f;
+            // 언리얼 방식: HalfHeight = CylinderHalfHeight + Radius
+            float HalfHeight = (Capsule.Length * 0.5f) + Capsule.Radius;
             World->AddDebugCapsule(Transform, Capsule.Radius, HalfHeight, ShapeColor, 0);
         }
     }

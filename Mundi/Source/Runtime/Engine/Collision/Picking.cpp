@@ -316,27 +316,30 @@ bool IntersectRayOBB(const FRay& InRay, const FVector& BoxCenter, const FVector&
 	OutT = (tMin >= 0) ? tMin : tMax;
 	return OutT >= 0;
 }
-// Ray-Capsule 충돌 검사 (캡슐 = 선분 + 반지름)
-bool IntersectRayCapsule(const FRay& Ray, const FVector& CapsuleCenter, const FQuat&
-	Rotation, float Radius, float HalfHeight, float& OutT)
+// Ray-Capsule 충돌 검사
+// 언리얼 방식:
+// - HalfHeight = 캡슐 중심에서 끝까지 거리 (반구 포함)
+// - Radius = 반구 반지름
+// - CylinderHalfHeight = HalfHeight - Radius (반구 중심까지 거리)
+// - 전체 높이 = 2 * HalfHeight
+bool IntersectRayCapsule(const FRay& Ray, const FVector& CapsuleCenter, const FQuat& Rotation, float Radius, float HalfHeight, float& OutT)
 {
 	// 캡슐의 축 방향 (Y축이 캡슐 축)
 	FVector CapsuleAxis = Rotation.RotateVector(FVector(0, 1, 0));
 
-	// 캡슐의 두 끝점 (반구 중심)
-	FVector P1 = CapsuleCenter - CapsuleAxis * HalfHeight;
-	FVector P2 = CapsuleCenter + CapsuleAxis * HalfHeight;
-
-	// 먼저 두 끝의 구와 충돌 검사
-	float t1, t2;
-	bool hit1 = IntersectRaySphere(Ray, P1, Radius, t1);
-	bool hit2 = IntersectRaySphere(Ray, P2, Radius, t2);
+	// 언리얼 방식: 반구 중심 = Center ± Axis * (HalfHeight - Radius)
+	float CylinderHalfHeight = FMath::Max(0.0f, HalfHeight - Radius);
+	FVector P1 = CapsuleCenter - CapsuleAxis * CylinderHalfHeight;  // 하단 반구 중심
+	FVector P2 = CapsuleCenter + CapsuleAxis * CylinderHalfHeight;  // 상단 반구 중심
 
 	float bestT = FLT_MAX;
-	if (hit1 && t1 < bestT) bestT = t1;
-	if (hit2 && t2 < bestT) bestT = t2;
+	float t;
 
-	// 실린더 부분과 충돌 검사 (무한 실린더 후 클램핑)
+	// 1. 반구(구) 충돌 검사 - 균일 스케일 구
+	if (IntersectRaySphere(Ray, P1, Radius, t) && t < bestT) bestT = t;
+	if (IntersectRaySphere(Ray, P2, Radius, t) && t < bestT) bestT = t;
+
+	// 2. 실린더 부분 충돌 검사 (P1~P2 구간)
 	FVector d = Ray.Direction;
 	FVector m = Ray.Origin - P1;
 	FVector n = P2 - P1;
@@ -357,14 +360,14 @@ bool IntersectRayCapsule(const FRay& Ray, const FVector& CapsuleCenter, const FQ
 		if (disc >= 0)
 		{
 			float sqrtDisc = sqrtf(disc);
-			float t = (-b - sqrtDisc) / (2.0f * a);
-			if (t >= 0)
+			float tCyl = (-b - sqrtDisc) / (2.0f * a);
+			if (tCyl >= 0)
 			{
-				// 충돌점이 실린더 범위 내인지 확인
-				float s = (mn + t * dn) / nn;
-				if (s >= 0 && s <= 1.0f && t < bestT)
+				// 충돌점이 실린더 범위 내인지 확인 (s = 0~1)
+				float s = (mn + tCyl * dn) / nn;
+				if (s >= 0.0f && s <= 1.0f && tCyl < bestT)
 				{
-					bestT = t;
+					bestT = tCyl;
 				}
 			}
 		}
@@ -377,101 +380,6 @@ bool IntersectRayCapsule(const FRay& Ray, const FVector& CapsuleCenter, const FQ
 	}
 	return false;
 }
-//bool IntersectRayCapsule(const FRay& InRay, const FVector& CapsuleCenter, const FQuat& Rotation, float Radius, float HalfHeight, float& OutT)
-//{
-//	// 캡슐의 축 방향 (Y축이 캡슐 축)
-//	FVector CapsuleAxis = Rotation.RotateVector(FVector(0, 1, 0));
-//
-//	// Unit Capsule 메시는 Radius=1, HalfHeight=1 기준으로 만들어짐
-//	// DrawDebugCapsule에서 Scale = (Radius, HalfHeight, Radius)로 적용됨
-//	// Unit 캡슐에서:
-//	// - 반구 중심: Y = ±1
-//	// - 반구 반지름: 1
-//	// - 전체 높이: 4 (반구 끝 Y = ±2)
-//	//
-//	// 스케일 (R, H, R) 적용 후:
-//	// - 반구 중심: Y = ±H
-//	// - 반구 X,Z 반지름: R
-//	// - 반구 Y 반지름: H (타원체가 됨)
-//	// - 전체 높이: 4H (반구 끝 Y = ±2H)
-//
-//	// 캡슐 전체 범위의 끝점 (반구 끝)
-//	FVector CapEnd1 = CapsuleCenter - CapsuleAxis * (HalfHeight * 2.0f);  // Y = -2H
-//	FVector CapEnd2 = CapsuleCenter + CapsuleAxis * (HalfHeight * 2.0f);  // Y = +2H
-//
-//	// 반구 중심 위치
-//	FVector P1 = CapsuleCenter - CapsuleAxis * HalfHeight;  // Y = -H
-//	FVector P2 = CapsuleCenter + CapsuleAxis * HalfHeight;  // Y = +H
-//
-//	float bestT = FLT_MAX;
-//
-//	// 반구 부분 충돌 검사
-//	// 타원체를 정확히 검사하기 어려우므로, 여러 위치에서 구 충돌 검사로 근사
-//	// 반구 중심에서 구 (반지름 = Radius)
-//	float t1, t2;
-//	bool hit1 = IntersectRaySphere(InRay, P1, Radius, t1);
-//	bool hit2 = IntersectRaySphere(InRay, P2, Radius, t2);
-//	if (hit1 && t1 < bestT) bestT = t1;
-//	if (hit2 && t2 < bestT) bestT = t2;
-//
-//	// 반구 끝 부분에서도 검사 (타원체 캡 커버)
-//	// 반구 끝점과 반구 중심의 중간 지점에서 검사
-//	FVector Mid1 = (P1 + CapEnd1) * 0.5f;  // Y = -1.5H
-//	FVector Mid2 = (P2 + CapEnd2) * 0.5f;  // Y = +1.5H
-//	float t3, t4;
-//	bool hit3 = IntersectRaySphere(InRay, Mid1, Radius, t3);
-//	bool hit4 = IntersectRaySphere(InRay, Mid2, Radius, t4);
-//	if (hit3 && t3 < bestT) bestT = t3;
-//	if (hit4 && t4 < bestT) bestT = t4;
-//
-//	// 반구 끝점에서도 검사 (캡슐 양 끝 커버)
-//	float t5, t6;
-//	bool hit5 = IntersectRaySphere(InRay, CapEnd1, Radius, t5);
-//	bool hit6 = IntersectRaySphere(InRay, CapEnd2, Radius, t6);
-//	if (hit5 && t5 < bestT) bestT = t5;
-//	if (hit6 && t6 < bestT) bestT = t6;
-//
-//	// 실린더 부분과 충돌 검사 (P1~P2 구간)
-//	FVector d = InRay.Direction;
-//	FVector m = InRay.Origin - P1;
-//	FVector n = P2 - P1;
-//	float nn = FVector::Dot(n, n);
-//	float mn = FVector::Dot(m, n);
-//	float dn = FVector::Dot(d, n);
-//	float dd = FVector::Dot(d, d);
-//	float md = FVector::Dot(m, d);
-//	float mm = FVector::Dot(m, m);
-//
-//	float a = dd * nn - dn * dn;
-//	float b = 2.0f * (md * nn - mn * dn);
-//	float c = mm * nn - mn * mn - Radius * Radius * nn;
-//
-//	if (std::fabsf(a) > 1e-6f)
-//	{
-//		float disc = b * b - 4.0f * a * c;
-//		if (disc >= 0)
-//		{
-//			float sqrtDisc = std::sqrtf(disc);
-//			float t = (-b - sqrtDisc) / (2.0f * a);
-//			if (t >= 0)
-//			{
-//				// 충돌점이 실린더 범위 내인지 확인
-//				float s = (mn + t * dn) / nn;
-//				if (s >= 0 && s <= 1.0f && t < bestT)
-//				{
-//					bestT = t;
-//				}
-//			}
-//		}
-//	}
-//
-//	if (bestT < FLT_MAX)
-//	{
-//		OutT = bestT;
-//		return true;
-//	}
-//	return false;
-//}
 
 // PickingSystem 구현
 AActor* CPickingSystem::PerformPicking(const TArray<AActor*>& Actors, ACameraActor* Camera)

@@ -542,23 +542,28 @@ void URenderer::DrawDebugCapsule(const FMatrix& Transform, float Radius, float H
 	if (!bDebugPrimitiveBatchActive)
 		return;
 
-	// Capsule = Cylinder(Body) + 2 Spheres(Caps)
-	// Unit Capsule: Radius=1, HalfHeight=1 (total height = 4: 2 for cylinder + 1 each for caps)
+	// 언리얼 방식:
+	// - HalfHeight = 캡슐 중심에서 끝까지 거리 (반구 포함)
+	// - Radius = 반구 반지름
+	// - CylinderHalfHeight = HalfHeight - Radius (반구 중심까지 거리)
+	//
+	// Unit Capsule 메시 구조:
+	// - Radius = 1.0, CylinderHalfHeight = 1.0
+	// - 반구 중심: Y = ±1.0
+	// - 언리얼방식 HalfHeight = 2.0 (반구중심거리 1.0 + 반지름 1.0)
+	//
+	// 비균일 스케일 (Radius, HalfHeight/2, Radius)로 변환
 
-	// 1. Cylinder body (scaled by radius X/Z, halfheight Y)
-	// Cylinder height in unit capsule is 2 (from -1 to +1 in Y)
-	// We need to scale Y by HalfHeight to get proper cylinder length
-	FMatrix CylinderScale = FMatrix::MakeScale(FVector(Radius, HalfHeight, Radius));
-	FMatrix CylinderTransform = CylinderScale * Transform;
+	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
+	FQuat Rotation(Transform);
 
 	UStaticMesh* CapsuleMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Capsule");
 	if (CapsuleMesh)
 	{
-		// Unit Capsule mesh는 이미 전체 캡슐 형태 (반구+실린더+반구)
-		// Scale: X/Z = Radius, Y = HalfHeight로 스케일
-		// 전체 높이 = 2 * HalfHeight + 2 * Radius (캡의 반지름)
-		// 따라서 Y 스케일은 HalfHeight, XZ 스케일은 Radius
-		DrawPrimitiveMesh(CapsuleMesh, CylinderTransform, Color, UUID);
+		// Unit Capsule의 언리얼방식 HalfHeight = 2.0 이므로 HalfHeight/2.0으로 스케일
+		float ScaleY = HalfHeight / 2.0f;
+		FMatrix CapsuleTransform = FMatrix::FromTRS(Position, Rotation, FVector(Radius, ScaleY, Radius));
+		DrawPrimitiveMesh(CapsuleMesh, CapsuleTransform, Color, UUID);
 	}
 }
 
