@@ -97,6 +97,15 @@ public:
     bool bWasGizmoDragging = false;
 };
 
+// Shape 타입 열거형
+enum class EShapeType : uint8
+{
+    None,
+    Sphere,
+    Box,
+    Capsule
+};
+
 // Physics Asset 에디터 상태
 struct PhysicsAssetEditorState : public ViewerState
 {
@@ -107,6 +116,7 @@ struct PhysicsAssetEditorState : public ViewerState
     int32 SelectedBodyIndex = -1;               // 선택된 Body 인덱스
     int32 SelectedConstraintIndex = -1;         // 선택된 Constraint 인덱스
     int32 SelectedShapeIndex = -1;              // 선택된 Shape 인덱스
+    EShapeType SelectedShapeType = EShapeType::None;  // 선택된 Shape 타입
 
     // ==== 선택 소스 (색상 구분용) ====
     enum class ESelectionSource { TreeOrViewport, Graph }; // 트리/뷰포트 : 파란색, 그래프 : 보라색

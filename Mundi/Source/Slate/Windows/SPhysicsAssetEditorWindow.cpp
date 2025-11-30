@@ -395,6 +395,12 @@ void SPhysicsAssetEditorWindow::OnRender()
 void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
 {
     SViewerWindow::OnUpdate(DeltaSeconds);
+
+    // Delete 키로 선택된 Shape 삭제
+    if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+    {
+        DeleteSelectedShape();
+    }
 }
 
 void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
@@ -476,6 +482,8 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
 
     // 모든 Body의 Shape들과 레이캐스트
     int32 ClosestBodyIndex = -1;
+    int32 ClosestShapeIndex = -1;
+    EShapeType ClosestShapeType = EShapeType::None;
     float ClosestDistance = FLT_MAX;
 
     for (int32 BodyIndex = 0; BodyIndex < PhysState->EditingAsset->Bodies.Num(); ++BodyIndex)
@@ -511,6 +519,8 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
                 {
                     ClosestDistance = HitT;
                     ClosestBodyIndex = BodyIndex;
+                    ClosestShapeIndex = i;
+                    ClosestShapeType = EShapeType::Sphere;
                 }
             }
         }
@@ -535,6 +545,8 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
                 {
                     ClosestDistance = HitT;
                     ClosestBodyIndex = BodyIndex;
+                    ClosestShapeIndex = i;
+                    ClosestShapeType = EShapeType::Box;
                 }
             }
         }
@@ -560,6 +572,8 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
                 {
                     ClosestDistance = HitT;
                     ClosestBodyIndex = BodyIndex;
+                    ClosestShapeIndex = i;
+                    ClosestShapeType = EShapeType::Capsule;
                 }
             }
         }
@@ -569,6 +583,8 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     if (ClosestBodyIndex >= 0)
     {
         SelectBody(ClosestBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+        PhysState->SelectedShapeIndex = ClosestShapeIndex;
+        PhysState->SelectedShapeType = ClosestShapeType;
     }
     else
     {
@@ -1359,8 +1375,9 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
     UWorld* World = PhysState->World;
 
     // 색상 정의
-    const FLinearColor UnselectedColor(0.5f, 0.5f, 0.5f, 0.6f);  // 회색 불투명
-    const FLinearColor SelectedColor(0.3f, 0.7f, 1.0f, 0.7f);    // 하늘색 하이라이트
+    const FLinearColor UnselectedColor(0.5f, 0.5f, 0.5f, 0.6f);      // 회색: 선택 안됨
+    const FLinearColor SiblingColor(0.6f, 0.4f, 0.8f, 0.7f);         // 보라색: 같은 Body의 다른 Shape
+    const FLinearColor SelectedShapeColor(0.3f, 0.7f, 1.0f, 0.8f);   // 파란색: 직접 피킹된 Shape
 
     // 모든 Body를 순회하며 렌더링
     for (int32 BodyIndex = 0; BodyIndex < PhysState->EditingAsset->Bodies.Num(); ++BodyIndex)
@@ -1383,8 +1400,7 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
         FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
 
         // 선택된 Body인지 확인
-        bool bIsSelected = (BodyIndex == PhysState->SelectedBodyIndex);
-        FLinearColor ShapeColor = bIsSelected ? SelectedColor : UnselectedColor;
+        bool bIsBodySelected = (BodyIndex == PhysState->SelectedBodyIndex);
 
         // Box Shape
         for (int32 i = 0; i < Body->AggGeom.BoxElems.Num(); ++i)
@@ -1396,6 +1412,15 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
             FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
             FVector HalfExtent(Box.X, Box.Y, Box.Z);
             FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, HalfExtent);
+
+            // 색상 결정: 직접 피킹된 Shape > 같은 Body의 Shape > 미선택
+            FLinearColor ShapeColor = UnselectedColor;
+            if (bIsBodySelected)
+            {
+                bool bIsThisShapeSelected = (PhysState->SelectedShapeType == EShapeType::Box &&
+                                             PhysState->SelectedShapeIndex == i);
+                ShapeColor = bIsThisShapeSelected ? SelectedShapeColor : SiblingColor;
+            }
             World->AddDebugBox(Transform, ShapeColor, 0);
         }
 
@@ -1406,6 +1431,14 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
             FVector ShapeCenter = BoneWorldTransform.Translation +
                 BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
             FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FQuat::Identity(), FVector(Sphere.Radius, Sphere.Radius, Sphere.Radius));
+
+            FLinearColor ShapeColor = UnselectedColor;
+            if (bIsBodySelected)
+            {
+                bool bIsThisShapeSelected = (PhysState->SelectedShapeType == EShapeType::Sphere &&
+                                             PhysState->SelectedShapeIndex == i);
+                ShapeColor = bIsThisShapeSelected ? SelectedShapeColor : SiblingColor;
+            }
             World->AddDebugSphere(Transform, ShapeColor, 0);
         }
 
@@ -1420,6 +1453,14 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
             FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
             // 언리얼 방식: HalfHeight = CylinderHalfHeight + Radius
             float HalfHeight = (Capsule.Length * 0.5f) + Capsule.Radius;
+
+            FLinearColor ShapeColor = UnselectedColor;
+            if (bIsBodySelected)
+            {
+                bool bIsThisShapeSelected = (PhysState->SelectedShapeType == EShapeType::Capsule &&
+                                             PhysState->SelectedShapeIndex == i);
+                ShapeColor = bIsThisShapeSelected ? SelectedShapeColor : SiblingColor;
+            }
             World->AddDebugCapsule(Transform, Capsule.Radius, HalfHeight, ShapeColor, 0);
         }
     }
@@ -1455,7 +1496,77 @@ void SPhysicsAssetEditorWindow::ClearSelection()
     PhysState->SelectedBodyIndex = -1;
     PhysState->SelectedConstraintIndex = -1;
     PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
     PhysState->bShapesDirty = true;  // Shape 라인 클리어 필요
+}
+
+void SPhysicsAssetEditorWindow::DeleteSelectedShape()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (PhysState->SelectedBodyIndex < 0 || PhysState->SelectedShapeIndex < 0) return;
+    if (PhysState->SelectedShapeType == EShapeType::None) return;
+
+    UBodySetup* Body = PhysState->EditingAsset->Bodies[PhysState->SelectedBodyIndex];
+    if (!Body) return;
+
+    bool bDeleted = false;
+
+    switch (PhysState->SelectedShapeType)
+    {
+    case EShapeType::Sphere:
+        if (PhysState->SelectedShapeIndex < Body->AggGeom.SphereElems.Num())
+        {
+            Body->AggGeom.SphereElems.RemoveAt(PhysState->SelectedShapeIndex);
+            bDeleted = true;
+        }
+        break;
+    case EShapeType::Box:
+        if (PhysState->SelectedShapeIndex < Body->AggGeom.BoxElems.Num())
+        {
+            Body->AggGeom.BoxElems.RemoveAt(PhysState->SelectedShapeIndex);
+            bDeleted = true;
+        }
+        break;
+    case EShapeType::Capsule:
+        if (PhysState->SelectedShapeIndex < Body->AggGeom.SphylElems.Num())
+        {
+            Body->AggGeom.SphylElems.RemoveAt(PhysState->SelectedShapeIndex);
+            bDeleted = true;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (bDeleted)
+    {
+        PhysState->bIsDirty = true;
+
+        // Body에 Shape가 하나도 없으면 Body도 삭제
+        if (Body->AggGeom.SphereElems.Num() == 0 &&
+            Body->AggGeom.BoxElems.Num() == 0 &&
+            Body->AggGeom.SphylElems.Num() == 0)
+        {
+            RemoveBody(PhysState->SelectedBodyIndex);
+        }
+
+        // 모든 선택 해제 (회색으로 돌아감)
+        ClearSelection();
+    }
+}
+
+int32 SPhysicsAssetEditorWindow::GetShapeCountByType(UBodySetup* Body, EShapeType ShapeType)
+{
+    if (!Body) return 0;
+
+    switch (ShapeType)
+    {
+    case EShapeType::Sphere:  return Body->AggGeom.SphereElems.Num();
+    case EShapeType::Box:     return Body->AggGeom.BoxElems.Num();
+    case EShapeType::Capsule: return Body->AggGeom.SphylElems.Num();
+    default:                  return 0;
+    }
 }
 
 void SPhysicsAssetEditorWindow::RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex)
@@ -1609,9 +1720,12 @@ void SPhysicsAssetEditorWindow::AddShapeToBone(int32 BoneIndex, EShapeType Shape
 
     if (ExistingBody)
     {
-        // 기존 Body에 Shape 추가
+        // 기존 Body에 Shape 추가 - 추가 전 인덱스 기록
+        int32 NewShapeIndex = GetShapeCountByType(ExistingBody, ShapeType);
         AddShapeToBody(ExistingBody, ShapeType);
         SelectBody(ExistingBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+        PhysState->SelectedShapeType = ShapeType;
+        PhysState->SelectedShapeIndex = NewShapeIndex;
     }
     else
     {
@@ -1627,10 +1741,12 @@ void SPhysicsAssetEditorWindow::AddShapeToBone(int32 BoneIndex, EShapeType Shape
         PhysState->EditingAsset->Bodies.Add(NewBody);
         int32 NewIndex = PhysState->EditingAsset->Bodies.Num() - 1;
         SelectBody(NewIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+        PhysState->SelectedShapeType = ShapeType;
+        PhysState->SelectedShapeIndex = 0;  // 새 Body의 첫 번째 Shape
     }
 
     PhysState->bIsDirty = true;
-    const char* ShapeNames[] = { "Box", "Sphere", "Capsule" };
+    const char* ShapeNames[] = { "None", "Sphere", "Box", "Capsule" };
     UE_LOG("[PhysicsAssetEditor] Added %s shape to bone: %s", ShapeNames[(int)ShapeType], BoneName.c_str());
 }
 

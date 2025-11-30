@@ -68,6 +68,12 @@ private:
     void RemoveBody(int32 BodyIndex);
     UBodySetup* CreateDefaultBodySetup(const FString& BoneName);
 
+    // Shape 삭제
+    void DeleteSelectedShape();
+
+    // Shape 개수 헬퍼
+    int32 GetShapeCountByType(UBodySetup* Body, EShapeType ShapeType);
+
     // Context menu
     void RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex);
 
@@ -86,14 +92,6 @@ private:
         AllBones,       // 모든 본 표시
         MeshBones,      // 메시 본 표시
         HideBones       // 본 숨김 (Body만 표시)
-    };
-
-    // Shape 타입
-    enum class EShapeType
-    {
-        Box,
-        Sphere,
-        Capsule
     };
 
     // 트리 표시 옵션
