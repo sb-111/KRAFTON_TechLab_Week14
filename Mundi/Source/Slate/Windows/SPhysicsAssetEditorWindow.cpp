@@ -781,6 +781,27 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
     {
         ImGui::Indent();
 
+        // Simulate Physics 체크박스
+        bool bSimulate = Body->bSimulatePhysics;
+        if (ImGui::Checkbox("Simulate Physics", &bSimulate))
+        {
+            Body->bSimulatePhysics = bSimulate;
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+
+        // Collision Enabled 콤보박스
+        const char* collisionModes[] = { "None", "Query Only", "Physics Only", "Physics and Query" };
+        int currentCollision = static_cast<int>(Body->CollisionEnabled);
+        ImGui::Text("Collision Enabled");
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::Combo("##CollisionEnabled", &currentCollision, collisionModes, 4))
+        {
+            Body->CollisionEnabled = static_cast<ECollisionEnabled>(currentCollision);
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+
+        ImGui::Separator();
+
         float mass = Body->MassInKg;
         ImGui::Text("Mass (kg)");
         ImGui::SetNextItemWidth(-1);
