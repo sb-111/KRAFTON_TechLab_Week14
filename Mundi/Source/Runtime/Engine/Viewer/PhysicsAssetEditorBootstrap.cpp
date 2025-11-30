@@ -8,6 +8,7 @@
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
+#include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "EditorAssetPreviewContext.h"
 
 ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UWorld* InWorld,
@@ -56,6 +57,15 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 	// Physics Asset 생성
 	State->EditingAsset = NewObject<UPhysicsAsset>();
 
+	// Shape 와이어프레임용 LineComponent 생성 및 연결
+	State->ShapeLineComponent = NewObject<ULineComponent>();
+	State->ShapeLineComponent->SetAlwaysOnTop(true);
+	if (State->PreviewActor)
+	{
+		State->PreviewActor->AddOwnedComponent(State->ShapeLineComponent);
+		State->ShapeLineComponent->RegisterComponent(State->World);
+	}
+
 	return State;
 }
 
@@ -89,6 +99,9 @@ void PhysicsAssetEditorBootstrap::DestroyViewerState(ViewerState*& State)
 	// ObjectFactory::DeleteAll에서 자동으로 삭제되므로 여기서는 포인터만 nullptr로 설정
 	// (World 삭제 시 관련 액터들도 함께 정리됨)
 	PhysState->EditingAsset = nullptr;
+
+	// ShapeLineComponent는 PreviewActor에 AddOwnedComponent로 추가했으므로 Actor 삭제 시 함께 정리됨
+	PhysState->ShapeLineComponent = nullptr;
 
 	delete State;
 	State = nullptr;

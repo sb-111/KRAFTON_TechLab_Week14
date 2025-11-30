@@ -109,14 +109,18 @@ struct PhysicsAssetEditorState : public ViewerState
     int32 SelectedShapeIndex = -1;              // 선택된 Shape 인덱스
 
     // ==== 선택 소스 (색상 구분용) ====
-    enum class ESelectionSource { TreeOrViewport, Graph }; // 트리/뷰포트 : 파란색, 그래픠 보라색
+    enum class ESelectionSource { TreeOrViewport, Graph }; // 트리/뷰포트 : 파란색, 그래프 : 보라색
     ESelectionSource SelectionSource = ESelectionSource::TreeOrViewport;
 
     // ==== 표시 옵션 ====
     bool bShowBodies = true;
     bool bShowConstraints = true;
-    bool bShowMesh = true;     
+    bool bShowMesh = true;
     bool bShowBoneNames = false;
+
+    // ==== Shape 시각화 ====
+    class ULineComponent* ShapeLineComponent = nullptr;  // Shape 와이어프레임용
+    bool bShapesDirty = true;  // Shape 라인 재구성 필요 플래그
 
     // ==== Graph View 상태
     FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋

@@ -9,6 +9,182 @@
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
+#include "Source/Runtime/Engine/Components/LineComponent.h"
+#include "Source/Runtime/Engine/Components/SkeletalMeshComponent.h"
+
+// ========== Shape 와이어프레임 생성 함수들 ==========
+
+static const float PI_CONST = 3.14159265358979323846f;
+
+// 박스 와이어프레임 (12개 라인) - 회전 지원
+static void CreateBoxWireframe(ULineComponent* LineComp, const FVector& Center, const FVector& HalfExtent, const FQuat& Rotation, const FVector4& Color)
+{
+    // 로컬 좌표 꼭짓점
+    FVector LocalCorners[8] = {
+        FVector(-HalfExtent.X, -HalfExtent.Y, -HalfExtent.Z),
+        FVector(+HalfExtent.X, -HalfExtent.Y, -HalfExtent.Z),
+        FVector(+HalfExtent.X, +HalfExtent.Y, -HalfExtent.Z),
+        FVector(-HalfExtent.X, +HalfExtent.Y, -HalfExtent.Z),
+        FVector(-HalfExtent.X, -HalfExtent.Y, +HalfExtent.Z),
+        FVector(+HalfExtent.X, -HalfExtent.Y, +HalfExtent.Z),
+        FVector(+HalfExtent.X, +HalfExtent.Y, +HalfExtent.Z),
+        FVector(-HalfExtent.X, +HalfExtent.Y, +HalfExtent.Z),
+    };
+
+    // 월드 좌표로 변환
+    FVector Corners[8];
+    for (int i = 0; i < 8; ++i)
+    {
+        Corners[i] = Center + Rotation.RotateVector(LocalCorners[i]);
+    }
+
+    // 아래 면 (4개 라인)
+    LineComp->AddLine(Corners[0], Corners[1], Color);
+    LineComp->AddLine(Corners[1], Corners[2], Color);
+    LineComp->AddLine(Corners[2], Corners[3], Color);
+    LineComp->AddLine(Corners[3], Corners[0], Color);
+
+    // 위 면 (4개 라인)
+    LineComp->AddLine(Corners[4], Corners[5], Color);
+    LineComp->AddLine(Corners[5], Corners[6], Color);
+    LineComp->AddLine(Corners[6], Corners[7], Color);
+    LineComp->AddLine(Corners[7], Corners[4], Color);
+
+    // 수직 연결 (4개 라인)
+    LineComp->AddLine(Corners[0], Corners[4], Color);
+    LineComp->AddLine(Corners[1], Corners[5], Color);
+    LineComp->AddLine(Corners[2], Corners[6], Color);
+    LineComp->AddLine(Corners[3], Corners[7], Color);
+}
+
+// 구 와이어프레임 (3개 원: XY, XZ, YZ 평면)
+static void CreateSphereWireframe(ULineComponent* LineComp, const FVector& Center, float Radius, const FVector4& Color)
+{
+    const int32 NumSegments = 16;  // 성능을 위해 세그먼트 수 감소
+
+    // XY 평면 원
+    for (int32 i = 0; i < NumSegments; ++i)
+    {
+        float Angle1 = (float(i) / NumSegments) * 2.0f * PI_CONST;
+        float Angle2 = (float((i + 1) % NumSegments) / NumSegments) * 2.0f * PI_CONST;
+
+        FVector P1 = Center + FVector(cos(Angle1) * Radius, sin(Angle1) * Radius, 0.0f);
+        FVector P2 = Center + FVector(cos(Angle2) * Radius, sin(Angle2) * Radius, 0.0f);
+        LineComp->AddLine(P1, P2, Color);
+    }
+
+    // XZ 평면 원
+    for (int32 i = 0; i < NumSegments; ++i)
+    {
+        float Angle1 = (float(i) / NumSegments) * 2.0f * PI_CONST;
+        float Angle2 = (float((i + 1) % NumSegments) / NumSegments) * 2.0f * PI_CONST;
+
+        FVector P1 = Center + FVector(cos(Angle1) * Radius, 0.0f, sin(Angle1) * Radius);
+        FVector P2 = Center + FVector(cos(Angle2) * Radius, 0.0f, sin(Angle2) * Radius);
+        LineComp->AddLine(P1, P2, Color);
+    }
+
+    // YZ 평면 원
+    for (int32 i = 0; i < NumSegments; ++i)
+    {
+        float Angle1 = (float(i) / NumSegments) * 2.0f * PI_CONST;
+        float Angle2 = (float((i + 1) % NumSegments) / NumSegments) * 2.0f * PI_CONST;
+
+        FVector P1 = Center + FVector(0.0f, cos(Angle1) * Radius, sin(Angle1) * Radius);
+        FVector P2 = Center + FVector(0.0f, cos(Angle2) * Radius, sin(Angle2) * Radius);
+        LineComp->AddLine(P1, P2, Color);
+    }
+}
+
+// 캡슐 와이어프레임 (2개 반구 + 4개 세로선 + 2개 링)
+static void CreateCapsuleWireframe(ULineComponent* LineComp, const FVector& Center, const FQuat& Rotation, float Radius, float HalfHeight, const FVector4& Color)
+{
+    const int32 NumSegments = 16;  // 성능을 위해 세그먼트 수 감소
+    const int32 HemiSegments = 8;
+
+    // 캡슐 방향 (Z축 기준)
+    FVector Up = Rotation.RotateVector(FVector(0, 0, 1));
+    FVector Right = Rotation.RotateVector(FVector(1, 0, 0));
+    FVector Forward = Rotation.RotateVector(FVector(0, 1, 0));
+
+    FVector TopCenter = Center + Up * HalfHeight;
+    FVector BottomCenter = Center - Up * HalfHeight;
+
+    // 상단/하단 원형 링
+    for (int32 i = 0; i < NumSegments; ++i)
+    {
+        float Angle1 = (float(i) / NumSegments) * 2.0f * PI_CONST;
+        float Angle2 = (float((i + 1) % NumSegments) / NumSegments) * 2.0f * PI_CONST;
+
+        FVector Offset1 = Right * cos(Angle1) * Radius + Forward * sin(Angle1) * Radius;
+        FVector Offset2 = Right * cos(Angle2) * Radius + Forward * sin(Angle2) * Radius;
+
+        // 상단 링
+        LineComp->AddLine(TopCenter + Offset1, TopCenter + Offset2, Color);
+        // 하단 링
+        LineComp->AddLine(BottomCenter + Offset1, BottomCenter + Offset2, Color);
+    }
+
+    // 세로선 (4개)
+    for (int32 i = 0; i < 4; ++i)
+    {
+        float Angle = (float(i) / 4) * 2.0f * PI_CONST;
+        FVector Offset = Right * cos(Angle) * Radius + Forward * sin(Angle) * Radius;
+        LineComp->AddLine(TopCenter + Offset, BottomCenter + Offset, Color);
+    }
+
+    // 상단 반구 (XZ, YZ 평면 반원)
+    for (int32 i = 0; i < HemiSegments; ++i)
+    {
+        float Angle1 = (float(i) / HemiSegments) * PI_CONST * 0.5f;  // 0 ~ 90도
+        float Angle2 = (float(i + 1) / HemiSegments) * PI_CONST * 0.5f;
+
+        // XZ 평면 반원
+        FVector P1 = TopCenter + Right * cos(Angle1) * Radius + Up * sin(Angle1) * Radius;
+        FVector P2 = TopCenter + Right * cos(Angle2) * Radius + Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        P1 = TopCenter - Right * cos(Angle1) * Radius + Up * sin(Angle1) * Radius;
+        P2 = TopCenter - Right * cos(Angle2) * Radius + Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        // YZ 평면 반원
+        P1 = TopCenter + Forward * cos(Angle1) * Radius + Up * sin(Angle1) * Radius;
+        P2 = TopCenter + Forward * cos(Angle2) * Radius + Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        P1 = TopCenter - Forward * cos(Angle1) * Radius + Up * sin(Angle1) * Radius;
+        P2 = TopCenter - Forward * cos(Angle2) * Radius + Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+    }
+
+    // 하단 반구 (XZ, YZ 평면 반원)
+    for (int32 i = 0; i < HemiSegments; ++i)
+    {
+        float Angle1 = (float(i) / HemiSegments) * PI_CONST * 0.5f;
+        float Angle2 = (float(i + 1) / HemiSegments) * PI_CONST * 0.5f;
+
+        // XZ 평면 반원
+        FVector P1 = BottomCenter + Right * cos(Angle1) * Radius - Up * sin(Angle1) * Radius;
+        FVector P2 = BottomCenter + Right * cos(Angle2) * Radius - Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        P1 = BottomCenter - Right * cos(Angle1) * Radius - Up * sin(Angle1) * Radius;
+        P2 = BottomCenter - Right * cos(Angle2) * Radius - Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        // YZ 평면 반원
+        P1 = BottomCenter + Forward * cos(Angle1) * Radius - Up * sin(Angle1) * Radius;
+        P2 = BottomCenter + Forward * cos(Angle2) * Radius - Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+
+        P1 = BottomCenter - Forward * cos(Angle1) * Radius - Up * sin(Angle1) * Radius;
+        P2 = BottomCenter - Forward * cos(Angle2) * Radius - Up * sin(Angle2) * Radius;
+        LineComp->AddLine(P1, P2, Color);
+    }
+}
+
+// ========== 클래스 구현 ==========
 
 SPhysicsAssetEditorWindow::SPhysicsAssetEditorWindow()
 {
@@ -230,6 +406,9 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
         ActiveState->PreviewActor->RebuildBoneLines(ActiveState->SelectedBoneIndex);
         ActiveState->bBoneLinesDirty = false;
     }
+
+    // Shape 와이어프레임 렌더링
+    RenderPhysicsBodies();
 }
 
 void SPhysicsAssetEditorWindow::OnSave()
@@ -1008,7 +1187,104 @@ void SPhysicsAssetEditorWindow::RenderViewportOverlay()
 
 void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
 {
-    // TODO
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->ShapeLineComponent) return;
+
+    // Body 선택이 바뀌었을 때만 라인 재구성 (bShapesDirty 플래그로 제어)
+    if (!PhysState->bShapesDirty) return;
+
+    // 라인 클리어
+    PhysState->ShapeLineComponent->ClearLines();
+    PhysState->bShapesDirty = false;
+
+    // Body가 선택되지 않았으면 렌더링 안함
+    if (PhysState->SelectedBodyIndex < 0) return;
+    if (!PhysState->EditingAsset) return;
+    if (PhysState->SelectedBodyIndex >= PhysState->EditingAsset->Bodies.Num()) return;
+
+    UBodySetup* SelectedBody = PhysState->EditingAsset->Bodies[PhysState->SelectedBodyIndex];
+    if (!SelectedBody) return;
+
+    // 본 인덱스 찾기
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    int32 BoneIndex = -1;
+    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+    {
+        if (Skeleton->Bones[i].Name == SelectedBody->BoneName.ToString())
+        {
+            BoneIndex = i;
+            break;
+        }
+    }
+    if (BoneIndex < 0) return;
+
+    // 본의 월드 트랜스폼 가져오기
+    ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(ActiveState->PreviewActor);
+    if (!PreviewActor) return;
+    USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
+    if (!MeshComp) return;
+
+    FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
+
+    // 선택 소스에 따른 색상 (트리/뷰포트: 파란색, 그래프: 보라색)
+    FVector4 ShapeColor;
+    if (PhysState->SelectionSource == PhysicsAssetEditorState::ESelectionSource::Graph)
+    {
+        ShapeColor = FVector4(0.6f, 0.4f, 0.8f, 1.0f);  // 보라색
+    }
+    else
+    {
+        ShapeColor = FVector4(0.3f, 0.5f, 1.0f, 1.0f);  // 파란색
+    }
+
+    // Box Shape 렌더링
+    for (int32 i = 0; i < SelectedBody->AggGeom.BoxElems.Num(); ++i)
+    {
+        const FKBoxElem& Box = SelectedBody->AggGeom.BoxElems[i];
+
+        // Shape의 로컬 트랜스폼 계산
+        FVector ShapeCenter = BoneWorldTransform.Translation +
+            BoneWorldTransform.Rotation.RotateVector(Box.Center);
+
+        // 오일러 각도를 쿼터니언으로 변환
+        FQuat BoxRotation = FQuat::MakeFromEulerZYX(Box.Rotation);
+        FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
+
+        FVector HalfExtent(Box.X, Box.Y, Box.Z);
+        CreateBoxWireframe(PhysState->ShapeLineComponent, ShapeCenter, HalfExtent, FinalRotation, ShapeColor);
+    }
+
+    // Sphere Shape 렌더링
+    for (int32 i = 0; i < SelectedBody->AggGeom.SphereElems.Num(); ++i)
+    {
+        const FKSphereElem& Sphere = SelectedBody->AggGeom.SphereElems[i];
+
+        FVector ShapeCenter = BoneWorldTransform.Translation +
+            BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
+
+        CreateSphereWireframe(PhysState->ShapeLineComponent, ShapeCenter, Sphere.Radius, ShapeColor);
+    }
+
+    // Capsule Shape 렌더링
+    for (int32 i = 0; i < SelectedBody->AggGeom.SphylElems.Num(); ++i)
+    {
+        const FKSphylElem& Capsule = SelectedBody->AggGeom.SphylElems[i];
+
+        FVector ShapeCenter = BoneWorldTransform.Translation +
+            BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
+
+        // 오일러 각도를 쿼터니언으로 변환
+        FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+        FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
+
+        // Length는 실린더 부분의 전체 길이, HalfHeight = Length/2
+        float HalfHeight = Capsule.Length * 0.5f;
+        CreateCapsuleWireframe(PhysState->ShapeLineComponent, ShapeCenter, FinalRotation,
+            Capsule.Radius, HalfHeight, ShapeColor);
+    }
 }
 
 void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
@@ -1023,6 +1299,7 @@ void SPhysicsAssetEditorWindow::SelectBody(int32 Index, PhysicsAssetEditorState:
     PhysState->SelectedBodyIndex = Index;
     PhysState->SelectedConstraintIndex = -1;
     PhysState->SelectionSource = Source;
+    PhysState->bShapesDirty = true;  // Shape 라인 재구성 필요
 }
 
 void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index)
@@ -1040,6 +1317,7 @@ void SPhysicsAssetEditorWindow::ClearSelection()
     PhysState->SelectedBodyIndex = -1;
     PhysState->SelectedConstraintIndex = -1;
     PhysState->SelectedShapeIndex = -1;
+    PhysState->bShapesDirty = true;  // Shape 라인 클리어 필요
 }
 
 void SPhysicsAssetEditorWindow::RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex)
@@ -1229,9 +1507,9 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
         FKBoxElem Box;
         Box.Center = FVector(0.0f, 0.0f, 0.0f);
         Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Box.X = 10.0f;
-        Box.Y = 10.0f;
-        Box.Z = 10.0f;
+        Box.X = 2.0f;  // Half extent
+        Box.Y = 2.0f;
+        Box.Z = 2.0f;
         Body->AggGeom.BoxElems.Add(Box);
         break;
     }
@@ -1239,7 +1517,7 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
     {
         FKSphereElem Sphere;
         Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
-        Sphere.Radius = 5.0f;
+        Sphere.Radius = 2.0f;
         Body->AggGeom.SphereElems.Add(Sphere);
         break;
     }
@@ -1249,8 +1527,8 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
         FKSphylElem Capsule;
         Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
         Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Capsule.Radius = 5.0f;
-        Capsule.Length = 10.0f;
+        Capsule.Radius = 1.5f;
+        Capsule.Length = 4.0f;  // 전체 실린더 길이
         Body->AggGeom.SphylElems.Add(Capsule);
         break;
     }
@@ -1299,40 +1577,8 @@ UBodySetup* SPhysicsAssetEditorWindow::CreateBodySetupWithShape(const FString& B
     UBodySetup* Body = NewObject<UBodySetup>();
     Body->BoneName = FName(BoneName);
 
-    // Shape 타입에 따라 다른 기본 Shape 추가
-    switch (ShapeType)
-    {
-    case EShapeType::Box:
-    {
-        FKBoxElem Box;
-        Box.Center = FVector(0.0f, 0.0f, 0.0f);
-        Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Box.X = 10.0f;  // Width
-        Box.Y = 10.0f;  // Height
-        Box.Z = 10.0f;  // Depth
-        Body->AggGeom.BoxElems.Add(Box);
-        break;
-    }
-    case EShapeType::Sphere:
-    {
-        FKSphereElem Sphere;
-        Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
-        Sphere.Radius = 5.0f;
-        Body->AggGeom.SphereElems.Add(Sphere);
-        break;
-    }
-    case EShapeType::Capsule:
-    default:
-    {
-        FKSphylElem Capsule;
-        Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
-        Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Capsule.Radius = 5.0f;
-        Capsule.Length = 10.0f;
-        Body->AggGeom.SphylElems.Add(Capsule);
-        break;
-    }
-    }
+    // Shape 추가 (AddShapeToBody 호출로 통일)
+    AddShapeToBody(Body, ShapeType);
 
     // 기본 물리 속성
     Body->MassInKg = 1.0f;
