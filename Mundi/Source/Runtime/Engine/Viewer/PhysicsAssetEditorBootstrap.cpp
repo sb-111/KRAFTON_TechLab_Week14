@@ -9,6 +9,7 @@
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
+#include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "EditorAssetPreviewContext.h"
 
 ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UWorld* InWorld,
@@ -66,6 +67,16 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 		State->ShapeLineComponent->RegisterComponent(State->World);
 	}
 
+	// Shape 기즈모용 앵커 컴포넌트 생성
+	State->ShapeGizmoAnchor = NewObject<UShapeAnchorComponent>();
+	State->ShapeGizmoAnchor->SetVisibility(false);
+	State->ShapeGizmoAnchor->SetEditability(false);
+	if (State->PreviewActor)
+	{
+		State->PreviewActor->AddOwnedComponent(State->ShapeGizmoAnchor);
+		State->ShapeGizmoAnchor->RegisterComponent(State->World);
+	}
+
 	return State;
 }
 
@@ -102,6 +113,7 @@ void PhysicsAssetEditorBootstrap::DestroyViewerState(ViewerState*& State)
 
 	// ShapeLineComponent는 PreviewActor에 AddOwnedComponent로 추가했으므로 Actor 삭제 시 함께 정리됨
 	PhysState->ShapeLineComponent = nullptr;
+	PhysState->ShapeGizmoAnchor = nullptr;
 
 	delete State;
 	State = nullptr;

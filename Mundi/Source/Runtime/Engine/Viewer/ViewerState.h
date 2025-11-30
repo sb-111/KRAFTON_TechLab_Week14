@@ -2,6 +2,7 @@
 
 class UWorld; class FViewport; class FViewportClient; class ASkeletalMeshActor; class USkeletalMesh; class UAnimSequence;
 class UParticleSystem; class UParticleSystemComponent; class AActor; class UParticleModule;
+class UShapeAnchorComponent;
 
 struct FAnimNotifyEvent
 {
@@ -131,6 +132,9 @@ struct PhysicsAssetEditorState : public ViewerState
     // ==== Shape 시각화 ====
     class ULineComponent* ShapeLineComponent = nullptr;  // Shape 와이어프레임용
     bool bShapesDirty = true;  // Shape 라인 재구성 필요 플래그
+
+    // ==== Shape 기즈모용 앵커 ====
+    UShapeAnchorComponent* ShapeGizmoAnchor = nullptr;   // 선택된 Shape의 기즈모 앵커
 
     // ==== Graph View 상태
     FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋

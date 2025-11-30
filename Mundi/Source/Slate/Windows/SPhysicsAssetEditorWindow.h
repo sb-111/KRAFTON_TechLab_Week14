@@ -22,6 +22,7 @@ public:
     virtual void PreRenderViewportUpdate() override;
     virtual void OnSave() override;
     virtual void OnMouseDown(FVector2D MousePos, uint32 Button) override;
+    virtual void OnMouseUp(FVector2D MousePos, uint32 Button) override;
 
 protected:
     virtual ViewerState* CreateViewerState(const char* Name, UEditorAssetPreviewContext* Context) override;
@@ -73,6 +74,9 @@ private:
 
     // Shape 개수 헬퍼
     int32 GetShapeCountByType(UBodySetup* Body, EShapeType ShapeType);
+
+    // Shape 기즈모 업데이트
+    void UpdateShapeGizmo();
 
     // Context menu
     void RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex);

@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "SlateManager.h"
 #include "SPhysicsAssetEditorWindow.h"
+#include "Source/Editor/Gizmo/GizmoActor.h"
 #include "Source/Runtime/Engine/Viewer/EditorAssetPreviewContext.h"
 #include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
@@ -11,10 +12,12 @@
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
+#include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/SkeletalMeshComponent.h"
 #include "Source/Runtime/Engine/Collision/Picking.h"
 #include "Source/Runtime/Engine/GameFramework/CameraActor.h"
 #include "Source/Runtime/Renderer/FViewportClient.h"
+#include "SelectionManager.h"
 
 // ========== Shape 와이어프레임 생성 함수들 ==========
 
@@ -401,6 +404,24 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
     {
         DeleteSelectedShape();
     }
+
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState) return;
+
+    // 기즈모 드래그 상태 체크 - 드래그 중일 때만 UpdateAnchorFromShape 방지
+    AGizmoActor* Gizmo = GetGizmoActor();
+    if (PhysState->ShapeGizmoAnchor)
+    {
+        PhysState->ShapeGizmoAnchor->bIsBeingManipulated = (Gizmo && Gizmo->GetbIsDragging());
+    }
+
+    // 기즈모로 Shape가 수정되었는지 체크
+    if (PhysState->ShapeGizmoAnchor && PhysState->ShapeGizmoAnchor->bShapeModified)
+    {
+        PhysState->bShapesDirty = true;
+        PhysState->bIsDirty = true;
+        PhysState->ShapeGizmoAnchor->bShapeModified = false;
+    }
 }
 
 void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
@@ -430,6 +451,20 @@ void SPhysicsAssetEditorWindow::OnSave()
     }
 }
 
+void SPhysicsAssetEditorWindow::OnMouseUp(FVector2D MousePos, uint32 Button)
+{
+    // 부모 클래스 호출 (기즈모 마우스업 처리)
+    SViewerWindow::OnMouseUp(MousePos, Button);
+
+    // 마우스 업 시 기즈모가 드래그 중이 아니면 플래그 리셋
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    AGizmoActor* Gizmo = GetGizmoActor();
+    if (PhysState && PhysState->ShapeGizmoAnchor && (!Gizmo || !Gizmo->GetbIsDragging()))
+    {
+        PhysState->ShapeGizmoAnchor->bIsBeingManipulated = false;
+    }
+}
+
 void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
 {
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
@@ -439,6 +474,12 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     if (!CenterRect.Contains(MousePos)) return;
 
     FVector2D LocalPos = MousePos - FVector2D(CenterRect.Left, CenterRect.Top);
+
+    // 좌클릭 + Shape 선택 상태면 기즈모 조작 가능성 있음 → 미리 플래그 설정
+    if (Button == 0 && PhysState->ShapeGizmoAnchor && PhysState->SelectedShapeIndex >= 0)
+    {
+        PhysState->ShapeGizmoAnchor->bIsBeingManipulated = true;
+    }
 
     // 기즈모 피킹 먼저 시도
     PhysState->Viewport->ProcessMouseButtonDown((int32)LocalPos.X, (int32)LocalPos.Y, (int32)Button);
@@ -585,6 +626,7 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
         SelectBody(ClosestBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
         PhysState->SelectedShapeIndex = ClosestShapeIndex;
         PhysState->SelectedShapeType = ClosestShapeType;
+        UpdateShapeGizmo();
     }
     else
     {
@@ -1498,6 +1540,7 @@ void SPhysicsAssetEditorWindow::ClearSelection()
     PhysState->SelectedShapeIndex = -1;
     PhysState->SelectedShapeType = EShapeType::None;
     PhysState->bShapesDirty = true;  // Shape 라인 클리어 필요
+    UpdateShapeGizmo();  // 기즈모 숨김
 }
 
 void SPhysicsAssetEditorWindow::DeleteSelectedShape()
@@ -1567,6 +1610,60 @@ int32 SPhysicsAssetEditorWindow::GetShapeCountByType(UBodySetup* Body, EShapeTyp
     case EShapeType::Capsule: return Body->AggGeom.SphylElems.Num();
     default:                  return 0;
     }
+}
+
+void SPhysicsAssetEditorWindow::UpdateShapeGizmo()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->World || !PhysState->ShapeGizmoAnchor) return;
+    if (!PhysState->EditingAsset) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    // Shape가 선택되지 않았으면 기즈모 숨김
+    if (PhysState->SelectedBodyIndex < 0 ||
+        PhysState->SelectedShapeIndex < 0 ||
+        PhysState->SelectedShapeType == EShapeType::None)
+    {
+        PhysState->ShapeGizmoAnchor->ClearTarget();
+        PhysState->ShapeGizmoAnchor->SetVisibility(false);
+        PhysState->ShapeGizmoAnchor->SetEditability(false);
+        PhysState->World->GetSelectionManager()->ClearSelection();
+        return;
+    }
+
+    UBodySetup* Body = PhysState->EditingAsset->Bodies[PhysState->SelectedBodyIndex];
+    if (!Body) return;
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(ActiveState->PreviewActor);
+    if (!PreviewActor) return;
+    USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
+    if (!MeshComp) return;
+
+    // 본 인덱스 찾기
+    int32 BoneIndex = -1;
+    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+    {
+        if (Skeleton->Bones[i].Name == Body->BoneName.ToString())
+        {
+            BoneIndex = i;
+            break;
+        }
+    }
+    if (BoneIndex < 0) return;
+
+    // ShapeAnchorComponent에 타겟 설정 및 위치 업데이트
+    PhysState->ShapeGizmoAnchor->SetTarget(Body, PhysState->SelectedShapeType,
+                                            PhysState->SelectedShapeIndex, MeshComp, BoneIndex);
+    PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+    PhysState->ShapeGizmoAnchor->SetVisibility(true);
+    PhysState->ShapeGizmoAnchor->SetEditability(true);
+
+    // SelectionManager에 등록하여 기즈모 표시
+    PhysState->World->GetSelectionManager()->SelectActor(PreviewActor);
+    PhysState->World->GetSelectionManager()->SelectComponent(PhysState->ShapeGizmoAnchor);
 }
 
 void SPhysicsAssetEditorWindow::RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex)
@@ -1746,6 +1843,7 @@ void SPhysicsAssetEditorWindow::AddShapeToBone(int32 BoneIndex, EShapeType Shape
     }
 
     PhysState->bIsDirty = true;
+    UpdateShapeGizmo();  // 기즈모 표시
     const char* ShapeNames[] = { "None", "Sphere", "Box", "Capsule" };
     UE_LOG("[PhysicsAssetEditor] Added %s shape to bone: %s", ShapeNames[(int)ShapeType], BoneName.c_str());
 }
