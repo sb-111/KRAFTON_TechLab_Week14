@@ -4,6 +4,7 @@
 #include "PhysicsAsset.h"
 #include "BodySetup.h"
 #include "FKSphylElem.h"
+#include "ConstraintInstance.h"
 #include "FbxLoader.h"
 #include "WindowsBinReader.h"
 #include "WindowsBinWriter.h"
@@ -121,7 +122,7 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
 
     const FSkeleton& Skeleton = Data->Skeleton;
 
-    // 각 본에 대해 BodySetup 생성
+    // ===== Phase 1: Bodies 생성 =====
     for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
     {
         const FBone& Bone = Skeleton.Bones[i];
@@ -135,7 +136,7 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
         Capsule.Center = FVector::Zero();
         Capsule.Rotation = FVector::Zero();
         Capsule.Radius = 0.1f;   // 테스트용 기본값
-        Capsule.Length = 0.1f;  // 테스트용 기본값
+        Capsule.Length = 0.1f;   // 테스트용 기본값
 
         BodySetup->AggGeom.SphylElems.Add(Capsule);
 
@@ -149,6 +150,40 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
         PhysicsAsset->Bodies.Add(BodySetup);
     }
 
-    UE_LOG("AutoGeneratePhysicsAsset: Generated %d bodies for skeleton '%s'",
-           PhysicsAsset->Bodies.Num(), Skeleton.Name.c_str());
+    // ===== Phase 2: Constraints 생성 (언리얼 방식) =====
+    // 각 자식 본과 부모 본 사이에 Constraint 생성
+    for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
+    {
+        const FBone& ChildBone = Skeleton.Bones[i];
+        int32 ParentIndex = ChildBone.ParentIndex;
+
+        // 루트 본은 부모가 없으므로 스킵
+        if (ParentIndex < 0 || ParentIndex >= Skeleton.Bones.Num())
+            continue;
+
+        const FBone& ParentBone = Skeleton.Bones[ParentIndex];
+
+        FConstraintInstance CI;
+        CI.ConstraintBone1 = FName(ParentBone.Name);  // 부모
+        CI.ConstraintBone2 = FName(ChildBone.Name);   // 자식
+
+        // Joint 위치: 자식 본의 위치 (부모 본의 로컬 좌표계 기준)
+        // 언리얼에서는 보통 자식 본의 원점을 Joint 위치로 사용
+        CI.Position1 = FVector::Zero();  // 부모 로컬 좌표계에서의 위치 (나중에 런타임에 계산)
+        CI.Position2 = FVector::Zero();  // 자식 로컬 좌표계에서의 위치 (원점)
+
+        // Joint Frame 회전: 기본값 (나중에 런타임에 본 방향에 맞춰 계산)
+        CI.Rotation1 = FVector::Zero();
+        CI.Rotation2 = FVector::Zero();
+
+        // 기본 각도 제한 (언리얼 기본값: 45도)
+        CI.Swing1LimitAngle = 45.0f;
+        CI.Swing2LimitAngle = 45.0f;
+        CI.TwistLimitAngle = 45.0f;
+
+        PhysicsAsset->Constraints.Add(CI);
+    }
+
+    UE_LOG("AutoGeneratePhysicsAsset: Generated %d bodies, %d constraints for skeleton '%s'",
+           PhysicsAsset->Bodies.Num(), PhysicsAsset->Constraints.Num(), Skeleton.Name.c_str());
 }

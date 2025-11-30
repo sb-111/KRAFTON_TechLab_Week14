@@ -34,7 +34,6 @@
 #include "Hash.h"
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
-#include "RagdollSystem.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMesh.h"
 #include "PhysicsAsset.h"
@@ -65,12 +64,7 @@ UWorld::~UWorld()
 {
 	bIsTearingDown = true;	// 월드 삭제 중에는 새로운 액터 생성을 방지하기 위해
 
-	// PIE 월드가 삭제될 때 Ragdoll 시스템 정리
-	if (bPie)
-	{
-		FRagdollSystem::GetInstance().Shutdown();
-		FRagdollSystem::GetInstance().Initialize();  // 다음 PIE를 위해 재초기화
-	}
+	// 래그돌은 이제 USkeletalMeshComponent에서 자동 정리됨
 
 	if (Level)
 	{
@@ -306,10 +300,10 @@ void UWorld::Tick(float DeltaSeconds)
 	ProcessPendingKillActors();
 
 	// PIE 모드에서만 물리 시뮬레이션 업데이트
+	// 래그돌 동기화는 USkeletalMeshComponent::TickComponent에서 자동 처리
 	if (bPie)
 	{
 		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
-		FRagdollSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
 	}
 
 	// [테스트용] G키로 래그돌 생성 (에디터/PIE 모두에서 동작)
@@ -326,11 +320,11 @@ void UWorld::Tick(float DeltaSeconds)
 			{
 				if (!Actor) continue;
 
-				// SkeletalMeshComponent 찾기
+				// SkeletalMeshComponent 찾기 (Cast<>로 타입 안전하게 검사)
 				USkeletalMeshComponent* SkelMeshComp = nullptr;
 				for (UActorComponent* Comp : Actor->GetOwnedComponents())
 				{
-					SkelMeshComp = static_cast<USkeletalMeshComponent*>(Comp);
+					SkelMeshComp = Cast<USkeletalMeshComponent>(Comp);
 					if (SkelMeshComp) break;
 				}
 				if (!SkelMeshComp) continue;
@@ -347,20 +341,9 @@ void UWorld::Tick(float DeltaSeconds)
 				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
 				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
 
-				// 현재 본 Transform들 수집
-				TArray<FTransform> BoneTransforms;
-				const FSkeleton* Skeleton = SkelMesh->GetSkeleton();
-				if (Skeleton)
-				{
-					for (int32 i = 0; i < Skeleton->Bones.Num(); ++i)
-					{
-						BoneTransforms.Add(SkelMeshComp->GetBoneWorldTransform(i));
-					}
-				}
-
-				// 래그돌 생성
-				FRagdollSystem::GetInstance().CreateRagdollFromPhysicsAsset(
-					PhysAsset, BoneTransforms, SkelMeshComp);
+				// 래그돌 생성 (새로운 컴포넌트 기반 API)
+				SkelMeshComp->InitArticulated(PhysAsset);
+				SkelMeshComp->SetSimulatePhysics(true);
 
 				UE_LOG("[Ragdoll Test] Created ragdoll for actor: %s", Actor->GetName().c_str());
 			}

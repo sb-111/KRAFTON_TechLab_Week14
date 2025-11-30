@@ -50,8 +50,10 @@
 #include "FbxLoader.h"
 #include "CollisionManager.h"
 #include "ShapeComponent.h"
-#include "RagdollSystem.h"
+// RagdollDebugRenderer는 USkeletalMeshComponent 기반으로 수정 필요
 #include "RagdollDebugRenderer.h"
+#include "SkeletalMeshComponent.h"
+#include "BodyInstance.h"
 #include "SkinnedMeshComponent.h"
 #include "ParticleSystemComponent.h"
 #include "ParticleStats.h"
@@ -1514,10 +1516,20 @@ void FSceneRenderer::RenderDebugPass()
 		}
 	}
 
-	// Ragdoll Debug draw (임시: Show Flag 체크 없이 항상 렌더링)
+	// Ragdoll Debug draw
+	for (UMeshComponent* MeshComp : Proxies.Meshes)
 	{
-		FRagdollSystem& RagdollSys = FRagdollSystem::GetInstance();
-		RagdollSys.RenderDebugAll(OwnerRenderer);
+		if (USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(MeshComp))
+		{
+			if (SkelMeshComp->IsSimulatingPhysics())
+			{
+				FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
+					OwnerRenderer, SkelMeshComp,
+					FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
+					FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
+				);
+			}
+		}
 	}
 
 	// 수집된 라인을 출력하고 정리

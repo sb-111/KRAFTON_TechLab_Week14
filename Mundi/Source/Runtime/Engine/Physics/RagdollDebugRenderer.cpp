@@ -1,46 +1,61 @@
 #include "pch.h"
 #include "RagdollDebugRenderer.h"
-#include "RagdollSystem.h"
+#include "SkeletalMeshComponent.h"
+#include "BodyInstance.h"
 #include "BodySetup.h"
 #include "AggregateGeometry.h"
 #include "PhysxConverter.h"
 #include "Renderer.h"
 
-void FRagdollDebugRenderer::RenderRagdoll(
+void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
     URenderer* Renderer,
-    const FRagdollInstance* Instance,
+    const USkeletalMeshComponent* SkelMeshComp,
     const FVector4& BoneColor,
     const FVector4& JointColor)
 {
-    if (!Renderer || !Instance) return;
+    if (!Renderer || !SkelMeshComp) return;
+    if (!SkelMeshComp->IsSimulatingPhysics()) return;
+
+    const TArray<FBodyInstance*>& Bodies = SkelMeshComp->GetBodies();
+    const TArray<int32>& ParentIndices = SkelMeshComp->GetBodyParentIndices();
+
+    if (Bodies.Num() == 0) return;
 
     TArray<FVector> StartPoints;
     TArray<FVector> EndPoints;
     TArray<FVector4> Colors;
 
-    for (int32 i = 0; i < Instance->Bones.Num(); ++i)
+    for (int32 i = 0; i < Bodies.Num(); ++i)
     {
-        const FRagdollBone& Bone = Instance->Bones[i];
-        if (!Bone.Body || !Bone.BodySetup) continue;
+        const FBodyInstance* Body = Bodies[i];
+        if (!Body || !Body->IsValidBodyInstance() || !Body->BodySetup) continue;
 
-        PxTransform WorldTransform = Bone.Body->getGlobalPose();
+        PxRigidDynamic* RigidBody = Body->GetPxRigidDynamic();
+        if (!RigidBody) continue;
+
+        PxTransform WorldTransform = RigidBody->getGlobalPose();
 
         // UBodySetup의 AggGeom에서 Shape들 렌더링
-        RenderAggGeom(Renderer, Bone.BodySetup->AggGeom, WorldTransform, BoneColor,
+        RenderAggGeom(Renderer, Body->BodySetup->AggGeom, WorldTransform, BoneColor,
                       StartPoints, EndPoints, Colors);
 
         // 부모와 연결선 (Joint 시각화)
-        if (Bone.ParentIndex >= 0 && Bone.ParentIndex < Instance->Bones.Num())
+        int32 ParentIdx = (i < ParentIndices.Num()) ? ParentIndices[i] : -1;
+        if (ParentIdx >= 0 && ParentIdx < Bodies.Num())
         {
-            const FRagdollBone& ParentBone = Instance->Bones[Bone.ParentIndex];
-            if (ParentBone.Body)
+            const FBodyInstance* ParentBody = Bodies[ParentIdx];
+            if (ParentBody && ParentBody->IsValidBodyInstance())
             {
-                PxVec3 Start = WorldTransform.p;
-                PxVec3 End = ParentBone.Body->getGlobalPose().p;
+                PxRigidDynamic* ParentRigidBody = ParentBody->GetPxRigidDynamic();
+                if (ParentRigidBody)
+                {
+                    PxVec3 Start = WorldTransform.p;
+                    PxVec3 End = ParentRigidBody->getGlobalPose().p;
 
-                StartPoints.Add(PhysxConverter::ToFVector(Start));
-                EndPoints.Add(PhysxConverter::ToFVector(End));
-                Colors.Add(JointColor);
+                    StartPoints.Add(PhysxConverter::ToFVector(Start));
+                    EndPoints.Add(PhysxConverter::ToFVector(End));
+                    Colors.Add(JointColor);
+                }
             }
         }
     }

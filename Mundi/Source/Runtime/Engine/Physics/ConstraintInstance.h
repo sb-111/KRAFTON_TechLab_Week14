@@ -4,6 +4,11 @@
 #include "Name.h"
 #include "FConstraintInstance.generated.h"
 
+// Forward declarations
+namespace physx { class PxD6Joint; }
+class FBodyInstance;
+class UPrimitiveComponent;
+
 // ===== Angular Constraint Motion =====
 // 각도 제한 모션 타입 (회전)
 enum class EAngularConstraintMotion : uint8
@@ -115,5 +120,24 @@ public:
     UPROPERTY(EditAnywhere, Category = "Motor")
     float AngularMotorDamping = 0.0f;   // Damping (감쇠) - 떨림 방지
 
+    // ===== Runtime Members (런타임 전용, 직렬화 안 됨) =====
+    // 과제 요구사항: PxJoint = FConstraintInstance
+    UPrimitiveComponent* OwnerComponent = nullptr;  // 소유자 컴포넌트
+    physx::PxD6Joint* ConstraintData = nullptr;     // PhysX Joint (런타임에 생성)
+
+    // ===== Runtime Methods =====
     FConstraintInstance() = default;
+    ~FConstraintInstance();
+
+    // Joint 초기화 (두 FBodyInstance 사이에 Joint 생성)
+    void InitConstraint(FBodyInstance* Body1, FBodyInstance* Body2, UPrimitiveComponent* InOwnerComponent);
+
+    // Joint 해제
+    void TermConstraint();
+
+    // Joint가 유효한지 확인
+    bool IsValidConstraintInstance() const { return ConstraintData != nullptr; }
+
+    // PhysX Joint 접근
+    physx::PxD6Joint* GetPxD6Joint() const { return ConstraintData; }
 };

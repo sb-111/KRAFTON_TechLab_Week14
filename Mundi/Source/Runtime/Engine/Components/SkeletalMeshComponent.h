@@ -7,6 +7,9 @@ class UAnimationAsset;
 class UAnimSequence;
 class UAnimStateMachineInstance;
 class UAnimBlendSpaceInstance;
+class UPhysicsAsset;
+struct FBodyInstance;
+struct FConstraintInstance;
 
 UCLASS(DisplayName="스켈레탈 메시 컴포넌트", Description="스켈레탈 메시를 렌더링하는 컴포넌트입니다")
 class USkeletalMeshComponent : public USkinnedMeshComponent
@@ -132,4 +135,44 @@ private:
     // Animation state
     UAnimInstance* AnimInstance = nullptr;
     bool bUseAnimation = true;
+
+// ===== 래그돌 시스템 (언리얼 방식) =====
+public:
+    // 과제 요구사항: UActorComponent::CreatePhysicsState 오버라이드
+    void CreatePhysicsState() override;
+    void DestroyPhysicsState() override;
+
+    // 래그돌 초기화 (PhysicsAsset 지정)
+    void InitArticulated(UPhysicsAsset* PhysAsset);
+
+    // 래그돌 활성화/비활성화
+    void SetSimulatePhysics(bool bEnable);
+    bool IsSimulatingPhysics() const { return bSimulatePhysics; }
+
+    // Bodies 접근자 (디버그 렌더링용)
+    const TArray<FBodyInstance*>& GetBodies() const { return Bodies; }
+    const TArray<int32>& GetBodyParentIndices() const { return BodyParentIndices; }
+
+private:
+    // 과제 요구사항: USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal
+    void InstantiatePhysicsAssetBodies_Internal(UPhysicsAsset* PhysAsset, const TArray<FTransform>& BoneWorldTransforms);
+    void CreateConstraints(UPhysicsAsset* PhysAsset);
+    void SetupBoneHierarchy();
+
+    // 물리 -> 렌더링 동기화
+    void SyncBodiesToBones();
+
+    // 본 이름으로 Bodies 인덱스 찾기
+    int32 FindBodyIndex(const FName& BoneName) const;
+
+private:
+    // 래그돌 물리 데이터 (과제 요구사항: PxShape/PxRigidActor = FBodyInstance, PxJoint = FConstraintInstance)
+    TArray<FBodyInstance*> Bodies;
+    TArray<FConstraintInstance*> Constraints;
+    TArray<int32> BodyBoneIndices;		// Bodies[i]에 대응하는 스켈레톤 본 인덱스
+    TArray<int32> BodyParentIndices;	// Bodies[i]의 부모 Body 인덱스 (-1이면 루트)
+
+    // 래그돌 상태
+    bool bSimulatePhysics = false;
+    UPhysicsAsset* PhysicsAsset = nullptr;
 };

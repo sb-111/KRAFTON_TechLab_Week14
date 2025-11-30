@@ -6,7 +6,8 @@
 using namespace physx;
 
 class URenderer;
-class FRagdollInstance;
+class USkeletalMeshComponent;
+struct FBodyInstance;
 struct FKAggregateGeom;
 struct FKSphereElem;
 struct FKBoxElem;
@@ -17,10 +18,10 @@ struct FKSphylElem;
 class FRagdollDebugRenderer
 {
 public:
-    // Ragdoll 전체 렌더링
-    static void RenderRagdoll(
+    // USkeletalMeshComponent 기반 래그돌 렌더링 (새 API)
+    static void RenderSkeletalMeshRagdoll(
         URenderer* Renderer,
-        const FRagdollInstance* Instance,
+        const USkeletalMeshComponent* SkelMeshComp,
         const FVector4& BoneColor = FVector4(0.0f, 1.0f, 0.0f, 1.0f),
         const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
     );
