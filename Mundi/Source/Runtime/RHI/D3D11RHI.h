@@ -183,6 +183,18 @@ public:
 	ID3D11SamplerState* GetSamplerState(RHI_Sampler_Index SamplerIndex) const;
 	void OMSetRenderTargets(ERTVMode RTVMode);
 
+	// DOF 임시 렌더 타겟 관리 (캐싱)
+	bool EnsureDOFResources(uint32 HalfWidth, uint32 HalfHeight);
+	void ReleaseDOFResources();
+
+	// DOF 리소스 접근자
+	ID3D11RenderTargetView* GetDOFHalfResColorCoCRTV() const { return DOFHalfResColorCoCRTV; }
+	ID3D11ShaderResourceView* GetDOFHalfResColorCoCSRV() const { return DOFHalfResColorCoCSRV; }
+	ID3D11RenderTargetView* GetDOFHalfResBlurTempRTV() const { return DOFHalfResBlurTempRTV; }
+	ID3D11ShaderResourceView* GetDOFHalfResBlurTempSRV() const { return DOFHalfResBlurTempSRV; }
+	ID3D11RenderTargetView* GetDOFHalfResBlurredRTV() const { return DOFHalfResBlurredRTV; }
+	ID3D11ShaderResourceView* GetDOFHalfResBlurredSRV() const { return DOFHalfResBlurredSRV; }
+
 public:
 	// getter
 	inline ID3D11Device* GetDevice()
@@ -286,6 +298,22 @@ private:
 	ID3D11SamplerState* PointClampSamplerState = nullptr;
 	ID3D11SamplerState* ShadowSamplerState = nullptr;
 	ID3D11SamplerState* VSMSamplerState = nullptr;
+
+	// DOF 임시 렌더 타겟 (캐싱, 최초 1회 생성 후 재사용)
+	ID3D11Texture2D* DOFHalfResColorCoCTexture = nullptr;
+	ID3D11RenderTargetView* DOFHalfResColorCoCRTV = nullptr;
+	ID3D11ShaderResourceView* DOFHalfResColorCoCSRV = nullptr;
+
+	ID3D11Texture2D* DOFHalfResBlurTempTexture = nullptr;
+	ID3D11RenderTargetView* DOFHalfResBlurTempRTV = nullptr;
+	ID3D11ShaderResourceView* DOFHalfResBlurTempSRV = nullptr;
+
+	ID3D11Texture2D* DOFHalfResBlurredTexture = nullptr;
+	ID3D11RenderTargetView* DOFHalfResBlurredRTV = nullptr;
+	ID3D11ShaderResourceView* DOFHalfResBlurredSRV = nullptr;
+
+	uint32 DOFCachedHalfWidth = 0;
+	uint32 DOFCachedHalfHeight = 0;
 
 	UShader* PreShader = nullptr; // Shaders, Inputlayout
 
