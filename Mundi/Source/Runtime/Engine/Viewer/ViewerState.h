@@ -100,27 +100,27 @@ public:
 // Physics Asset 에디터 상태
 struct PhysicsAssetEditorState : public ViewerState
 {
-    // 편집 중인 에셋
-    class UPhysicsAsset* EditingAsset = nullptr;
+    // ==== 편집 대상 ====
+    class UPhysicsAsset* EditingAsset = nullptr; // 현재 편집 중인 Physics Asset
 
-    // 선택 상태
-    int32 SelectedBodyIndex = -1;
-    int32 SelectedConstraintIndex = -1;
-    int32 SelectedShapeIndex = -1;
+    // ==== 선택 상태 ====
+    int32 SelectedBodyIndex = -1;               // 선택된 Body 인덱스
+    int32 SelectedConstraintIndex = -1;         // 선택된 Constraint 인덱스
+    int32 SelectedShapeIndex = -1;              // 선택된 Shape 인덱스
 
-    // 선택 소스 (트리/뷰포트 vs 그래프)
-    enum class ESelectionSource { TreeOrViewport, Graph };
+    // ==== 선택 소스 (색상 구분용) ====
+    enum class ESelectionSource { TreeOrViewport, Graph }; // 트리/뷰포트 : 파란색, 그래픠 보라색
     ESelectionSource SelectionSource = ESelectionSource::TreeOrViewport;
 
-    // 표시 옵션
+    // ==== 표시 옵션 ====
     bool bShowBodies = true;
     bool bShowConstraints = true;
-    bool bShowMesh = true;
+    bool bShowMesh = true;     
     bool bShowBoneNames = false;
 
-    // Graph View 상태
-    FVector2D GraphOffset = FVector2D::Zero();
-    float GraphZoom = 1.0f;
+    // ==== Graph View 상태
+    FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋
+    float GraphZoom = 1.0f;                     // 그래프 줌 레벨
 
     // 파일 상태
     FString CurrentFilePath;

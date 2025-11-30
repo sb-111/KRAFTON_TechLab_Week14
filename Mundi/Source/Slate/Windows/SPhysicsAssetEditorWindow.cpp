@@ -8,6 +8,7 @@
 #include "Source/Runtime/Engine/Physics/PhysicsAsset.h"
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
+#include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
 
 SPhysicsAssetEditorWindow::SPhysicsAssetEditorWindow()
 {
@@ -338,7 +339,31 @@ PhysicsAssetEditorState* SPhysicsAssetEditorWindow::GetPhysicsState() const
 void SPhysicsAssetEditorWindow::RenderSkeletonTreePanel(float Width, float Height)
 {
     ImGui::BeginChild("SkeletonTree", ImVec2(Width - 16, Height), false);
+
+    // 헤더: Skeleton 텍스트 + 톱니바퀴 설정 버튼
+    float headerWidth = ImGui::GetContentRegionAvail().x;
     ImGui::Text("Skeleton");
+    ImGui::SameLine(headerWidth - 20);
+
+    // 톱니바퀴 버튼
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
+    if (ImGui::Button("##TreeSettings", ImVec2(20, 20)))
+    {
+        ImGui::OpenPopup("SkeletonTreeSettingsPopup");
+    }
+    ImGui::PopStyleColor(2);
+
+    // 톱니바퀴 아이콘 그리기 (간단한 텍스트로 대체)
+    ImVec2 btnMin = ImGui::GetItemRectMin();
+    ImVec2 btnMax = ImGui::GetItemRectMax();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 center((btnMin.x + btnMax.x) * 0.5f, (btnMin.y + btnMax.y) * 0.5f);
+    drawList->AddText(ImVec2(center.x - 4, center.y - 7), IM_COL32(200, 200, 200, 255), "*");
+
+    // 설정 팝업 메뉴
+    RenderSkeletonTreeSettings();
+
     ImGui::Separator();
 
     if (!ActiveState || !ActiveState->CurrentMesh)
@@ -356,15 +381,99 @@ void SPhysicsAssetEditorWindow::RenderSkeletonTreePanel(float Width, float Heigh
         return;
     }
 
-    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+    // 본 숨김 모드: Body만 트리 구조로 표시
+    if (TreeSettings.BoneDisplayMode == EBoneDisplayMode::HideBones)
     {
-        if (Skeleton->Bones[i].ParentIndex == -1)
+        PhysicsAssetEditorState* PhysState = GetPhysicsState();
+        if (PhysState && PhysState->EditingAsset)
         {
-            RenderBoneTreeNode(i, 0);
+            // 루트 Body 찾기 (부모 본에 Body가 없는 Body들)
+            for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
+            {
+                UBodySetup* Body = PhysState->EditingAsset->Bodies[i];
+                if (!Body) continue;
+
+                // 이 Body의 본 인덱스 찾기
+                int32 BoneIndex = -1;
+                for (int32 j = 0; j < (int32)Skeleton->Bones.size(); ++j)
+                {
+                    if (Skeleton->Bones[j].Name == Body->BoneName.ToString())
+                    {
+                        BoneIndex = j;
+                        break;
+                    }
+                }
+
+                if (BoneIndex < 0) continue;
+
+                // 부모 본 체인에서 Body가 있는지 확인
+                bool bHasParentBody = false;
+                int32 ParentBoneIndex = Skeleton->Bones[BoneIndex].ParentIndex;
+                while (ParentBoneIndex >= 0)
+                {
+                    const FString& ParentBoneName = Skeleton->Bones[ParentBoneIndex].Name;
+                    for (int32 k = 0; k < PhysState->EditingAsset->Bodies.Num(); ++k)
+                    {
+                        if (PhysState->EditingAsset->Bodies[k] &&
+                            PhysState->EditingAsset->Bodies[k]->BoneName.ToString() == ParentBoneName)
+                        {
+                            bHasParentBody = true;
+                            break;
+                        }
+                    }
+                    if (bHasParentBody) break;
+                    ParentBoneIndex = Skeleton->Bones[ParentBoneIndex].ParentIndex;
+                }
+
+                // 부모 Body가 없으면 루트로서 렌더링
+                if (!bHasParentBody)
+                {
+                    RenderBodyTreeNode(i, Skeleton);
+                }
+            }
+        }
+    }
+    else
+    {
+        // 일반 모드: 스켈레톤 트리 표시
+        for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+        {
+            if (Skeleton->Bones[i].ParentIndex == -1)
+            {
+                RenderBoneTreeNode(i, 0);
+            }
         }
     }
 
     ImGui::EndChild();
+}
+
+void SPhysicsAssetEditorWindow::RenderSkeletonTreeSettings()
+{
+    if (ImGui::BeginPopup("SkeletonTreeSettingsPopup"))
+    {
+        // 라디오 버튼 스타일: 하나만 선택 가능
+        bool bAllBones = (TreeSettings.BoneDisplayMode == EBoneDisplayMode::AllBones);
+        bool bMeshBones = (TreeSettings.BoneDisplayMode == EBoneDisplayMode::MeshBones);
+        bool bHideBones = (TreeSettings.BoneDisplayMode == EBoneDisplayMode::HideBones);
+
+        if (ImGui::RadioButton("Show All Bones", bAllBones))
+        {
+            TreeSettings.BoneDisplayMode = EBoneDisplayMode::AllBones;
+        }
+
+        if (ImGui::RadioButton("Show Mesh Bones", bMeshBones))
+        {
+            TreeSettings.BoneDisplayMode = EBoneDisplayMode::MeshBones;
+        }
+
+        if (ImGui::RadioButton("Hide Bones", bHideBones))
+        {
+            TreeSettings.BoneDisplayMode = EBoneDisplayMode::HideBones;
+        }
+
+        ImGui::EndPopup();
+    }
 }
 
 void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
@@ -386,6 +495,7 @@ void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
 
     bool bHasBody = false;
     int32 BodyIndex = -1;
+    UBodySetup* BodySetup = nullptr;
     if (PhysState && PhysState->EditingAsset)
     {
         for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
@@ -395,34 +505,174 @@ void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
             {
                 bHasBody = true;
                 BodyIndex = i;
+                BodySetup = PhysState->EditingAsset->Bodies[i];
                 break;
             }
         }
     }
 
+    // Body가 있거나 자식이 있으면 Leaf가 아님
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-    if (ChildIndices.Num() == 0) nodeFlags |= ImGuiTreeNodeFlags_Leaf;
-
-    bool bSelected = (PhysState && PhysState->SelectedBodyIndex == BodyIndex && BodyIndex >= 0);
-    if (bSelected) nodeFlags |= ImGuiTreeNodeFlags_Selected;
+    if (ChildIndices.Num() == 0 && !bHasBody)
+        nodeFlags |= ImGuiTreeNodeFlags_Leaf;
 
     // Bone.Name is already FString
     const FString& BoneName = Bone.Name;
-    FString Label = bHasBody ? (FString("* ") + BoneName) : BoneName;
 
-    bool bOpen = ImGui::TreeNodeEx((void*)(intptr_t)BoneIndex, nodeFlags, "%s", Label.c_str());
+    bool bOpen = ImGui::TreeNodeEx((void*)(intptr_t)BoneIndex, nodeFlags, "%s", BoneName.c_str());
 
     if (ImGui::IsItemClicked())
     {
-        if (bHasBody)
-            SelectBody(BodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
         ActiveState->SelectedBoneIndex = BoneIndex;
+        // 본 클릭 시 Body 선택 해제
+        if (PhysState)
+        {
+            PhysState->SelectedBodyIndex = -1;
+        }
+    }
+
+    // 우클릭 컨텍스트 메뉴
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+    {
+        ContextMenuBoneIndex = BoneIndex;
+        ImGui::OpenPopup("BoneContextMenu");
+    }
+
+    // 컨텍스트 메뉴 렌더링 (이 노드에서 열린 경우에만)
+    if (ContextMenuBoneIndex == BoneIndex)
+    {
+        RenderBoneContextMenu(BoneIndex, bHasBody, BodyIndex);
     }
 
     if (bOpen)
     {
+        // Body가 있으면 하위에 BodySetup 노드 표시
+        if (bHasBody && BodySetup)
+        {
+            bool bBodySelected = (PhysState && PhysState->SelectedBodyIndex == BodyIndex);
+            ImGuiTreeNodeFlags bodyFlags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth;
+            if (bBodySelected) bodyFlags |= ImGuiTreeNodeFlags_Selected;
+
+            // 아이콘 + 본 이름으로 BodySetup 표시
+            FString bodyLabel = FString("[Body] ") + BoneName;
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 1.0f, 1.0f)); // 파란색 텍스트
+            if (ImGui::TreeNodeEx((void*)(intptr_t)(10000 + BodyIndex), bodyFlags, "%s", bodyLabel.c_str()))
+            {
+                ImGui::TreePop();
+            }
+            ImGui::PopStyleColor();
+
+            if (ImGui::IsItemClicked())
+            {
+                SelectBody(BodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+            }
+        }
+
+        // 자식 본 렌더링
         for (int32 ChildIndex : ChildIndices)
             RenderBoneTreeNode(ChildIndex, Depth + 1);
+
+        ImGui::TreePop();
+    }
+}
+
+void SPhysicsAssetEditorWindow::RenderBodyTreeNode(int32 BodyIndex, const FSkeleton* Skeleton)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset || !Skeleton) return;
+    if (BodyIndex < 0 || BodyIndex >= PhysState->EditingAsset->Bodies.Num()) return;
+
+    UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
+    if (!Body) return;
+
+    // 이 Body의 본 인덱스 찾기
+    int32 BoneIndex = -1;
+    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+    {
+        if (Skeleton->Bones[i].Name == Body->BoneName.ToString())
+        {
+            BoneIndex = i;
+            break;
+        }
+    }
+
+    if (BoneIndex < 0) return;
+
+    // 자식 Body 찾기 (이 본의 자손 본들 중 Body가 있는 것)
+    TArray<int32> ChildBodyIndices;
+    for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
+    {
+        if (i == BodyIndex) continue;
+        UBodySetup* OtherBody = PhysState->EditingAsset->Bodies[i];
+        if (!OtherBody) continue;
+
+        // OtherBody의 본 인덱스 찾기
+        int32 OtherBoneIndex = -1;
+        for (int32 j = 0; j < (int32)Skeleton->Bones.size(); ++j)
+        {
+            if (Skeleton->Bones[j].Name == OtherBody->BoneName.ToString())
+            {
+                OtherBoneIndex = j;
+                break;
+            }
+        }
+
+        if (OtherBoneIndex < 0) continue;
+
+        // OtherBody의 부모 체인에서 이 Body가 바로 위 Body인지 확인
+        int32 ParentIdx = Skeleton->Bones[OtherBoneIndex].ParentIndex;
+        bool bIsDirectChild = false;
+        while (ParentIdx >= 0)
+        {
+            // 이 부모 본에 Body가 있는지 확인
+            for (int32 k = 0; k < PhysState->EditingAsset->Bodies.Num(); ++k)
+            {
+                if (PhysState->EditingAsset->Bodies[k] &&
+                    PhysState->EditingAsset->Bodies[k]->BoneName.ToString() == Skeleton->Bones[ParentIdx].Name)
+                {
+                    // 찾은 Body가 현재 Body면 직접 자식
+                    if (k == BodyIndex)
+                    {
+                        bIsDirectChild = true;
+                    }
+                    // 다른 Body면 직접 자식이 아님 (중간에 다른 Body가 있음)
+                    goto done_search;
+                }
+            }
+            ParentIdx = Skeleton->Bones[ParentIdx].ParentIndex;
+        }
+    done_search:
+        if (bIsDirectChild)
+        {
+            ChildBodyIndices.Add(i);
+        }
+    }
+
+    // 트리 노드 렌더링
+    bool bSelected = (PhysState->SelectedBodyIndex == BodyIndex);
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (ChildBodyIndices.Num() == 0)
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    if (bSelected)
+        flags |= ImGuiTreeNodeFlags_Selected;
+
+    FString label = Body->BoneName.ToString();
+
+    bool bOpen = ImGui::TreeNodeEx((void*)(intptr_t)(20000 + BodyIndex), flags, "%s", label.c_str());
+
+    if (ImGui::IsItemClicked())
+    {
+        SelectBody(BodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+    }
+
+    if (bOpen)
+    {
+        // 자식 Body 렌더링
+        for (int32 ChildBodyIndex : ChildBodyIndices)
+        {
+            RenderBodyTreeNode(ChildBodyIndex, Skeleton);
+        }
         ImGui::TreePop();
     }
 }
@@ -566,9 +816,37 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
         ImGui::Indent();
         ImGui::Text("Bone Name");
         ImGui::TextDisabled("%s", Body->BoneName.ToString().c_str());
+        ImGui::Unindent();
+    }
 
-        int32 shapeCount = Body->AggGeom.GetElementCount();
-        ImGui::Text("Shapes: %d", shapeCount);
+    if (ImGui::CollapsingHeader("Primitives", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Indent();
+
+        // Sphere 개수
+        int32 sphereCount = Body->AggGeom.SphereElems.Num();
+        ImGui::Text("Sphere");
+        ImGui::SameLine(150);
+        ImGui::TextDisabled("Elements: %d", sphereCount);
+
+        // Box 개수
+        int32 boxCount = Body->AggGeom.BoxElems.Num();
+        ImGui::Text("Box");
+        ImGui::SameLine(150);
+        ImGui::TextDisabled("Elements: %d", boxCount);
+
+        // Capsule 개수
+        int32 capsuleCount = Body->AggGeom.SphylElems.Num();
+        ImGui::Text("Capsule");
+        ImGui::SameLine(150);
+        ImGui::TextDisabled("Elements: %d", capsuleCount);
+
+        // Convex 개수
+        int32 convexCount = Body->AggGeom.ConvexElems.Num();
+        ImGui::Text("Convex");
+        ImGui::SameLine(150);
+        ImGui::TextDisabled("Elements: %d", convexCount);
+
         ImGui::Unindent();
     }
 
@@ -741,4 +1019,304 @@ void SPhysicsAssetEditorWindow::ClearSelection()
     PhysState->SelectedBodyIndex = -1;
     PhysState->SelectedConstraintIndex = -1;
     PhysState->SelectedShapeIndex = -1;
+}
+
+void SPhysicsAssetEditorWindow::RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex)
+{
+    if (ImGui::BeginPopup("BoneContextMenu"))
+    {
+        if (!ActiveState || !ActiveState->CurrentMesh)
+        {
+            ImGui::EndPopup();
+            return;
+        }
+
+        const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+        if (!Skeleton || BoneIndex < 0 || BoneIndex >= (int32)Skeleton->Bones.size())
+        {
+            ImGui::EndPopup();
+            return;
+        }
+
+        const FString& BoneName = Skeleton->Bones[BoneIndex].Name;
+        ImGui::TextDisabled("%s", BoneName.c_str());
+        ImGui::Separator();
+
+        // Shape 추가 서브메뉴 (Body 유무와 관계없이 항상 표시)
+        if (ImGui::BeginMenu("Add Shape"))
+        {
+            if (ImGui::MenuItem("Box"))
+            {
+                AddShapeToBone(BoneIndex, EShapeType::Box);
+                ContextMenuBoneIndex = -1;
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::MenuItem("Sphere"))
+            {
+                AddShapeToBone(BoneIndex, EShapeType::Sphere);
+                ContextMenuBoneIndex = -1;
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::MenuItem("Capsule"))
+            {
+                AddShapeToBone(BoneIndex, EShapeType::Capsule);
+                ContextMenuBoneIndex = -1;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndMenu();
+        }
+
+        // Body가 있으면 삭제 옵션
+        if (bHasBody)
+        {
+            if (ImGui::MenuItem("Remove Body"))
+            {
+                RemoveBody(BodyIndex);
+                ContextMenuBoneIndex = -1;
+            }
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void SPhysicsAssetEditorWindow::AddBodyToSelectedBone()
+{
+    if (!ActiveState || ActiveState->SelectedBoneIndex < 0)
+        return;
+    AddBodyToBone(ActiveState->SelectedBoneIndex);
+}
+
+void SPhysicsAssetEditorWindow::AddBodyToBone(int32 BoneIndex)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || BoneIndex < 0 || BoneIndex >= (int32)Skeleton->Bones.size())
+        return;
+
+    const FString& BoneName = Skeleton->Bones[BoneIndex].Name;
+
+    // 이미 Body가 있는지 확인
+    for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
+    {
+        if (PhysState->EditingAsset->Bodies[i] &&
+            PhysState->EditingAsset->Bodies[i]->BoneName == BoneName)
+        {
+            UE_LOG("[PhysicsAssetEditor] Body already exists for bone: %s", BoneName.c_str());
+            return;
+        }
+    }
+
+    // Body 생성
+    UBodySetup* NewBody = CreateDefaultBodySetup(BoneName);
+    if (NewBody)
+    {
+        PhysState->EditingAsset->Bodies.Add(NewBody);
+        int32 NewIndex = PhysState->EditingAsset->Bodies.Num() - 1;
+        SelectBody(NewIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+        PhysState->bIsDirty = true;
+        UE_LOG("[PhysicsAssetEditor] Added body for bone: %s", BoneName.c_str());
+    }
+}
+
+void SPhysicsAssetEditorWindow::RemoveBody(int32 BodyIndex)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (BodyIndex < 0 || BodyIndex >= PhysState->EditingAsset->Bodies.Num()) return;
+
+    UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
+    if (Body)
+    {
+        UE_LOG("[PhysicsAssetEditor] Removed body for bone: %s", Body->BoneName.ToString().c_str());
+    }
+
+    PhysState->EditingAsset->Bodies.RemoveAt(BodyIndex);
+    ClearSelection();
+    PhysState->bIsDirty = true;
+}
+
+UBodySetup* SPhysicsAssetEditorWindow::CreateDefaultBodySetup(const FString& BoneName)
+{
+    return CreateBodySetupWithShape(BoneName, EShapeType::Capsule);
+}
+
+void SPhysicsAssetEditorWindow::AddShapeToBone(int32 BoneIndex, EShapeType ShapeType)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || BoneIndex < 0 || BoneIndex >= (int32)Skeleton->Bones.size())
+        return;
+
+    const FString& BoneName = Skeleton->Bones[BoneIndex].Name;
+
+    // 이미 Body가 있는지 확인
+    UBodySetup* ExistingBody = nullptr;
+    int32 ExistingBodyIndex = -1;
+    for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
+    {
+        if (PhysState->EditingAsset->Bodies[i] &&
+            PhysState->EditingAsset->Bodies[i]->BoneName == BoneName)
+        {
+            ExistingBody = PhysState->EditingAsset->Bodies[i];
+            ExistingBodyIndex = i;
+            break;
+        }
+    }
+
+    if (ExistingBody)
+    {
+        // 기존 Body에 Shape 추가
+        AddShapeToBody(ExistingBody, ShapeType);
+        SelectBody(ExistingBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+    }
+    else
+    {
+        // 새 Body 생성 후 Shape 추가
+        UBodySetup* NewBody = NewObject<UBodySetup>();
+        NewBody->BoneName = FName(BoneName);
+        NewBody->MassInKg = 1.0f;
+        NewBody->LinearDamping = 0.01f;
+        NewBody->AngularDamping = 0.0f;
+
+        AddShapeToBody(NewBody, ShapeType);
+
+        PhysState->EditingAsset->Bodies.Add(NewBody);
+        int32 NewIndex = PhysState->EditingAsset->Bodies.Num() - 1;
+        SelectBody(NewIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+    }
+
+    PhysState->bIsDirty = true;
+    const char* ShapeNames[] = { "Box", "Sphere", "Capsule" };
+    UE_LOG("[PhysicsAssetEditor] Added %s shape to bone: %s", ShapeNames[(int)ShapeType], BoneName.c_str());
+}
+
+void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType ShapeType)
+{
+    if (!Body) return;
+
+    switch (ShapeType)
+    {
+    case EShapeType::Box:
+    {
+        FKBoxElem Box;
+        Box.Center = FVector(0.0f, 0.0f, 0.0f);
+        Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
+        Box.X = 10.0f;
+        Box.Y = 10.0f;
+        Box.Z = 10.0f;
+        Body->AggGeom.BoxElems.Add(Box);
+        break;
+    }
+    case EShapeType::Sphere:
+    {
+        FKSphereElem Sphere;
+        Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
+        Sphere.Radius = 5.0f;
+        Body->AggGeom.SphereElems.Add(Sphere);
+        break;
+    }
+    case EShapeType::Capsule:
+    default:
+    {
+        FKSphylElem Capsule;
+        Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
+        Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
+        Capsule.Radius = 5.0f;
+        Capsule.Length = 10.0f;
+        Body->AggGeom.SphylElems.Add(Capsule);
+        break;
+    }
+    }
+}
+
+void SPhysicsAssetEditorWindow::AddBodyToBoneWithShape(int32 BoneIndex, EShapeType ShapeType)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || BoneIndex < 0 || BoneIndex >= (int32)Skeleton->Bones.size())
+        return;
+
+    const FString& BoneName = Skeleton->Bones[BoneIndex].Name;
+
+    // 이미 Body가 있는지 확인
+    for (int32 i = 0; i < PhysState->EditingAsset->Bodies.Num(); ++i)
+    {
+        if (PhysState->EditingAsset->Bodies[i] &&
+            PhysState->EditingAsset->Bodies[i]->BoneName == BoneName)
+        {
+            UE_LOG("[PhysicsAssetEditor] Body already exists for bone: %s", BoneName.c_str());
+            return;
+        }
+    }
+
+    // Body 생성
+    UBodySetup* NewBody = CreateBodySetupWithShape(BoneName, ShapeType);
+    if (NewBody)
+    {
+        PhysState->EditingAsset->Bodies.Add(NewBody);
+        int32 NewIndex = PhysState->EditingAsset->Bodies.Num() - 1;
+        SelectBody(NewIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+        PhysState->bIsDirty = true;
+
+        const char* ShapeNames[] = { "Box", "Sphere", "Capsule" };
+        UE_LOG("[PhysicsAssetEditor] Added %s body for bone: %s", ShapeNames[(int)ShapeType], BoneName.c_str());
+    }
+}
+
+UBodySetup* SPhysicsAssetEditorWindow::CreateBodySetupWithShape(const FString& BoneName, EShapeType ShapeType)
+{
+    UBodySetup* Body = NewObject<UBodySetup>();
+    Body->BoneName = FName(BoneName);
+
+    // Shape 타입에 따라 다른 기본 Shape 추가
+    switch (ShapeType)
+    {
+    case EShapeType::Box:
+    {
+        FKBoxElem Box;
+        Box.Center = FVector(0.0f, 0.0f, 0.0f);
+        Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
+        Box.X = 10.0f;  // Width
+        Box.Y = 10.0f;  // Height
+        Box.Z = 10.0f;  // Depth
+        Body->AggGeom.BoxElems.Add(Box);
+        break;
+    }
+    case EShapeType::Sphere:
+    {
+        FKSphereElem Sphere;
+        Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
+        Sphere.Radius = 5.0f;
+        Body->AggGeom.SphereElems.Add(Sphere);
+        break;
+    }
+    case EShapeType::Capsule:
+    default:
+    {
+        FKSphylElem Capsule;
+        Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
+        Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
+        Capsule.Radius = 5.0f;
+        Capsule.Length = 10.0f;
+        Body->AggGeom.SphylElems.Add(Capsule);
+        break;
+    }
+    }
+
+    // 기본 물리 속성
+    Body->MassInKg = 1.0f;
+    Body->LinearDamping = 0.01f;
+    Body->AngularDamping = 0.05f;
+
+    return Body;
 }
