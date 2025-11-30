@@ -2,6 +2,8 @@
 #include "TextRenderComponent.h"
 #include "Shader.h"
 #include "StaticMesh.h"
+#include "Color.h"
+#include "VertexData.h"
 #include "Quad.h"
 #include "StaticMeshComponent.h"
 #include "BillboardComponent.h"
@@ -39,6 +41,7 @@
 URenderer::URenderer(D3D11RHI* InDevice) : RHIDevice(InDevice)
 {
 	InitializeLineBatch();
+	InitializeDebugPrimitiveBatch();
 
 	// GPU 타이머 초기화 (스키닝 성능 측정용)
 	FSkinningStatManager::GetInstance().InitializeGPUTimer(RHIDevice->GetDevice());
@@ -444,4 +447,133 @@ void URenderer::ProcessDeferredReleases()
 			DeferredReleaseQueue.RemoveAt(i);
 		}
 	}
+}
+
+//================================================================================================
+// Debug Primitive Batch Rendering System
+// Physics Body 시각화를 위한 반투명 프리미티브 렌더링
+//================================================================================================
+
+void URenderer::InitializeDebugPrimitiveBatch()
+{
+	// Load debug primitive shader
+	DebugPrimitiveShader = UResourceManager::GetInstance().Load<UShader>("Shaders/Debug/DebugPrimitive.hlsl");
+}
+
+void URenderer::BeginDebugPrimitiveBatch()
+{
+	bDebugPrimitiveBatchActive = true;
+
+	// Set render target with ID buffer for picking support
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithId);
+
+	// Set blend state for transparency (SrcAlpha, InvSrcAlpha)
+	RHIDevice->OMSetBlendState(true);
+
+	// Set depth stencil state: depth test enabled, depth write disabled (X-ray effect)
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqualReadOnly);
+
+	// Set rasterizer state to solid fill
+	RHIDevice->RSSetState(ERasterizerMode::Solid);
+}
+
+void URenderer::DrawPrimitiveMesh(UStaticMesh* Mesh, const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive || !Mesh || !DebugPrimitiveShader)
+		return;
+
+	// Set model matrix
+	FMatrix ModelInvTranspose = Transform.InverseAffine().Transpose();
+	RHIDevice->SetAndUpdateConstantBuffer(ModelBufferType(Transform, ModelInvTranspose));
+
+	// Set color (with alpha for transparency)
+	RHIDevice->SetAndUpdateConstantBuffer(ColorBufferType(Color, UUID));
+
+	// Prepare shader
+	RHIDevice->PrepareShader(DebugPrimitiveShader);
+
+	// Get vertex/index buffers
+	ID3D11Buffer* VertexBuffer = Mesh->GetVertexBuffer();
+	ID3D11Buffer* IndexBuffer = Mesh->GetIndexBuffer();
+
+	if (!VertexBuffer || !IndexBuffer)
+		return;
+
+	// Set vertex/index buffers
+	// 프리미티브 메시는 FVertexDynamic 포맷 사용 (Position, Normal, UV, Tangent, Color)
+	UINT stride = sizeof(FVertexDynamic);
+	UINT offset = 0;
+	RHIDevice->GetDeviceContext()->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
+	RHIDevice->GetDeviceContext()->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	RHIDevice->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Draw
+	RHIDevice->GetDeviceContext()->DrawIndexed(Mesh->GetIndexCount(), 0, 0);
+}
+
+void URenderer::DrawDebugSphere(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Unit sphere mesh를 가져와서 Transform으로 렌더링
+	UStaticMesh* SphereMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Sphere");
+	if (SphereMesh)
+	{
+		DrawPrimitiveMesh(SphereMesh, Transform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugBox(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Unit box mesh를 가져와서 Transform으로 렌더링
+	UStaticMesh* BoxMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Box");
+	if (BoxMesh)
+	{
+		DrawPrimitiveMesh(BoxMesh, Transform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugCapsule(const FMatrix& Transform, float Radius, float HalfHeight, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Capsule = Cylinder(Body) + 2 Spheres(Caps)
+	// Unit Capsule: Radius=1, HalfHeight=1 (total height = 4: 2 for cylinder + 1 each for caps)
+
+	// 1. Cylinder body (scaled by radius X/Z, halfheight Y)
+	// Cylinder height in unit capsule is 2 (from -1 to +1 in Y)
+	// We need to scale Y by HalfHeight to get proper cylinder length
+	FMatrix CylinderScale = FMatrix::MakeScale(FVector(Radius, HalfHeight, Radius));
+	FMatrix CylinderTransform = CylinderScale * Transform;
+
+	UStaticMesh* CapsuleMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Capsule");
+	if (CapsuleMesh)
+	{
+		// Unit Capsule mesh는 이미 전체 캡슐 형태 (반구+실린더+반구)
+		// Scale: X/Z = Radius, Y = HalfHeight로 스케일
+		// 전체 높이 = 2 * HalfHeight + 2 * Radius (캡의 반지름)
+		// 따라서 Y 스케일은 HalfHeight, XZ 스케일은 Radius
+		DrawPrimitiveMesh(CapsuleMesh, CylinderTransform, Color, UUID);
+	}
+}
+
+void URenderer::EndDebugPrimitiveBatch()
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Restore default states
+	RHIDevice->OMSetBlendState(false);
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
+	RHIDevice->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Restore render target (without ID buffer)
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTarget);
+
+	bDebugPrimitiveBatchActive = false;
 }

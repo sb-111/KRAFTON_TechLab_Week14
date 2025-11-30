@@ -14,6 +14,7 @@ class UCameraComponent;
 class FSceneView;
 
 struct FMaterialSlot;
+struct FLinearColor;
 
 class URenderer
 {
@@ -49,6 +50,15 @@ public:
 	void SetCurrentCamera(ACameraActor* InCamera) { CurrentCamera = InCamera; }
 	ACameraActor* GetCurrentCamera() const { return CurrentCamera; }
 
+	// ===== Debug Primitive Rendering System =====
+	// 반투명 프리미티브 렌더링 (Physics Body 시각화용)
+	// Transform: Scale * Rotation * Translation 매트릭스
+	void BeginDebugPrimitiveBatch();
+	void DrawDebugSphere(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID = 0);
+	void DrawDebugBox(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID = 0);
+	void DrawDebugCapsule(const FMatrix& Transform, float Radius, float HalfHeight, const FLinearColor& Color, uint32 UUID = 0);
+	void EndDebugPrimitiveBatch();
+
 	// Deferred buffer release system (GPU-safe resource management)
 	void DeferredReleaseBuffer(ID3D11Buffer* Buffer);
 
@@ -80,6 +90,12 @@ private:
 	static const uint32 MAX_LINES = 200000;  // Maximum lines per batch (safety headroom)
 
 	void InitializeLineBatch();
+
+	// Debug Primitive Batch System
+	void InitializeDebugPrimitiveBatch();
+	void DrawPrimitiveMesh(UStaticMesh* Mesh, const FMatrix& Transform, const FLinearColor& Color, uint32 UUID);
+	UShader* DebugPrimitiveShader = nullptr;
+	bool bDebugPrimitiveBatchActive = false;
 
 	// 이전 drawCall에서 이미 썼던 RnderState면, 다시 Set 하지 않기 위해 만든 변수들
 	EViewMode PreViewModeIndex = EViewMode::VMI_Wireframe; // RSSetState, UpdateColorConstantBuffers

@@ -1508,6 +1508,41 @@ void FSceneRenderer::RenderDebugPass()
 
 	// 수집된 라인을 출력하고 정리
 	OwnerRenderer->EndLineBatch(FMatrix::Identity());
+
+	// Debug Primitive 렌더링 (Physics Body 시각화 등)
+	RenderDebugPrimitivesPass();
+}
+
+void FSceneRenderer::RenderDebugPrimitivesPass()
+{
+	const TArray<FDebugPrimitive>& DebugPrimitives = World->GetDebugPrimitives();
+	if (DebugPrimitives.IsEmpty())
+		return;
+
+	// Debug Primitive 배치 시작
+	OwnerRenderer->BeginDebugPrimitiveBatch();
+
+	for (const FDebugPrimitive& Prim : DebugPrimitives)
+	{
+		switch (Prim.Type)
+		{
+		case EDebugPrimitiveType::Sphere:
+			OwnerRenderer->DrawDebugSphere(Prim.Transform, Prim.Color, Prim.UUID);
+			break;
+		case EDebugPrimitiveType::Box:
+			OwnerRenderer->DrawDebugBox(Prim.Transform, Prim.Color, Prim.UUID);
+			break;
+		case EDebugPrimitiveType::Capsule:
+			OwnerRenderer->DrawDebugCapsule(Prim.Transform, Prim.Radius, Prim.HalfHeight, Prim.Color, Prim.UUID);
+			break;
+		}
+	}
+
+	// Debug Primitive 배치 종료
+	OwnerRenderer->EndDebugPrimitiveBatch();
+
+	// 렌더링 후 큐 클리어 (매 프레임 갱신)
+	World->ClearDebugPrimitives();
 }
 
 void FSceneRenderer::RenderOverayEditorPrimitivesPass()

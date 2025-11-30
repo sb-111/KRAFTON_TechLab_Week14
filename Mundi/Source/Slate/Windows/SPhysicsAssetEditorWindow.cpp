@@ -4,6 +4,7 @@
 #include "Source/Runtime/Engine/Viewer/EditorAssetPreviewContext.h"
 #include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
+#include "Source/Runtime/Engine/GameFramework/World.h"
 #include "Source/Runtime/Renderer/FViewport.h"
 #include "Source/Runtime/Engine/Physics/PhysicsAsset.h"
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
@@ -1188,14 +1189,13 @@ void SPhysicsAssetEditorWindow::RenderViewportOverlay()
 void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
 {
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
-    if (!PhysState || !PhysState->ShapeLineComponent) return;
+    if (!PhysState || !PhysState->World) return;
 
-    // Body 선택이 바뀌었을 때만 라인 재구성 (bShapesDirty 플래그로 제어)
-    if (!PhysState->bShapesDirty) return;
-
-    // 라인 클리어
-    PhysState->ShapeLineComponent->ClearLines();
-    PhysState->bShapesDirty = false;
+    // 와이어프레임 클리어 (더 이상 사용하지 않음)
+    if (PhysState->ShapeLineComponent)
+    {
+        PhysState->ShapeLineComponent->ClearLines();
+    }
 
     // Body가 선택되지 않았으면 렌더링 안함
     if (PhysState->SelectedBodyIndex < 0) return;
@@ -1230,60 +1230,54 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
     FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
 
     // 선택 소스에 따른 색상 (트리/뷰포트: 파란색, 그래프: 보라색)
-    FVector4 ShapeColor;
+    // 반투명 색상 (Alpha = 0.4)
+    FLinearColor ShapeColor;
     if (PhysState->SelectionSource == PhysicsAssetEditorState::ESelectionSource::Graph)
     {
-        ShapeColor = FVector4(0.6f, 0.4f, 0.8f, 1.0f);  // 보라색
+        ShapeColor = FLinearColor(0.6f, 0.4f, 0.8f, 0.4f);  // 보라색 반투명
     }
     else
     {
-        ShapeColor = FVector4(0.3f, 0.5f, 1.0f, 1.0f);  // 파란색
+        ShapeColor = FLinearColor(0.3f, 0.5f, 1.0f, 0.4f);  // 파란색 반투명
     }
 
-    // Box Shape 렌더링
+    // World의 Debug Primitive Queue에 추가 (SceneRenderer에서 렌더링됨)
+    UWorld* World = PhysState->World;
+
+    // Box Shape
     for (int32 i = 0; i < SelectedBody->AggGeom.BoxElems.Num(); ++i)
     {
         const FKBoxElem& Box = SelectedBody->AggGeom.BoxElems[i];
-
-        // Shape의 로컬 트랜스폼 계산
         FVector ShapeCenter = BoneWorldTransform.Translation +
             BoneWorldTransform.Rotation.RotateVector(Box.Center);
-
-        // 오일러 각도를 쿼터니언으로 변환
         FQuat BoxRotation = FQuat::MakeFromEulerZYX(Box.Rotation);
         FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
-
         FVector HalfExtent(Box.X, Box.Y, Box.Z);
-        CreateBoxWireframe(PhysState->ShapeLineComponent, ShapeCenter, HalfExtent, FinalRotation, ShapeColor);
+        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, HalfExtent);
+        World->AddDebugBox(Transform, ShapeColor, 0);
     }
 
-    // Sphere Shape 렌더링
+    // Sphere Shape
     for (int32 i = 0; i < SelectedBody->AggGeom.SphereElems.Num(); ++i)
     {
         const FKSphereElem& Sphere = SelectedBody->AggGeom.SphereElems[i];
-
         FVector ShapeCenter = BoneWorldTransform.Translation +
             BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
-
-        CreateSphereWireframe(PhysState->ShapeLineComponent, ShapeCenter, Sphere.Radius, ShapeColor);
+        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FQuat::Identity(), FVector(Sphere.Radius, Sphere.Radius, Sphere.Radius));
+        World->AddDebugSphere(Transform, ShapeColor, 0);
     }
 
-    // Capsule Shape 렌더링
+    // Capsule Shape
     for (int32 i = 0; i < SelectedBody->AggGeom.SphylElems.Num(); ++i)
     {
         const FKSphylElem& Capsule = SelectedBody->AggGeom.SphylElems[i];
-
         FVector ShapeCenter = BoneWorldTransform.Translation +
             BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
-
-        // 오일러 각도를 쿼터니언으로 변환
         FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
         FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
-
-        // Length는 실린더 부분의 전체 길이, HalfHeight = Length/2
+        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
         float HalfHeight = Capsule.Length * 0.5f;
-        CreateCapsuleWireframe(PhysState->ShapeLineComponent, ShapeCenter, FinalRotation,
-            Capsule.Radius, HalfHeight, ShapeColor);
+        World->AddDebugCapsule(Transform, Capsule.Radius, HalfHeight, ShapeColor, 0);
     }
 }
 

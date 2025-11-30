@@ -5,6 +5,7 @@
 #include "Level.h"
 #include "Gizmo/GizmoActor.h"
 #include "LightManager.h"
+#include "Color.h"
 
 // Forward Declarations
 class UResourceManager;
@@ -40,6 +41,25 @@ struct FActorTimeState
 {
     float Durtaion;
     float Dilation;
+};
+
+// Debug Primitive 타입
+enum class EDebugPrimitiveType : uint8
+{
+    Sphere,
+    Box,
+    Capsule
+};
+
+// Debug Primitive 렌더링 요청 구조체
+struct FDebugPrimitive
+{
+    EDebugPrimitiveType Type;
+    FMatrix Transform;
+    FLinearColor Color;
+    float Radius = 0.0f;      // Sphere, Capsule용
+    float HalfHeight = 0.0f;  // Capsule용
+    uint32 UUID = 0;
 };
 
 enum class EWorldType : uint8;
@@ -196,6 +216,47 @@ private:
     bool bIsTearingDown = false;    // 월드가 파괴 중임을 알리는 플래그
 
     EWorldType WorldType = EWorldType::Editor;  // Default to editor world
+
+    // ===== Debug Primitive Queue =====
+    // Physics Body 시각화 등 디버그용 프리미티브 렌더링 큐
+    TArray<FDebugPrimitive> DebugPrimitiveQueue;
+
+public:
+    // ===== Debug Primitive API (public) =====
+    void AddDebugSphere(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Sphere;
+        Prim.Transform = Transform;
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    void AddDebugBox(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Box;
+        Prim.Transform = Transform;
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    void AddDebugCapsule(const FMatrix& Transform, float Radius, float HalfHeight, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Capsule;
+        Prim.Transform = Transform;
+        Prim.Radius = Radius;
+        Prim.HalfHeight = HalfHeight;
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    void ClearDebugPrimitives() { DebugPrimitiveQueue.Empty(); }
+    const TArray<FDebugPrimitive>& GetDebugPrimitives() const { return DebugPrimitiveQueue; }
 };
 template<class T>
 inline T* UWorld::SpawnActor()
