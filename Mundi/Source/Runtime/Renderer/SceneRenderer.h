@@ -128,6 +128,9 @@ private:
 	/** @brief FXAA 등 화면에서 최종 이미지 품질을 위해 적용되는 효과를 적용하는 패스입니다. */
 	void ApplyScreenEffectsPass();
 
+	/** @brief Depth of Field 후처리 효과를 적용하는 패스입니다. */
+	void ApplyDepthOfFieldPass();
+
 	void CompositeToBackBuffer();
 
 private:

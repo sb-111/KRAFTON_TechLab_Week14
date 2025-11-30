@@ -177,7 +177,10 @@ enum class EEngineShowFlags : uint64
     SF_Collision = 1ull << 21,    // Show/hide collision component debug shapes
     SF_CollisionBVH = 1ull << 22, // Show/hide collision BVH debug visualization
 
-    SF_Ragdoll = 1ull << 23,      // Show/hide ragdoll debug shapes
+    // Post-processing
+    SF_DepthOfField = 1ull << 23,      // Enable/disable depth of field effect
+    SF_CoCVisualization = 1ull << 24,  // Show/hide Circle of Confusion visualization
+    SF_Ragdoll = 1ull << 25,      // Show/hide ragdoll debug shapes
 
     // Default enabled flags
     SF_DefaultEnabled = SF_Primitives | SF_StaticMeshes | SF_SkeletalMeshes | SF_Grid | SF_Lighting | SF_Decals |
