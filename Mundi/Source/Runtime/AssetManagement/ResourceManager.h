@@ -87,8 +87,8 @@ public:
 	void CreateTextBillboardTexture();
 
 	// --- Physics Shape 프리미티브 메시 생성 ---
-	UStaticMesh* CreateUnitSphereMesh(int32 Segments = 16, int32 Rings = 8);
-	UStaticMesh* CreateUnitCapsuleMesh(int32 Segments = 16, int32 Rings = 8);
+	UStaticMesh* CreateUnitSphereMesh(int32 Segments = 64, int32 Rings = 32);
+	UStaticMesh* CreateUnitCapsuleMesh(int32 Segments = 64, int32 Rings = 32);
 	UStaticMesh* CreateUnitBoxMesh();
 	UStaticMesh* GetOrCreatePrimitiveMesh(const FString& PrimitiveName);
 

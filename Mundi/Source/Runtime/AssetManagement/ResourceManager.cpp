@@ -488,6 +488,7 @@ UStaticMesh* UResourceManager::CreateUnitSphereMesh(int32 Segments, int32 Rings)
     Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
     Add<UStaticMesh>("__PrimitiveSphere", Mesh);
 
+    delete MeshData;
     return Mesh;
 }
 
@@ -608,6 +609,7 @@ UStaticMesh* UResourceManager::CreateUnitCapsuleMesh(int32 Segments, int32 Rings
     Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
     Add<UStaticMesh>("__PrimitiveCapsule", Mesh);
 
+    delete MeshData;
     return Mesh;
 }
 
@@ -668,6 +670,7 @@ UStaticMesh* UResourceManager::CreateUnitBoxMesh()
     Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
     Add<UStaticMesh>("__PrimitiveBox", Mesh);
 
+    delete MeshData;
     return Mesh;
 }
 
