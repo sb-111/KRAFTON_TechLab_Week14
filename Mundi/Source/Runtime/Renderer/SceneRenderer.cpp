@@ -1850,7 +1850,6 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	float farClip = View->FarClip;
 	int isOrtho = (View->ProjectionMode == ECameraProjectionMode::Orthographic) ? 1 : 0;
 
-	// SceneDepth_PS.hlsl과 동일한 방식으로 변경
 	// ProjectionAB.x = Near, ProjectionAB.y = Far
 	FVector2D projAB = FVector2D(nearClip, farClip);
 
@@ -1949,20 +1948,20 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 		vp.MaxDepth = 1.0f;
 		RHIDevice->GetDeviceContext()->RSSetViewports(1, &vp);
 
-			// ViewportConstants 업데이트 (Half Resolution - 입출력 모두 half resolution)
-			FViewportConstants HalfViewportConst;
-			HalfViewportConst.ViewportRect = FVector4(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight));
-			HalfViewportConst.ScreenSize = FVector4(
-				static_cast<float>(halfWidth),
-				static_cast<float>(halfHeight),
-				1.0f / halfWidth,
-				1.0f / halfHeight
-			);
-			RHIDevice->SetAndUpdateConstantBuffer(HalfViewportConst);
+		// ViewportConstants 업데이트 (Half Resolution - 입출력 모두 half resolution)
+		FViewportConstants HalfViewportConst;
+		HalfViewportConst.ViewportRect = FVector4(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight));
+		HalfViewportConst.ScreenSize = FVector4(
+			static_cast<float>(halfWidth),
+			static_cast<float>(halfHeight),
+			1.0f / halfWidth,
+			1.0f / halfHeight
+		);
+		RHIDevice->SetAndUpdateConstantBuffer(HalfViewportConst);
 
-			// 렌더 타겟 설정
-			ID3D11RenderTargetView* rtv = RHIDevice->GetDOFHalfResBlurTempRTV();
-			RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
+		// 렌더 타겟 설정
+		ID3D11RenderTargetView* rtv = RHIDevice->GetDOFHalfResBlurTempRTV();
+		RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
 
 		// 셰이더 로드
 		UShader* FullScreenTriangleVS = UResourceManager::GetInstance().Load<UShader>("Shaders/Utility/FullScreenTriangle_VS.hlsl");
@@ -2049,13 +2048,13 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 			FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
 		));
 
-			// 셰이더 준비 및 드로우
-			RHIDevice->PrepareShader(FullScreenTriangleVS, BlurVPS);
-			RHIDevice->DrawFullScreenQuad();
+		// 셰이더 준비 및 드로우
+		RHIDevice->PrepareShader(FullScreenTriangleVS, BlurVPS);
+		RHIDevice->DrawFullScreenQuad();
 
-			// Pass 3에서 사용한 SRV 언바인드 (t0: BlurTemp)
-			ID3D11ShaderResourceView* NullSRV = nullptr;
-			RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
+		// Pass 3에서 사용한 SRV 언바인드 (t0: BlurTemp)
+		ID3D11ShaderResourceView* NullSRV = nullptr;
+		RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
 		}
 	} // Pass 1-3 블록 종료
 
