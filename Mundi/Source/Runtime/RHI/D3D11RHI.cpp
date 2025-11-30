@@ -77,6 +77,7 @@ void D3D11RHI::Release()
     // RTV/DSV/FrameBuffer
     ReleaseFrameBuffer();
     ReleaseIdBuffer();
+    ReleaseDOFResources();
 
     // Device + SwapChain
     ReleaseDeviceAndSwapChain();
@@ -444,6 +445,88 @@ void D3D11RHI::ClearViewportRenderTargetOverride()
 {
     ViewportRTVOverride = nullptr;
     ViewportDSVOverride = nullptr;
+}
+
+bool D3D11RHI::EnsureDOFResources(uint32 HalfWidth, uint32 HalfHeight)
+{
+    // 이미 동일한 해상도로 생성되어 있으면 재사용
+    if (DOFHalfResColorCoCTexture && DOFCachedHalfWidth == HalfWidth && DOFCachedHalfHeight == HalfHeight)
+    {
+        return true;
+    }
+
+    // 기존 리소스 해제
+    ReleaseDOFResources();
+
+    HRESULT hr;
+
+    // 공통 텍스처 설정
+    D3D11_TEXTURE2D_DESC TexDesc = {};
+    TexDesc.Width = HalfWidth;
+    TexDesc.Height = HalfHeight;
+    TexDesc.MipLevels = 1;
+    TexDesc.ArraySize = 1;
+    TexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    TexDesc.SampleDesc.Count = 1;
+    TexDesc.SampleDesc.Quality = 0;
+    TexDesc.Usage = D3D11_USAGE_DEFAULT;
+    TexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    TexDesc.CPUAccessFlags = 0;
+    TexDesc.MiscFlags = 0;
+
+    // 1. HalfResColorCoC 생성
+    hr = Device->CreateTexture2D(&TexDesc, nullptr, &DOFHalfResColorCoCTexture);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCTexture 생성 실패\n"); return false; }
+
+    hr = Device->CreateRenderTargetView(DOFHalfResColorCoCTexture, nullptr, &DOFHalfResColorCoCRTV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCRTV 생성 실패\n"); return false; }
+
+    hr = Device->CreateShaderResourceView(DOFHalfResColorCoCTexture, nullptr, &DOFHalfResColorCoCSRV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResColorCoCSRV 생성 실패\n"); return false; }
+
+    // 2. HalfResBlurTemp 생성
+    hr = Device->CreateTexture2D(&TexDesc, nullptr, &DOFHalfResBlurTempTexture);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurTempTexture 생성 실패\n"); return false; }
+
+    hr = Device->CreateRenderTargetView(DOFHalfResBlurTempTexture, nullptr, &DOFHalfResBlurTempRTV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurTempRTV 생성 실패\n"); return false; }
+
+    hr = Device->CreateShaderResourceView(DOFHalfResBlurTempTexture, nullptr, &DOFHalfResBlurTempSRV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurTempSRV 생성 실패\n"); return false; }
+
+    // 3. HalfResBlurred 생성
+    hr = Device->CreateTexture2D(&TexDesc, nullptr, &DOFHalfResBlurredTexture);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurredTexture 생성 실패\n"); return false; }
+
+    hr = Device->CreateRenderTargetView(DOFHalfResBlurredTexture, nullptr, &DOFHalfResBlurredRTV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurredRTV 생성 실패\n"); return false; }
+
+    hr = Device->CreateShaderResourceView(DOFHalfResBlurredTexture, nullptr, &DOFHalfResBlurredSRV);
+    if (FAILED(hr)) { UE_LOG("DOF: halfResBlurredSRV 생성 실패\n"); return false; }
+
+    // 캐시된 해상도 저장
+    DOFCachedHalfWidth = HalfWidth;
+    DOFCachedHalfHeight = HalfHeight;
+
+    return true;
+}
+
+void D3D11RHI::ReleaseDOFResources()
+{
+    if (DOFHalfResBlurredSRV) { DOFHalfResBlurredSRV->Release(); DOFHalfResBlurredSRV = nullptr; }
+    if (DOFHalfResBlurredRTV) { DOFHalfResBlurredRTV->Release(); DOFHalfResBlurredRTV = nullptr; }
+    if (DOFHalfResBlurredTexture) { DOFHalfResBlurredTexture->Release(); DOFHalfResBlurredTexture = nullptr; }
+
+    if (DOFHalfResBlurTempSRV) { DOFHalfResBlurTempSRV->Release(); DOFHalfResBlurTempSRV = nullptr; }
+    if (DOFHalfResBlurTempRTV) { DOFHalfResBlurTempRTV->Release(); DOFHalfResBlurTempRTV = nullptr; }
+    if (DOFHalfResBlurTempTexture) { DOFHalfResBlurTempTexture->Release(); DOFHalfResBlurTempTexture = nullptr; }
+
+    if (DOFHalfResColorCoCSRV) { DOFHalfResColorCoCSRV->Release(); DOFHalfResColorCoCSRV = nullptr; }
+    if (DOFHalfResColorCoCRTV) { DOFHalfResColorCoCRTV->Release(); DOFHalfResColorCoCRTV = nullptr; }
+    if (DOFHalfResColorCoCTexture) { DOFHalfResColorCoCTexture->Release(); DOFHalfResColorCoCTexture = nullptr; }
+
+    DOFCachedHalfWidth = 0;
+    DOFCachedHalfHeight = 0;
 }
 
 void D3D11RHI::OMSetRenderTargets(ERTVMode RTVMode)
