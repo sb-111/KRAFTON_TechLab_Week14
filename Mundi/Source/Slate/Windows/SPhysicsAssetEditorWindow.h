@@ -21,6 +21,7 @@ public:
     virtual void OnUpdate(float DeltaSeconds) override;
     virtual void PreRenderViewportUpdate() override;
     virtual void OnSave() override;
+    virtual void OnMouseDown(FVector2D MousePos, uint32 Button) override;
 
 protected:
     virtual ViewerState* CreateViewerState(const char* Name, UEditorAssetPreviewContext* Context) override;

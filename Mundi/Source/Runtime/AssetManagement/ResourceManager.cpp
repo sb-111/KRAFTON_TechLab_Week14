@@ -497,9 +497,9 @@ UStaticMesh* UResourceManager::CreateUnitCapsuleMesh(int32 Segments, int32 Rings
     FMeshData* MeshData = new FMeshData();
 
     // 캡슐 = 상단 반구 + 실린더 + 하단 반구
-    // 기본 반지름 0.5, 높이 1.0 (전체 높이 2.0)
-    const float Radius = 0.5f;
-    const float HalfHeight = 0.5f;  // 실린더 반높이
+    // 단위 캡슐: 반지름 1.0, 실린더 반높이 1.0 - Scale = (Radius, HalfHeight, Radius)로 직관적 사용
+    const float Radius = 1.0f;
+    const float HalfHeight = 1.0f;  // 실린더 반높이
 
     int32 HemiRings = Rings / 2;
 
@@ -617,8 +617,8 @@ UStaticMesh* UResourceManager::CreateUnitBoxMesh()
 {
     FMeshData* MeshData = new FMeshData();
 
-    // 단위 박스 (-0.5 ~ 0.5)
-    const float h = 0.5f;
+    // 단위 박스 (-1 ~ 1) - Scale = HalfExtent로 직관적으로 사용 가능
+    const float h = 1.0f;
 
     // 6면 x 4정점 = 24정점 (각 면마다 다른 노말)
     FVector positions[24] = {

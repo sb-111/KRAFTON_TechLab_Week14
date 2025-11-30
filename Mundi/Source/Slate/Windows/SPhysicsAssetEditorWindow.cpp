@@ -12,6 +12,9 @@
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/SkeletalMeshComponent.h"
+#include "Source/Runtime/Engine/Collision/Picking.h"
+#include "Source/Runtime/Engine/GameFramework/CameraActor.h"
+#include "Source/Runtime/Renderer/FViewportClient.h"
 
 // ========== Shape 와이어프레임 생성 함수들 ==========
 
@@ -408,7 +411,6 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
         ActiveState->bBoneLinesDirty = false;
     }
 
-    // Shape 와이어프레임 렌더링
     RenderPhysicsBodies();
 }
 
@@ -419,6 +421,158 @@ void SPhysicsAssetEditorWindow::OnSave()
     {
         PhysState->bIsDirty = false;
         UE_LOG("Physics Asset saved: %s", PhysState->CurrentFilePath.c_str());
+    }
+}
+
+void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->Viewport) return;
+    if (!PhysState->Viewport->IsViewportHovered()) return;
+
+    if (!CenterRect.Contains(MousePos)) return;
+
+    FVector2D LocalPos = MousePos - FVector2D(CenterRect.Left, CenterRect.Top);
+
+    // 기즈모 피킹 먼저 시도
+    PhysState->Viewport->ProcessMouseButtonDown((int32)LocalPos.X, (int32)LocalPos.Y, (int32)Button);
+
+    // 좌클릭일 때만 Body 피킹 시도
+    if (Button != 0) return;
+    if (!PhysState->EditingAsset) return;
+    if (!PhysState->CurrentMesh) return;
+    if (!PhysState->Client) return;
+
+    const FSkeleton* Skeleton = PhysState->CurrentMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(PhysState->PreviewActor);
+    if (!PreviewActor) return;
+    USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
+    if (!MeshComp) return;
+
+    ACameraActor* Camera = PhysState->Client->GetCamera();
+    if (!Camera) return;
+
+    // 레이 생성
+    FVector CameraPos = Camera->GetActorLocation();
+    FVector CameraRight = Camera->GetRight();
+    FVector CameraUp = Camera->GetUp();
+    FVector CameraForward = Camera->GetForward();
+
+    FVector2D ViewportMousePos(MousePos.X - CenterRect.Left, MousePos.Y - CenterRect.Top);
+    FVector2D ViewportSize(CenterRect.GetWidth(), CenterRect.GetHeight());
+
+    FRay Ray = MakeRayFromViewport(
+        Camera->GetViewMatrix(),
+        Camera->GetProjectionMatrix(CenterRect.GetWidth() / CenterRect.GetHeight(), PhysState->Viewport),
+        CameraPos,
+        CameraRight,
+        CameraUp,
+        CameraForward,
+        ViewportMousePos,
+        ViewportSize
+    );
+
+    // 모든 Body의 Shape들과 레이캐스트
+    int32 ClosestBodyIndex = -1;
+    float ClosestDistance = FLT_MAX;
+
+    for (int32 BodyIndex = 0; BodyIndex < PhysState->EditingAsset->Bodies.Num(); ++BodyIndex)
+    {
+        UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
+        if (!Body) continue;
+
+        // 본 인덱스 찾기
+        int32 BoneIndex = -1;
+        for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+        {
+            if (Skeleton->Bones[i].Name == Body->BoneName.ToString())
+            {
+                BoneIndex = i;
+                break;
+            }
+        }
+        if (BoneIndex < 0) continue;
+
+        FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
+
+        // Sphere Shape 피킹
+        for (int32 i = 0; i < Body->AggGeom.SphereElems.Num(); ++i)
+        {
+            const FKSphereElem& Sphere = Body->AggGeom.SphereElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
+
+            float HitT;
+            if (IntersectRaySphere(Ray, ShapeCenter, Sphere.Radius, HitT))
+            {
+                if (HitT < ClosestDistance)
+                {
+                    ClosestDistance = HitT;
+                    ClosestBodyIndex = BodyIndex;
+                }
+            }
+        }
+
+        // Box Shape 피킹 (OBB 충돌 검사)
+        for (int32 i = 0; i < Body->AggGeom.BoxElems.Num(); ++i)
+        {
+            const FKBoxElem& Box = Body->AggGeom.BoxElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Box.Center);
+
+            FQuat BoxRotation = FQuat::MakeFromEulerZYX(Box.Rotation);
+            FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
+
+            // 단위 박스(-1~1) × Scale = HalfExtent 그대로 사용
+            FVector HalfExtent(Box.X, Box.Y, Box.Z);
+
+            float HitT;
+            if (IntersectRayOBB(Ray, ShapeCenter, HalfExtent, FinalRotation, HitT))
+            {
+                if (HitT < ClosestDistance)
+                {
+                    ClosestDistance = HitT;
+                    ClosestBodyIndex = BodyIndex;
+                }
+            }
+        }
+
+        // Capsule Shape 피킹 (정확한 캡슐 충돌 검사)
+        for (int32 i = 0; i < Body->AggGeom.SphylElems.Num(); ++i)
+        {
+            const FKSphylElem& Capsule = Body->AggGeom.SphylElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
+
+            FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+            FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
+
+            // 단위 캡슐(Radius=1, HalfHeight=1) × Scale = 값 그대로 사용
+            float HalfHeight = Capsule.Length * 0.5f;
+
+            float HitT;
+            if (IntersectRayCapsule(Ray, ShapeCenter, FinalRotation, Capsule.Radius, HalfHeight, HitT))
+            {
+                if (HitT < ClosestDistance)
+                {
+                    ClosestDistance = HitT;
+                    ClosestBodyIndex = BodyIndex;
+                }
+            }
+        }
+    }
+
+    // 피킹 결과 적용
+    if (ClosestBodyIndex >= 0)
+    {
+        SelectBody(ClosestBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
+    }
+    else
+    {
+        // 아무것도 피킹되지 않으면 선택 해제
+        ClearSelection();
     }
 }
 
@@ -1190,94 +1344,82 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
 {
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
     if (!PhysState || !PhysState->World) return;
-
-    // 와이어프레임 클리어 (더 이상 사용하지 않음)
-    if (PhysState->ShapeLineComponent)
-    {
-        PhysState->ShapeLineComponent->ClearLines();
-    }
-
-    // Body가 선택되지 않았으면 렌더링 안함
-    if (PhysState->SelectedBodyIndex < 0) return;
     if (!PhysState->EditingAsset) return;
-    if (PhysState->SelectedBodyIndex >= PhysState->EditingAsset->Bodies.Num()) return;
-
-    UBodySetup* SelectedBody = PhysState->EditingAsset->Bodies[PhysState->SelectedBodyIndex];
-    if (!SelectedBody) return;
-
-    // 본 인덱스 찾기
     if (!ActiveState || !ActiveState->CurrentMesh) return;
+
     const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
     if (!Skeleton) return;
 
-    int32 BoneIndex = -1;
-    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
-    {
-        if (Skeleton->Bones[i].Name == SelectedBody->BoneName.ToString())
-        {
-            BoneIndex = i;
-            break;
-        }
-    }
-    if (BoneIndex < 0) return;
-
-    // 본의 월드 트랜스폼 가져오기
     ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(ActiveState->PreviewActor);
     if (!PreviewActor) return;
     USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
     if (!MeshComp) return;
 
-    FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
-
-    // 선택 소스에 따른 색상 (트리/뷰포트: 파란색, 그래프: 보라색)
-    // 반투명 색상 (Alpha = 0.4)
-    FLinearColor ShapeColor;
-    if (PhysState->SelectionSource == PhysicsAssetEditorState::ESelectionSource::Graph)
-    {
-        ShapeColor = FLinearColor(0.6f, 0.4f, 0.8f, 0.4f);  // 보라색 반투명
-    }
-    else
-    {
-        ShapeColor = FLinearColor(0.3f, 0.5f, 1.0f, 0.4f);  // 파란색 반투명
-    }
-
-    // World의 Debug Primitive Queue에 추가 (SceneRenderer에서 렌더링됨)
     UWorld* World = PhysState->World;
 
-    // Box Shape
-    for (int32 i = 0; i < SelectedBody->AggGeom.BoxElems.Num(); ++i)
-    {
-        const FKBoxElem& Box = SelectedBody->AggGeom.BoxElems[i];
-        FVector ShapeCenter = BoneWorldTransform.Translation +
-            BoneWorldTransform.Rotation.RotateVector(Box.Center);
-        FQuat BoxRotation = FQuat::MakeFromEulerZYX(Box.Rotation);
-        FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
-        FVector HalfExtent(Box.X, Box.Y, Box.Z);
-        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, HalfExtent);
-        World->AddDebugBox(Transform, ShapeColor, 0);
-    }
+    // 색상 정의
+    const FLinearColor UnselectedColor(0.5f, 0.5f, 0.5f, 0.6f);  // 회색 불투명
+    const FLinearColor SelectedColor(0.3f, 0.7f, 1.0f, 0.7f);    // 하늘색 하이라이트
 
-    // Sphere Shape
-    for (int32 i = 0; i < SelectedBody->AggGeom.SphereElems.Num(); ++i)
+    // 모든 Body를 순회하며 렌더링
+    for (int32 BodyIndex = 0; BodyIndex < PhysState->EditingAsset->Bodies.Num(); ++BodyIndex)
     {
-        const FKSphereElem& Sphere = SelectedBody->AggGeom.SphereElems[i];
-        FVector ShapeCenter = BoneWorldTransform.Translation +
-            BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
-        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FQuat::Identity(), FVector(Sphere.Radius, Sphere.Radius, Sphere.Radius));
-        World->AddDebugSphere(Transform, ShapeColor, 0);
-    }
+        UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
+        if (!Body) continue;
 
-    // Capsule Shape
-    for (int32 i = 0; i < SelectedBody->AggGeom.SphylElems.Num(); ++i)
-    {
-        const FKSphylElem& Capsule = SelectedBody->AggGeom.SphylElems[i];
-        FVector ShapeCenter = BoneWorldTransform.Translation +
-            BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
-        FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
-        FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
-        FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
-        float HalfHeight = Capsule.Length * 0.5f;
-        World->AddDebugCapsule(Transform, Capsule.Radius, HalfHeight, ShapeColor, 0);
+        // 본 인덱스 찾기
+        int32 BoneIndex = -1;
+        for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+        {
+            if (Skeleton->Bones[i].Name == Body->BoneName.ToString())
+            {
+                BoneIndex = i;
+                break;
+            }
+        }
+        if (BoneIndex < 0) continue;
+
+        FTransform BoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
+
+        // 선택된 Body인지 확인
+        bool bIsSelected = (BodyIndex == PhysState->SelectedBodyIndex);
+        FLinearColor ShapeColor = bIsSelected ? SelectedColor : UnselectedColor;
+
+        // Box Shape
+        for (int32 i = 0; i < Body->AggGeom.BoxElems.Num(); ++i)
+        {
+            const FKBoxElem& Box = Body->AggGeom.BoxElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Box.Center);
+            FQuat BoxRotation = FQuat::MakeFromEulerZYX(Box.Rotation);
+            FQuat FinalRotation = BoneWorldTransform.Rotation * BoxRotation;
+            FVector HalfExtent(Box.X, Box.Y, Box.Z);
+            FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, HalfExtent);
+            World->AddDebugBox(Transform, ShapeColor, 0);
+        }
+
+        // Sphere Shape
+        for (int32 i = 0; i < Body->AggGeom.SphereElems.Num(); ++i)
+        {
+            const FKSphereElem& Sphere = Body->AggGeom.SphereElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Sphere.Center);
+            FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FQuat::Identity(), FVector(Sphere.Radius, Sphere.Radius, Sphere.Radius));
+            World->AddDebugSphere(Transform, ShapeColor, 0);
+        }
+
+        // Capsule Shape
+        for (int32 i = 0; i < Body->AggGeom.SphylElems.Num(); ++i)
+        {
+            const FKSphylElem& Capsule = Body->AggGeom.SphylElems[i];
+            FVector ShapeCenter = BoneWorldTransform.Translation +
+                BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
+            FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+            FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
+            FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
+            float HalfHeight = Capsule.Length * 0.5f;
+            World->AddDebugCapsule(Transform, Capsule.Radius, HalfHeight, ShapeColor, 0);
+        }
     }
 }
 

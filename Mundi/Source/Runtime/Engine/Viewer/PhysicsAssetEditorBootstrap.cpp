@@ -37,9 +37,9 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 	Client->SetViewportType(EViewportType::Perspective);
 	Client->SetViewMode(EViewMode::VMI_Lit_Phong);
 
-	// 카메라 설정
-	Client->GetCamera()->SetActorLocation(FVector(150.f, 0.f, 100.f));
-	Client->GetCamera()->SetRotationFromEulerAngles(FVector(0.f, 20.f, 180.f));
+	// 카메라 설정 - 정면에서 가까이 바라보게
+	Client->GetCamera()->SetActorLocation(FVector(3.f, 0.f, 1.f));
+	Client->GetCamera()->SetRotationFromEulerAngles(FVector(0.f, 10.f, 180.f));
 
 	State->Client = Client;
 	State->Viewport->SetViewportClient(Client);
