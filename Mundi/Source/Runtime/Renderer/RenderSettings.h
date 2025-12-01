@@ -83,7 +83,7 @@ private:
     float DOFFocalDistance = 10.0f;          // 포커스 거리 (미터, 기본값: 10.0)
     float DOFNearTransitionRange = 5.0f;     // 포그라운드 전환 범위 (미터, 기본값: 5.0)
     float DOFFarTransitionRange = 10.0f;     // 백그라운드 전환 범위 (미터, 기본값: 10.0)
-    float DOFMaxCoCRadius = 8.0f;            // 최대 CoC 반경 (픽셀, 기본값: 8.0)
+    float DOFMaxCoCRadius = 1.0f;            // 최대 CoC 반경 (픽셀, 기본값: 1.0)
 
     // Tile-based light culling
     uint32 TileSize = 16;                   // 타일 크기 (픽셀, 기본값: 16)
