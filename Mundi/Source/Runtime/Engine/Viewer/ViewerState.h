@@ -136,6 +136,13 @@ struct PhysicsAssetEditorState : public ViewerState
     // ==== Shape 기즈모용 앵커 ====
     UShapeAnchorComponent* ShapeGizmoAnchor = nullptr;   // 선택된 Shape의 기즈모 앵커
 
+    // ==== Constraint 시각화 ====
+    class ULineComponent* ConstraintLineComponent = nullptr;  // Constraint 와이어프레임용
+    bool bConstraintsDirty = true;  // Constraint 라인 재구성 필요 플래그
+
+    // ==== Constraint 생성 중간 상태 ====
+    int32 ConstraintStartBodyIndex = -1;  // -1이면 Constraint 생성 대기 안함
+
     // ==== Graph View 상태
     FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋
     float GraphZoom = 1.0f;                     // 그래프 줌 레벨

@@ -86,6 +86,7 @@ private:
 
     // Context menu state
     int32 ContextMenuBoneIndex = -1;
+    int32 ContextMenuConstraintIndex = -1;
 
     // Skeleton Tree Settings
     void RenderSkeletonTreeSettings();
@@ -102,6 +103,7 @@ private:
     struct FTreeDisplaySettings
     {
         EBoneDisplayMode BoneDisplayMode = EBoneDisplayMode::AllBones;
+        bool bShowConstraintsInTree = true;  // 트리에 컨스트레인트 표시
     };
     FTreeDisplaySettings TreeSettings;
 
@@ -112,4 +114,14 @@ private:
     // Shape 타입별 Body 생성 (deprecated - use AddShapeToBone)
     void AddBodyToBoneWithShape(int32 BoneIndex, EShapeType ShapeType);
     UBodySetup* CreateBodySetupWithShape(const FString& BoneName, EShapeType ShapeType);
+
+    // Constraint 생성/삭제
+    void AddConstraintBetweenBodies(int32 BodyIndex1, int32 BodyIndex2);
+    void AddConstraintToParentBody(int32 ChildBodyIndex);
+    void RemoveConstraint(int32 ConstraintIndex);
+    FConstraintInstance CreateDefaultConstraint(const FName& Bone1, const FName& Bone2);
+
+    // Constraint 트리 표시
+    void RenderConstraintTreeNode(int32 ConstraintIndex, const FName& CurrentBoneName);
+    void RenderConstraintContextMenu(int32 ConstraintIndex);
 };

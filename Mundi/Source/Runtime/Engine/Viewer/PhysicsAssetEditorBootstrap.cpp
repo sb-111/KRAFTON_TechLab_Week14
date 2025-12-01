@@ -77,6 +77,15 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 		State->ShapeGizmoAnchor->RegisterComponent(State->World);
 	}
 
+	// Constraint 와이어프레임용 LineComponent 생성 및 연결
+	State->ConstraintLineComponent = NewObject<ULineComponent>();
+	State->ConstraintLineComponent->SetAlwaysOnTop(true);
+	if (State->PreviewActor)
+	{
+		State->PreviewActor->AddOwnedComponent(State->ConstraintLineComponent);
+		State->ConstraintLineComponent->RegisterComponent(State->World);
+	}
+
 	return State;
 }
 
@@ -114,6 +123,7 @@ void PhysicsAssetEditorBootstrap::DestroyViewerState(ViewerState*& State)
 	// ShapeLineComponent는 PreviewActor에 AddOwnedComponent로 추가했으므로 Actor 삭제 시 함께 정리됨
 	PhysState->ShapeLineComponent = nullptr;
 	PhysState->ShapeGizmoAnchor = nullptr;
+	PhysState->ConstraintLineComponent = nullptr;
 
 	delete State;
 	State = nullptr;
