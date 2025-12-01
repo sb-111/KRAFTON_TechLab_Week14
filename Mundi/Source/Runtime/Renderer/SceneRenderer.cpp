@@ -2037,69 +2037,7 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &NullRTV, nullptr);
 
 	// Pass 2: BlurH (수평)
-	// 뷰포트 설정 (Half Resolution)
-	// vp = {};
-	// vp.TopLeftX = 0.0f;
-	// vp.TopLeftY = 0.0f;
-	// vp.Width = static_cast<float>(halfWidth);
-	// vp.Height = static_cast<float>(halfHeight);
-	// vp.MinDepth = 0.0f;
-	// vp.MaxDepth = 1.0f;
-	// RHIDevice->GetDeviceContext()->RSSetViewports(1, &vp);
-	//
-	// // ViewportConstants 업데이트 (Half Resolution - 입출력 모두 half resolution)
-	// FViewportConstants HalfViewportConst;
-	// HalfViewportConst.ViewportRect = FVector4(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight));
-	// HalfViewportConst.ScreenSize = FVector4(
-	// 	static_cast<float>(halfWidth),
-	// 	static_cast<float>(halfHeight),
-	// 	1.0f / halfWidth,
-	// 	1.0f / halfHeight
-	// );
-	// RHIDevice->SetAndUpdateConstantBuffer(HalfViewportConst);
-	//
-	// // 렌더 타겟 설정
-	// rtv = RHIDevice->GetDOFHalfResBlurTempRTV();
-	// RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
-	//
-	// // 셰이더 로드
-	// // Pass 1과 동일하게 Full Screen Triangle Vertex Shader를 사용하므로 생략
-	// UShader* BlurPS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_PS.hlsl");
-	// if (!BlurPS || !BlurPS->GetPixelShader())
-	// {
-	// 	UE_LOG("DOF: Blur 셰이더 없음!\n");
-	// 	return;
-	// }
-	//
-	// // SRV 바인딩 (t0: halfResColorCoC)
-	// ID3D11ShaderResourceView* srv = RHIDevice->GetDOFHalfResColorCoCSRV();
-	// RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &srv);
-	//
-	// // Sampler 바인딩
-	// ID3D11SamplerState* LinearSampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
-	// RHIDevice->GetDeviceContext()->PSSetSamplers(0, 1, &LinearSampler);
-	//
-	// // 상수 버퍼 업데이트 (BlurDirection = (1, 0))
-	// RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
-	// 	RenderSettings.GetDOFFocalDistance(),
-	// 	RenderSettings.GetDOFNearTransitionRange(),
-	// 	RenderSettings.GetDOFFarTransitionRange(),
-	// 	RenderSettings.GetDOFMaxCoCRadius(),
-	// 	projAB,
-	// 	isOrtho,
-	// 	FVector2D(1.0f, 0.0f), // BlurDirection: 수평
-	// 	FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
-	// ));
-	//
-	// // 셰이더 준비 및 드로우
-	// RHIDevice->PrepareShader(FullScreenTriangleVS, BlurPS);
-	// RHIDevice->DrawFullScreenQuad();
-	//
-	// // Pass 2에서 사용한 SRV 언바인드 (t0: ColorCoC)
-	// ID3D11ShaderResourceView* NullSRV = nullptr;
-	// RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
-
-	/* Compute Shader 방식으로 pivot */
+	
 	// Compute Shader 컴파일 (한 번만 컴파일하고 Pass 2 & 3에서 재사용)
 	ID3D11ComputeShader* BlurCS = CompileComputeShader(
 		RHIDevice->GetDevice(),
@@ -2160,40 +2098,8 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
 	context->CSSetShader(nullptr, nullptr, 0);
 	
-	// Pass 3: BlurV (수직)
-	// 수평 및 수직 블러 사용 여부 제외 나머지 설정이 모두 동일하므로 이전 Pass에서의 Pipeline 설정을 동일하게 유지
-
-	// 렌더 타겟 설정
-	// rtv = RHIDevice->GetDOFHalfResBlurredRTV();
-	// RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
-	//
-	// // SRV 바인딩 (t0: halfResBlurTemp)
-	// srv = RHIDevice->GetDOFHalfResBlurTempSRV();
-	// RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &srv);
-	//
-	// // 상수 버퍼 업데이트 (BlurDirection = (0, 1))
-	// RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
-	// 	RenderSettings.GetDOFFocalDistance(),
-	// 	RenderSettings.GetDOFNearTransitionRange(),
-	// 	RenderSettings.GetDOFFarTransitionRange(),
-	// 	RenderSettings.GetDOFMaxCoCRadius(),
-	// 	projAB,
-	// 	isOrtho,
-	// 	FVector2D(0.0f, 1.0f), // BlurDirection: 수직
-	// 	FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
-	// ));
-	//
-	// // 드로우
-	// RHIDevice->DrawFullScreenQuad();
-	//
-	// // Pass 3에서 사용한 SRV 언바인드 (t0: BlurTemp)
-	// NullSRV = nullptr;
-	// RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
-
-	/* Pass 3 Compute Shader 방식으로 pivot */
-
 	// ===== Pass 3: BlurV (수직) =====
-	// 동일한 BlurCS 재사용 (재컴파일 불필요)
+	// 동일한 BlurCS 재사용
 
 	// 1. 입력: BlurTemp → 출력: Blurred
 	inputSRV = RHIDevice->GetDOFHalfResBlurTempSRV();
