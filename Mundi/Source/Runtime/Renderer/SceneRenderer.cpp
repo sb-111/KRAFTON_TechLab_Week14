@@ -1985,7 +1985,7 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	// Pass 2: BlurH (수평)
 
 	// Compute Shader 로드 (UResourceManager 프레임워크 사용)
-	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_CS.hlsl");
+	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Poisson_Blur_CS.hlsl");
 	if (!BlurCS_Shader || !BlurCS_Shader->GetComputeShader())
 	{
 		UE_LOG("DOF: Blur Compute Shader 로드 실패!\n");
