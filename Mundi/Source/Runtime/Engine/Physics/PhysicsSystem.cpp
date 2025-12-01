@@ -3,6 +3,26 @@
 #include "BodyInstance.h"
 #include "PrimitiveComponent.h"
 
+// ===== 기본 필터 셰이더 =====
+// PhysX Joint가 연결된 바디 간 충돌을 자동으로 비활성화함
+// 따라서 커스텀 래그돌 필터 불필요 - 표준 방식 사용
+static PxFilterFlags DefaultFilterShader(
+    PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+    PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+    PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+{
+    // 트리거 처리
+    if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+    {
+        pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+        return PxFilterFlag::eDEFAULT;
+    }
+
+    // 기본 충돌 처리 (Joint가 인접 본 충돌을 자동 비활성화)
+    pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+    return PxFilterFlag::eDEFAULT;
+}
+
 FPhysicsSystem* FPhysicsSystem::Instance = nullptr;
 FPhysicsSystem& FPhysicsSystem::GetInstance()
 {
@@ -77,8 +97,8 @@ void FPhysicsSystem::Initialize()
 
 	Dispatcher = PxDefaultCpuDispatcherCreate(3);
 	SceneDesc.cpuDispatcher = Dispatcher;
-	// filterShader: 충돌 처리 로직, 일단 기본 필터 사용 수정 가능
-	SceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	// filterShader: 기본 필터 사용 (Joint가 인접 본 충돌을 자동 비활성화)
+	SceneDesc.filterShader = DefaultFilterShader;
 	// Persistent contact manifold: 지속적인 접촉 시 떨림 완화
 	// ENABLE_ACTIVE_ACTORS: 움직인 엑터만 명단 뽑아놓음
 	SceneDesc.flags |=  PxSceneFlag::eENABLE_PCM | PxSceneFlag::eENABLE_ACTIVE_ACTORS;

@@ -238,11 +238,18 @@ void FRagdollDebugRenderer::RenderCapsule(
         OutColors.Add(Color);
     }
 
-    // 반구 표현 (간단화: 추가 원 2개)
-    AddCircle(TopCenter, AxisY, Radius, NumSegments / 2, Color,
-              OutStartPoints, OutEndPoints, OutColors);
-    AddCircle(BottomCenter, AxisY, Radius, NumSegments / 2, Color,
-              OutStartPoints, OutEndPoints, OutColors);
+    // 반구 표현 (반원 2개로 반구처럼 보이게)
+    // 상단 반구: 캡슐 축 방향(+)으로 볼록한 반원 2개
+    AddSemicircle(TopCenter, CapsuleAxis, AxisY, Radius, NumSegments, Color,
+                  OutStartPoints, OutEndPoints, OutColors);
+    AddSemicircle(TopCenter, CapsuleAxis, AxisZ, Radius, NumSegments, Color,
+                  OutStartPoints, OutEndPoints, OutColors);
+
+    // 하단 반구: 캡슐 축 방향(-)으로 볼록한 반원 2개
+    AddSemicircle(BottomCenter, CapsuleAxis * -1.0f, AxisY, Radius, NumSegments, Color,
+                  OutStartPoints, OutEndPoints, OutColors);
+    AddSemicircle(BottomCenter, CapsuleAxis * -1.0f, AxisZ, Radius, NumSegments, Color,
+                  OutStartPoints, OutEndPoints, OutColors);
 }
 
 void FRagdollDebugRenderer::AddCircle(
@@ -274,6 +281,49 @@ void FRagdollDebugRenderer::AddCircle(
     {
         float Angle = (2.0f * PxPi * i) / NumSegments;
         FVector CurrentPoint = Center + (Tangent * std::cos(Angle) + Bitangent * std::sin(Angle)) * Radius;
+
+        OutStartPoints.Add(PrevPoint);
+        OutEndPoints.Add(CurrentPoint);
+        OutColors.Add(Color);
+
+        PrevPoint = CurrentPoint;
+    }
+}
+
+void FRagdollDebugRenderer::AddSemicircle(
+    const FVector& Center,
+    const FVector& BulgeDir,      // 반구가 볼록하게 나갈 방향
+    const FVector& PlaneAxis,     // 반원이 그려질 평면의 한 축
+    float Radius,
+    int32 NumSegments,
+    const FVector4& Color,
+    TArray<FVector>& OutStartPoints,
+    TArray<FVector>& OutEndPoints,
+    TArray<FVector4>& OutColors)
+{
+    // 반원을 그리기 위한 두 번째 축 계산
+    // PlaneAxis와 BulgeDir에 모두 수직인 축
+    FVector SecondAxis = FVector::Cross(BulgeDir, PlaneAxis).GetNormalized();
+
+    // 반원: 0도에서 180도까지 (Pi 라디안)
+    // 시작점: PlaneAxis 방향으로 Radius만큼
+    // 끝점: PlaneAxis 반대 방향으로 Radius만큼
+    // 중간: BulgeDir 방향으로 가장 많이 볼록
+    int32 HalfSegments = NumSegments / 2;
+    if (HalfSegments < 4) HalfSegments = 4;
+
+    FVector PrevPoint = Center + PlaneAxis * Radius;  // 0도 위치
+
+    for (int32 i = 1; i <= HalfSegments; ++i)
+    {
+        float Angle = (PxPi * i) / HalfSegments;  // 0 ~ Pi
+
+        // 반원 위의 점 계산
+        // cos(0)=1, cos(Pi)=-1 → PlaneAxis 방향
+        // sin(0)=0, sin(Pi/2)=1, sin(Pi)=0 → BulgeDir 방향으로 볼록
+        FVector CurrentPoint = Center +
+            PlaneAxis * (Radius * std::cos(Angle)) +
+            BulgeDir * (Radius * std::sin(Angle));
 
         OutStartPoints.Add(PrevPoint);
         OutEndPoints.Add(CurrentPoint);

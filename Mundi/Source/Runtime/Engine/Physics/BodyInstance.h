@@ -18,6 +18,7 @@ struct FBodyInstance
 	// === 래그돌 지원 (언리얼 방식) ===
 	UBodySetup* BodySetup = nullptr;	// 래그돌 본의 물리 설정
 	int32 BoneIndex = -1;				// 스켈레톤에서 이 바디에 대응하는 본 인덱스
+	uint32 RagdollOwnerID = 0;			// 같은 래그돌 내 자체 충돌 방지용 ID (0이면 일반 오브젝트)
 
 	FBodyInstance() = default;
 
@@ -27,7 +28,8 @@ struct FBodyInstance
 	void InitPhysics(UPrimitiveComponent* Component);
 
 	// 래그돌용 초기화 (UBodySetup 기반)
-	void InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex = -1);
+	// InRagdollOwnerID: 같은 래그돌은 동일한 ID를 사용 (자체 충돌 방지)
+	void InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex = -1, uint32 InRagdollOwnerID = 0);
 
 	// 물리 바디 정리
 	void TermBody();

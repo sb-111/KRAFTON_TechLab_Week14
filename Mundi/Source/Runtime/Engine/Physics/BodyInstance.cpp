@@ -150,7 +150,7 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 
 // ===== 래그돌용 함수들 (언리얼 방식) =====
 
-void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex)
+void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex, uint32 InRagdollOwnerID)
 {
 	if (!Setup) return;
 	if (RigidActor) return;	// 이미 초기화됨
@@ -160,6 +160,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
+	RagdollOwnerID = InRagdollOwnerID;
 
 	// RigidDynamic 생성
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
@@ -169,8 +170,10 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 	// UBodySetup의 AggGeom에서 Shape들 생성
 	CreateShapesFromBodySetup(Setup, Body);
 
-	// 질량 설정
-	PxRigidBodyExt::setMassAndUpdateInertia(*Body, Setup->MassInKg);
+	// 질량 설정 (밀도 기반 부피 비례 자동 계산)
+	// 밀도 1.0 = 물과 비슷 (인체 밀도 ~1.01 g/cm³)
+	const float Density = 1.0f;
+	PxRigidBodyExt::updateMassAndInertia(*Body, Density);
 
 	// Damping 설정
 	Body->setLinearDamping(Setup->LinearDamping);
@@ -198,6 +201,12 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 	);
 	if (!Material) return;
 
+	// 래그돌 자체 충돌 방지용 Filter Data
+	// word0 = Owner ID, word1 = 1 (래그돌 Shape 표시)
+	PxFilterData RagdollFilterData;
+	RagdollFilterData.word0 = RagdollOwnerID;
+	RagdollFilterData.word1 = (RagdollOwnerID != 0) ? 1 : 0;  // 래그돌이면 1
+
 	const FKAggregateGeom& AggGeom = Setup->AggGeom;
 
 	// === Sphere Shape 생성 ===
@@ -210,6 +219,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -232,6 +242,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxQuat(Rotation)
 			);
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -253,6 +264,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
