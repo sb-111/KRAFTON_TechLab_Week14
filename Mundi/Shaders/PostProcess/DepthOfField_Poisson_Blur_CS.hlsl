@@ -1,4 +1,10 @@
-Texture2D<float4> g_InputTexture : register(t0);
+// Poisson Disk 기반 Bokeh 컴퓨트 셰이더 (HLSL)
+// - 변수명 명확화: accumulatedColor, accumulatedWeight, sampleCount 등
+// - CoC에 따라 샘플 수 동적으로 증가
+// - 각 샘플 Weight는 radial Gaussian으로 계산 (수식 및 주석 포함)
+// - 중심 샘플 포함, wsum fallback, poisson 방향 정규화 등 안정성 포함
+
+Texture2D<float4> g_InputTexture : register(t0);     // RGBA: RGB=color, A=CoC (0..1 정규화)
 RWTexture2D<float4> g_OutputTexture : register(u0);
 
 SamplerState g_LinearSampler : register(s0);
@@ -8,17 +14,20 @@ cbuffer DOFParametersCB : register(b2)
     float FocalDistance;
     float NearTransitionRange;
     float FarTransitionRange;
-    float MaxCoCRadius;
+    float MaxCoCRadius;      // CoC=1일 때 최대 블러 반경(픽셀 단위)
 
     float2 ProjectionAB;
     int IsOrthographic;
     float Padding;
 
-    float2 BlurDirection;
-    float2 TexelSize;
+    float2 BlurDirection;    // (disk gather에서는 사용 안함, 호환성 유지)
+    float2 TexelSize;        // (1/width, 1/height)
 };
 
-static const float2 poissonDisk[16] = {
+// Poisson-ish 방향 배열 (방향 + 약간의 반경 jitter 포함)
+// 길이가 1이 아님 → dirUnit과 dirLenNorm을 사용
+static const int POISSON_COUNT = 16;
+static const float2 poissonDisk[POISSON_COUNT] = {
     float2(-0.94201624, -0.39906216),
     float2(0.94558609, -0.76890725),
     float2(-0.094184101, -0.92938870),
@@ -37,120 +46,120 @@ static const float2 poissonDisk[16] = {
     float2(0.14383161, -0.14100790)
 };
 
-// Precomputed maximum length of values in poissonDisk (measured from provided array).
-// This value was computed from the original array: ~1.23393213
+// poissonDisk 항목의 최대 길이 (정규화용)
 static const float POISSON_MAX_LEN = 1.23393213;
-static const float POISSON_COUNT = 16;
 
-float ComputeKernelWeight(float r)
+// -----------------------
+// 반경 가우시안 Weight 함수
+// -----------------------
+// r: 0(center)~1(outer radius) 범위의 정규화된 반경
+// sigma: 표준편차, CoC 기반으로 동적 결정
+// w(r) = exp( - (r^2) / (2*sigma^2) )
+// 정규화 후 합=1로 밝기 유지
+float RadialGaussianWeight(float r, float sigma)
 {
-    // simple triangular falloff
-    return saturate(1.0 - r);
+    float s = max(sigma, 1e-6f); // sigma >0 방어
+    return exp(- (r * r) / (2.0f * s * s));
 }
 
-[numthreads(8, 8, 1)]
+// -----------------------
+// 컴퓨트 셰이더 진입점
+// -----------------------
+[numthreads(8,8,1)]
 void mainCS(uint3 dispatchThreadID : SV_DispatchThreadID)
 {
     uint2 pixelPos = dispatchThreadID.xy;
 
-    // 텍스처 크기 확인 (범위 체크)
+    // 텍스처 범위 확인
     uint width, height;
     g_InputTexture.GetDimensions(width, height);
     if (pixelPos.x >= width || pixelPos.y >= height)
         return;
 
+    // 정수 픽셀 위치 -> UV 좌표 (픽셀 중심)
     float2 uv = (pixelPos + 0.5f) / float2(width, height);
 
+    // 중심 샘플 읽기 (RGBA, A=CoC 0..1)
     float4 centerSample = g_InputTexture.SampleLevel(g_LinearSampler, uv, 0);
     float centerCoC = centerSample.a;
 
-    // 조기 종료 (CoC가 거의 없으면 블러 스킵)
-    if (centerCoC < 0.01f)
+    // CoC가 거의 없으면 블러 스킵
+    if (centerCoC < 1e-3f)
     {
         g_OutputTexture[pixelPos] = centerSample;
         return;
     }
 
-    // === 포이송 샘플링 ==
+    // -----------------------
+    // 동적 샘플 수 계산
+    // -----------------------
+    // centerCoC가 클수록 샘플 수 증가 (품질 유지)
+    // sampleCount = round( lerp(minSamples, maxSamples, pow(centerCoC, sampleBiasPower)) )
+    const int minSamples = 8;      // 최소 샘플
+    const int maxSamples = 64;     // 최대 샘플
 
-    uint KernelRadius = (uint)ceil(centerCoC * MaxCoCRadius);
-    if (KernelRadius % 2 == 0)
-        KernelRadius++;
+    float t = centerCoC;
+    int sampleCount = (int)round( lerp((float)minSamples, (float)maxSamples, t) );
+    sampleCount = clamp(sampleCount, 1, maxSamples);
 
-    // 최소/최대 제한
-    KernelRadius = clamp(KernelRadius, 1u, 31u);
+    // -----------------------
+    // 픽셀 반경 및 가우시안 sigma 결정
+    // -----------------------
+    float radiusPixels = centerCoC * MaxCoCRadius; // 픽셀 단위 블러 반경
+    float sigma = 0.5f * saturate(centerCoC);     // sigma: CoC 비례, 0~0.5 조절 가능
 
-    float radiusPixels = centerCoC * MaxCoCRadius;
-    float3 acc = float3(0.0f, 0.0f, 0.0f);
-    float wsum = 0;
+    // -----------------------
+    // 누적 변수 초기화
+    // -----------------------
+    float3 accumulatedColor = float3(0.0f,0.0f,0.0f);
+    float accumulatedWeight = 0.0f;
 
-    // for (uint i = 0; i < KernelRadius; i++)
-    // {
-    //     float2 dir = poissonDisk[i % 16];
-    //     float2 off = dir * radiusPixels * TexelSize;
-    //     float2 sampleUV = uv + off;
-    //
-    //     float3 samp = g_InputTexture.SampleLevel(g_LinearSampler, sampleUV, 0).rgb;
-    //     float rNorm = length(dir) / POISSON_MAX_LEN;
-    //     float w = ComputeKernelWeight(rNorm);
-    //     acc += samp * w;
-    //     wsum += w;
-    // }
-    //
-    // float3 result = acc / max(wsum, 1e-6);
-    // float blend = saturate(centerCoC);
-    // float3 outCol = lerp(centerSample.rgb, result, blend);
-    //
-    // // RGB: Blurred Color, A: CoC (유지)
-    // g_OutputTexture[pixelPos] = float4(outCol, centerCoC);
+    // 중심 샘플 포함 (밝기 유지)
+    float centerWeight = RadialGaussianWeight(0.0f, sigma);
+    accumulatedColor += centerSample.rgb * centerWeight;
+    accumulatedWeight += centerWeight;
 
-    for (uint i = 0; i < KernelRadius; ++i)
+    // -----------------------
+    // 샘플 루프: 디스크 채우기
+    // -----------------------
+    for (int si=0; si<sampleCount; ++si)
     {
-        // choose a direction from poisson disk (wrap if KernelRadius > POISSON_COUNT)
-        float2 dir = poissonDisk[i % POISSON_COUNT];
+        // Poisson 기반 방향 선택, 단위벡터로 변환
+        float2 baseDir = poissonDisk[si % POISSON_COUNT];
+        float baseDirLen = max(length(baseDir), 1e-6f);
+        float2 dirUnit = baseDir / baseDirLen;
 
-        // compute normalized radial coordinate in [0..1] for this dir
-        // len(dir) / POISSON_MAX_LEN -> ~0..1
-        float dirLenNorm = length(dir) / POISSON_MAX_LEN;
+        // radialFactor: 0..1 범위로 디스크 내 샘플 위치 결정
+        float radialFactor = ((float)si + 0.5f) / (float)sampleCount;
 
-        // **Important**: Scale dir to actual pixel radius, but dir should be treated as direction*unitRadius
-        // We want UV offset = (normalizedDir) * radiusPixels * TexelSize
-        // Get unit direction:
-        float2 dirUnit = dir / max(length(dir), 1e-6f); // guard divide-by-zero
+        // UV 오프셋 계산
+        float2 offsetUV = dirUnit * (radialFactor * radiusPixels) * TexelSize;
+        float2 sampleUV = uv + offsetUV;
 
-        // optionally multiply by dirLenNorm if you want the poissonDisk to encode radius jitter
-        // here we will use dirLenNorm as an additional radial factor for variety:
-        float radialFactor = dirLenNorm; // 0..1 roughly
+        // 텍스처 샘플링
+        float3 sampleColor = g_InputTexture.SampleLevel(g_LinearSampler, sampleUV, 0).rgb;
 
-        // final offset in UV space
-        float2 off = dirUnit * (radialFactor * radiusPixels) * TexelSize;
-        float2 sampleUV = uv + off;
+        // 정규화된 반경 r=0..1
+        float rNorm = saturate(radialFactor);
 
-        // sample scene color (uv bounds may go outside 0..1; sampler should be clamp)
-        float3 samp = g_InputTexture.SampleLevel(g_LinearSampler, sampleUV, 0).rgb;
+        // 가중치 계산
+        float sampleWeight = RadialGaussianWeight(rNorm, sigma);
 
-        // compute weight based on radial normalized distance (radialFactor)
-        // kernel expects 0..1 where 1 is outermost radius.
-        float w = ComputeKernelWeight(radialFactor);
-
-        // accumulate
-        acc += samp * w;
-        wsum += w;
+        // 누적
+        accumulatedColor += sampleColor * sampleWeight;
+        accumulatedWeight += sampleWeight;
     }
 
-    // if weights sum is (near) zero, fallback to center sample
-    if (wsum <= 1e-6f)
+    // 안전장치: weight 합이 거의 0이면 중심 샘플로 폴백
+    if (accumulatedWeight <= 1e-6f)
     {
         g_OutputTexture[pixelPos] = centerSample;
         return;
     }
 
-    float3 result = acc / wsum;
+    // 누적 컬러 정규화
+    float3 blurredColor = accumulatedColor / accumulatedWeight;
 
-    // mix original and blurred based on CoC strength
-    float blend = saturate(centerCoC);
-    float3 outCol = lerp(centerSample.rgb, result, blend);
-
-    // write result (preserve CoC in alpha)
-    g_OutputTexture[pixelPos] = float4(outCol, centerCoC);
+    // 출력 (RGB=블러 컬러, A=CoC 유지)
+    g_OutputTexture[pixelPos] = float4(blurredColor, centerCoC);
 }
