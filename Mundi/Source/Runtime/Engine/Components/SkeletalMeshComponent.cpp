@@ -668,18 +668,77 @@ void USkeletalMeshComponent::CreateConstraints(UPhysicsAsset* PhysAsset)
 void USkeletalMeshComponent::SyncBodiesToBones()
 {
     if (Bodies.Num() != BodyBoneIndices.Num()) return;  // 안전 검사
+    if (!SkeletalMesh || !SkeletalMesh->GetSkeleton()) return;
 
+    const FTransform& ComponentWorldTransform = GetWorldTransform();
+    const FSkeleton& Skeleton = SkeletalMesh->GetSkeletalMeshData()->Skeleton;
+    const int32 NumBones = Skeleton.Bones.Num();
+
+    // Body가 있는 본 인덱스를 빠르게 찾기 위한 맵
+    TMap<int32, int32> BoneToBodyMap;  // BoneIndex → Bodies 배열 인덱스
     for (int32 i = 0; i < Bodies.Num(); ++i)
     {
-        FBodyInstance* Body = Bodies[i];
-        if (!Body || !Body->IsValidBodyInstance()) continue;
-
         int32 BoneIndex = BodyBoneIndices[i];
-        if (BoneIndex < 0) continue;
-
-        FTransform PhysicsTransform = Body->GetWorldTransform();
-        SetBoneWorldTransform(BoneIndex, PhysicsTransform);
+        if (BoneIndex >= 0)
+        {
+            BoneToBodyMap.Add(BoneIndex, i);
+        }
     }
+
+    // 본 계층 순서대로 (루트부터) ComponentSpace 계산
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        const int32 ParentIndex = Skeleton.Bones[BoneIndex].ParentIndex;
+
+        // 이 본에 Body가 있는지 확인
+        const int32* BodyIndexPtr = BoneToBodyMap.Find(BoneIndex);
+
+        if (BodyIndexPtr)
+        {
+            // Body가 있는 본: Body의 월드 Transform을 ComponentSpace로 변환
+            FBodyInstance* Body = Bodies[*BodyIndexPtr];
+            if (Body && Body->IsValidBodyInstance())
+            {
+                FTransform BodyWorldTransform = Body->GetWorldTransform();
+                // GetRelativeTransform: 부모(Component)의 월드 기준으로 자식(Body)의 상대 Transform 계산
+                FTransform NewComponentSpace = ComponentWorldTransform.GetRelativeTransform(BodyWorldTransform);
+
+                // PhysX는 스케일을 지원하지 않으므로, 원래 본의 스케일 유지
+                NewComponentSpace.Scale3D = CurrentComponentSpacePose[BoneIndex].Scale3D;
+
+                CurrentComponentSpacePose[BoneIndex] = NewComponentSpace;
+            }
+        }
+        else
+        {
+            // Body가 없는 본: 부모의 ComponentSpace + 원래 로컬 오프셋으로 계산
+            if (ParentIndex >= 0)
+            {
+                const FTransform& ParentCS = CurrentComponentSpacePose[ParentIndex];
+                const FTransform& LocalPose = CurrentLocalSpacePose[BoneIndex];
+                CurrentComponentSpacePose[BoneIndex] = ParentCS.GetWorldTransform(LocalPose);
+            }
+            // 루트인데 Body가 없으면 현재 값 유지
+        }
+    }
+
+    // ComponentSpace → LocalSpace 역계산
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        const int32 ParentIndex = Skeleton.Bones[BoneIndex].ParentIndex;
+        if (ParentIndex == -1)
+        {
+            CurrentLocalSpacePose[BoneIndex] = CurrentComponentSpacePose[BoneIndex];
+        }
+        else
+        {
+            const FTransform& ParentCS = CurrentComponentSpacePose[ParentIndex];
+            CurrentLocalSpacePose[BoneIndex] = ParentCS.GetRelativeTransform(CurrentComponentSpacePose[BoneIndex]);
+        }
+    }
+
+    // 최종 스키닝 매트릭스 업데이트
+    UpdateFinalSkinningMatrices();
 }
 
 int32 USkeletalMeshComponent::FindBodyIndex(const FName& BoneName) const
