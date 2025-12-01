@@ -14,7 +14,8 @@ void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
     const FVector4& JointColor)
 {
     if (!Renderer || !SkelMeshComp) return;
-    if (!SkelMeshComp->IsSimulatingPhysics()) return;
+    // IsSimulatingPhysics() 조건 제거: 에디터 미리보기에서도 렌더링되도록
+    // Bodies가 있으면 렌더링 (호출자가 이미 Bodies 유무를 체크함)
 
     const TArray<FBodyInstance*>& Bodies = SkelMeshComp->GetBodies();
     const TArray<int32>& ParentIndices = SkelMeshComp->GetBodyParentIndices();

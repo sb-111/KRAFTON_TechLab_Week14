@@ -306,9 +306,59 @@ void UWorld::Tick(float DeltaSeconds)
 		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
 	}
 
-	// [테스트용] G키로 래그돌 생성 (에디터/PIE 모두에서 동작)
-	// 에디터 모드: 충돌체 크기 확인용 (시뮬레이션 없음)
+	// [에디터용] H키로 래그돌 충돌체 미리보기 (에디터 모드에서만 동작)
+	// Bodies만 생성하고 시뮬레이션은 하지 않음 (디버그 렌더링용)
+	if (!bPie)
+	{
+		static bool bHKeyWasPressed = false;
+		bool bHKeyPressed = (GetAsyncKeyState('H') & 0x8000) != 0;
+
+		if (bHKeyPressed && !bHKeyWasPressed)
+		{
+			for (AActor* Actor : Level->GetActors())
+			{
+				if (!Actor) continue;
+
+				USkeletalMeshComponent* SkelMeshComp = nullptr;
+				for (UActorComponent* Comp : Actor->GetOwnedComponents())
+				{
+					SkelMeshComp = Cast<USkeletalMeshComponent>(Comp);
+					if (SkelMeshComp) break;
+				}
+				if (!SkelMeshComp) continue;
+
+				USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
+				if (!SkelMesh) continue;
+
+				// PhysicsAsset 자동 생성 (없으면)
+				if (!SkelMesh->GetPhysicsAsset())
+				{
+					SkelMesh->AutoGeneratePhysicsAsset();
+				}
+
+				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
+				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
+
+				// 이미 Bodies가 있으면 제거, 없으면 생성 (미리보기 토글)
+				if (SkelMeshComp->GetBodies().IsEmpty())
+				{
+					SkelMeshComp->InitArticulated(PhysAsset);
+					// 시뮬레이션은 하지 않음 (디버그 미리보기만)
+					UE_LOG("[Ragdoll Preview] Created bodies for actor: %s (H to hide)", Actor->GetName().c_str());
+				}
+				else
+				{
+					SkelMeshComp->DestroyPhysicsState();
+					UE_LOG("[Ragdoll Preview] Removed bodies for actor: %s", Actor->GetName().c_str());
+				}
+			}
+		}
+		bHKeyWasPressed = bHKeyPressed;
+	}
+
+	// [PIE용] G키로 래그돌 시뮬레이션 토글 (PIE 모드에서만 동작)
 	// PIE 모드: 실제 물리 시뮬레이션 동작
+	if (bPie)
 	{
 		static bool bGKeyWasPressed = false;
 		bool bGKeyPressed = (GetAsyncKeyState('G') & 0x8000) != 0;
@@ -341,11 +391,22 @@ void UWorld::Tick(float DeltaSeconds)
 				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
 				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
 
-				// 래그돌 생성 (새로운 컴포넌트 기반 API)
-				SkelMeshComp->InitArticulated(PhysAsset);
-				SkelMeshComp->SetSimulatePhysics(true);
-
-				UE_LOG("[Ragdoll Test] Created ragdoll for actor: %s", Actor->GetName().c_str());
+				// 이미 래그돌이 있으면 토글만, 없으면 생성
+				if (SkelMeshComp->GetBodies().IsEmpty())
+				{
+					// 래그돌 생성 (새로운 컴포넌트 기반 API)
+					SkelMeshComp->InitArticulated(PhysAsset);
+					SkelMeshComp->SetSimulatePhysics(true);
+					UE_LOG("[Ragdoll Test] Created ragdoll for actor: %s", Actor->GetName().c_str());
+				}
+				else
+				{
+					// 이미 있으면 SimulatePhysics 토글
+					bool bCurrentlySimulating = SkelMeshComp->IsSimulatingPhysics();
+					SkelMeshComp->SetSimulatePhysics(!bCurrentlySimulating);
+					UE_LOG("[Ragdoll Test] Toggled ragdoll (%s) for actor: %s",
+						!bCurrentlySimulating ? "ON" : "OFF", Actor->GetName().c_str());
+				}
 			}
 		}
 		bGKeyWasPressed = bGKeyPressed;

@@ -223,6 +223,9 @@ void FSceneRenderer::RenderLitPath()
 		RenderDebugPass();
 	}
 
+	// 래그돌 디버그는 에디터/PIE 모두에서 렌더링 (Show flag로 제어)
+	RenderRagdollDebugPass();
+
 	RenderDecalPass();
 	RenderParticleSystemPass();
 }
@@ -1516,12 +1519,31 @@ void FSceneRenderer::RenderDebugPass()
 		}
 	}
 
+	// 수집된 라인을 출력하고 정리
+	OwnerRenderer->EndLineBatch(FMatrix::Identity());
+}
+
+// 래그돌 디버그 렌더링 (에디터/PIE 모두 동작)
+// 조건: SF_Ragdoll Show flag가 켜져 있고, Bodies가 존재하면 렌더링
+void FSceneRenderer::RenderRagdollDebugPass()
+{
+	// Show flag 체크
+	if (!World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_Ragdoll))
+	{
+		return;
+	}
+
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTarget);
+
+	OwnerRenderer->BeginLineBatch();
+
 	// Ragdoll Debug draw
 	for (UMeshComponent* MeshComp : Proxies.Meshes)
 	{
 		if (USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(MeshComp))
 		{
-			if (SkelMeshComp->IsSimulatingPhysics())
+			// Bodies가 있으면 렌더링 (시뮬레이션 여부와 무관)
+			if (!SkelMeshComp->GetBodies().IsEmpty())
 			{
 				FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
 					OwnerRenderer, SkelMeshComp,
@@ -1532,7 +1554,6 @@ void FSceneRenderer::RenderDebugPass()
 		}
 	}
 
-	// 수집된 라인을 출력하고 정리
 	OwnerRenderer->EndLineBatch(FMatrix::Identity());
 }
 
