@@ -59,6 +59,10 @@ void UBoxComponent::SetBoxExtent(const FVector& InExtent, bool bUpdateBoundsNow)
 
 void UBoxComponent::TickComponent(float DeltaTime)
 {
+	//if (BodyInstance.RigidActor)
+	//{
+	//	AddForce(FVector(100.0f, 0.0f, 0.0f));
+	//}
 }
 
 FVector UBoxComponent::GetScaledBoxExtent() const
