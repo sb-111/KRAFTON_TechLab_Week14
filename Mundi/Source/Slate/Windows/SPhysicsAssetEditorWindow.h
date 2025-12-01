@@ -14,6 +14,9 @@ struct FConstraintInstance;
 class SPhysicsAssetEditorWindow : public SViewerWindow
 {
 public:
+    // 다른 위젯에서 Physics Asset Editor 포커스 상태 확인용
+    static bool bIsAnyPhysicsAssetEditorFocused;
+
     SPhysicsAssetEditorWindow();
     virtual ~SPhysicsAssetEditorWindow();
 

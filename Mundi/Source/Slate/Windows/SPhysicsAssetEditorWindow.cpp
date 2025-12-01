@@ -22,6 +22,9 @@
 #include "PlatformProcess.h"
 #include "PathUtils.h"
 
+// Static 변수 정의
+bool SPhysicsAssetEditorWindow::bIsAnyPhysicsAssetEditorFocused = false;
+
 // ========== Shape 와이어프레임 생성 함수들 ==========
 
 static const float PI_CONST = 3.14159265358979323846f;
@@ -260,6 +263,9 @@ void SPhysicsAssetEditorWindow::OnRender()
         bIsWindowHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
         bIsWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
+        // 다른 위젯에서 체크할 수 있도록 static 변수 업데이트
+        bIsAnyPhysicsAssetEditorFocused = bIsWindowFocused;
+
         RenderTabsAndToolbar(EViewerType::PhysicsAsset);
 
         if (!bIsOpen)
@@ -392,6 +398,20 @@ void SPhysicsAssetEditorWindow::OnRender()
         ImGui::EndChild();
 
         ImGui::PopStyleVar();
+
+        // Delete 키로 선택된 Constraint 또는 Shape 삭제 (OnRender에서 bIsWindowFocused 설정 후 처리)
+        PhysicsAssetEditorState* PhysState = GetPhysicsState();
+        if (bIsWindowFocused && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        {
+            if (PhysState && PhysState->SelectedConstraintIndex >= 0)
+            {
+                RemoveConstraint(PhysState->SelectedConstraintIndex);
+            }
+            else
+            {
+                DeleteSelectedShape();
+            }
+        }
     }
     ImGui::End();
 
@@ -401,6 +421,7 @@ void SPhysicsAssetEditorWindow::OnRender()
         CenterRect.UpdateMinMax();
         bIsWindowHovered = false;
         bIsWindowFocused = false;
+        bIsAnyPhysicsAssetEditorFocused = false;
     }
 
     if (!bIsOpen)
@@ -416,20 +437,6 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
     SViewerWindow::OnUpdate(DeltaSeconds);
 
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
-
-    // Delete 키로 선택된 Constraint 또는 Shape 삭제
-    if (ImGui::IsKeyPressed(ImGuiKey_Delete))
-    {
-        if (PhysState && PhysState->SelectedConstraintIndex >= 0)
-        {
-            RemoveConstraint(PhysState->SelectedConstraintIndex);
-        }
-        else
-        {
-            DeleteSelectedShape();
-        }
-    }
-
     if (!PhysState) return;
 
     // 기즈모 드래그 상태 체크 - 드래그 중일 때만 UpdateAnchorFromShape 방지
