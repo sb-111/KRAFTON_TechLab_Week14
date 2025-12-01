@@ -6,11 +6,11 @@
 IMPLEMENT_CLASS(UConstraintAnchorComponent)
 
 void UConstraintAnchorComponent::SetTarget(FConstraintInstance* InConstraint,
-                                            USkeletalMeshComponent* InMeshComp, int32 InBone1Index)
+                                            USkeletalMeshComponent* InMeshComp, int32 InBoneIndex)
 {
     TargetConstraint = InConstraint;
     MeshComp = InMeshComp;
-    Bone1Index = InBone1Index;
+    BoneIndex = InBoneIndex;  // Child 본 (Bone2) 인덱스
     bConstraintModified = false;
     bIsBeingManipulated = false;
     bUpdatingFromConstraint = false;
@@ -19,9 +19,9 @@ void UConstraintAnchorComponent::SetTarget(FConstraintInstance* InConstraint,
     LastAnchorLocation = FVector::Zero();
     LastAnchorRotation = FQuat::Identity();
 
-    if (MeshComp && Bone1Index >= 0)
+    if (MeshComp && BoneIndex >= 0)
     {
-        CachedBoneWorldTransform = MeshComp->GetBoneWorldTransform(Bone1Index);
+        CachedBoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
     }
 }
 
@@ -29,14 +29,14 @@ void UConstraintAnchorComponent::ClearTarget()
 {
     TargetConstraint = nullptr;
     MeshComp = nullptr;
-    Bone1Index = -1;
+    BoneIndex = -1;
     bConstraintModified = false;
     bIsBeingManipulated = false;
 }
 
 void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
 {
-    if (!TargetConstraint || !MeshComp || Bone1Index < 0)
+    if (!TargetConstraint || !MeshComp || BoneIndex < 0)
         return;
 
     // 기즈모 조작 중에는 Constraint에서 Anchor로의 업데이트 무시
@@ -46,12 +46,12 @@ void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
     // OnTransformUpdated()에서 Constraint 수정 방지
     bUpdatingFromConstraint = true;
 
-    CachedBoneWorldTransform = MeshComp->GetBoneWorldTransform(Bone1Index);
+    CachedBoneWorldTransform = MeshComp->GetBoneWorldTransform(BoneIndex);
 
-    // Constraint의 Position1, Rotation1을 월드 좌표로 변환
-    FQuat JointRot = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation1);
+    // Constraint의 Position2, Rotation2를 월드 좌표로 변환 (Child 본 기준)
+    FQuat JointRot = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation2);
     FVector JointWorldPos = CachedBoneWorldTransform.Translation +
-                            CachedBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position1);
+                            CachedBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position2);
     FQuat JointWorldRot = CachedBoneWorldTransform.Rotation * JointRot;
 
     SetWorldLocation(JointWorldPos);
@@ -70,7 +70,7 @@ void UConstraintAnchorComponent::OnTransformUpdated()
 {
     USceneComponent::OnTransformUpdated();
 
-    if (!TargetConstraint || !MeshComp || Bone1Index < 0)
+    if (!TargetConstraint || !MeshComp || BoneIndex < 0)
         return;
 
     // UpdateAnchorFromConstraint() 실행 중에는 Constraint 수정하지 않음
@@ -103,8 +103,8 @@ void UConstraintAnchorComponent::OnTransformUpdated()
     LastAnchorLocation = AnchorWorldPos;
     LastAnchorRotation = AnchorWorldRot;
 
-    // 현재 본 월드 트랜스폼
-    FTransform BoneWorld = MeshComp->GetBoneWorldTransform(Bone1Index);
+    // 현재 본(Child 본) 월드 트랜스폼
+    FTransform BoneWorld = MeshComp->GetBoneWorldTransform(BoneIndex);
     FQuat BoneWorldRotInv = BoneWorld.Rotation.Inverse();
 
     // 본 로컬 좌표로 변환
@@ -112,9 +112,9 @@ void UConstraintAnchorComponent::OnTransformUpdated()
     FQuat LocalRotation = BoneWorldRotInv * AnchorWorldRot;
     FVector LocalEuler = LocalRotation.ToEulerZYXDeg();
 
-    // Constraint에 적용
-    TargetConstraint->Position1 = LocalPosition;
-    TargetConstraint->Rotation1 = LocalEuler;
+    // Constraint에 적용 (Child 본 기준 - Position2, Rotation2)
+    TargetConstraint->Position2 = LocalPosition;
+    TargetConstraint->Rotation2 = LocalEuler;
 
     bConstraintModified = true;
 }

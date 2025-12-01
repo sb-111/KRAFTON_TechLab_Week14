@@ -876,22 +876,22 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     {
         FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[i];
 
-        // Bone1 인덱스 찾기
-        int32 Bone1Index = -1;
+        // Bone2 (Child 본) 인덱스 찾기 - Constraint는 Child 본 위치에 있음
+        int32 Bone2Index = -1;
         for (int32 j = 0; j < (int32)Skeleton->Bones.size(); ++j)
         {
-            if (Skeleton->Bones[j].Name == Constraint.ConstraintBone1.ToString())
+            if (Skeleton->Bones[j].Name == Constraint.ConstraintBone2.ToString())
             {
-                Bone1Index = j;
+                Bone2Index = j;
                 break;
             }
         }
-        if (Bone1Index < 0) continue;
+        if (Bone2Index < 0) continue;
 
-        // Constraint 월드 위치 계산 (Bone1 기준)
-        FTransform Bone1WorldTransform = MeshComp->GetBoneWorldTransform(Bone1Index);
-        FVector ConstraintWorldPos = Bone1WorldTransform.Translation +
-            Bone1WorldTransform.Rotation.RotateVector(Constraint.Position1);
+        // Constraint 월드 위치 계산 (Bone2/Child 본 기준)
+        FTransform Bone2WorldTransform = MeshComp->GetBoneWorldTransform(Bone2Index);
+        FVector ConstraintWorldPos = Bone2WorldTransform.Translation +
+            Bone2WorldTransform.Rotation.RotateVector(Constraint.Position2);
 
         // Ray와 점 사이의 최단 거리 계산
         FVector RayToPoint = ConstraintWorldPos - Ray.Origin;
@@ -2210,19 +2210,21 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
 
         // 본 월드 트랜스폼
         FTransform Bone1World = MeshComp->GetBoneWorldTransform(Bone1Index);
+        FTransform Bone2World = MeshComp->GetBoneWorldTransform(Bone2Index);
 
-        // Joint 위치 계산 (본 로컬 -> 월드)
-        FQuat JointRot1 = FQuat::MakeFromEulerZYX(Constraint.Rotation1);
-        FVector JointPos1 = Bone1World.Translation +
-            Bone1World.Rotation.RotateVector(Constraint.Position1);
-        FQuat JointWorldRot = Bone1World.Rotation * JointRot1;
+        // Joint 위치 계산 - Child 본(Bone2) 위치 기준 (언리얼 방식)
+        // Constraint는 Child 본의 원점(관절 위치)에 생성됨
+        FQuat JointRot2 = FQuat::MakeFromEulerZYX(Constraint.Rotation2);
+        FVector JointPos = Bone2World.Translation +
+            Bone2World.Rotation.RotateVector(Constraint.Position2);
+        FQuat JointWorldRot = Bone2World.Rotation * JointRot2;
 
         // 선택 상태에 따른 크기
         float ConeHeight = bIsSelected ? SelectedConeHeight : NormalConeHeight;
         float ArcRadius = bIsSelected ? SelectedArcRadius : NormalArcRadius;
 
         // 1. Joint 마커 (작은 구)
-        FMatrix MarkerTransform = FMatrix::FromTRS(JointPos1, FQuat::Identity(), FVector(MarkerRadius, MarkerRadius, MarkerRadius));
+        FMatrix MarkerTransform = FMatrix::FromTRS(JointPos, FQuat::Identity(), FVector(MarkerRadius, MarkerRadius, MarkerRadius));
         World->AddDebugSphere(MarkerTransform, MarkerColor);
 
         // 2. Swing 원뿔 (양방향 다이아몬드 형태, 빨간색)
@@ -2241,7 +2243,7 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
             FLinearColor ConeColor = bIsSelected ? SwingConeSelectedColor : SwingConeColor;
 
             // 양방향 원뿔 (메시 자체가 양방향)
-            FMatrix ConeTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            FMatrix ConeTransform = FMatrix::FromTRS(JointPos, JointWorldRot, FVector::One());
             World->AddDebugCone(ConeTransform, Swing1Rad, Swing2Rad, ConeHeight, ConeColor);
         }
 
@@ -2252,14 +2254,14 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
             float TwistRad = Constraint.TwistLimitAngle * PI_CONST / 180.0f;
             TwistRad = FMath::Max(TwistRad, 0.05f);
 
-            FMatrix ArcTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            FMatrix ArcTransform = FMatrix::FromTRS(JointPos, JointWorldRot, FVector::One());
             FLinearColor ArcColor = bIsSelected ? TwistArcSelectedColor : TwistArcColor;
             World->AddDebugArc(ArcTransform, TwistRad, ArcRadius, ArcColor);
         }
         else if (Constraint.TwistMotion == EAngularConstraintMotion::Free)
         {
             // Free면 전체 원 (PI = 180도, 최대 크기)
-            FMatrix ArcTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            FMatrix ArcTransform = FMatrix::FromTRS(JointPos, JointWorldRot, FVector::One());
             FLinearColor ArcColor = bIsSelected ? TwistArcSelectedColor : TwistArcColor;
             World->AddDebugArc(ArcTransform, PI_CONST, ArcRadius, ArcColor);
         }
@@ -2489,20 +2491,20 @@ void SPhysicsAssetEditorWindow::UpdateConstraintGizmo()
     USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
     if (!MeshComp) return;
 
-    // Bone1 인덱스 찾기
-    int32 Bone1Index = -1;
+    // Bone2 (Child 본) 인덱스 찾기 - Constraint는 Child 본 위치에 생성됨
+    int32 Bone2Index = -1;
     for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
     {
-        if (Skeleton->Bones[i].Name == Constraint.ConstraintBone1.ToString())
+        if (Skeleton->Bones[i].Name == Constraint.ConstraintBone2.ToString())
         {
-            Bone1Index = i;
+            Bone2Index = i;
             break;
         }
     }
-    if (Bone1Index < 0) return;
+    if (Bone2Index < 0) return;
 
-    // ConstraintAnchorComponent에 타겟 설정 및 위치 업데이트
-    PhysState->ConstraintGizmoAnchor->SetTarget(&Constraint, MeshComp, Bone1Index);
+    // ConstraintAnchorComponent에 타겟 설정 및 위치 업데이트 (Child 본 기준)
+    PhysState->ConstraintGizmoAnchor->SetTarget(&Constraint, MeshComp, Bone2Index);
     PhysState->ConstraintGizmoAnchor->UpdateAnchorFromConstraint();
     PhysState->ConstraintGizmoAnchor->SetVisibility(true);
     PhysState->ConstraintGizmoAnchor->SetEditability(true);
