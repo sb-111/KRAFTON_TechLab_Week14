@@ -48,6 +48,8 @@ public:
 	 */
 	void SetBoxExtent(const FVector& InExtent, bool bUpdateBounds = true);
 
+	void TickComponent(float DeltaTime) override;
+
 	/**
 	 * Box 크기를 반환합니다 (로컬 스페이스).
 	 */

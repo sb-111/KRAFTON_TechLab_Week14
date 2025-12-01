@@ -2,7 +2,9 @@
 #include "BodyInstance.h"
 #include "PrimitiveComponent.h"
 #include "PhysicsSystem.h"
+#include "PhysicsScene.h"
 #include "StaticMeshComponent.h"
+#include "extensions/PxRigidBodyExt.h"
 #include "BodySetup.h"
 #include "AggregateGeometry.h"
 #include "PhysxConverter.h"
@@ -18,15 +20,67 @@ void FBodyInstance::TermBody()
 {
 	if (RigidActor)
 	{
-		if (RigidActor->getScene())
-		{
-			RigidActor->getScene()->removeActor(*RigidActor);
-		}
-		RigidActor->release();
+		GWorld->GetPhysicsScene()->WriteInTheDeathNote(RigidActor);
 		RigidActor = nullptr;
 	}
 	BodySetup = nullptr;
 	BoneIndex = -1;
+}
+
+void FBodyInstance::AddForce(const FVector& InForce)
+{
+	bHasPendingForce = true;
+	PendingForce += InForce;
+}
+
+void FBodyInstance::AddTorque(const FVector& InTorque)
+{
+	bHasPendingForce = true;
+	PendingTorque += InTorque;
+}
+
+void FBodyInstance::FlushPendingForce()
+{
+	if (!bHasPendingForce)
+	{
+		return;
+	}
+	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
+
+	if (RigidBody)
+	{
+		RigidBody->addForce(PhysxConverter::ToPxVec3(PendingForce));
+		RigidBody->addTorque(PhysxConverter::ToPxVec3(PendingTorque));
+	}
+	PendingForce = FVector::Zero();
+	PendingTorque = FVector::Zero();
+
+	bHasPendingForce = false;
+}
+
+void FBodyInstance::UpdateMassProperty()
+{
+	if (!RigidActor)
+	{
+		return;
+	}
+	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
+
+	if (!RigidBody)
+	{
+		UE_LOG("Static Actor는 질량을 바꿀 수 없습니다.");
+		return;
+	}
+	
+	if (OwnerComponent->bOverrideMass)
+	{
+		PxRigidBodyExt::setMassAndUpdateInertia(*RigidBody, OwnerComponent->Mass);
+	}
+	else
+	{
+		PxRigidBodyExt::updateMassAndInertia(*RigidBody, OwnerComponent->Density);
+	}
+
 }
 
 void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
@@ -46,10 +100,26 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	if (InOwnerComponent->MobilityType == EMobilityType::Movable)
 	{
 		// RigidDynamic: 움직이는 강체
-		NewActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+		}
+		else
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
+		NewActor = DynamicActor;
 	}
 	else
 	{
+		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침. 
+		// TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			UE_LOG("Static이면서 동시에 SimulatePhysics할 수 없습니다, SimulatePhysics를 Off합니다");
+			InOwnerComponent->bSimulatePhysics = false;
+		}
 		NewActor = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
 	}
 
@@ -60,7 +130,9 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	NewActor->userData = (void*)this;
 	RigidActor = NewActor;
 
-	PhysicsSystem.GetScene()->addActor(*NewActor);
+	UpdateMassProperty();
+
+	GWorld->GetPhysicsScene()->AddActor(*NewActor);
 }
 
 void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor)
@@ -89,6 +161,7 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 				Shape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, Geometry.any(), *Material);
 
 				Shape->setLocalPose(PhysxConverter::ToPxTransform(LocalTransform));
+				
 
 				SetCollisionType(Shape, PrimitiveComponent);
 			}
@@ -118,6 +191,13 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 {
 	switch (Component->CollisionType)
 	{
+	case ECollisionEnabled::None:
+	{
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+	}
+	break;
 	case ECollisionEnabled::QueryOnly:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
@@ -150,13 +230,13 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 
 // ===== 래그돌용 함수들 (언리얼 방식) =====
 
-void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex, uint32 InRagdollOwnerID)
+void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex, uint32 InRagdollOwnerID)
 {
 	if (!Setup) return;
 	if (RigidActor) return;	// 이미 초기화됨
 
 	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
-	if (!PhysicsSystem.GetPhysics() || !PhysicsSystem.GetScene()) return;
+	if (!PhysicsSystem.GetPhysics() || !GWorld->GetPhysicsScene()) return;
 
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
@@ -164,29 +244,52 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 
 	// RigidDynamic 생성
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
-	PxRigidDynamic* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+	PxRigidActor* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
 	if (!Body) return;
 
-	// UBodySetup의 AggGeom에서 Shape들 생성
-	CreateShapesFromBodySetup(Setup, Body);
+	if (InOwnerComponent->MobilityType == EMobilityType::Movable || !GWorld->bPie)
+	{
+		// RigidDynamic: 움직이는 강체
+		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+		}
+		else
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
+		Body = DynamicActor;
+		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
+		// 질량 설정
+		// Damping 설정
+		DynamicActor->setLinearDamping(Setup->LinearDamping);
+		DynamicActor->setAngularDamping(Setup->AngularDamping);
+		PxRigidBodyExt::updateMassAndInertia(*DynamicActor, 1.0f);
+	}
+	else
+	{
+		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침. 
+		// TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			UE_LOG("Static이면서 동시에 SimulatePhysics할 수 없습니다, SimulatePhysics를 Off합니다");
+			InOwnerComponent->bSimulatePhysics = false;
+		}
+		Body = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
+		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
+	}
 
-	// 질량 설정 (밀도 기반 부피 비례 자동 계산)
-	// 밀도 1.0 = 물과 비슷 (인체 밀도 ~1.01 g/cm³)
-	const float Density = 1.0f;
-	PxRigidBodyExt::updateMassAndInertia(*Body, Density);
 
-	// Damping 설정
-	Body->setLinearDamping(Setup->LinearDamping);
-	Body->setAngularDamping(Setup->AngularDamping);
 
 	// Scene에 추가
-	PhysicsSystem.GetScene()->addActor(*Body);
-	Body->wakeUp();
+	GWorld->GetPhysicsScene()->AddActor(*Body);
 
+	Body->userData = (void*)this;
 	RigidActor = Body;
 }
 
-void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic* Body)
+void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* Body, UPrimitiveComponent* OwnerComponent)
 {
 	if (!Setup || !Body) return;
 
@@ -218,6 +321,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 		if (Shape)
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 			Shape->setSimulationFilterData(RagdollFilterData);
 		}
@@ -241,6 +345,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxVec3(Box.Center),
 				PhysxConverter::ToPxQuat(Rotation)
 			);
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 			Shape->setSimulationFilterData(RagdollFilterData);
 		}
@@ -263,6 +368,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxVec3(Capsule.Center),
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 			Shape->setSimulationFilterData(RagdollFilterData);
 		}

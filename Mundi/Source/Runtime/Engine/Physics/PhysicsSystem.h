@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 using namespace physx;
+class FPhysicsScene;
+
 
 class FPhysicsSystem
 {
@@ -13,7 +15,7 @@ public:
 
     PxPhysics* GetPhysics();
 
-    PxScene* GetScene();
+    std::unique_ptr<FPhysicsScene> CreateScene();
 
     PxMaterial* GetDefaultMaterial();
 
@@ -44,9 +46,7 @@ private:
     PxCooking* Cooking = nullptr;     
 
     // Physx에 스레드 배분해줌
-    PxDefaultCpuDispatcher* Dispatcher = nullptr;  
-
-    PxScene* Scene = nullptr;       
+    PxDefaultCpuDispatcher* Dispatcher = nullptr;     
 
     // 표면 성질 정의(마찰, 반발계수)
     PxMaterial* Material = nullptr;    
