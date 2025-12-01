@@ -109,6 +109,13 @@ public:
     UPROPERTY(EditAnywhere, Category = "Transform")
     FVector Rotation2 = FVector::Zero();    // Euler Angles (Degrees)
 
+    // ===== Collision Settings (충돌 설정) =====
+    // 언리얼 방식: Joint로 연결된 두 Body 간의 충돌 비활성화 여부
+    // true = 인접 본 간 충돌 무시 (래그돌 기본값)
+    // false = 인접 본 간 충돌 활성화
+    UPROPERTY(EditAnywhere, Category = "Collision")
+    bool bDisableCollision = true;
+
     // ===== Motor Settings (Drive) =====
     // 시체가 된 후에도 특정 자세를 유지하려 하거나 힘을 줄 때 사용
     UPROPERTY(EditAnywhere, Category = "Motor")
