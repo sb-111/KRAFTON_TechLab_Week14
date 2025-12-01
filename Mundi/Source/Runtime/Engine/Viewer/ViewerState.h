@@ -150,6 +150,7 @@ struct PhysicsAssetEditorState : public ViewerState
     // ==== Graph View 상태
     FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋
     float GraphZoom = 1.0f;                     // 그래프 줌 레벨
+    int32 GraphFocusBodyIndex = -1;             // 그래프 왼쪽에 표시할 Body (트리 선택 시에만 갱신)
 
     // 파일 상태
     FString CurrentFilePath;

@@ -69,7 +69,7 @@ private:
 
     // Selection helpers
     void SelectBody(int32 Index, PhysicsAssetEditorState::ESelectionSource Source);
-    void SelectConstraint(int32 Index);
+    void SelectConstraint(int32 Index, PhysicsAssetEditorState::ESelectionSource Source);
     void ClearSelection();
 
     // Body 생성/삭제

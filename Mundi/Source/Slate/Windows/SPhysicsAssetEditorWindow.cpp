@@ -925,7 +925,7 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     }
     else if (ClosestConstraintIndex >= 0)
     {
-        SelectConstraint(ClosestConstraintIndex);
+        SelectConstraint(ClosestConstraintIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
     }
     else
     {
@@ -1589,14 +1589,31 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         return;
     }
 
+    if (!ActiveState || !ActiveState->CurrentMesh)
+    {
+        ImGui::TextDisabled("No mesh loaded");
+        ImGui::EndChild();
+        return;
+    }
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton)
+    {
+        ImGui::TextDisabled("No skeleton");
+        ImGui::EndChild();
+        return;
+    }
+
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
+    // 배경
     DrawList->AddRectFilled(canvasPos,
         ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y),
         IM_COL32(30, 30, 30, 255));
 
+    // 그리드
     float gridSize = 20.0f * PhysState->GraphZoom;
     for (float x = fmodf(PhysState->GraphOffset.X, gridSize); x < canvasSize.x; x += gridSize)
     {
@@ -1609,27 +1626,297 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
             ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + y), IM_COL32(50, 50, 50, 255));
     }
 
-    if (PhysState->SelectedBodyIndex >= 0 && PhysState->SelectedBodyIndex < PhysState->EditingAsset->Bodies.Num())
+    // 본 깊이 계산 헬퍼 (스켈레톤 계층에서 루트로부터의 거리)
+    auto GetBoneDepth = [Skeleton](const FName& BoneName) -> int32
     {
-        UBodySetup* Body = PhysState->EditingAsset->Bodies[PhysState->SelectedBodyIndex];
-        if (Body)
+        auto it = Skeleton->BoneNameToIndex.find(BoneName.ToString());
+        if (it == Skeleton->BoneNameToIndex.end()) return -1;
+
+        int32 boneIdx = it->second;
+        int32 depth = 0;
+        while (boneIdx >= 0)
         {
-            FVector2D centerPos(canvasSize.x * 0.5f, canvasSize.y * 0.5f);
-            bool bSelectedFromGraph = (PhysState->SelectionSource == PhysicsAssetEditorState::ESelectionSource::Graph);
-            uint32 color = bSelectedFromGraph ? IM_COL32(150, 100, 200, 255) : IM_COL32(70, 130, 180, 255);
-            RenderGraphNode(centerPos, Body->BoneName.ToString(), true, true, color);
+            boneIdx = Skeleton->Bones[boneIdx].ParentIndex;
+            depth++;
+        }
+        return depth;
+    };
+
+    // GraphFocusBodyIndex 갱신: 트리/뷰포트에서 선택한 경우에만 갱신
+    // 그래프에서 노드 클릭 시에는 갱신하지 않음 (SelectionSource로 구분)
+    if (PhysState->SelectionSource == PhysicsAssetEditorState::ESelectionSource::TreeOrViewport)
+    {
+        if (PhysState->SelectedBodyIndex >= 0 && PhysState->SelectedBodyIndex < PhysState->EditingAsset->Bodies.Num())
+        {
+            // Body 선택 시: 해당 Body를 그래프 포커스로
+            PhysState->GraphFocusBodyIndex = PhysState->SelectedBodyIndex;
+        }
+        else if (PhysState->SelectedConstraintIndex >= 0 && PhysState->SelectedConstraintIndex < PhysState->EditingAsset->Constraints.Num())
+        {
+            // Constraint 선택 시: 스켈레톤 계층에서 더 상위(Root에 가까운) Body를 그래프 포커스로
+            FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[PhysState->SelectedConstraintIndex];
+
+            // Bone1, Bone2에 해당하는 Body 인덱스 찾기
+            int32 Body1Idx = -1, Body2Idx = -1;
+            for (int32 j = 0; j < PhysState->EditingAsset->Bodies.Num(); ++j)
+            {
+                if (PhysState->EditingAsset->Bodies[j]->BoneName == Constraint.ConstraintBone1)
+                    Body1Idx = j;
+                if (PhysState->EditingAsset->Bodies[j]->BoneName == Constraint.ConstraintBone2)
+                    Body2Idx = j;
+            }
+
+            // 스켈레톤 계층에서 더 상위(깊이가 작은)인 Body 선택
+            if (Body1Idx >= 0 && Body2Idx >= 0)
+            {
+                int32 depth1 = GetBoneDepth(Constraint.ConstraintBone1);
+                int32 depth2 = GetBoneDepth(Constraint.ConstraintBone2);
+
+                // 깊이가 작을수록 Root에 가까움 (상위)
+                PhysState->GraphFocusBodyIndex = (depth1 <= depth2) ? Body1Idx : Body2Idx;
+            }
+            else if (Body1Idx >= 0)
+            {
+                PhysState->GraphFocusBodyIndex = Body1Idx;
+            }
+            else if (Body2Idx >= 0)
+            {
+                PhysState->GraphFocusBodyIndex = Body2Idx;
+            }
         }
     }
-    else
+
+    // GraphFocusBodyIndex가 유효하지 않으면 메시지 표시
+    if (PhysState->GraphFocusBodyIndex < 0 || PhysState->GraphFocusBodyIndex >= PhysState->EditingAsset->Bodies.Num())
     {
-        // Use Dummy to advance cursor instead of SetCursorScreenPos
         ImGui::Dummy(ImVec2(10, 30));
-        ImGui::TextDisabled("Select a body to view connections");
+        ImGui::TextDisabled("Select a body or constraint from tree");
+        ImGui::EndChild();
+        return;
     }
 
-    // Ensure valid size for InvisibleButton
+    // 그래프는 항상 GraphFocusBodyIndex 기준으로 렌더링
+    UBodySetup* FocusBody = PhysState->EditingAsset->Bodies[PhysState->GraphFocusBodyIndex];
+    FName FocusBoneName = FocusBody->BoneName;
+
+    // 포커스 Body와 연결된 모든 Constraint 및 이웃 Body 찾기
+    struct FNeighborInfo
+    {
+        int32 ConstraintIndex;
+        int32 NeighborBodyIndex;  // Constraint 건너편 Body
+    };
+    TArray<FNeighborInfo> Neighbors;
+
+    for (int32 i = 0; i < PhysState->EditingAsset->Constraints.Num(); ++i)
+    {
+        FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[i];
+
+        // 포커스 Body가 이 Constraint의 Bone1 또는 Bone2인지 확인
+        bool bIsBone1 = (Constraint.ConstraintBone1 == FocusBoneName);
+        bool bIsBone2 = (Constraint.ConstraintBone2 == FocusBoneName);
+
+        if (bIsBone1 || bIsBone2)
+        {
+            // 건너편 본 이름 찾기
+            FName NeighborBoneName = bIsBone1 ? Constraint.ConstraintBone2 : Constraint.ConstraintBone1;
+
+            // 건너편 Body 인덱스 찾기
+            int32 NeighborBodyIdx = -1;
+            for (int32 j = 0; j < PhysState->EditingAsset->Bodies.Num(); ++j)
+            {
+                if (PhysState->EditingAsset->Bodies[j]->BoneName == NeighborBoneName)
+                {
+                    NeighborBodyIdx = j;
+                    break;
+                }
+            }
+
+            if (NeighborBodyIdx >= 0)
+            {
+                FNeighborInfo Info;
+                Info.ConstraintIndex = i;
+                Info.NeighborBodyIndex = NeighborBodyIdx;
+                Neighbors.Add(Info);
+            }
+        }
+    }
+
+    if (Neighbors.Num() == 0)
+    {
+        ImGui::Dummy(ImVec2(10, 30));
+        ImGui::TextDisabled("No constraints connected");
+        ImGui::EndChild();
+        return;
+    }
+
+    // 노드 크기 및 레이아웃 상수 (노드 크기 확대)
+    const float NodeWidth = 120.0f * PhysState->GraphZoom;
+    const float NodeHeight = 65.0f * PhysState->GraphZoom;
+    const float ConstraintNodeWidth = 140.0f * PhysState->GraphZoom;
+    const float ConstraintNodeHeight = 45.0f * PhysState->GraphZoom;
+    const float HorizontalSpacing = 160.0f * PhysState->GraphZoom;
+    const float VerticalSpacing = 85.0f * PhysState->GraphZoom;
+
+    // 색상 정의 (언리얼 스타일)
+    const ImU32 BodyColor = IM_COL32(160, 200, 130, 255);           // 연두색 (Body)
+    const ImU32 BodySelectedColor = IM_COL32(180, 220, 150, 255);   // 밝은 연두색 (선택된 Body)
+    const ImU32 ConstraintColor = IM_COL32(220, 180, 100, 255);     // 노란색/주황색 (Constraint)
+    const ImU32 ConstraintSelectedColor = IM_COL32(240, 200, 120, 255); // 밝은 노란색 (선택된 Constraint)
+    const ImU32 LineColor = IM_COL32(150, 150, 150, 255);           // 연결선
+    const ImU32 TextColor = IM_COL32(40, 40, 40, 255);              // 검은색 글씨 (통일)
+
+    // 레이아웃: 왼쪽(선택된 Body 1개) - 가운데(Constraint들) - 오른쪽(이웃 Body들)
+    int32 numNeighbors = Neighbors.Num();
+    float totalHeight = (numNeighbors - 1) * VerticalSpacing;
+    float centerY = canvasPos.y + canvasSize.y * 0.5f + PhysState->GraphOffset.Y;
+    float startY = centerY - totalHeight * 0.5f;
+
+    // X 위치
+    float leftX = canvasPos.x + canvasSize.x * 0.5f + PhysState->GraphOffset.X - HorizontalSpacing;
+    float centerX = canvasPos.x + canvasSize.x * 0.5f + PhysState->GraphOffset.X;
+    float rightX = canvasPos.x + canvasSize.x * 0.5f + PhysState->GraphOffset.X + HorizontalSpacing;
+
+    // 선택된 Body Y 위치 (세로 중앙)
+    float selectedBodyY = centerY;
+
+    // ========== 연결선 그리기 (노드 뒤에) ==========
+    for (int32 i = 0; i < numNeighbors; ++i)
+    {
+        float rowY = startY + i * VerticalSpacing;
+
+        ImVec2 selectedPos(leftX, selectedBodyY);
+        ImVec2 constraintPos(centerX, rowY);
+        ImVec2 neighborPos(rightX, rowY);
+
+        // 선택된 Body → Constraint
+        DrawList->AddLine(
+            ImVec2(selectedPos.x + NodeWidth * 0.5f, selectedPos.y),
+            ImVec2(constraintPos.x - ConstraintNodeWidth * 0.5f, constraintPos.y),
+            LineColor, 2.0f);
+
+        // Constraint → 이웃 Body
+        DrawList->AddLine(
+            ImVec2(constraintPos.x + ConstraintNodeWidth * 0.5f, constraintPos.y),
+            ImVec2(neighborPos.x - NodeWidth * 0.5f, neighborPos.y),
+            LineColor, 2.0f);
+    }
+
+    // ========== 노드 그리기 ==========
+
+    // 헬퍼 람다: Body 노드 그리기 (언리얼 스타일)
+    auto DrawBodyNode = [&](ImVec2 pos, const FString& boneName, int32 bodyIdx, int32 shapeCount, bool bSelected)
+    {
+        ImVec2 nodeMin(pos.x - NodeWidth * 0.5f, pos.y - NodeHeight * 0.5f);
+        ImVec2 nodeMax(pos.x + NodeWidth * 0.5f, pos.y + NodeHeight * 0.5f);
+
+        // 배경색 (연두색)
+        ImU32 bgColor = bSelected ? BodySelectedColor : BodyColor;
+        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f);
+        if (bSelected)
+            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f, 0, 2.0f);
+
+        // "바디" 라벨 (검은 글씨)
+        const char* bodyLabel = "바디";
+        ImVec2 labelSize = ImGui::CalcTextSize(bodyLabel);
+        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, bodyLabel);
+
+        // 본 이름 (검은 글씨)
+        FString displayName = boneName;
+        ImVec2 nameSize = ImGui::CalcTextSize(displayName.c_str());
+        if (nameSize.x > NodeWidth - 10)
+        {
+            // 이름이 너무 길면 뒤에서 자르기
+            size_t maxLen = 12;
+            if (boneName.length() > maxLen)
+                displayName = boneName.substr(boneName.length() - maxLen);
+            nameSize = ImGui::CalcTextSize(displayName.c_str());
+        }
+        DrawList->AddText(ImVec2(pos.x - nameSize.x * 0.5f, pos.y - 5), TextColor, displayName.c_str());
+
+        // "셰이프 N개" (검은 글씨)
+        char shapeText[32];
+        sprintf_s(shapeText, "셰이프 %d개", shapeCount);
+        ImVec2 shapeSize = ImGui::CalcTextSize(shapeText);
+        DrawList->AddText(ImVec2(pos.x - shapeSize.x * 0.5f, nodeMax.y - 18), TextColor, shapeText);
+
+        // 클릭 감지
+        if (ImGui::IsMouseHoveringRect(nodeMin, nodeMax) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            SelectBody(bodyIdx, PhysicsAssetEditorState::ESelectionSource::Graph);
+        }
+    };
+
+    // 헬퍼 람다: Constraint 노드 그리기 (언리얼 스타일)
+    // 표시 형식: 자식본:부모본 (스켈레톤 계층 구조 기준, Bone1/Bone2 순서 무관)
+    auto DrawConstraintNode = [&](ImVec2 pos, const FString& bone1, const FString& bone2, int32 constraintIdx, bool bSelected)
+    {
+        ImVec2 nodeMin(pos.x - ConstraintNodeWidth * 0.5f, pos.y - ConstraintNodeHeight * 0.5f);
+        ImVec2 nodeMax(pos.x + ConstraintNodeWidth * 0.5f, pos.y + ConstraintNodeHeight * 0.5f);
+
+        // 배경색 (노란색/주황색)
+        ImU32 bgColor = bSelected ? ConstraintSelectedColor : ConstraintColor;
+        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f);
+        if (bSelected)
+            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f, 0, 2.0f);
+
+        // "컨스트레인트" 라벨 (검은 글씨)
+        const char* constraintLabel = "컨스트레인트";
+        ImVec2 labelSize = ImGui::CalcTextSize(constraintLabel);
+        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, constraintLabel);
+
+        // Bone2 : Bone1 표시 (언리얼 방식: ConstraintBone2(Child) : ConstraintBone1(Parent))
+        // 이름 축약 (뒤에서 10자)
+        FString shortBone1 = bone1.length() > 10 ? bone1.substr(bone1.length() - 10) : bone1;
+        FString shortBone2 = bone2.length() > 10 ? bone2.substr(bone2.length() - 10) : bone2;
+        FString connectionText = shortBone2 + " : " + shortBone1;
+        ImVec2 connSize = ImGui::CalcTextSize(connectionText.c_str());
+        DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18), TextColor, connectionText.c_str());
+
+        // 클릭 감지
+        if (ImGui::IsMouseHoveringRect(nodeMin, nodeMax) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            SelectConstraint(constraintIdx, PhysicsAssetEditorState::ESelectionSource::Graph);
+        }
+    };
+
+    // Shape 개수 계산 헬퍼
+    auto GetBodyShapeCount = [](UBodySetup* body) -> int32
+    {
+        if (!body) return 0;
+        return body->AggGeom.SphereElems.Num() + body->AggGeom.BoxElems.Num() + body->AggGeom.SphylElems.Num();
+    };
+
+    // ========== 포커스 Body 노드 그리기 (왼쪽, 하나만) ==========
+    ImVec2 focusPos(leftX, selectedBodyY);
+    bool bFocusBodyHighlight = (PhysState->SelectedBodyIndex == PhysState->GraphFocusBodyIndex);
+    DrawBodyNode(focusPos, FocusBody->BoneName.ToString(), PhysState->GraphFocusBodyIndex,
+        GetBodyShapeCount(FocusBody), bFocusBodyHighlight);
+
+    // ========== Constraint 및 이웃 Body 노드 그리기 ==========
+    for (int32 i = 0; i < numNeighbors; ++i)
+    {
+        const FNeighborInfo& Info = Neighbors[i];
+        float rowY = startY + i * VerticalSpacing;
+
+        // Constraint (가운데)
+        FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[Info.ConstraintIndex];
+        ImVec2 constraintPos(centerX, rowY);
+        bool bConstraintSelected = (PhysState->SelectedConstraintIndex == Info.ConstraintIndex);
+        DrawConstraintNode(constraintPos, Constraint.ConstraintBone1.ToString(),
+            Constraint.ConstraintBone2.ToString(), Info.ConstraintIndex, bConstraintSelected);
+
+        // 이웃 Body (오른쪽)
+        UBodySetup* NeighborBody = PhysState->EditingAsset->Bodies[Info.NeighborBodyIndex];
+        ImVec2 neighborPos(rightX, rowY);
+        bool bNeighborSelected = (PhysState->SelectedBodyIndex == Info.NeighborBodyIndex);
+        DrawBodyNode(neighborPos, NeighborBody->BoneName.ToString(), Info.NeighborBodyIndex,
+            GetBodyShapeCount(NeighborBody), bNeighborSelected);
+    }
+
+    // Ensure valid size for InvisibleButton (패닝/줌용)
     if (canvasSize.x > 1 && canvasSize.y > 1)
     {
+        ImGui::SetCursorScreenPos(canvasPos);
         ImGui::InvisibleButton("GraphCanvas", canvasSize);
         if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {
@@ -2309,7 +2596,7 @@ void SPhysicsAssetEditorWindow::SelectBody(int32 Index, PhysicsAssetEditorState:
     UpdateConstraintGizmo();
 }
 
-void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index)
+void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index, PhysicsAssetEditorState::ESelectionSource Source)
 {
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
     if (!PhysState) return;
@@ -2317,6 +2604,7 @@ void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index)
     PhysState->SelectedBodyIndex = -1;
     PhysState->SelectedShapeIndex = -1;
     PhysState->SelectedShapeType = EShapeType::None;
+    PhysState->SelectionSource = Source;
 
     // Shape 기즈모 숨김
     UpdateShapeGizmo();
@@ -2911,7 +3199,7 @@ void SPhysicsAssetEditorWindow::AddConstraintBetweenBodies(int32 BodyIndex1, int
     PhysState->EditingAsset->Constraints.Add(NewConstraint);
 
     int32 NewIndex = PhysState->EditingAsset->Constraints.Num() - 1;
-    SelectConstraint(NewIndex);
+    SelectConstraint(NewIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
     PhysState->bIsDirty = true;
     PhysState->bConstraintsDirty = true;
 
@@ -3010,7 +3298,7 @@ void SPhysicsAssetEditorWindow::RenderConstraintTreeNode(int32 ConstraintIndex, 
 
     if (ImGui::IsItemClicked())
     {
-        SelectConstraint(ConstraintIndex);
+        SelectConstraint(ConstraintIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
     }
 
     // 우클릭 컨텍스트 메뉴
