@@ -208,6 +208,9 @@ SPhysicsAssetEditorWindow::SPhysicsAssetEditorWindow()
 
 SPhysicsAssetEditorWindow::~SPhysicsAssetEditorWindow()
 {
+    // 포커스 플래그 리셋 (윈도우 파괴 시)
+    bIsAnyPhysicsAssetEditorFocused = false;
+
     for (int i = 0; i < Tabs.Num(); ++i)
     {
         ViewerState* State = Tabs[i];
@@ -237,6 +240,9 @@ void SPhysicsAssetEditorWindow::OnRender()
         IconLoad = NewObject<UTexture>();
         IconLoad->Load(GDataDir + "/Icon/Toolbar_Load.png", Device);
     }
+
+    // 매 프레임 시작 시 포커스 플래그 리셋 (윈도우가 닫혀도 리셋되도록)
+    bIsAnyPhysicsAssetEditorFocused = false;
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoSavedSettings;
 
