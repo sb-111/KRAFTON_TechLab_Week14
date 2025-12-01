@@ -3,6 +3,7 @@
 class UWorld; class FViewport; class FViewportClient; class ASkeletalMeshActor; class USkeletalMesh; class UAnimSequence;
 class UParticleSystem; class UParticleSystemComponent; class AActor; class UParticleModule;
 class UShapeAnchorComponent;
+class UConstraintAnchorComponent;
 
 struct FAnimNotifyEvent
 {
@@ -135,6 +136,9 @@ struct PhysicsAssetEditorState : public ViewerState
 
     // ==== Shape 기즈모용 앵커 ====
     UShapeAnchorComponent* ShapeGizmoAnchor = nullptr;   // 선택된 Shape의 기즈모 앵커
+
+    // ==== Constraint 기즈모용 앵커 ====
+    UConstraintAnchorComponent* ConstraintGizmoAnchor = nullptr;  // 선택된 Constraint의 기즈모 앵커
 
     // ==== Constraint 시각화 ====
     class ULineComponent* ConstraintLineComponent = nullptr;  // Constraint 와이어프레임용

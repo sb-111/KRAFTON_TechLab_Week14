@@ -78,6 +78,9 @@ private:
     // Shape 기즈모 업데이트
     void UpdateShapeGizmo();
 
+    // Constraint 기즈모 업데이트
+    void UpdateConstraintGizmo();
+
     // Context menu
     void RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex);
 

@@ -10,6 +10,7 @@
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
+#include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
 #include "EditorAssetPreviewContext.h"
 
 ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UWorld* InWorld,
@@ -86,6 +87,16 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 		State->ConstraintLineComponent->RegisterComponent(State->World);
 	}
 
+	// Constraint 기즈모용 앵커 컴포넌트 생성
+	State->ConstraintGizmoAnchor = NewObject<UConstraintAnchorComponent>();
+	State->ConstraintGizmoAnchor->SetVisibility(false);
+	State->ConstraintGizmoAnchor->SetEditability(false);
+	if (State->PreviewActor)
+	{
+		State->PreviewActor->AddOwnedComponent(State->ConstraintGizmoAnchor);
+		State->ConstraintGizmoAnchor->RegisterComponent(State->World);
+	}
+
 	return State;
 }
 
@@ -124,6 +135,7 @@ void PhysicsAssetEditorBootstrap::DestroyViewerState(ViewerState*& State)
 	PhysState->ShapeLineComponent = nullptr;
 	PhysState->ShapeGizmoAnchor = nullptr;
 	PhysState->ConstraintLineComponent = nullptr;
+	PhysState->ConstraintGizmoAnchor = nullptr;
 
 	delete State;
 	State = nullptr;

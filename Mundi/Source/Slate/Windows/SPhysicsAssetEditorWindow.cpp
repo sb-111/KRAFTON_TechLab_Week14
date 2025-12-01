@@ -13,6 +13,7 @@
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
+#include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/SkeletalMeshComponent.h"
 #include "Source/Runtime/Engine/Collision/Picking.h"
 #include "Source/Runtime/Engine/GameFramework/CameraActor.h"
@@ -422,6 +423,10 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
     {
         PhysState->ShapeGizmoAnchor->bIsBeingManipulated = (Gizmo && Gizmo->GetbIsDragging());
     }
+    if (PhysState->ConstraintGizmoAnchor)
+    {
+        PhysState->ConstraintGizmoAnchor->bIsBeingManipulated = (Gizmo && Gizmo->GetbIsDragging());
+    }
 
     // 기즈모로 Shape가 수정되었는지 체크
     if (PhysState->ShapeGizmoAnchor && PhysState->ShapeGizmoAnchor->bShapeModified)
@@ -429,6 +434,13 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
         PhysState->bShapesDirty = true;
         PhysState->bIsDirty = true;
         PhysState->ShapeGizmoAnchor->bShapeModified = false;
+    }
+
+    // 기즈모로 Constraint가 수정되었는지 체크
+    if (PhysState->ConstraintGizmoAnchor && PhysState->ConstraintGizmoAnchor->bConstraintModified)
+    {
+        PhysState->bIsDirty = true;
+        PhysState->ConstraintGizmoAnchor->bConstraintModified = false;
     }
 }
 
@@ -448,6 +460,13 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
 
     RenderPhysicsBodies();
     RenderConstraintVisuals();
+
+    // Constraint 기즈모 앵커 위치 업데이트 (드래그 중이 아닐 때만)
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (PhysState && PhysState->ConstraintGizmoAnchor && !PhysState->ConstraintGizmoAnchor->bIsBeingManipulated)
+    {
+        PhysState->ConstraintGizmoAnchor->UpdateAnchorFromConstraint();
+    }
 }
 
 void SPhysicsAssetEditorWindow::OnSave()
@@ -629,13 +648,65 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
         }
     }
 
-    // 피킹 결과 적용
-    if (ClosestBodyIndex >= 0)
+    // Constraint 피킹 (Shape보다 우선순위 낮음)
+    int32 ClosestConstraintIndex = -1;
+    float ClosestConstraintDistance = FLT_MAX;
+    const float ConstraintPickRadius = 0.15f;  // 피킹 반경 (월드 스페이스)
+
+    for (int32 i = 0; i < PhysState->EditingAsset->Constraints.Num(); ++i)
+    {
+        FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[i];
+
+        // Bone1 인덱스 찾기
+        int32 Bone1Index = -1;
+        for (int32 j = 0; j < (int32)Skeleton->Bones.size(); ++j)
+        {
+            if (Skeleton->Bones[j].Name == Constraint.ConstraintBone1.ToString())
+            {
+                Bone1Index = j;
+                break;
+            }
+        }
+        if (Bone1Index < 0) continue;
+
+        // Constraint 월드 위치 계산 (Bone1 기준)
+        FTransform Bone1WorldTransform = MeshComp->GetBoneWorldTransform(Bone1Index);
+        FVector ConstraintWorldPos = Bone1WorldTransform.Translation +
+            Bone1WorldTransform.Rotation.RotateVector(Constraint.Position1);
+
+        // Ray와 점 사이의 최단 거리 계산
+        FVector RayToPoint = ConstraintWorldPos - Ray.Origin;
+        float ProjectedLength = FVector::Dot(RayToPoint, Ray.Direction);
+
+        // 카메라 뒤에 있으면 스킵
+        if (ProjectedLength < 0) continue;
+
+        FVector ClosestPointOnRay = Ray.Origin + Ray.Direction * ProjectedLength;
+        float DistanceToRay = (ConstraintWorldPos - ClosestPointOnRay).Size();
+
+        // 피킹 반경 내에 있고 Shape보다 가까우면 선택
+        if (DistanceToRay < ConstraintPickRadius && ProjectedLength < ClosestConstraintDistance)
+        {
+            // Shape가 더 가까우면 Shape 우선
+            if (ClosestBodyIndex >= 0 && ClosestDistance < ProjectedLength)
+                continue;
+
+            ClosestConstraintDistance = ProjectedLength;
+            ClosestConstraintIndex = i;
+        }
+    }
+
+    // 피킹 결과 적용 (Shape 우선, 그 다음 Constraint)
+    if (ClosestBodyIndex >= 0 && (ClosestConstraintIndex < 0 || ClosestDistance <= ClosestConstraintDistance))
     {
         SelectBody(ClosestBodyIndex, PhysicsAssetEditorState::ESelectionSource::TreeOrViewport);
         PhysState->SelectedShapeIndex = ClosestShapeIndex;
         PhysState->SelectedShapeType = ClosestShapeType;
         UpdateShapeGizmo();
+    }
+    else if (ClosestConstraintIndex >= 0)
+    {
+        SelectConstraint(ClosestConstraintIndex);
     }
     else
     {
@@ -1694,9 +1765,40 @@ void SPhysicsAssetEditorWindow::SelectBody(int32 Index, PhysicsAssetEditorState:
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
     if (!PhysState) return;
     PhysState->SelectedBodyIndex = Index;
-    PhysState->SelectedConstraintIndex = -1;
+    PhysState->SelectedConstraintIndex = -1;  // Constraint 선택 해제
     PhysState->SelectionSource = Source;
     PhysState->bShapesDirty = true;  // Shape 라인 재구성 필요
+
+    // Body의 첫 번째 Shape 자동 선택
+    PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
+    if (PhysState->EditingAsset && Index >= 0 && Index < PhysState->EditingAsset->Bodies.Num())
+    {
+        UBodySetup* Body = PhysState->EditingAsset->Bodies[Index];
+        if (Body)
+        {
+            // 우선순위: Sphere > Box > Capsule
+            if (Body->AggGeom.SphereElems.Num() > 0)
+            {
+                PhysState->SelectedShapeIndex = 0;
+                PhysState->SelectedShapeType = EShapeType::Sphere;
+            }
+            else if (Body->AggGeom.BoxElems.Num() > 0)
+            {
+                PhysState->SelectedShapeIndex = 0;
+                PhysState->SelectedShapeType = EShapeType::Box;
+            }
+            else if (Body->AggGeom.SphylElems.Num() > 0)
+            {
+                PhysState->SelectedShapeIndex = 0;
+                PhysState->SelectedShapeType = EShapeType::Capsule;
+            }
+        }
+    }
+
+    // 기즈모 업데이트
+    UpdateShapeGizmo();
+    UpdateConstraintGizmo();
 }
 
 void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index)
@@ -1705,6 +1807,13 @@ void SPhysicsAssetEditorWindow::SelectConstraint(int32 Index)
     if (!PhysState) return;
     PhysState->SelectedConstraintIndex = Index;
     PhysState->SelectedBodyIndex = -1;
+    PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
+
+    // Shape 기즈모 숨김
+    UpdateShapeGizmo();
+    // Constraint 기즈모 업데이트
+    UpdateConstraintGizmo();
 }
 
 void SPhysicsAssetEditorWindow::ClearSelection()
@@ -1716,7 +1825,8 @@ void SPhysicsAssetEditorWindow::ClearSelection()
     PhysState->SelectedShapeIndex = -1;
     PhysState->SelectedShapeType = EShapeType::None;
     PhysState->bShapesDirty = true;  // Shape 라인 클리어 필요
-    UpdateShapeGizmo();  // 기즈모 숨김
+    UpdateShapeGizmo();  // Shape 기즈모 숨김
+    UpdateConstraintGizmo();  // Constraint 기즈모 숨김
 }
 
 void SPhysicsAssetEditorWindow::DeleteSelectedShape()
@@ -1803,7 +1913,11 @@ void SPhysicsAssetEditorWindow::UpdateShapeGizmo()
         PhysState->ShapeGizmoAnchor->ClearTarget();
         PhysState->ShapeGizmoAnchor->SetVisibility(false);
         PhysState->ShapeGizmoAnchor->SetEditability(false);
-        PhysState->World->GetSelectionManager()->ClearSelection();
+        // Constraint 기즈모가 활성화되지 않은 경우에만 SelectionManager 클리어
+        if (PhysState->SelectedConstraintIndex < 0)
+        {
+            PhysState->World->GetSelectionManager()->ClearSelection();
+        }
         return;
     }
 
@@ -1840,6 +1954,56 @@ void SPhysicsAssetEditorWindow::UpdateShapeGizmo()
     // SelectionManager에 등록하여 기즈모 표시
     PhysState->World->GetSelectionManager()->SelectActor(PreviewActor);
     PhysState->World->GetSelectionManager()->SelectComponent(PhysState->ShapeGizmoAnchor);
+}
+
+void SPhysicsAssetEditorWindow::UpdateConstraintGizmo()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->World || !PhysState->ConstraintGizmoAnchor) return;
+    if (!PhysState->EditingAsset) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    // Constraint가 선택되지 않았으면 기즈모 숨김
+    if (PhysState->SelectedConstraintIndex < 0 ||
+        PhysState->SelectedConstraintIndex >= PhysState->EditingAsset->Constraints.Num())
+    {
+        PhysState->ConstraintGizmoAnchor->ClearTarget();
+        PhysState->ConstraintGizmoAnchor->SetVisibility(false);
+        PhysState->ConstraintGizmoAnchor->SetEditability(false);
+        return;
+    }
+
+    FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[PhysState->SelectedConstraintIndex];
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(ActiveState->PreviewActor);
+    if (!PreviewActor) return;
+    USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
+    if (!MeshComp) return;
+
+    // Bone1 인덱스 찾기
+    int32 Bone1Index = -1;
+    for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+    {
+        if (Skeleton->Bones[i].Name == Constraint.ConstraintBone1.ToString())
+        {
+            Bone1Index = i;
+            break;
+        }
+    }
+    if (Bone1Index < 0) return;
+
+    // ConstraintAnchorComponent에 타겟 설정 및 위치 업데이트
+    PhysState->ConstraintGizmoAnchor->SetTarget(&Constraint, MeshComp, Bone1Index);
+    PhysState->ConstraintGizmoAnchor->UpdateAnchorFromConstraint();
+    PhysState->ConstraintGizmoAnchor->SetVisibility(true);
+    PhysState->ConstraintGizmoAnchor->SetEditability(true);
+
+    // SelectionManager에 등록하여 기즈모 표시
+    PhysState->World->GetSelectionManager()->SelectActor(PreviewActor);
+    PhysState->World->GetSelectionManager()->SelectComponent(PhysState->ConstraintGizmoAnchor);
 }
 
 void SPhysicsAssetEditorWindow::RenderBoneContextMenu(int32 BoneIndex, bool bHasBody, int32 BodyIndex)
