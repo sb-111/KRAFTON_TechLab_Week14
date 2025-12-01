@@ -180,6 +180,7 @@ enum class EEngineShowFlags : uint64
     // Post-processing
     SF_DepthOfField = 1ull << 23,      // Enable/disable depth of field effect
     SF_CoCVisualization = 1ull << 24,  // Show/hide Circle of Confusion visualization
+    SF_Ragdoll = 1ull << 25,      // Show/hide ragdoll debug shapes
 
     // Default enabled flags
     SF_DefaultEnabled = SF_Primitives | SF_StaticMeshes | SF_SkeletalMeshes | SF_Grid | SF_Lighting | SF_Decals |

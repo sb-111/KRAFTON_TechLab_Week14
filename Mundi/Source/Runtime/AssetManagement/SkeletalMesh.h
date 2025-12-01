@@ -59,4 +59,7 @@ public:
     // Physics Asset getter/setter
     UPhysicsAsset* GetPhysicsAsset() const { return PhysicsAsset; }
     void SetPhysicsAsset(UPhysicsAsset* InPhysicsAsset) { PhysicsAsset = InPhysicsAsset; }
+
+    // 테스트용: 스켈레톤 기반으로 PhysicsAsset 자동 생성
+    void AutoGeneratePhysicsAsset();
 };

@@ -36,6 +36,11 @@ public:
     virtual void TickComponent(float DeltaTime);       // 매 프레임
     virtual void EndPlay();                            // PIE 중에 파괴/월드 제거 시
 
+    // ─────────────── Physics (물리 상태)
+    // 과제 요구사항: UActorComponent::CreatePhysicsState
+    virtual void CreatePhysicsState() {}               // 물리 바디/조인트 생성
+    virtual void DestroyPhysicsState() {}              // 물리 바디/조인트 파괴
+
     // ─────────────── Registration (월드/씬 등록 수명)
     // 액터/월드가 소유할 때 호출되는 등록/해제 포인트
     void RegisterComponent(UWorld* InWorld);           // 외부에서 호출 (AActor)

@@ -8,6 +8,16 @@
 #include "AnimStateMachineInstance.h"
 #include "AnimBlendSpaceInstance.h"
 
+// 래그돌 관련
+#include "BodyInstance.h"
+#include "PhysicsAsset.h"
+#include "BodySetup.h"
+#include "ConstraintInstance.h"
+#include "PhysicsSystem.h"
+#include "PhysxConverter.h"
+
+using namespace physx;
+
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
     // Keep constructor lightweight for editor/viewer usage.
@@ -26,6 +36,14 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 
     if (!SkeletalMesh) { return; }
+
+    // 래그돌 모드: 물리 결과를 본에 동기화
+    if (bSimulatePhysics)
+    {
+        SyncBodiesToBones();
+        return;  // 애니메이션 스킵
+    }
+
     // Drive animation instance if present
     if (bUseAnimation && AnimInstance && SkeletalMesh && SkeletalMesh->GetSkeleton())
     {
@@ -380,4 +398,359 @@ void USkeletalMeshComponent::TriggerAnimNotify(const FAnimNotifyEvent& NotifyEve
     {
         Owner->HandleAnimNotify(NotifyEvent);
     }
+}
+
+// ===== 래그돌 시스템 구현 (언리얼 방식) =====
+
+// 과제 요구사항: UActorComponent::CreatePhysicsState 오버라이드
+// 물리 상태 생성 (PhysicsAsset이 설정되어 있으면 래그돌 초기화)
+void USkeletalMeshComponent::CreatePhysicsState()
+{
+    // PhysicsAsset이 이미 설정되어 있으면 Bodies/Constraints 생성
+    if (PhysicsAsset && Bodies.IsEmpty())
+    {
+        InitArticulated(PhysicsAsset);
+    }
+}
+
+void USkeletalMeshComponent::InitArticulated(UPhysicsAsset* PhysAsset)
+{
+    if (!PhysAsset || !SkeletalMesh) return;
+
+    // 기존 래그돌 정리 (과제 요구사항: DestroyPhysicsState 사용)
+    DestroyPhysicsState();
+
+    PhysicsAsset = PhysAsset;
+
+    // 각 본의 월드 Transform 수집
+    TArray<FTransform> BoneWorldTransforms;
+    const FSkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (Skeleton)
+    {
+        for (int32 i = 0; i < PhysAsset->Bodies.Num(); ++i)
+        {
+            UBodySetup* Setup = PhysAsset->Bodies[i];
+            if (!Setup) continue;
+
+            // BodySetup의 BoneName으로 스켈레톤에서 본 인덱스 찾기
+            const auto* BoneIndexPtr = Skeleton->BoneNameToIndex.Find(Setup->BoneName.ToString());
+            if (BoneIndexPtr)
+            {
+                BoneWorldTransforms.Add(GetBoneWorldTransform(*BoneIndexPtr));
+            }
+            else
+            {
+                BoneWorldTransforms.Add(GetWorldTransform());
+            }
+        }
+    }
+
+    // Bodies 생성 (과제 요구사항: InstantiatePhysicsAssetBodies_Internal 사용)
+    InstantiatePhysicsAssetBodies_Internal(PhysAsset, BoneWorldTransforms);
+
+    // 부모-자식 관계 설정
+    SetupBoneHierarchy();
+
+    // Constraints (Joint) 생성
+    CreateConstraints(PhysAsset);
+
+    UE_LOG("[Ragdoll] InitArticulated: Created %d bodies, %d constraints", Bodies.Num(), Constraints.Num());
+}
+
+// 과제 요구사항: UActorComponent::DestroyPhysicsState 오버라이드
+// 래그돌 물리 상태 해제 (Joint → Body 순서로 정리)
+void USkeletalMeshComponent::DestroyPhysicsState()
+{
+    // Joint 먼저 해제 (과제 요구사항: FConstraintInstance로 래핑)
+    for (FConstraintInstance* Constraint : Constraints)
+    {
+        if (Constraint)
+        {
+            delete Constraint;  // 소멸자에서 TermConstraint 호출
+        }
+    }
+    Constraints.Empty();
+
+    // Body 해제
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (Body)
+        {
+            delete Body;
+        }
+    }
+    Bodies.Empty();
+
+    BodyBoneIndices.Empty();
+    BodyParentIndices.Empty();
+    PhysicsAsset = nullptr;
+    bSimulatePhysics = false;
+}
+
+void USkeletalMeshComponent::SetSimulatePhysics(bool bEnable)
+{
+    if (bEnable && Bodies.IsEmpty())
+    {
+        UE_LOG("[Ragdoll] Warning: SetSimulatePhysics(true) called but no bodies exist. Call InitArticulated first.");
+        return;
+    }
+
+    bSimulatePhysics = bEnable;
+
+    // Bodies 깨우기/재우기
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (Body && Body->IsValidBodyInstance())
+        {
+            PxRigidDynamic* RigidBody = Body->GetPxRigidDynamic();
+            if (RigidBody)
+            {
+                if (bEnable)
+                {
+                    RigidBody->wakeUp();
+                }
+                else
+                {
+                    RigidBody->putToSleep();
+                }
+            }
+        }
+    }
+}
+
+// 과제 요구사항: USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal
+// PhysicsAsset의 BodySetup들을 기반으로 FBodyInstance 배열 생성
+void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsset* PhysAsset, const TArray<FTransform>& BoneWorldTransforms)
+{
+    const FSkeleton* Skeleton = SkeletalMesh ? SkeletalMesh->GetSkeleton() : nullptr;
+
+    for (int32 i = 0; i < PhysAsset->Bodies.Num(); ++i)
+    {
+        UBodySetup* Setup = PhysAsset->Bodies[i];
+        if (!Setup) continue;
+
+        FTransform BodyTransform = (i < BoneWorldTransforms.Num()) ? BoneWorldTransforms[i] : FTransform();
+
+        // 스켈레톤에서 본 인덱스 찾기
+        int32 BoneIndex = -1;
+        if (Skeleton)
+        {
+            const auto* BoneIndexPtr = Skeleton->BoneNameToIndex.Find(Setup->BoneName.ToString());
+            if (BoneIndexPtr)
+            {
+                BoneIndex = *BoneIndexPtr;
+            }
+        }
+
+        // FBodyInstance 생성 및 초기화
+        FBodyInstance* NewBody = new FBodyInstance();
+        NewBody->InitBody(Setup, BodyTransform, BoneIndex);
+
+        Bodies.Add(NewBody);
+        BodyBoneIndices.Add(BoneIndex);
+    }
+}
+
+void USkeletalMeshComponent::SetupBoneHierarchy()
+{
+    const FSkeleton* Skeleton = SkeletalMesh ? SkeletalMesh->GetSkeleton() : nullptr;
+    if (!Skeleton || !PhysicsAsset)
+    {
+        // 선형 계층으로 폴백
+        BodyParentIndices.SetNum(Bodies.Num());
+        for (int32 i = 0; i < Bodies.Num(); ++i)
+        {
+            BodyParentIndices[i] = (i > 0) ? i - 1 : -1;
+        }
+        return;
+    }
+
+    // BodySetup의 BoneName을 기반으로 Bodies 인덱스 매핑
+    TMap<FName, int32> BoneNameToBodyIndex;
+    for (int32 i = 0; i < PhysicsAsset->Bodies.Num(); ++i)
+    {
+        if (PhysicsAsset->Bodies[i])
+        {
+            BoneNameToBodyIndex.Add(PhysicsAsset->Bodies[i]->BoneName, i);
+        }
+    }
+
+    BodyParentIndices.SetNum(Bodies.Num());
+
+    for (int32 i = 0; i < Bodies.Num(); ++i)
+    {
+        BodyParentIndices[i] = -1;  // 기본값: 루트
+
+        int32 BoneIndex = BodyBoneIndices[i];
+        if (BoneIndex < 0) continue;
+
+        // 스켈레톤 체인을 따라 올라가며 Bodies에 있는 부모 찾기
+        int32 CurrentParentBoneIndex = Skeleton->Bones[BoneIndex].ParentIndex;
+        while (CurrentParentBoneIndex >= 0)
+        {
+            const FString& ParentBoneName = Skeleton->Bones[CurrentParentBoneIndex].Name;
+            const auto* BodyIndexPtr = BoneNameToBodyIndex.Find(FName(ParentBoneName));
+
+            if (BodyIndexPtr)
+            {
+                BodyParentIndices[i] = *BodyIndexPtr;
+                break;
+            }
+
+            CurrentParentBoneIndex = Skeleton->Bones[CurrentParentBoneIndex].ParentIndex;
+        }
+    }
+}
+
+void USkeletalMeshComponent::CreateConstraints(UPhysicsAsset* PhysAsset)
+{
+    // 과제 요구사항: PxJoint = FConstraintInstance
+    // FConstraintInstance::InitConstraint()에서 Joint 생성 로직 처리
+
+    // PhysicsAsset의 Constraints 사용 (있으면)
+    if (PhysAsset->Constraints.Num() > 0)
+    {
+        for (const FConstraintInstance& AssetCI : PhysAsset->Constraints)
+        {
+            int32 ParentIdx = FindBodyIndex(AssetCI.ConstraintBone1);
+            int32 ChildIdx = FindBodyIndex(AssetCI.ConstraintBone2);
+
+            if (ParentIdx < 0 || ChildIdx < 0) continue;
+            if (!Bodies[ParentIdx] || !Bodies[ChildIdx]) continue;
+
+            // 새 FConstraintInstance 생성 (에셋 데이터 복사)
+            FConstraintInstance* CI = new FConstraintInstance(AssetCI);
+
+            // Joint 초기화 (FConstraintInstance가 PhysX Joint를 래핑)
+            CI->InitConstraint(Bodies[ParentIdx], Bodies[ChildIdx], this);
+
+            if (CI->IsValidConstraintInstance())
+            {
+                Constraints.Add(CI);
+            }
+            else
+            {
+                delete CI;
+            }
+        }
+    }
+    else
+    {
+        // Constraints가 없으면 SetupBoneHierarchy 결과 사용 (기본 45도 제한)
+        for (int32 i = 0; i < Bodies.Num(); ++i)
+        {
+            int32 ParentIdx = BodyParentIndices[i];
+            if (ParentIdx < 0) continue;
+
+            if (!Bodies[i] || !Bodies[ParentIdx]) continue;
+
+            // 새 FConstraintInstance 생성 (기본값 45도)
+            FConstraintInstance* CI = new FConstraintInstance();
+            CI->TwistLimitAngle = 45.0f;
+            CI->Swing1LimitAngle = 45.0f;
+            CI->Swing2LimitAngle = 45.0f;
+
+            // Joint 초기화
+            CI->InitConstraint(Bodies[ParentIdx], Bodies[i], this);
+
+            if (CI->IsValidConstraintInstance())
+            {
+                Constraints.Add(CI);
+            }
+            else
+            {
+                delete CI;
+            }
+        }
+    }
+}
+
+void USkeletalMeshComponent::SyncBodiesToBones()
+{
+    if (Bodies.Num() != BodyBoneIndices.Num()) return;  // 안전 검사
+    if (!SkeletalMesh || !SkeletalMesh->GetSkeleton()) return;
+
+    const FTransform& ComponentWorldTransform = GetWorldTransform();
+    const FSkeleton& Skeleton = SkeletalMesh->GetSkeletalMeshData()->Skeleton;
+    const int32 NumBones = Skeleton.Bones.Num();
+
+    // Body가 있는 본 인덱스를 빠르게 찾기 위한 맵
+    TMap<int32, int32> BoneToBodyMap;  // BoneIndex → Bodies 배열 인덱스
+    for (int32 i = 0; i < Bodies.Num(); ++i)
+    {
+        int32 BoneIndex = BodyBoneIndices[i];
+        if (BoneIndex >= 0)
+        {
+            BoneToBodyMap.Add(BoneIndex, i);
+        }
+    }
+
+    // 본 계층 순서대로 (루트부터) ComponentSpace 계산
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        const int32 ParentIndex = Skeleton.Bones[BoneIndex].ParentIndex;
+
+        // 이 본에 Body가 있는지 확인
+        const int32* BodyIndexPtr = BoneToBodyMap.Find(BoneIndex);
+
+        if (BodyIndexPtr)
+        {
+            // Body가 있는 본: Body의 월드 Transform을 ComponentSpace로 변환
+            FBodyInstance* Body = Bodies[*BodyIndexPtr];
+            if (Body && Body->IsValidBodyInstance())
+            {
+                FTransform BodyWorldTransform = Body->GetWorldTransform();
+                // GetRelativeTransform: 부모(Component)의 월드 기준으로 자식(Body)의 상대 Transform 계산
+                FTransform NewComponentSpace = ComponentWorldTransform.GetRelativeTransform(BodyWorldTransform);
+
+                // PhysX는 스케일을 지원하지 않으므로, 원래 본의 스케일 유지
+                NewComponentSpace.Scale3D = CurrentComponentSpacePose[BoneIndex].Scale3D;
+
+                CurrentComponentSpacePose[BoneIndex] = NewComponentSpace;
+            }
+        }
+        else
+        {
+            // Body가 없는 본: 부모의 ComponentSpace + 원래 로컬 오프셋으로 계산
+            if (ParentIndex >= 0)
+            {
+                const FTransform& ParentCS = CurrentComponentSpacePose[ParentIndex];
+                const FTransform& LocalPose = CurrentLocalSpacePose[BoneIndex];
+                CurrentComponentSpacePose[BoneIndex] = ParentCS.GetWorldTransform(LocalPose);
+            }
+            // 루트인데 Body가 없으면 현재 값 유지
+        }
+    }
+
+    // ComponentSpace → LocalSpace 역계산
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        const int32 ParentIndex = Skeleton.Bones[BoneIndex].ParentIndex;
+        if (ParentIndex == -1)
+        {
+            CurrentLocalSpacePose[BoneIndex] = CurrentComponentSpacePose[BoneIndex];
+        }
+        else
+        {
+            const FTransform& ParentCS = CurrentComponentSpacePose[ParentIndex];
+            CurrentLocalSpacePose[BoneIndex] = ParentCS.GetRelativeTransform(CurrentComponentSpacePose[BoneIndex]);
+        }
+    }
+
+    // 최종 스키닝 매트릭스 업데이트
+    UpdateFinalSkinningMatrices();
+}
+
+int32 USkeletalMeshComponent::FindBodyIndex(const FName& BoneName) const
+{
+    if (!PhysicsAsset) return -1;
+
+    for (int32 i = 0; i < PhysicsAsset->Bodies.Num(); ++i)
+    {
+        if (PhysicsAsset->Bodies[i] && PhysicsAsset->Bodies[i]->BoneName == BoneName)
+        {
+            return i;
+        }
+    }
+    return -1;
 }

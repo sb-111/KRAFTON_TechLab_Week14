@@ -3,10 +3,18 @@
 #include "PrimitiveComponent.h"
 #include "PhysicsSystem.h"
 #include "StaticMeshComponent.h"
+#include "BodySetup.h"
+#include "AggregateGeometry.h"
+#include "PhysxConverter.h"
 
 using namespace physx;
 
 FBodyInstance::~FBodyInstance()
+{
+	TermBody();
+}
+
+void FBodyInstance::TermBody()
 {
 	if (RigidActor)
 	{
@@ -17,6 +25,8 @@ FBodyInstance::~FBodyInstance()
 		RigidActor->release();
 		RigidActor = nullptr;
 	}
+	BodySetup = nullptr;
+	BoneIndex = -1;
 }
 
 void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
@@ -136,4 +146,137 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 	}
+}
+
+// ===== 래그돌용 함수들 (언리얼 방식) =====
+
+void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex)
+{
+	if (!Setup) return;
+	if (RigidActor) return;	// 이미 초기화됨
+
+	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
+	if (!PhysicsSystem.GetPhysics() || !PhysicsSystem.GetScene()) return;
+
+	BodySetup = Setup;
+	BoneIndex = InBoneIndex;
+
+	// RigidDynamic 생성
+	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
+	PxRigidDynamic* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+	if (!Body) return;
+
+	// UBodySetup의 AggGeom에서 Shape들 생성
+	CreateShapesFromBodySetup(Setup, Body);
+
+	// 질량 설정
+	PxRigidBodyExt::setMassAndUpdateInertia(*Body, Setup->MassInKg);
+
+	// Damping 설정
+	Body->setLinearDamping(Setup->LinearDamping);
+	Body->setAngularDamping(Setup->AngularDamping);
+
+	// Scene에 추가
+	PhysicsSystem.GetScene()->addActor(*Body);
+	Body->wakeUp();
+
+	RigidActor = Body;
+}
+
+void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic* Body)
+{
+	if (!Setup || !Body) return;
+
+	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
+	if (!PhysicsSystem.GetPhysics()) return;
+
+	// UBodySetup의 물리 재질로 PxMaterial 생성
+	PxMaterial* Material = PhysicsSystem.GetPhysics()->createMaterial(
+		Setup->Friction,
+		Setup->Friction,
+		Setup->Restitution
+	);
+	if (!Material) return;
+
+	const FKAggregateGeom& AggGeom = Setup->AggGeom;
+
+	// === Sphere Shape 생성 ===
+	for (int32 i = 0; i < AggGeom.SphereElems.Num(); ++i)
+	{
+		const FKSphereElem& Sphere = AggGeom.SphereElems[i];
+		PxSphereGeometry Geom(Sphere.Radius);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		if (Shape)
+		{
+			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
+			Shape->setLocalPose(LocalPose);
+		}
+	}
+
+	// === Box Shape 생성 ===
+	for (int32 i = 0; i < AggGeom.BoxElems.Num(); ++i)
+	{
+		const FKBoxElem& Box = AggGeom.BoxElems[i];
+		// 좌표계 변환
+		PxVec3 HalfExtent = PhysxConverter::ToPxVec3(FVector(Box.X, Box.Y, Box.Z));
+		HalfExtent.x = std::abs(HalfExtent.x);
+		HalfExtent.y = std::abs(HalfExtent.y);
+		HalfExtent.z = std::abs(HalfExtent.z);
+		PxBoxGeometry Geom(HalfExtent.x, HalfExtent.y, HalfExtent.z);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		if (Shape)
+		{
+			FQuat Rotation = FQuat::MakeFromEulerZYX(Box.Rotation);
+			PxTransform LocalPose(
+				PhysxConverter::ToPxVec3(Box.Center),
+				PhysxConverter::ToPxQuat(Rotation)
+			);
+			Shape->setLocalPose(LocalPose);
+		}
+	}
+
+	// === Capsule (Sphyl) Shape 생성 ===
+	for (int32 i = 0; i < AggGeom.SphylElems.Num(); ++i)
+	{
+		const FKSphylElem& Capsule = AggGeom.SphylElems[i];
+		PxCapsuleGeometry Geom(Capsule.Radius, Capsule.Length / 2.0f);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		if (Shape)
+		{
+			// 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축)
+			FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
+			FQuat UserRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+			FQuat FinalRotation = UserRotation * BaseRotation;
+
+			PxTransform LocalPose(
+				PhysxConverter::ToPxVec3(Capsule.Center),
+				PhysxConverter::ToPxQuat(FinalRotation)
+			);
+			Shape->setLocalPose(LocalPose);
+		}
+	}
+
+	// Material release (Shape들이 참조하고 있으므로 refcount만 감소)
+	Material->release();
+}
+
+FTransform FBodyInstance::GetWorldTransform() const
+{
+	if (!RigidActor) return FTransform();
+
+	PxTransform PhysicsTransform = RigidActor->getGlobalPose();
+	return PhysxConverter::ToFTransform(PhysicsTransform);
+}
+
+void FBodyInstance::SetWorldTransform(const FTransform& NewTransform)
+{
+	if (!RigidActor) return;
+
+	PxTransform PhysicsTransform = PhysxConverter::ToPxTransform(NewTransform);
+	RigidActor->setGlobalPose(PhysicsTransform);
+}
+
+PxRigidDynamic* FBodyInstance::GetPxRigidDynamic() const
+{
+	return RigidActor ? RigidActor->is<PxRigidDynamic>() : nullptr;
 }

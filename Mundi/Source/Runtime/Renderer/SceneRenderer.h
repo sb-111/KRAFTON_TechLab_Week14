@@ -125,6 +125,10 @@ private:
     void RenderDebugPass();
     void RenderFinalOverlayLines();
 
+    /** @brief 래그돌 디버그 렌더링 (PIE 모드에서도 동작) */
+    void RenderRagdollDebugPass();
+	
+
     /** @brief Debug Primitive (Physics Body 시각화 등)를 렌더링합니다. */
     void RenderDebugPrimitivesPass();
 	

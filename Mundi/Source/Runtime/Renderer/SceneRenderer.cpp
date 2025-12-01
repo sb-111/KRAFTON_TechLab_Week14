@@ -50,6 +50,10 @@
 #include "FbxLoader.h"
 #include "CollisionManager.h"
 #include "ShapeComponent.h"
+// RagdollDebugRenderer는 USkeletalMeshComponent 기반으로 수정 필요
+#include "RagdollDebugRenderer.h"
+#include "SkeletalMeshComponent.h"
+#include "BodyInstance.h"
 #include "SkinnedMeshComponent.h"
 #include "ParticleSystemComponent.h"
 #include "ParticleStats.h"
@@ -218,6 +222,9 @@ void FSceneRenderer::RenderLitPath()
 	{
 		RenderDebugPass();
 	}
+
+	// 래그돌 디버그는 에디터/PIE 모두에서 렌더링 (Show flag로 제어)
+	RenderRagdollDebugPass();
 
 	RenderDecalPass();
 	RenderParticleSystemPass();
@@ -1549,6 +1556,40 @@ void FSceneRenderer::RenderDebugPrimitivesPass()
 
 	// 렌더링 후 큐 클리어 (매 프레임 갱신)
 	World->ClearDebugPrimitives();
+}
+
+// 래그돌 디버그 렌더링 (에디터/PIE 모두 동작)
+// 조건: SF_Ragdoll Show flag가 켜져 있고, Bodies가 존재하면 렌더링
+void FSceneRenderer::RenderRagdollDebugPass()
+{
+	// Show flag 체크
+	if (!World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_Ragdoll))
+	{
+		return;
+	}
+
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTarget);
+
+	OwnerRenderer->BeginLineBatch();
+
+	// Ragdoll Debug draw
+	for (UMeshComponent* MeshComp : Proxies.Meshes)
+	{
+		if (USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(MeshComp))
+		{
+			// Bodies가 있으면 렌더링 (시뮬레이션 여부와 무관)
+			if (!SkelMeshComp->GetBodies().IsEmpty())
+			{
+				FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
+					OwnerRenderer, SkelMeshComp,
+					FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
+					FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
+				);
+			}
+		}
+	}
+
+	OwnerRenderer->EndLineBatch(FMatrix::Identity());
 }
 
 void FSceneRenderer::RenderOverayEditorPrimitivesPass()
