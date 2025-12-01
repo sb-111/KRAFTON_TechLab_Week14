@@ -170,8 +170,10 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 	// UBodySetup의 AggGeom에서 Shape들 생성
 	CreateShapesFromBodySetup(Setup, Body);
 
-	// 질량 설정
-	PxRigidBodyExt::setMassAndUpdateInertia(*Body, Setup->MassInKg);
+	// 질량 설정 (밀도 기반 부피 비례 자동 계산)
+	// 밀도 1.0 = 물과 비슷 (인체 밀도 ~1.01 g/cm³)
+	const float Density = 1.0f;
+	PxRigidBodyExt::updateMassAndInertia(*Body, Density);
 
 	// Damping 설정
 	Body->setLinearDamping(Setup->LinearDamping);

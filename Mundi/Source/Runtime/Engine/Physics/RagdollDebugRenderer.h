@@ -79,4 +79,19 @@ private:
         TArray<FVector>& OutEndPoints,
         TArray<FVector4>& OutColors
     );
+
+    // 헬퍼: 반원 렌더링 (반구 표현용)
+    // BulgeDir: 반원이 볼록하게 나갈 방향
+    // PlaneAxis: 반원이 그려질 평면의 한 축
+    static void AddSemicircle(
+        const FVector& Center,
+        const FVector& BulgeDir,
+        const FVector& PlaneAxis,
+        float Radius,
+        int32 NumSegments,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
 };

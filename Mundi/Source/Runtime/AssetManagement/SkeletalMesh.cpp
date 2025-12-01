@@ -30,6 +30,106 @@ static FVector TransformDirection(const FMatrix& M, const FVector& Dir)
     );
 }
 
+// 대소문자 무시 문자열 포함 검사 (범용 스켈레톤 지원)
+static bool ContainsIgnoreCase(const FString& Str, const FString& Pattern)
+{
+    FString LowerStr = Str;
+    FString LowerPattern = Pattern;
+    std::transform(LowerStr.begin(), LowerStr.end(), LowerStr.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+    std::transform(LowerPattern.begin(), LowerPattern.end(), LowerPattern.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+    return LowerStr.find(LowerPattern) != FString::npos;
+}
+
+// 손가락/발가락/말단 본 필터링 (대소문자 무시, 범용)
+static bool ShouldSkipBone(const FString& BoneName)
+{
+    // 손가락 관련 (다양한 스켈레톤 형식 지원)
+    if (ContainsIgnoreCase(BoneName, "thumb")) return true;
+    if (ContainsIgnoreCase(BoneName, "index")) return true;
+    if (ContainsIgnoreCase(BoneName, "middle")) return true;
+    if (ContainsIgnoreCase(BoneName, "ring")) return true;
+    if (ContainsIgnoreCase(BoneName, "pinky")) return true;
+    if (ContainsIgnoreCase(BoneName, "finger")) return true;
+    if (ContainsIgnoreCase(BoneName, "digit")) return true;
+
+    // 발가락 관련
+    if (ContainsIgnoreCase(BoneName, "toe")) return true;
+
+    // 말단 본 마커 (다양한 형식)
+    if (ContainsIgnoreCase(BoneName, "_end")) return true;
+    if (ContainsIgnoreCase(BoneName, ".end")) return true;
+    if (ContainsIgnoreCase(BoneName, "_tip")) return true;
+    if (ContainsIgnoreCase(BoneName, "nub")) return true;
+
+    return false;
+}
+
+// Hand 본 감지 (대소문자 무시, 범용)
+// Hand 본은 자식(손가락)까지 거리가 짧아서 고정 크기 캡슐 필요
+static bool IsHandBone(const FString& BoneName)
+{
+    // "Hand"가 포함되어 있고 손가락 본이 아닌 경우
+    // 예: LeftHand, RightHand, hand_l, hand_r, Hand.L, Hand.R
+    if (ContainsIgnoreCase(BoneName, "hand"))
+    {
+        // 손가락 본은 제외 (예: LeftHandThumb1)
+        if (ShouldSkipBone(BoneName)) return false;
+        return true;
+    }
+    return false;
+}
+
+// Head 본 감지 (대소문자 무시, 범용)
+// Head 본은 구형에 가깝게 처리 (길이 제한)
+static bool IsHeadBone(const FString& BoneName)
+{
+    // "Head"가 포함되어 있고 말단 본이 아닌 경우
+    // 예: Head, head, HEAD
+    if (ContainsIgnoreCase(BoneName, "head"))
+    {
+        // HeadTop_End 같은 말단 본은 제외
+        if (ShouldSkipBone(BoneName)) return false;
+        return true;
+    }
+    return false;
+}
+
+// Spine/Pelvis 본 감지 (대소문자 무시, 범용)
+// 가로 캡슐로 회전해야 하는 본들
+static bool IsSpineOrPelvisBone(const FString& BoneName)
+{
+    if (ContainsIgnoreCase(BoneName, "spine")) return true;
+    if (ContainsIgnoreCase(BoneName, "pelvis")) return true;
+    if (ContainsIgnoreCase(BoneName, "hips")) return true;
+    return false;
+}
+
+// Neck 본 감지 (대소문자 무시, 범용)
+static bool IsNeckBone(const FString& BoneName)
+{
+    if (ContainsIgnoreCase(BoneName, "neck")) return true;
+    return false;
+}
+
+// Shoulder/Clavicle 본 감지 (대소문자 무시, 범용)
+// 가슴과 팔을 연결하는 본 - 충돌 방지를 위해 반지름 키움
+static bool IsShoulderBone(const FString& BoneName)
+{
+    if (ContainsIgnoreCase(BoneName, "shoulder")) return true;
+    if (ContainsIgnoreCase(BoneName, "clavicle")) return true;
+    return false;
+}
+
+// Foot 본 감지 (대소문자 무시, 범용)
+static bool IsFootBone(const FString& BoneName)
+{
+    if (ContainsIgnoreCase(BoneName, "foot")) return true;
+    if (ContainsIgnoreCase(BoneName, "ankle")) return true;
+    return false;
+}
+
 // 본 길이 계산 및 본의 로컬 방향 반환
 static float CalculateBoneLength(const FSkeleton& Skeleton, int32 BoneIndex, FVector& OutBoneLocalDir)
 {
@@ -58,7 +158,7 @@ static float CalculateBoneLength(const FSkeleton& Skeleton, int32 BoneIndex, FVe
             }
             else
             {
-                OutBoneLocalDir = FVector(0, 1, 0);  // 기본 방향
+                OutBoneLocalDir = FVector(0, 0, 1);  // 기본 방향
             }
 
             return BoneLength;
@@ -66,7 +166,7 @@ static float CalculateBoneLength(const FSkeleton& Skeleton, int32 BoneIndex, FVe
     }
 
     // 자식이 없으면 (말단 본) 기본값
-    OutBoneLocalDir = FVector::Zero();
+    OutBoneLocalDir = FVector(0, 0, 1);
     return 0.0f;  // 말단 본은 캡슐 생성하지 않음
 }
 
@@ -194,34 +294,41 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
 
     const FSkeleton& Skeleton = Data->Skeleton;
 
-    // ===== 본 크기 기반 캡슐 파라미터 (언리얼 방식) =====
-    const float MinBoneSize = 0.03f;    // 최소 본 크기 (3cm 이하는 무시) - Neck 포함하도록
+    // ===== 본 크기 기반 캡슐 파라미터 (범용) =====
+    const float MinBoneSize = 0.03f;    // 최소 본 크기 (3cm 이하는 무시)
     const float MaxBoneSize = 0.50f;    // 최대 본 크기 (50cm 초과는 클램프)
-    const float RadiusRatio = 0.3f;     // 반지름 = 길이의 30%
+    const float RadiusRatio = 0.25f;    // 반지름 = 길이의 25% (팔다리)
     const float LengthRatio = 0.8f;     // 캡슐 길이 = 본 길이의 80%
 
-    // 제외할 본 키워드 (손가락, 발가락 등 세부 본)
-    auto ShouldSkipBone = [](const FString& BoneName) -> bool {
-        // 손가락 관련
-        if (BoneName.find("Thumb") != FString::npos) return true;
-        if (BoneName.find("Index") != FString::npos) return true;
-        if (BoneName.find("Middle") != FString::npos) return true;
-        if (BoneName.find("Ring") != FString::npos) return true;
-        if (BoneName.find("Pinky") != FString::npos) return true;
-        // 발가락 관련
-        if (BoneName.find("Toe") != FString::npos) return true;
-        // 말단 본
-        if (BoneName.find("_End") != FString::npos) return true;
-        if (BoneName.find("Top_End") != FString::npos) return true;
-        return false;
-    };
+    // Hand 본 고정 크기 (손가락까지 거리가 짧아서 별도 처리)
+    const float HandBoneSize = 0.15f;   // 15cm 고정 크기
+    const float HandRadiusRatio = 0.4f; // Hand 반지름 = 길이의 40%
+
+    // Head 본 특별 처리 (구형에 가깝게, 위로 올림)
+    const float HeadMaxLength = 0.07f;  // 머리 길이 최대 7cm
+    const float HeadRadiusRatio = 1.2f; // Head 반지름 = 길이의 120% (더 키움)
+    const float HeadCenterOffset = 0.03f; // 머리 캡슐 위로 3cm 올림
+
+    // Foot 본 특별 처리 (발은 좀 더 두껍게)
+    const float FootRadiusRatio = 0.4f; // Foot 반지름 = 길이의 40%
+
+    // Spine/Pelvis 본 특별 처리 (가로로 넓게)
+    const float SpineRadiusRatio = 0.5f;  // Spine 반지름 = 길이의 50%
+    const float SpineLengthRatio = 1.2f;  // Spine 캡슐 길이 = 본 길이의 120%
+
+    // Neck 본 특별 처리
+    const float NeckRadiusRatio = 0.7f;   // Neck 반지름 = 길이의 70%
+    const float NeckLengthRatio = 1.2f;   // Neck 캡슐 길이 = 본 길이의 120%
+
+    // Shoulder/Clavicle 본 특별 처리 (가슴-팔 연결부)
+    const float ShoulderRadiusRatio = 0.3f;  // Shoulder 반지름 = 길이의 30% (줄임)
 
     // ===== Phase 1: Bodies 생성 =====
     for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
     {
         const FBone& Bone = Skeleton.Bones[i];
 
-        // 0. 손가락/발가락 등 세부 본은 스킵
+        // 0. 손가락/발가락/말단 본은 스킵 (대소문자 무시, 범용)
         if (ShouldSkipBone(Bone.Name))
         {
             UE_LOG("Skipping bone '%s': filtered by name", Bone.Name.c_str());
@@ -232,23 +339,32 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
         FVector BoneLocalDir;
         float BoneLength = CalculateBoneLength(Skeleton, i, BoneLocalDir);
 
-        // 2. 너무 작은 본이나 말단 본은 건너뛰기
-        if (BoneLength < MinBoneSize)
+        // 1.5. Hand 본 특별 처리 (손가락까지 거리가 짧아서 고정 크기 사용)
+        bool bIsHandBone = IsHandBone(Bone.Name);
+        if (bIsHandBone)
         {
-            UE_LOG("Skipping bone '%s': length %.2f < min %.2f", Bone.Name.c_str(), BoneLength, MinBoneSize);
+            BoneLength = HandBoneSize;  // 고정 크기 사용
+            UE_LOG("Hand bone '%s': using fixed size %.3f", Bone.Name.c_str(), HandBoneSize);
+        }
+
+        // 1.6. Head 본 특별 처리 (길이 제한, 구형에 가깝게)
+        bool bIsHeadBone = IsHeadBone(Bone.Name);
+        if (bIsHeadBone && BoneLength > HeadMaxLength)
+        {
+            UE_LOG("Head bone '%s': clamping length %.3f -> %.3f", Bone.Name.c_str(), BoneLength, HeadMaxLength);
+            BoneLength = HeadMaxLength;
+        }
+
+        // 2. 너무 작은 본이나 말단 본은 건너뛰기 (Hand 본은 제외)
+        if (BoneLength < MinBoneSize && !bIsHandBone)
+        {
+            UE_LOG("Skipping bone '%s': length %.3f < min %.3f", Bone.Name.c_str(), BoneLength, MinBoneSize);
             continue;
         }
 
         // 3. 비정상적으로 큰 본 길이는 클램프
-        // Head 본은 _End 마커까지의 거리가 비정상적으로 크므로 특별히 작은 크기 사용
-        float EffectiveMaxSize = MaxBoneSize;
-        if (Bone.Name.find("Head") != FString::npos && Bone.Name.find("Top") == FString::npos)
-        {
-            EffectiveMaxSize = 0.12f;  // 머리는 최대 12cm
-        }
-
-        float ClampedLength = std::min(BoneLength, EffectiveMaxSize);
-        if (BoneLength > EffectiveMaxSize)
+        float ClampedLength = std::min(BoneLength, MaxBoneSize);
+        if (BoneLength > MaxBoneSize)
         {
             UE_LOG("Clamping bone '%s': length %.2f -> %.2f", Bone.Name.c_str(), BoneLength, ClampedLength);
         }
@@ -256,16 +372,67 @@ void USkeletalMesh::AutoGeneratePhysicsAsset()
         // 4. 캡슐 크기 계산
         FKSphylElem Capsule;
         Capsule.Name = FName(Bone.Name);
-        Capsule.Radius = ClampedLength * RadiusRatio;
-        Capsule.Length = ClampedLength * LengthRatio;
+
+        // 본 타입별 비율 적용
+        bool bIsSpineBone = IsSpineOrPelvisBone(Bone.Name);
+        bool bIsNeckBone = IsNeckBone(Bone.Name);
+        bool bIsShoulderBone = IsShoulderBone(Bone.Name);
+        bool bIsFootBone = IsFootBone(Bone.Name);
+
+        float EffectiveRadiusRatio = RadiusRatio;
+        float EffectiveLengthRatio = LengthRatio;
+
+        if (bIsHandBone)
+        {
+            EffectiveRadiusRatio = HandRadiusRatio;
+        }
+        else if (bIsHeadBone)
+        {
+            EffectiveRadiusRatio = HeadRadiusRatio;
+        }
+        else if (bIsSpineBone)
+        {
+            EffectiveRadiusRatio = SpineRadiusRatio;
+            EffectiveLengthRatio = SpineLengthRatio;
+        }
+        else if (bIsNeckBone)
+        {
+            EffectiveRadiusRatio = NeckRadiusRatio;
+            EffectiveLengthRatio = NeckLengthRatio;
+        }
+        else if (bIsShoulderBone)
+        {
+            EffectiveRadiusRatio = ShoulderRadiusRatio;
+        }
+        else if (bIsFootBone)
+        {
+            EffectiveRadiusRatio = FootRadiusRatio;
+        }
+
+        Capsule.Radius = ClampedLength * EffectiveRadiusRatio;
+        Capsule.Length = ClampedLength * EffectiveLengthRatio;
 
         // 5. 캡슐 위치: 본 세그먼트 중앙 (로컬 Z축 방향)
         // ClampedLength 사용 (BoneLength가 클램프된 경우 대비)
         Capsule.Center = FVector(0, 0, ClampedLength * 0.5f);
 
-        // 6. 캡슐 회전: -Z축(BaseRotation 후) → +Z축(본 방향)
-        // BaseRotation(-90)이 Y→-Z로 만들므로, 180도 추가 회전으로 +Z로 뒤집음
-        Capsule.Rotation = FVector(180.0f, 0.0f, 0.0f);
+        // Head는 위로 올려서 가슴과 간섭 방지
+        if (bIsHeadBone)
+        {
+            Capsule.Center.Z += HeadCenterOffset;
+        }
+
+        // 6. 캡슐 회전
+        if (bIsSpineBone)
+        {
+            // Spine/Pelvis: 가로 캡슐
+            Capsule.Rotation = FVector(180.0f, 90.0f, 90.0f);
+        }
+        else
+        {
+            // 기본: 세로 캡슐
+            Capsule.Rotation = FVector(180.0f, 0.0f, 0.0f);
+        }
 
         UE_LOG("Bone '%s': len=%.2f, dir=(%.2f,%.2f,%.2f), center=(%.2f,%.2f,%.2f)",
                Bone.Name.c_str(), BoneLength,
