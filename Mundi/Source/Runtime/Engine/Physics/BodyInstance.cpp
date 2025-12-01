@@ -197,6 +197,7 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 	}
+	break;
 	case ECollisionEnabled::QueryOnly:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
@@ -259,11 +260,12 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 		}
 		Body = DynamicActor;
+		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 		// 질량 설정
-			// Damping 설정
+		// Damping 설정
 		DynamicActor->setLinearDamping(Setup->LinearDamping);
 		DynamicActor->setAngularDamping(Setup->AngularDamping);
-		PxRigidBodyExt::setMassAndUpdateInertia(*DynamicActor, Setup->MassInKg);
+		PxRigidBodyExt::updateMassAndInertia(*DynamicActor, 1.0f);
 	}
 	else
 	{
@@ -275,10 +277,9 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 			InOwnerComponent->bSimulatePhysics = false;
 		}
 		Body = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
+		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 	}
 
-	// UBodySetup의 AggGeom에서 Shape들 생성
-	CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 
 
 	// Scene에 추가
