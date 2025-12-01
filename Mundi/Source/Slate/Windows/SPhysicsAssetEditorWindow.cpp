@@ -503,17 +503,26 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
 
     FVector2D LocalPos = MousePos - FVector2D(CenterRect.Left, CenterRect.Top);
 
-    // 좌클릭 + Shape 선택 상태면 기즈모 조작 가능성 있음 → 미리 플래그 설정
-    if (Button == 0 && PhysState->ShapeGizmoAnchor && PhysState->SelectedShapeIndex >= 0)
-    {
-        PhysState->ShapeGizmoAnchor->bIsBeingManipulated = true;
-    }
-
     // 기즈모 피킹 먼저 시도
     PhysState->Viewport->ProcessMouseButtonDown((int32)LocalPos.X, (int32)LocalPos.Y, (int32)Button);
 
-    // 좌클릭일 때만 Body 피킹 시도
+    // 좌클릭일 때만 Shape/Constraint 피킹 시도
     if (Button != 0) return;
+
+    // 기즈모가 선택되었는지 확인 - 선택됐으면 Shape/Constraint 피킹 스킵
+    if (PhysState->World)
+    {
+        UActorComponent* SelectedComp = PhysState->World->GetSelectionManager()->GetSelectedComponent();
+        if (SelectedComp)
+        {
+            // ShapeAnchorComponent 또는 ConstraintAnchorComponent가 선택됐으면 피킹 스킵
+            if (Cast<UShapeAnchorComponent>(SelectedComp) || Cast<UConstraintAnchorComponent>(SelectedComp))
+            {
+                return;
+            }
+        }
+    }
+
     if (!PhysState->EditingAsset) return;
     if (!PhysState->CurrentMesh) return;
     if (!PhysState->Client) return;
