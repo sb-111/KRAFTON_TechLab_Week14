@@ -2,6 +2,8 @@
 #include "TextRenderComponent.h"
 #include "Shader.h"
 #include "StaticMesh.h"
+#include "Color.h"
+#include "VertexData.h"
 #include "Quad.h"
 #include "StaticMeshComponent.h"
 #include "BillboardComponent.h"
@@ -39,6 +41,7 @@
 URenderer::URenderer(D3D11RHI* InDevice) : RHIDevice(InDevice)
 {
 	InitializeLineBatch();
+	InitializeDebugPrimitiveBatch();
 
 	// GPU 타이머 초기화 (스키닝 성능 측정용)
 	FSkinningStatManager::GetInstance().InitializeGPUTimer(RHIDevice->GetDevice());
@@ -444,4 +447,207 @@ void URenderer::ProcessDeferredReleases()
 			DeferredReleaseQueue.RemoveAt(i);
 		}
 	}
+}
+
+//================================================================================================
+// Debug Primitive Batch Rendering System
+// Physics Body 시각화를 위한 반투명 프리미티브 렌더링
+//================================================================================================
+
+void URenderer::InitializeDebugPrimitiveBatch()
+{
+	// Load debug primitive shader
+	DebugPrimitiveShader = UResourceManager::GetInstance().Load<UShader>("Shaders/Debug/DebugPrimitive.hlsl");
+}
+
+void URenderer::BeginDebugPrimitiveBatch()
+{
+	bDebugPrimitiveBatchActive = true;
+
+	// Set render target with ID buffer for picking support
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithId);
+
+	// Set blend state for transparency (SrcAlpha, InvSrcAlpha)
+	RHIDevice->OMSetBlendState(true);
+
+	// Set depth stencil state: depth test enabled, depth write disabled (X-ray effect)
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqualReadOnly);
+
+	// Set rasterizer state to solid fill
+	RHIDevice->RSSetState(ERasterizerMode::Solid);
+}
+
+void URenderer::DrawPrimitiveMesh(UStaticMesh* Mesh, const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive || !Mesh || !DebugPrimitiveShader)
+		return;
+
+	// Set model matrix
+	FMatrix ModelInvTranspose = Transform.InverseAffine().Transpose();
+	RHIDevice->SetAndUpdateConstantBuffer(ModelBufferType(Transform, ModelInvTranspose));
+
+	// Set color (with alpha for transparency)
+	RHIDevice->SetAndUpdateConstantBuffer(ColorBufferType(Color, UUID));
+
+	// Prepare shader
+	RHIDevice->PrepareShader(DebugPrimitiveShader);
+
+	// Get vertex/index buffers
+	ID3D11Buffer* VertexBuffer = Mesh->GetVertexBuffer();
+	ID3D11Buffer* IndexBuffer = Mesh->GetIndexBuffer();
+
+	if (!VertexBuffer || !IndexBuffer)
+		return;
+
+	// Set vertex/index buffers
+	// 프리미티브 메시는 FVertexDynamic 포맷 사용 (Position, Normal, UV, Tangent, Color)
+	UINT stride = sizeof(FVertexDynamic);
+	UINT offset = 0;
+	RHIDevice->GetDeviceContext()->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
+	RHIDevice->GetDeviceContext()->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	RHIDevice->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Draw
+	RHIDevice->GetDeviceContext()->DrawIndexed(Mesh->GetIndexCount(), 0, 0);
+}
+
+void URenderer::DrawDebugSphere(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Unit sphere mesh를 가져와서 Transform으로 렌더링
+	UStaticMesh* SphereMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Sphere");
+	if (SphereMesh)
+	{
+		DrawPrimitiveMesh(SphereMesh, Transform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugBox(const FMatrix& Transform, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Unit box mesh를 가져와서 Transform으로 렌더링
+	UStaticMesh* BoxMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Box");
+	if (BoxMesh)
+	{
+		DrawPrimitiveMesh(BoxMesh, Transform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugCapsule(const FMatrix& Transform, float Radius, float HalfHeight, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// 언리얼 방식:
+	// - HalfHeight = 캡슐 중심에서 끝까지 거리 (반구 포함)
+	// - Radius = 반구 반지름
+	// - CylinderHalfHeight = HalfHeight - Radius (반구 중심까지 거리)
+	//
+	// Unit Capsule 메시 구조:
+	// - Radius = 1.0, CylinderHalfHeight = 1.0
+	// - 반구 중심: Y = ±1.0
+	// - 언리얼방식 HalfHeight = 2.0 (반구중심거리 1.0 + 반지름 1.0)
+	//
+	// 비균일 스케일 (Radius, HalfHeight/2, Radius)로 변환
+
+	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
+	FQuat Rotation(Transform);
+
+	UStaticMesh* CapsuleMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Capsule");
+	if (CapsuleMesh)
+	{
+		// Unit Capsule의 언리얼방식 HalfHeight = 2.0 이므로 HalfHeight/2.0으로 스케일
+		float ScaleY = HalfHeight / 2.0f;
+		FMatrix CapsuleTransform = FMatrix::FromTRS(Position, Rotation, FVector(Radius, ScaleY, Radius));
+		DrawPrimitiveMesh(CapsuleMesh, CapsuleTransform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugCone(const FMatrix& Transform, float Swing1Angle, float Swing2Angle, float Height, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Unit Cone: +X 방향, 높이 1.0, 밑면 반지름 1.0
+	// Swing 원뿔 시각화 (언리얼 스타일):
+	// - 0~90도: 일반 원뿔 (sin으로 반지름 계산, cos로 높이)
+	// - 90도: 밑면이 원점에 위치 (반지름 = Height)
+	// - 90~180도: 콘이 뒤집혀서 바깥으로 확장
+	//
+	// 핵심: sin/cos를 사용하여 단위 구면 위의 점을 계산
+	// 각도 θ에서: radius = Height * sin(θ), depth = Height * cos(θ)
+
+	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
+	FQuat Rotation(Transform);
+
+	UStaticMesh* ConeMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Cone");
+	if (ConeMesh)
+	{
+		const float PI = 3.14159265f;
+
+		// sin/cos로 계산 (0~180도 전 범위에서 자연스럽게 작동)
+		// Swing1 (Y축 반지름)
+		float SinY = sinf(Swing1Angle);
+		float CosY = cosf(Swing1Angle);
+		float RadiusY = Height * SinY;
+
+		// Swing2 (Z축 반지름)
+		float SinZ = sinf(Swing2Angle);
+		float CosZ = cosf(Swing2Angle);
+		float RadiusZ = Height * SinZ;
+
+		// 콘의 깊이는 두 각도 중 더 큰 각도 기준으로 결정
+		// 90도 이상이면 cos가 음수가 되어 콘이 뒤집힘
+		float MaxAngle = FMath::Max(Swing1Angle, Swing2Angle);
+		float ConeDepth = Height * cosf(MaxAngle);
+
+		// ConeDepth가 음수이면 콘이 뒤집힌 상태
+		// 이 경우 콘의 꼭지점이 앞쪽으로 이동하고 밑면이 뒤쪽으로 확장
+		FMatrix ConeTransform = FMatrix::FromTRS(Position, Rotation, FVector(ConeDepth, RadiusY, RadiusZ));
+		DrawPrimitiveMesh(ConeMesh, ConeTransform, Color, UUID);
+	}
+}
+
+void URenderer::DrawDebugArc(const FMatrix& Transform, float TwistAngle, float Radius, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// 동적 부채꼴 Arc: YZ 평면
+	// Twist 제한 시각화:
+	// - TwistAngle은 ±범위이므로, 180도(PI) = 전체 원
+	// - 0도 = 매우 얇은 선 (최소 각도 적용)
+	// - 반지름 Radius로 스케일
+
+	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
+	FQuat Rotation(Transform);
+
+	// 동적 Arc 메시 가져오기 (TwistAngle에 맞는 부채꼴)
+	UStaticMesh* ArcMesh = UResourceManager::GetInstance().GetOrCreateDynamicArcMesh(TwistAngle);
+	if (ArcMesh)
+	{
+		// Radius로 Y, Z 스케일 동일하게 적용 (원형 유지)
+		FMatrix ArcTransform = FMatrix::FromTRS(Position, Rotation, FVector(1.0f, Radius, Radius));
+		DrawPrimitiveMesh(ArcMesh, ArcTransform, Color, UUID);
+	}
+}
+
+void URenderer::EndDebugPrimitiveBatch()
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// Restore default states
+	RHIDevice->OMSetBlendState(false);
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
+	RHIDevice->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Restore render target (without ID buffer)
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTarget);
+
+	bDebugPrimitiveBatchActive = false;
 }

@@ -274,6 +274,113 @@ float DistanceRayToLineSegment(const FRay& Ray, const FVector& LineStart, const 
 	return (PointOnRay - PointOnSegment).Size();
 }
 
+bool IntersectRayOBB(const FRay& InRay, const FVector& BoxCenter, const FVector& HalfExtent, const FQuat& Rotation, float& OutT)
+{
+	// OBB의 3개 축 방향 계산
+	FVector Axes[3];
+	Axes[0] = Rotation.RotateVector(FVector(1, 0, 0));
+	Axes[1] = Rotation.RotateVector(FVector(0, 1, 0));
+	Axes[2] = Rotation.RotateVector(FVector(0, 0, 1));
+
+	FVector Delta = BoxCenter - InRay.Origin;
+	float HalfExtents[3] = { HalfExtent.X, HalfExtent.Y, HalfExtent.Z };
+
+	float tMin = -FLT_MAX;
+	float tMax = FLT_MAX;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		float e = FVector::Dot(Axes[i], Delta);
+		float f = FVector::Dot(InRay.Direction, Axes[i]);
+
+		if (std::fabsf(f) > 1e-6f)
+		{
+			float t1 = (e - HalfExtents[i]) / f;
+			float t2 = (e + HalfExtents[i]) / f;
+
+			if (t1 > t2) { float temp = t1; t1 = t2; t2 = temp; }
+			if (t1 > tMin) tMin = t1;
+			if (t2 < tMax) tMax = t2;
+
+			if (tMin > tMax) return false;
+			if (tMax < 0) return false;
+		}
+		else
+		{
+			// 레이가 슬랩과 평행
+			if (-e - HalfExtents[i] > 0 || -e + HalfExtents[i] < 0)
+				return false;
+		}
+	}
+
+	OutT = (tMin >= 0) ? tMin : tMax;
+	return OutT >= 0;
+}
+// Ray-Capsule 충돌 검사
+// 언리얼 방식:
+// - HalfHeight = 캡슐 중심에서 끝까지 거리 (반구 포함)
+// - Radius = 반구 반지름
+// - CylinderHalfHeight = HalfHeight - Radius (반구 중심까지 거리)
+// - 전체 높이 = 2 * HalfHeight
+bool IntersectRayCapsule(const FRay& Ray, const FVector& CapsuleCenter, const FQuat& Rotation, float Radius, float HalfHeight, float& OutT)
+{
+	// 캡슐의 축 방향 (Y축이 캡슐 축)
+	FVector CapsuleAxis = Rotation.RotateVector(FVector(0, 1, 0));
+
+	// 언리얼 방식: 반구 중심 = Center ± Axis * (HalfHeight - Radius)
+	float CylinderHalfHeight = FMath::Max(0.0f, HalfHeight - Radius);
+	FVector P1 = CapsuleCenter - CapsuleAxis * CylinderHalfHeight;  // 하단 반구 중심
+	FVector P2 = CapsuleCenter + CapsuleAxis * CylinderHalfHeight;  // 상단 반구 중심
+
+	float bestT = FLT_MAX;
+	float t;
+
+	// 1. 반구(구) 충돌 검사 - 균일 스케일 구
+	if (IntersectRaySphere(Ray, P1, Radius, t) && t < bestT) bestT = t;
+	if (IntersectRaySphere(Ray, P2, Radius, t) && t < bestT) bestT = t;
+
+	// 2. 실린더 부분 충돌 검사 (P1~P2 구간)
+	FVector d = Ray.Direction;
+	FVector m = Ray.Origin - P1;
+	FVector n = P2 - P1;
+	float nn = FVector::Dot(n, n);
+	float mn = FVector::Dot(m, n);
+	float dn = FVector::Dot(d, n);
+	float dd = FVector::Dot(d, d);
+	float md = FVector::Dot(m, d);
+	float mm = FVector::Dot(m, m);
+
+	float a = dd * nn - dn * dn;
+	float b = 2.0f * (md * nn - mn * dn);
+	float c = mm * nn - mn * mn - Radius * Radius * nn;
+
+	if (fabsf(a) > 1e-6f)
+	{
+		float disc = b * b - 4.0f * a * c;
+		if (disc >= 0)
+		{
+			float sqrtDisc = sqrtf(disc);
+			float tCyl = (-b - sqrtDisc) / (2.0f * a);
+			if (tCyl >= 0)
+			{
+				// 충돌점이 실린더 범위 내인지 확인 (s = 0~1)
+				float s = (mn + tCyl * dn) / nn;
+				if (s >= 0.0f && s <= 1.0f && tCyl < bestT)
+				{
+					bestT = tCyl;
+				}
+			}
+		}
+	}
+
+	if (bestT < FLT_MAX)
+	{
+		OutT = bestT;
+		return true;
+	}
+	return false;
+}
+
 // PickingSystem 구현
 AActor* CPickingSystem::PerformPicking(const TArray<AActor*>& Actors, ACameraActor* Camera)
 {

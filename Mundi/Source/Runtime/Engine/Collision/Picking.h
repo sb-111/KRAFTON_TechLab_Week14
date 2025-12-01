@@ -56,11 +56,20 @@ bool IntersectRayTriangleMT(const FRay& InRay,
 
 // Ray-line segment distance.
 // Returns the shortest distance and outputs the parameters (OutRayT, OutSegmentT) for the closest points.
-float DistanceRayToLineSegment(const FRay& Ray, 
+float DistanceRayToLineSegment(const FRay& Ray,
                                const FVector& LineStart,
                                const FVector& LineEnd,
                                float& OutRayT,
                                float& OutSegmentT);
+
+// Ray-OBB (Oriented Bounding Box) intersection using Slab Method.
+// Returns true if the ray intersects the OBB and outputs the closest positive T.
+bool IntersectRayOBB(const FRay& InRay, const FVector& BoxCenter, const FVector& HalfExtent, const FQuat& Rotation, float& OutT);
+
+// Ray-Capsule intersection.
+// Capsule is defined by center, rotation (Y axis is capsule axis), radius, and half height.
+// Returns true if the ray intersects the capsule and outputs the closest positive T.
+bool IntersectRayCapsule(const FRay& InRay, const FVector& CapsuleCenter, const FQuat& Rotation, float Radius, float HalfHeight, float& OutT);
 
 /**
  * PickingSystem

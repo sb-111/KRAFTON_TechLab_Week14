@@ -128,6 +128,10 @@ private:
     /** @brief 래그돌 디버그 렌더링 (PIE 모드에서도 동작) */
     void RenderRagdollDebugPass();
 	
+
+    /** @brief Debug Primitive (Physics Body 시각화 등)를 렌더링합니다. */
+    void RenderDebugPrimitivesPass();
+	
 	/** @brief FXAA 등 화면에서 최종 이미지 품질을 위해 적용되는 효과를 적용하는 패스입니다. */
 	void ApplyScreenEffectsPass();
 

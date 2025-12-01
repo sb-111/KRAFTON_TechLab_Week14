@@ -229,7 +229,7 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 
 // ===== 래그돌용 함수들 (언리얼 방식) =====
 
-void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex)
+void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex, uint32 InRagdollOwnerID)
 {
 	if (!Setup) return;
 	if (RigidActor) return;	// 이미 초기화됨
@@ -239,6 +239,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
+	RagdollOwnerID = InRagdollOwnerID;
 
 	// RigidDynamic 생성
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
@@ -279,6 +280,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 	// UBodySetup의 AggGeom에서 Shape들 생성
 	CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 
+
 	// Scene에 추가
 	GWorld->GetPhysicsScene()->AddActor(*Body);
 
@@ -301,6 +303,12 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 	);
 	if (!Material) return;
 
+	// 래그돌 자체 충돌 방지용 Filter Data
+	// word0 = Owner ID, word1 = 1 (래그돌 Shape 표시)
+	PxFilterData RagdollFilterData;
+	RagdollFilterData.word0 = RagdollOwnerID;
+	RagdollFilterData.word1 = (RagdollOwnerID != 0) ? 1 : 0;  // 래그돌이면 1
+
 	const FKAggregateGeom& AggGeom = Setup->AggGeom;
 
 	// === Sphere Shape 생성 ===
@@ -314,6 +322,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
 			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -337,6 +346,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 			);
 			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -359,6 +369,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 			);
 			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
+			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 

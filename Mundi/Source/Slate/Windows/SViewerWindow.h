@@ -43,6 +43,9 @@ public:
 		std::function<bool(UAnimSequence*)> IsAnimationSelected = nullptr);
 
 protected:
+	// Asset Browser UI (FBX 로드)
+	void RenderAssetBrowser(float PanelWidth);
+
 	// Per-tab state
 	UEditorAssetPreviewContext* Context = nullptr;
 	ViewerState* ActiveState = nullptr;

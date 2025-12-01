@@ -2,6 +2,8 @@
 
 class UWorld; class FViewport; class FViewportClient; class ASkeletalMeshActor; class USkeletalMesh; class UAnimSequence;
 class UParticleSystem; class UParticleSystemComponent; class AActor; class UParticleModule;
+class UShapeAnchorComponent;
+class UConstraintAnchorComponent;
 
 struct FAnimNotifyEvent
 {
@@ -95,6 +97,63 @@ public:
 
     // 기즈모 드래그 첫 프레임 감지용 (부동소수점 오차로 인한 불필요한 업데이트 방지)
     bool bWasGizmoDragging = false;
+};
+
+// Shape 타입 열거형
+enum class EShapeType : uint8
+{
+    None,
+    Sphere,
+    Box,
+    Capsule
+};
+
+// Physics Asset 에디터 상태
+struct PhysicsAssetEditorState : public ViewerState
+{
+    // ==== 편집 대상 ====
+    class UPhysicsAsset* EditingAsset = nullptr; // 현재 편집 중인 Physics Asset
+
+    // ==== 선택 상태 ====
+    int32 SelectedBodyIndex = -1;               // 선택된 Body 인덱스
+    int32 SelectedConstraintIndex = -1;         // 선택된 Constraint 인덱스
+    int32 SelectedShapeIndex = -1;              // 선택된 Shape 인덱스
+    EShapeType SelectedShapeType = EShapeType::None;  // 선택된 Shape 타입
+
+    // ==== 선택 소스 (색상 구분용) ====
+    enum class ESelectionSource { TreeOrViewport, Graph }; // 트리/뷰포트 : 파란색, 그래프 : 보라색
+    ESelectionSource SelectionSource = ESelectionSource::TreeOrViewport;
+
+    // ==== 표시 옵션 ====
+    bool bShowBodies = true;
+    bool bShowConstraints = true;
+    bool bShowMesh = true;
+    bool bShowBoneNames = false;
+
+    // ==== Shape 시각화 ====
+    class ULineComponent* ShapeLineComponent = nullptr;  // Shape 와이어프레임용
+    bool bShapesDirty = true;  // Shape 라인 재구성 필요 플래그
+
+    // ==== Shape 기즈모용 앵커 ====
+    UShapeAnchorComponent* ShapeGizmoAnchor = nullptr;   // 선택된 Shape의 기즈모 앵커
+
+    // ==== Constraint 기즈모용 앵커 ====
+    UConstraintAnchorComponent* ConstraintGizmoAnchor = nullptr;  // 선택된 Constraint의 기즈모 앵커
+
+    // ==== Constraint 시각화 ====
+    class ULineComponent* ConstraintLineComponent = nullptr;  // Constraint 와이어프레임용
+    bool bConstraintsDirty = true;  // Constraint 라인 재구성 필요 플래그
+
+    // ==== Constraint 생성 중간 상태 ====
+    int32 ConstraintStartBodyIndex = -1;  // -1이면 Constraint 생성 대기 안함
+
+    // ==== Graph View 상태
+    FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋
+    float GraphZoom = 1.0f;                     // 그래프 줌 레벨
+
+    // 파일 상태
+    FString CurrentFilePath;
+    // bIsDirty는 부모 클래스에 있음
 };
 
 // 파티클 에디터 상태
