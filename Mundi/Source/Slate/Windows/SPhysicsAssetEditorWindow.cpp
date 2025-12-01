@@ -511,11 +511,12 @@ void SPhysicsAssetEditorWindow::SavePhysicsAsset()
         return;
     }
 
-    // 저장 수행
-    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, PhysState->CurrentFilePath))
+    // 저장 수행 (FBX 경로도 함께 저장)
+    FString SourceFbxPath = ActiveState ? ActiveState->LoadedMeshPath : "";
+    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, PhysState->CurrentFilePath, SourceFbxPath))
     {
         PhysState->bIsDirty = false;
-        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s", PhysState->CurrentFilePath.c_str());
+        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", PhysState->CurrentFilePath.c_str(), SourceFbxPath.c_str());
     }
     else
     {
@@ -556,14 +557,15 @@ void SPhysicsAssetEditorWindow::SavePhysicsAssetAs()
     // std::filesystem::path를 FString으로 변환 (상대 경로로 변환)
     FString SavePathStr = ResolveAssetRelativePath(NormalizePath(WideToUTF8(SavePath.wstring())), "");
 
-    // 저장 수행
-    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, SavePathStr))
+    // 저장 수행 (FBX 경로도 함께 저장)
+    FString SourceFbxPath = ActiveState ? ActiveState->LoadedMeshPath : "";
+    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, SavePathStr, SourceFbxPath))
     {
         // 에디터 상태 업데이트
         PhysState->CurrentFilePath = SavePathStr;
         PhysState->bIsDirty = false;
 
-        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s", SavePathStr.c_str());
+        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", SavePathStr.c_str(), SourceFbxPath.c_str());
     }
     else
     {
@@ -597,8 +599,9 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
     // std::filesystem::path를 FString으로 변환
     FString LoadPathStr = WideToUTF8(LoadPath.wstring());
 
-    // 파일에서 Physics Asset 로드
-    UPhysicsAsset* LoadedAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(LoadPathStr);
+    // 파일에서 Physics Asset 로드 (FBX 경로도 함께 반환)
+    FString SourceFbxPath;
+    UPhysicsAsset* LoadedAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(LoadPathStr, &SourceFbxPath);
     if (!LoadedAsset)
     {
         UE_LOG("[PhysicsAssetEditor] 로드 실패: %s", LoadPathStr.c_str());
@@ -618,7 +621,59 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
     PhysState->SelectedShapeIndex = -1;
     PhysState->SelectedShapeType = EShapeType::None;
 
-    UE_LOG("[PhysicsAssetEditor] 로드 완료: %s", LoadPathStr.c_str());
+    // 소스 FBX 파일이 있으면 자동으로 로드
+    if (!SourceFbxPath.empty() && ActiveState)
+    {
+        USkeletalMesh* Mesh = UResourceManager::GetInstance().Load<USkeletalMesh>(SourceFbxPath);
+        if (Mesh && ActiveState->PreviewActor)
+        {
+            ActiveState->PreviewActor->SetSkeletalMesh(SourceFbxPath);
+            ActiveState->CurrentMesh = Mesh;
+
+            // MeshPathBuffer 업데이트 (Asset Browser UI에 표시)
+            size_t copyLen = std::min(SourceFbxPath.size(), sizeof(ActiveState->MeshPathBuffer) - 1);
+            memcpy(ActiveState->MeshPathBuffer, SourceFbxPath.c_str(), copyLen);
+            ActiveState->MeshPathBuffer[copyLen] = '\0';
+
+            // 본 노드 확장
+            ActiveState->ExpandedBoneIndices.clear();
+            if (const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton())
+            {
+                for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+                {
+                    ActiveState->ExpandedBoneIndices.insert(i);
+                }
+            }
+
+            // Physics Asset 로드 시에는 OnSkeletalMeshLoaded를 호출하지 않음
+            // (이미 로드된 Body/Constraint 데이터를 유지하기 위해)
+
+            ActiveState->LoadedMeshPath = SourceFbxPath;
+            if (auto* Skeletal = ActiveState->PreviewActor->GetSkeletalMeshComponent())
+            {
+                Skeletal->SetVisibility(ActiveState->bShowMesh);
+            }
+            ActiveState->bBoneLinesDirty = true;
+            if (auto* LineComp = ActiveState->PreviewActor->GetBoneLineComponent())
+            {
+                LineComp->ClearLines();
+                LineComp->SetLineVisible(ActiveState->bShowBones);
+            }
+
+            // Shape 라인 재구성 필요
+            PhysState->bShapesDirty = true;
+
+            UE_LOG("[PhysicsAssetEditor] 로드 완료: %s (FBX: %s)", LoadPathStr.c_str(), SourceFbxPath.c_str());
+        }
+        else
+        {
+            UE_LOG("[PhysicsAssetEditor] 로드 완료: %s (FBX 로드 실패: %s)", LoadPathStr.c_str(), SourceFbxPath.c_str());
+        }
+    }
+    else
+    {
+        UE_LOG("[PhysicsAssetEditor] 로드 완료: %s (FBX 경로 없음)", LoadPathStr.c_str());
+    }
 }
 
 void SPhysicsAssetEditorWindow::OnMouseUp(FVector2D MousePos, uint32 Button)
@@ -892,6 +947,9 @@ void SPhysicsAssetEditorWindow::OnSkeletalMeshLoaded(ViewerState* State, const F
 void SPhysicsAssetEditorWindow::RenderLeftPanel(float PanelWidth)
 {
     if (!ActiveState) return;
+
+    // Asset Browser 섹션 (부모 클래스에서 가져옴)
+    RenderAssetBrowser(PanelWidth);
 
     float totalHeight = ImGui::GetContentRegionAvail().y;
     float splitterHeight = 4.0f;
@@ -2112,12 +2170,12 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
     const FLinearColor TwistArcSelectedColor(0.3f, 1.0f, 0.3f, 0.6f);   // 선택 시 더 진하게
     const FLinearColor MarkerColor(1.0f, 1.0f, 1.0f, 0.8f);         // 흰색 (마커)
 
-    // 크기 설정
-    const float NormalConeHeight = 0.3f;
-    const float SelectedConeHeight = 0.5f;  // 선택 시 확대
-    const float NormalArcRadius = 0.3f;
-    const float SelectedArcRadius = 0.5f;   // 선택 시 확대
-    const float MarkerRadius = 0.03f;
+    // 크기 설정 (축소됨)
+    const float NormalConeHeight = 0.1f;
+    const float SelectedConeHeight = 0.15f;  // 선택 시 확대
+    const float NormalArcRadius = 0.1f;
+    const float SelectedArcRadius = 0.15f;   // 선택 시 확대
+    const float MarkerRadius = 0.015f;
 
     // 모든 Constraint 순회
     for (int32 ConstraintIndex = 0; ConstraintIndex < PhysState->EditingAsset->Constraints.Num(); ++ConstraintIndex)

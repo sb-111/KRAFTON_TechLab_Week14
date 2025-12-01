@@ -16,9 +16,9 @@ public:
 	// ViewerState 소멸
 	static void DestroyViewerState(ViewerState*& State);
 
-	// Physics Asset을 JSON 파일로 저장
-	static bool SavePhysicsAsset(UPhysicsAsset* Asset, const FString& FilePath);
+	// Physics Asset을 JSON 파일로 저장 (FBX 경로도 함께 저장)
+	static bool SavePhysicsAsset(UPhysicsAsset* Asset, const FString& FilePath, const FString& SourceFbxPath = "");
 
-	// JSON 파일에서 Physics Asset 로드
-	static UPhysicsAsset* LoadPhysicsAsset(const FString& FilePath);
+	// JSON 파일에서 Physics Asset 로드 (FBX 경로도 함께 반환)
+	static UPhysicsAsset* LoadPhysicsAsset(const FString& FilePath, FString* OutSourceFbxPath = nullptr);
 };

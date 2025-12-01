@@ -671,12 +671,9 @@ void SViewerWindow::CloseTab(int Index)
     else { ActiveTabIndex = std::min(Index, Tabs.Num() - 1); ActiveState = Tabs[ActiveTabIndex]; }
 }
 
-void SViewerWindow::RenderLeftPanel(float PanelWidth)
+void SViewerWindow::RenderAssetBrowser(float PanelWidth)
 {
-    if (!ActiveState)   return;
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    float spacing = style.ItemSpacing.y;
+    if (!ActiveState) return;
 
     // Asset Browser Section
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6);
@@ -791,6 +788,17 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::PopStyleColor();
     ImGui::Dummy(ImVec2(0, 8));
     ImGui::Spacing();
+}
+
+void SViewerWindow::RenderLeftPanel(float PanelWidth)
+{
+    if (!ActiveState)   return;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    float spacing = style.ItemSpacing.y;
+
+    // Asset Browser
+    RenderAssetBrowser(PanelWidth);
 
     // Display Options
     ImGui::BeginGroup();

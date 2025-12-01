@@ -258,7 +258,7 @@ static JSON SerializeConstraintInstance(const FConstraintInstance& Constraint)
 	return Obj;
 }
 
-bool PhysicsAssetEditorBootstrap::SavePhysicsAsset(UPhysicsAsset* Asset, const FString& FilePath)
+bool PhysicsAssetEditorBootstrap::SavePhysicsAsset(UPhysicsAsset* Asset, const FString& FilePath, const FString& SourceFbxPath)
 {
 	if (!Asset)
 	{
@@ -274,6 +274,13 @@ bool PhysicsAssetEditorBootstrap::SavePhysicsAsset(UPhysicsAsset* Asset, const F
 
 	// Root JSON Object
 	JSON JsonHandle = JSON::Make(JSON::Class::Object);
+
+	// 소스 FBX 경로 저장 (백슬래시를 슬래시로 정규화하여 JSON 이스케이프 문제 방지)
+	if (!SourceFbxPath.empty())
+	{
+		FString NormalizedFbxPath = NormalizePath(SourceFbxPath);
+		JsonHandle["SourceFbxPath"] = NormalizedFbxPath;
+	}
 
 	// Bodies 배열 직렬화
 	JSON BodiesArray = JSON::Make(JSON::Class::Array);
@@ -459,7 +466,7 @@ static FConstraintInstance DeserializeConstraintInstance(const JSON& Data)
 	return Constraint;
 }
 
-UPhysicsAsset* PhysicsAssetEditorBootstrap::LoadPhysicsAsset(const FString& FilePath)
+UPhysicsAsset* PhysicsAssetEditorBootstrap::LoadPhysicsAsset(const FString& FilePath, FString* OutSourceFbxPath)
 {
 	if (FilePath.empty())
 	{
@@ -477,6 +484,12 @@ UPhysicsAsset* PhysicsAssetEditorBootstrap::LoadPhysicsAsset(const FString& File
 	{
 		UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicsAsset: 파일 로드 실패: %s", NormalizedFilePath.c_str());
 		return nullptr;
+	}
+
+	// 소스 FBX 경로 읽기
+	if (OutSourceFbxPath)
+	{
+		FJsonSerializer::ReadString(JsonHandle, "SourceFbxPath", *OutSourceFbxPath, "", false);
 	}
 
 	// 새 PhysicsAsset 객체 생성
