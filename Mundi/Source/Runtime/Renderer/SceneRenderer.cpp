@@ -63,6 +63,10 @@
 #include "Modules/ParticleModuleTypeDataBeam.h"
 #include "Modules/ParticleModuleTypeDataRibbon.h"
 
+// Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
+
+// =================== FSceneRenderer 생성/소멸 ===================
+
 FSceneRenderer::FSceneRenderer(UWorld* InWorld, FSceneView* InView, URenderer* InOwnerRenderer)
 	: World(InWorld)
 	, View(InView) // 전달받은 FSceneView 저장
@@ -2015,50 +2019,84 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	ID3D11ShaderResourceView* NullSRVs[2] = { nullptr, nullptr };
 	RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 2, NullSRVs);
 
+	// CRITICAL: Pass 1 RTV 언바인드 (Pass 2에서 같은 텍스처를 SRV로 읽어야 하므로)
+	ID3D11RenderTargetView* NullRTV = nullptr;
+	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &NullRTV, nullptr);
+
 	// Pass 2: BlurH (수평)
-	// 뷰포트 설정 (Half Resolution)
-	vp = {};
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.Width = static_cast<float>(halfWidth);
-	vp.Height = static_cast<float>(halfHeight);
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	RHIDevice->GetDeviceContext()->RSSetViewports(1, &vp);
 
-	// ViewportConstants 업데이트 (Half Resolution - 입출력 모두 half resolution)
-	FViewportConstants HalfViewportConst;
-	HalfViewportConst.ViewportRect = FVector4(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight));
-	HalfViewportConst.ScreenSize = FVector4(
-		static_cast<float>(halfWidth),
-		static_cast<float>(halfHeight),
-		1.0f / halfWidth,
-		1.0f / halfHeight
-	);
-	RHIDevice->SetAndUpdateConstantBuffer(HalfViewportConst);
-
-	// 렌더 타겟 설정
-	rtv = RHIDevice->GetDOFHalfResBlurTempRTV();
-	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
-
-	// 셰이더 로드
-	// Pass 1과 동일하게 Full Screen Triangle Vertex Shader를 사용하므로 생략
-	UShader* BlurPS = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_PS.hlsl");
-	if (!BlurPS || !BlurPS->GetPixelShader())
+	// Compute Shader 로드 (UResourceManager 프레임워크 사용)
+	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_CS.hlsl");
+	if (!BlurCS_Shader || !BlurCS_Shader->GetComputeShader())
 	{
-		UE_LOG("DOF: Blur 셰이더 없음!\n");
+		UE_LOG("DOF: Blur Compute Shader 로드 실패!\n");
 		return;
 	}
 
-	// SRV 바인딩 (t0: halfResColorCoC)
-	ID3D11ShaderResourceView* srv = RHIDevice->GetDOFHalfResColorCoCSRV();
-	RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &srv);
+	ID3D11ComputeShader* BlurCS = BlurCS_Shader->GetComputeShader();
+	ID3D11DeviceContext* context = RHIDevice->GetDeviceContext();
 
-	// Sampler 바인딩
-	ID3D11SamplerState* LinearSampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
-	RHIDevice->GetDeviceContext()->PSSetSamplers(0, 1, &LinearSampler);
+	// ===== Pass 2: BlurH (수평) =====
 
-	// 상수 버퍼 업데이트 (BlurDirection = (1, 0))
+	// 1. SRV 바인딩 (입력: ColorCoC)
+	ID3D11ShaderResourceView* inputSRV = RHIDevice->GetDOFHalfResColorCoCSRV();
+	context->CSSetShaderResources(0, 1, &inputSRV);
+
+	// 2. UAV 바인딩 (출력: BlurTemp)
+	ID3D11UnorderedAccessView* outputUAV = RHIDevice->GetDOFHalfResBlurTempUAV();
+	context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
+
+	// 3. Sampler Binding
+	ID3D11SamplerState* sampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
+	context->CSSetSamplers(0, 1, &sampler);
+
+	// 4. Constant Buffer 바인딩 (수평 블러)
+	RHIDevice->SetAndUpdateConstantBuffer(
+		DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho,
+			FVector2D(1.0f, 0.0f), //BlurDirection: 수평
+			FVector2D(1.0f / halfWidth, 1.0f / halfHeight)
+		)
+	);
+
+	ID3D11Buffer* cb = RHIDevice->GetDOFConstantBuffer();
+	context->CSSetConstantBuffers(2, 1, &cb);
+
+	// 5. Compute Shader 설정
+	context->CSSetShader(BlurCS, nullptr, 0);
+
+	// 6. Dispatch
+	uint32 groupCountX = (halfWidth + 7) / 8;	// 8x8 스레드 그룹
+	uint32 groupCountY = (halfHeight + 7) / 8;
+	context->Dispatch(groupCountX, groupCountY, 1);
+
+	// 7. Unbind
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	ID3D11UnorderedAccessView* nullUAV = nullptr;
+	context->CSSetShaderResources(0, 1, &nullSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
+	context->CSSetShader(nullptr, nullptr, 0);
+	
+	// ===== Pass 3: BlurV (수직) =====
+	// 동일한 BlurCS 재사용
+
+	// 1. 입력: BlurTemp → 출력: Blurred
+	inputSRV = RHIDevice->GetDOFHalfResBlurTempSRV();
+	outputUAV = RHIDevice->GetDOFHalfResBlurredUAV();
+
+	context->CSSetShaderResources(0, 1, &inputSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
+
+	// 2. Sampler (동일)
+	sampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
+	context->CSSetSamplers(0, 1, &sampler);
+
+	// 3. Constant Buffer - BlurDirection = (0, 1) 수직
 	RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
 		RenderSettings.GetDOFFocalDistance(),
 		RenderSettings.GetDOFNearTransitionRange(),
@@ -2066,47 +2104,30 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 		RenderSettings.GetDOFMaxCoCRadius(),
 		projAB,
 		isOrtho,
-		FVector2D(1.0f, 0.0f), // BlurDirection: 수평
-		FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
+		FVector2D(0.0f, 1.0f),  // BlurDirection: 수직
+		FVector2D(1.0f / halfWidth, 1.0f / halfHeight)
 	));
 
-	// 셰이더 준비 및 드로우
-	RHIDevice->PrepareShader(FullScreenTriangleVS, BlurPS);
-	RHIDevice->DrawFullScreenQuad();
+	cb = RHIDevice->GetDOFConstantBuffer();
+	context->CSSetConstantBuffers(2, 1, &cb);
 
-	// Pass 2에서 사용한 SRV 언바인드 (t0: ColorCoC)
-	ID3D11ShaderResourceView* NullSRV = nullptr;
-	RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
+	// 4. Compute Shader 설정 (동일한 BlurCS 재사용)
+	context->CSSetShader(BlurCS, nullptr, 0);
 
-	// Pass 3: BlurV (수직)
-	// 수평 및 수직 블러 사용 여부 제외 나머지 설정이 모두 동일하므로 이전 Pass에서의 Pipeline 설정을 동일하게 유지
+	// 5. Dispatch
+	groupCountX = (halfWidth + 7) / 8;
+	groupCountY = (halfHeight + 7) / 8;
+	context->Dispatch(groupCountX, groupCountY, 1);
 
-	// 렌더 타겟 설정
-	rtv = RHIDevice->GetDOFHalfResBlurredRTV();
-	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &rtv, nullptr);
+	// 6. Unbind
+	nullSRV = nullptr;
+	nullUAV = nullptr;
+	context->CSSetShaderResources(0, 1, &nullSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
+	context->CSSetShader(nullptr, nullptr, 0);
 
-	// SRV 바인딩 (t0: halfResBlurTemp)
-	srv = RHIDevice->GetDOFHalfResBlurTempSRV();
-	RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &srv);
-
-	// 상수 버퍼 업데이트 (BlurDirection = (0, 1))
-	RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
-		RenderSettings.GetDOFFocalDistance(),
-		RenderSettings.GetDOFNearTransitionRange(),
-		RenderSettings.GetDOFFarTransitionRange(),
-		RenderSettings.GetDOFMaxCoCRadius(),
-		projAB,
-		isOrtho,
-		FVector2D(0.0f, 1.0f), // BlurDirection: 수직
-		FVector2D(1.0f / halfWidth, 1.0f / halfHeight) // TexelSize
-	));
-
-	// 드로우
-	RHIDevice->DrawFullScreenQuad();
-
-	// Pass 3에서 사용한 SRV 언바인드 (t0: BlurTemp)
-	NullSRV = nullptr;
-	RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 1, &NullSRV);
+	// UResourceManager가 Compute Shader 리소스를 관리하므로 직접 Release 불필요
+	
 	// Pass 1-3 블록 종료
 
 	// ===== Pass 4: Composite 또는 CoCVisualize =====
