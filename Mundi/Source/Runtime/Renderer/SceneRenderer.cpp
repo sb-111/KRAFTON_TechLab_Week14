@@ -2093,9 +2093,6 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	}
 
 	// Sampler 바인딩
-	// Samplers[0] = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
-	// Samplers[1] = RHIDevice->GetSamplerState(RHI_Sampler_Index::PointClamp);
-	
 	RHIDevice->GetDeviceContext()->PSSetSamplers(0, 2, Samplers);
 
 	// 상수 버퍼 업데이트
