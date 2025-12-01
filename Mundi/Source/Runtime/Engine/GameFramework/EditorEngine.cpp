@@ -6,6 +6,8 @@
 #include "FbxLoader.h"
 #include "PlatformCrashHandler.h"
 #include "PhysicsSystem.h"
+#include "PhysicsScene.h"
+#include "SkeletalMeshComponent.h"
 #include <ObjManager.h>
 
 float UEditorEngine::ClientWidth = 1024.0f;
@@ -305,6 +307,30 @@ void UEditorEngine::MainLoop()
         {
             if (GWorld && bPIEActive)
             {
+                // PIE 월드 삭제 전 래그돌 Bodies 정리
+                // (PhysicsScene이 삭제되기 전에 Bodies를 먼저 정리해야 함)
+                if (GWorld->GetLevel())
+                {
+                    for (AActor* Actor : GWorld->GetLevel()->GetActors())
+                    {
+                        if (!Actor) continue;
+                        for (UActorComponent* Comp : Actor->GetOwnedComponents())
+                        {
+                            if (USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Comp))
+                            {
+                                SkelComp->DestroyPhysicsState();
+                            }
+                        }
+                    }
+                }
+
+                // WriteInTheDeathNote로 큐에 들어간 Actor들을 실제로 Scene에서 제거
+                // (FetchAndUpdate가 호출되지 않으므로 수동으로 정리)
+                if (GWorld->GetPhysicsScene())
+                {
+                    GWorld->GetPhysicsScene()->PendingDestroyInDeathNote();
+                }
+
                 WorldContexts.pop_back();
                 ObjectFactory::DeleteObject(GWorld);
             }
@@ -373,6 +399,31 @@ void UEditorEngine::StartPIE()
     UE_LOG("[info] START PIE");
 
     UWorld* EditorWorld = WorldContexts[0].World;
+
+    // PIE 시작 전 에디터 월드의 래그돌 Bodies 정리
+    // (PIE Scene 생성 시 에디터 Bodies가 무효화되므로 미리 정리)
+    if (EditorWorld && EditorWorld->GetLevel())
+    {
+        for (AActor* Actor : EditorWorld->GetLevel()->GetActors())
+        {
+            if (!Actor) continue;
+            for (UActorComponent* Comp : Actor->GetOwnedComponents())
+            {
+                if (USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Comp))
+                {
+                    SkelComp->DestroyPhysicsState();
+                }
+            }
+        }
+    }
+
+    // WriteInTheDeathNote로 큐에 들어간 Actor들을 실제로 Scene에서 제거
+    // (PIE Scene 생성 전에 에디터 Scene 정리해야 좀비 액터 방지)
+    if (EditorWorld && EditorWorld->GetPhysicsScene())
+    {
+        EditorWorld->GetPhysicsScene()->PendingDestroyInDeathNote();
+    }
+
     UWorld* PIEWorld = UWorld::DuplicateWorldForPIE(EditorWorld);
 
     GWorld = PIEWorld;

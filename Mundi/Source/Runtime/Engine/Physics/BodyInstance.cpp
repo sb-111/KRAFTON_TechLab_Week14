@@ -20,9 +20,20 @@ void FBodyInstance::TermBody()
 {
 	if (RigidActor)
 	{
-		GWorld->GetPhysicsScene()->WriteInTheDeathNote(RigidActor);
+		// OwnerScene을 사용하여 올바른 PhysicsScene에서 제거
+		// (PIE 전환 시 GWorld가 바뀌어도 원래 등록된 Scene에서 제거됨)
+		if (OwnerScene)
+		{
+			OwnerScene->WriteInTheDeathNote(RigidActor);
+		}
+		else if (GWorld && GWorld->GetPhysicsScene())
+		{
+			// 폴백: OwnerScene이 없으면 GWorld 사용 (기존 동작)
+			GWorld->GetPhysicsScene()->WriteInTheDeathNote(RigidActor);
+		}
 		RigidActor = nullptr;
 	}
+	OwnerScene = nullptr;
 	BodySetup = nullptr;
 	BoneIndex = -1;
 }
@@ -132,7 +143,10 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 
 	UpdateMassProperty();
 
-	GWorld->GetPhysicsScene()->AddActor(*NewActor);
+	// Scene에 추가하고 OwnerScene 저장 (PIE 전환 시 올바른 Scene에서 제거하기 위해)
+	FPhysicsScene* Scene = GWorld->GetPhysicsScene();
+	Scene->AddActor(*NewActor);
+	OwnerScene = Scene;
 }
 
 void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor)
@@ -241,16 +255,17 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
 	RagdollOwnerID = InRagdollOwnerID;
+	OwnerComponent = InOwnerComponent;
 
-	// RigidDynamic 생성
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
-	PxRigidActor* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
-	if (!Body) return;
+	PxRigidActor* Body = nullptr;
 
 	if (InOwnerComponent->MobilityType == EMobilityType::Movable || !GWorld->bPie)
 	{
 		// RigidDynamic: 움직이는 강체
 		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		if (!DynamicActor) return;
+
 		if (InOwnerComponent->bSimulatePhysics)
 		{
 			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
@@ -261,7 +276,6 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 		}
 		Body = DynamicActor;
 		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
-		// 질량 설정
 		// Damping 설정
 		DynamicActor->setLinearDamping(Setup->LinearDamping);
 		DynamicActor->setAngularDamping(Setup->AngularDamping);
@@ -269,7 +283,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 	}
 	else
 	{
-		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침. 
+		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침.
 		// TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기
 		if (InOwnerComponent->bSimulatePhysics)
 		{
@@ -277,13 +291,16 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 			InOwnerComponent->bSimulatePhysics = false;
 		}
 		Body = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
+		if (!Body) return;
 		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 	}
 
 
 
-	// Scene에 추가
-	GWorld->GetPhysicsScene()->AddActor(*Body);
+	// Scene에 추가하고 OwnerScene 저장 (PIE 전환 시 올바른 Scene에서 제거하기 위해)
+	FPhysicsScene* Scene = GWorld->GetPhysicsScene();
+	Scene->AddActor(*Body);
+	OwnerScene = Scene;
 
 	Body->userData = (void*)this;
 	RigidActor = Body;

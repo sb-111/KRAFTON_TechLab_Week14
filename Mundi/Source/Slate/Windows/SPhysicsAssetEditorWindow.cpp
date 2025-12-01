@@ -11,6 +11,7 @@
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
+#include "Source/Runtime/Engine/Physics/PhysicsScene.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
@@ -418,6 +419,25 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
 
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
 
+    // === 에디터 시뮬레이션 처리 ===
+    if (bSimulateInEditor && PhysState && PhysState->World)
+    {
+        // PhysicsScene 시뮬레이션 실행 (PIE가 아니므로 직접 호출)
+        FPhysicsScene* PhysScene = PhysState->World->GetPhysicsScene();
+        if (PhysScene)
+        {
+            PhysScene->Simulate(DeltaSeconds);
+        }
+
+        // 래그돌 결과를 본에 적용
+        ASkeletalMeshActor* PreviewActor = PhysState->PreviewActor;
+        USkeletalMeshComponent* PreviewComp = PreviewActor ? PreviewActor->GetSkeletalMeshComponent() : nullptr;
+        if (PreviewComp && PreviewComp->IsSimulatingPhysics())
+        {
+            PreviewComp->ApplyPhysicsResult();
+        }
+    }
+
     // Delete 키로 선택된 Constraint 또는 Shape 삭제
     if (ImGui::IsKeyPressed(ImGuiKey_Delete))
     {
@@ -518,6 +538,17 @@ void SPhysicsAssetEditorWindow::SavePhysicsAsset()
     {
         PhysState->bIsDirty = false;
         UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", PhysState->CurrentFilePath.c_str(), SourceFbxPath.c_str());
+
+        // === Physics Asset 자동 연결 시스템 ===
+        // 1. SkeletalMesh에 PhysicsAsset 경로 연결
+        if (PhysState->CurrentMesh)
+        {
+            PhysState->CurrentMesh->SetPhysicsAssetPath(PhysState->CurrentFilePath);
+            UE_LOG("[PhysicsAssetEditor] SkeletalMesh에 PhysicsAsset 경로 연결: %s", PhysState->CurrentFilePath.c_str());
+        }
+
+        // 2. 에디터 월드의 모든 관련 SkeletalMeshComponent 갱신
+        RefreshPhysicsAssetInWorld(PhysState->EditingAsset);
     }
     else
     {
@@ -3086,6 +3117,45 @@ void SPhysicsAssetEditorWindow::RenderToolsPanel()
         }
     }
 
+    // ===== Simulation 섹션 =====
+    if (ImGui::CollapsingHeader("Simulation", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        // 시뮬레이션 체크박스
+        if (ImGui::Checkbox("Simulate", &bSimulateInEditor))
+        {
+            // PreviewActor에서 SkeletalMeshComponent 가져오기
+            ASkeletalMeshActor* PreviewActor = PhysState->PreviewActor;
+            USkeletalMeshComponent* PreviewComp = PreviewActor ? PreviewActor->GetSkeletalMeshComponent() : nullptr;
+            if (PreviewComp)
+            {
+                if (bSimulateInEditor)
+                {
+                    // 시뮬레이션 시작
+                    if (PreviewComp->GetBodies().IsEmpty())
+                    {
+                        PreviewComp->InitArticulated(PhysState->EditingAsset);
+                    }
+                    PreviewComp->SetSimulatePhysics(true);
+                    PreviewComp->SetRagdollState(true);
+                    UE_LOG("[PhysicsAssetEditor] 시뮬레이션 시작");
+                }
+                else
+                {
+                    // 시뮬레이션 중지 + 포즈 복원
+                    PreviewComp->SetSimulatePhysics(false);
+                    PreviewComp->SetRagdollState(false);
+                    PreviewComp->ResetToRefPose();
+                    UE_LOG("[PhysicsAssetEditor] 시뮬레이션 중지, 포즈 복원");
+                }
+            }
+        }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Toggle physics simulation in preview");
+        }
+    }
+
     // 확인 팝업 렌더링
     RenderGenerateConfirmPopup();
 }
@@ -3608,4 +3678,48 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
     ClearSelection();
 
     UE_LOG("Generated %d bodies and %d constraints", Asset->Bodies.Num(), Asset->Constraints.Num());
+}
+
+// ============================================================================
+// Physics Asset 에디터 월드 새로고침
+// ============================================================================
+
+void SPhysicsAssetEditorWindow::RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset)
+{
+    if (!Asset) return;
+
+    // 에디터 월드 가져오기 (GWorld 전역 변수 사용)
+    if (!GWorld) return;
+
+    ULevel* Level = GWorld->GetLevel();
+    if (!Level) return;
+
+    int32 RefreshedCount = 0;
+
+    // 모든 액터의 SkeletalMeshComponent 순회
+    for (AActor* Actor : Level->GetActors())
+    {
+        if (!Actor) continue;
+
+        for (UActorComponent* Comp : Actor->GetOwnedComponents())
+        {
+            USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Comp);
+            if (!SkelComp) continue;
+
+            // 동일한 PhysicsAsset을 사용하는 컴포넌트만 갱신
+            USkeletalMesh* Mesh = SkelComp->GetSkeletalMesh();
+            if (Mesh && Mesh->GetPhysicsAsset() == Asset)
+            {
+                // Bodies/Constraints 재초기화
+                SkelComp->InitArticulated(Asset);
+                RefreshedCount++;
+                UE_LOG("[PhysicsAsset] Refreshed: %s", Actor->GetName().c_str());
+            }
+        }
+    }
+
+    if (RefreshedCount > 0)
+    {
+        UE_LOG("[PhysicsAsset] 총 %d개 컴포넌트 갱신 완료", RefreshedCount);
+    }
 }

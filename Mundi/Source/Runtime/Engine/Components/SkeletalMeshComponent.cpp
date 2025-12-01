@@ -16,6 +16,7 @@
 #include "PhysicsSystem.h"
 #include "PhysxConverter.h"
 #include "PhysicsScene.h"
+#include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 
 using namespace physx;
 
@@ -31,13 +32,62 @@ USkeletalMeshComponent::USkeletalMeshComponent()
     */
 }
 
+USkeletalMeshComponent::~USkeletalMeshComponent()
+{
+    // 래그돌 Bodies/Constraints 정리 (메모리 누수 방지)
+    DestroyPhysicsState();
+}
+
+void USkeletalMeshComponent::DuplicateSubObjects()
+{
+    Super::DuplicateSubObjects();
+
+    // 래그돌 관련 데이터 초기화 (원본과 공유 방지)
+    // 얕은 복사된 Bodies/Constraints 포인터들은 원본의 PhysX 객체를 가리키므로
+    // 복제된 컴포넌트는 자신만의 Bodies를 새로 생성해야 함
+    Bodies.Empty();
+    Constraints.Empty();
+    BodyBoneIndices.Empty();
+    BodyParentIndices.Empty();
+    PhysicsAsset = nullptr;
+    bIsRagdoll = false;
+}
 
 void USkeletalMeshComponent::BeginPlay()
 {
     Super::BeginPlay();
-    // TODO: Physics Asset이 있고 movable이면 PrePhysics에 등록해준다(키네마틱이든 레그돌이든(피지컬 애니메이션) 시뮬레이션 전에 계산해야함)
-    if (PhysicsAsset && MobilityType == EMobilityType::Movable)
-    {   
+
+    // PIE 모드에서 PhysicsAsset이 있으면 래그돌 자동 활성화
+    UWorld* World = GetWorld();
+    if (World && World->bPie)
+    {
+        UPhysicsAsset* Asset = GetEffectivePhysicsAsset();
+        if (Asset)
+        {
+            // 중요: InitArticulated 전에 bSimulatePhysics를 true로 설정
+            // FBodyInstance::InitBody에서 이 값을 참조하여 키네마틱 여부 결정
+            bSimulatePhysics = true;
+
+            // Bodies가 비어있으면 초기화
+            if (Bodies.IsEmpty())
+            {
+                InitArticulated(Asset);
+            }
+
+            // Bodies가 있으면 시뮬레이션 시작
+            if (!Bodies.IsEmpty())
+            {
+                SetSimulatePhysics(true);
+                SetRagdollState(true);
+            }
+        }
+    }
+
+    // Physics Asset이 있고 movable이면 PrePhysics에 등록
+    // (키네마틱이든 래그돌이든 시뮬레이션 전에 계산해야 함)
+    UPhysicsAsset* EffectiveAsset = GetEffectivePhysicsAsset();
+    if (EffectiveAsset && MobilityType == EMobilityType::Movable)
+    {
         GWorld->GetPhysicsScene()->RegisterPrePhysics(this);
     }
 }
@@ -455,7 +505,6 @@ void USkeletalMeshComponent::CreatePhysicsState()
     // PhysicsAsset이 이미 설정되어 있으면 Bodies/Constraints 생성
     if (!PhysicsAsset)
     {
-        SkeletalMesh->AutoGeneratePhysicsAsset();
         PhysicsAsset = SkeletalMesh->GetPhysicsAsset();
     }
     InitArticulated(PhysicsAsset);
@@ -532,7 +581,7 @@ void USkeletalMeshComponent::DestroyPhysicsState()
     BodyBoneIndices.Empty();
     BodyParentIndices.Empty();
     PhysicsAsset = nullptr;
-    bSimulatePhysics = false;
+    // bSimulatePhysics는 건드리지 않음 - 물리 상태 정리와 시뮬레이션 의도는 별개
 }
 
 void USkeletalMeshComponent::SetSimulatePhysics(bool bEnable)
@@ -809,4 +858,73 @@ int32 USkeletalMeshComponent::FindBodyIndex(const FName& BoneName) const
         }
     }
     return -1;
+}
+
+// ============================================================================
+// Physics Asset 경로 오버라이드 시스템
+// ============================================================================
+
+FString USkeletalMeshComponent::GetEffectivePhysicsAssetPath() const
+{
+    // 1. 컴포넌트 오버라이드가 있으면 그것 사용
+    if (!PhysicsAssetPathOverride.empty())
+    {
+        return PhysicsAssetPathOverride;
+    }
+
+    // 2. SkeletalMesh의 기본 경로 사용
+    if (SkeletalMesh)
+    {
+        return SkeletalMesh->GetPhysicsAssetPath();
+    }
+
+    return "";
+}
+
+UPhysicsAsset* USkeletalMeshComponent::GetEffectivePhysicsAsset()
+{
+    // 이미 캐시된 PhysicsAsset이 있으면 반환
+    if (PhysicsAsset)
+    {
+        return PhysicsAsset;
+    }
+
+    // 1. 오버라이드 경로가 있으면 해당 경로에서 로드 (한 번만)
+    if (!PhysicsAssetPathOverride.empty())
+    {
+        PhysicsAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(PhysicsAssetPathOverride, nullptr);
+        return PhysicsAsset;
+    }
+
+    // 2. SkeletalMesh의 기본 PhysicsAsset 사용
+    if (SkeletalMesh)
+    {
+        return SkeletalMesh->GetPhysicsAsset();
+    }
+
+    return nullptr;
+}
+
+const TArray<FBodyInstance*>& USkeletalMeshComponent::GetBodies()
+{
+    UWorld* MyWorld = GetWorld();
+
+    // 에디터 모드 + PIE 비활성일 때만 lazy 초기화
+    // (PIE 중에는 재생성 안 함 - StartPIE에서 정리했고, PIE Scene에 잘못 생성되면 안됨)
+    if (MyWorld && !MyWorld->bPie && !GEngine.IsPIEActive())
+    {
+        if (Bodies.IsEmpty())
+        {
+            UPhysicsAsset* Asset = GetEffectivePhysicsAsset();
+            if (Asset)
+            {
+                bool bPrevSimulate = bSimulatePhysics;
+                bSimulatePhysics = false;
+                InitArticulated(Asset);
+                bSimulatePhysics = bPrevSimulate;
+            }
+        }
+    }
+
+    return Bodies;
 }

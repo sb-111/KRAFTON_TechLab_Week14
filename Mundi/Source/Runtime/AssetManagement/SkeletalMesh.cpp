@@ -5,6 +5,7 @@
 #include "WindowsBinReader.h"
 #include "WindowsBinWriter.h"
 #include "PathUtils.h"
+#include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 #include <filesystem>
 
 IMPLEMENT_CLASS(USkeletalMesh)
@@ -96,4 +97,40 @@ void USkeletalMesh::CreateIndexBuffer(FSkeletalMeshData* InSkeletalMesh, ID3D11D
 {
     HRESULT hr = D3D11RHI::CreateIndexBuffer(InDevice, InSkeletalMesh, &IndexBuffer);
     assert(SUCCEEDED(hr));
+}
+
+// ============================================================================
+// Physics Asset 경로 기반 연결 시스템
+// ============================================================================
+
+void USkeletalMesh::SetPhysicsAssetPath(const FString& Path)
+{
+    PhysicsAssetPath = Path;
+
+    // 기존 PhysicsAsset 참조 해제 (새 경로로 다시 로드하기 위해)
+    PhysicsAsset = nullptr;
+
+    // 새 경로가 있으면 즉시 로드
+    if (!Path.empty())
+    {
+        PhysicsAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(Path, nullptr);
+        if (PhysicsAsset)
+        {
+            UE_LOG("[SkeletalMesh] PhysicsAsset 로드 완료: %s", Path.c_str());
+        }
+        else
+        {
+            UE_LOG("[SkeletalMesh] PhysicsAsset 로드 실패: %s", Path.c_str());
+        }
+    }
+}
+
+UPhysicsAsset* USkeletalMesh::GetPhysicsAsset()
+{
+    // 캐시된 PhysicsAsset이 없고 경로가 설정되어 있으면 로드 시도
+    if (!PhysicsAsset && !PhysicsAssetPath.empty())
+    {
+        PhysicsAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(PhysicsAssetPath, nullptr);
+    }
+    return PhysicsAsset;
 }

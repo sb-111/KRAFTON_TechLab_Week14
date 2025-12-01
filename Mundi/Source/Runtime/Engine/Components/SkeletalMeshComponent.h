@@ -19,7 +19,10 @@ public:
     GENERATED_REFLECTION_BODY()
     
     USkeletalMeshComponent();
-    ~USkeletalMeshComponent() override = default;
+    ~USkeletalMeshComponent() override;
+
+    // 복제 시 래그돌 Bodies 정리 (원본과 공유 방지)
+    void DuplicateSubObjects() override;
 
     void BeginPlay() override;
 
@@ -159,13 +162,26 @@ public:
     // 래그돌 초기화 (PhysicsAsset 지정)
     void InitArticulated(UPhysicsAsset* PhysAsset);
 
-    // 래그돌 활성화/비활성화
-    void SetSimulatePhysics(bool bEnable);
-    bool IsSimulatingPhysics() const { return bSimulatePhysics; }
+    // ===== Physics Asset 경로 오버라이드 시스템 =====
+    // 에디터에서 수정 가능한 PhysicsAsset 경로
+    // 비어있으면 SkeletalMesh의 기본값 사용
+    UPROPERTY(EditAnywhere, Category = "Physics", DisplayName = "Physics Asset 경로")
+    FString PhysicsAssetPathOverride;
 
-    // Bodies 접근자 (디버그 렌더링용)
-    const TArray<FBodyInstance*>& GetBodies() const { return Bodies; }
+    // 실제 사용할 PhysicsAsset 경로 반환 (오버라이드 > 기본값)
+    FString GetEffectivePhysicsAssetPath() const;
+
+    // 실제 사용할 PhysicsAsset 반환 (오버라이드 경로 > SkeletalMesh 기본값)
+    UPhysicsAsset* GetEffectivePhysicsAsset();
+
+    // 래그돌 활성화/비활성화 (부모 UPrimitiveComponent의 bSimulatePhysics 사용)
+    void SetSimulatePhysics(bool bEnable);
+    bool IsSimulatingPhysics() const { return bIsRagdoll; }
+
+    // Bodies 접근자 (디버그 렌더링용, 에디터 모드에서 lazy 초기화)
+    const TArray<FBodyInstance*>& GetBodies();
     const TArray<int32>& GetBodyParentIndices() const { return BodyParentIndices; }
+    const TArray<int32>& GetBodyBoneIndices() const { return BodyBoneIndices; }
 
 private:
     // 과제 요구사항: USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal
@@ -186,9 +202,7 @@ private:
     TArray<int32> BodyBoneIndices;		// Bodies[i]에 대응하는 스켈레톤 본 인덱스
     TArray<int32> BodyParentIndices;	// Bodies[i]의 부모 Body 인덱스 (-1이면 루트)
 
-    // 래그돌 상태
-    bool bSimulatePhysics = false;
+    // 래그돌 상태 (bSimulatePhysics는 부모 UPrimitiveComponent에서 상속)
     UPhysicsAsset* PhysicsAsset = nullptr;
-
     bool bIsRagdoll = false;
 };

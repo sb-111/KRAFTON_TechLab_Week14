@@ -189,6 +189,15 @@ void UPrimitiveComponent::SetMaterialByName(uint32 InElementIndex, const FString
 void UPrimitiveComponent::DuplicateSubObjects()
 {
     Super::DuplicateSubObjects();
+
+    // BodyInstance의 포인터들 리셋 (복제 시 원본의 stale pointer가 복사되는 것 방지)
+    // 새 컴포넌트는 자신만의 physics body를 새로 생성해야 함
+    BodyInstance.RigidActor = nullptr;
+    BodyInstance.OwnerScene = nullptr;
+    BodyInstance.OwnerComponent = nullptr;
+    BodyInstance.BodySetup = nullptr;
+    BodyInstance.BoneIndex = -1;
+    BodyInstance.RagdollOwnerID = 0;
 }
 
 void UPrimitiveComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)

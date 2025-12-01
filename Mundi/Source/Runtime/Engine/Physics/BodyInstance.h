@@ -2,6 +2,7 @@
 
 class UPrimitiveComponent;
 class UBodySetup;
+class FPhysicsScene;
 
 using namespace physx;
 
@@ -14,6 +15,9 @@ struct FBodyInstance
 
 	// RigidActor 참조 이유: 업데이트 or 물리 명령 시뮬레이션 액터에 보내야 함.
 	PxRigidActor* RigidActor = nullptr;
+
+	// 소속된 PhysicsScene (PIE 전환 시 올바른 Scene에서 제거하기 위해 저장)
+	FPhysicsScene* OwnerScene = nullptr;
 
 	// === 래그돌 지원 (언리얼 방식) ===
 	UBodySetup* BodySetup = nullptr;	// 래그돌 본의 물리 설정

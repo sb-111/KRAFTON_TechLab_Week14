@@ -57,6 +57,8 @@ private:
 	// Simplified sound combo without thumbnails
 	static bool RenderSoundSelectionComboSimple(const char* Label, USound* CurrentSound, USound*& OutNewSound);
 
+	// Physics Asset 선택 콤보박스
+	static bool RenderPhysicsAssetSelectionCombo(const char* Label, FString& CurrentPath);
 
 	// Transform 프로퍼티 렌더링 헬퍼 함수
 	static bool RenderTransformProperty(const FProperty& Prop, void* Instance);
@@ -94,4 +96,6 @@ private:
 	static TArray<const char*> CachedScriptItems;
 	static TArray<FString> CachedParticleSystemPaths;
 	static TArray<FString> CachedParticleSystemItems;
+	static TArray<FString> CachedPhysicsAssetPaths;
+	static TArray<FString> CachedPhysicsAssetItems;
 };

@@ -9,7 +9,7 @@
 
 void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
     URenderer* Renderer,
-    const USkeletalMeshComponent* SkelMeshComp,
+    USkeletalMeshComponent* SkelMeshComp,
     const FVector4& BoneColor,
     const FVector4& JointColor)
 {
@@ -19,12 +19,20 @@ void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
 
     const TArray<FBodyInstance*>& Bodies = SkelMeshComp->GetBodies();
     const TArray<int32>& ParentIndices = SkelMeshComp->GetBodyParentIndices();
+    const TArray<int32>& BoneIndices = SkelMeshComp->GetBodyBoneIndices();
 
     if (Bodies.Num() == 0) return;
+
+    // 에디터 모드(시뮬레이션 중이 아닐 때)에서는 본 트랜스폼을 따라가도록
+    bool bUsePhysicsTransform = SkelMeshComp->IsSimulatingPhysics();
 
     TArray<FVector> StartPoints;
     TArray<FVector> EndPoints;
     TArray<FVector4> Colors;
+
+    // 각 Body의 월드 트랜스폼을 저장 (Joint 렌더링용)
+    TArray<PxTransform> BodyWorldTransforms;
+    BodyWorldTransforms.SetNum(Bodies.Num());
 
     for (int32 i = 0; i < Bodies.Num(); ++i)
     {
@@ -34,7 +42,30 @@ void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
         PxRigidDynamic* RigidBody = Body->GetPxRigidDynamic();
         if (!RigidBody) continue;
 
-        PxTransform WorldTransform = RigidBody->getGlobalPose();
+        PxTransform WorldTransform;
+
+        if (bUsePhysicsTransform)
+        {
+            // 시뮬레이션 중: PhysX Body의 실제 위치 사용
+            WorldTransform = RigidBody->getGlobalPose();
+        }
+        else
+        {
+            // 에디터 모드: 본의 월드 트랜스폼을 사용하여 컴포넌트 이동 따라가기
+            int32 BoneIndex = (i < BoneIndices.Num()) ? BoneIndices[i] : -1;
+            if (BoneIndex >= 0)
+            {
+                FTransform BoneWorldTransform = SkelMeshComp->GetBoneWorldTransform(BoneIndex);
+                WorldTransform = PhysxConverter::ToPxTransform(BoneWorldTransform);
+            }
+            else
+            {
+                // 본 인덱스가 없으면 PhysX 위치 사용 (폴백)
+                WorldTransform = RigidBody->getGlobalPose();
+            }
+        }
+
+        BodyWorldTransforms[i] = WorldTransform;
 
         // UBodySetup의 AggGeom에서 Shape들 렌더링
         RenderAggGeom(Renderer, Body->BodySetup->AggGeom, WorldTransform, BoneColor,
@@ -47,16 +78,12 @@ void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
             const FBodyInstance* ParentBody = Bodies[ParentIdx];
             if (ParentBody && ParentBody->IsValidBodyInstance())
             {
-                PxRigidDynamic* ParentRigidBody = ParentBody->GetPxRigidDynamic();
-                if (ParentRigidBody)
-                {
-                    PxVec3 Start = WorldTransform.p;
-                    PxVec3 End = ParentRigidBody->getGlobalPose().p;
+                PxVec3 Start = WorldTransform.p;
+                PxVec3 End = BodyWorldTransforms[ParentIdx].p;
 
-                    StartPoints.Add(PhysxConverter::ToFVector(Start));
-                    EndPoints.Add(PhysxConverter::ToFVector(End));
-                    Colors.Add(JointColor);
-                }
+                StartPoints.Add(PhysxConverter::ToFVector(Start));
+                EndPoints.Add(PhysxConverter::ToFVector(End));
+                Colors.Add(JointColor);
             }
         }
     }

@@ -155,4 +155,10 @@ private:
     // Tools 패널 상태
     EShapeType SelectedPrimitiveType = EShapeType::Capsule;
     bool bShowGenerateConfirmPopup = false;
+
+    // ===== 에디터 시뮬레이션 =====
+    bool bSimulateInEditor = false;  // 시뮬레이션 활성화 여부
+
+    // 에디터 월드의 SkeletalMeshComponent들에 PhysicsAsset 새로고침
+    void RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset);
 };

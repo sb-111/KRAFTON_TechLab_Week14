@@ -51,6 +51,7 @@ public:
 
     // 독립적인 물리 액터인지 결정
     // 키네마틱 여부(false인 경우 정해진 동작만 수행함)
+    // 기본값 false: 래그돌은 SkeletalMeshComponent의 BeginPlay에서 처리
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bSimulatePhysics = false;
 

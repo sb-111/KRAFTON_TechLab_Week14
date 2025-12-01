@@ -25,6 +25,7 @@
 #include "ParticleModule.h"
 #include "ParticleSystemComponent.h"
 #include "ParticleSystem.h"
+#include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 
 // 정적 멤버 변수 초기화
 TArray<FString> UPropertyRenderer::CachedSkeletalMeshPaths;
@@ -43,6 +44,8 @@ TArray<FString> UPropertyRenderer::CachedScriptPaths;
 TArray<const char*> UPropertyRenderer::CachedScriptItems;
 TArray<FString> UPropertyRenderer::CachedParticleSystemPaths;
 TArray<FString> UPropertyRenderer::CachedParticleSystemItems;
+TArray<FString> UPropertyRenderer::CachedPhysicsAssetPaths;
+TArray<FString> UPropertyRenderer::CachedPhysicsAssetItems;
 
 static bool ItemsGetter(void* Data, int Index, const char** CItem)
 {
@@ -599,6 +602,12 @@ void UPropertyRenderer::CacheResources()
 			}
 		}
 	}
+
+	// 7. PhysicsAsset (.physics) - PhysicsAssetEditorBootstrap 사용
+	if (CachedPhysicsAssetPaths.IsEmpty() && CachedPhysicsAssetItems.IsEmpty())
+	{
+		PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(CachedPhysicsAssetPaths, CachedPhysicsAssetItems);
+	}
 }
 
 void UPropertyRenderer::ClearResourcesCache()
@@ -619,6 +628,8 @@ void UPropertyRenderer::ClearResourcesCache()
 	CachedScriptItems.Empty();
 	CachedParticleSystemPaths.Empty();
 	CachedParticleSystemItems.Empty();
+	CachedPhysicsAssetPaths.Empty();
+	CachedPhysicsAssetItems.Empty();
 }
 
 // ===== 타입별 렌더링 구현 =====
@@ -720,6 +731,12 @@ bool UPropertyRenderer::RenderColorProperty(const FProperty& Prop, void* Instanc
 bool UPropertyRenderer::RenderStringProperty(const FProperty& Prop, void* Instance)
 {
 	FString* Value = Prop.GetValuePtr<FString>(Instance);
+
+	// === PhysicsAssetPathOverride 특수 처리: 드롭다운으로 선택 ===
+	if (FString(Prop.Name) == "PhysicsAssetPathOverride" || FString(Prop.Name) == "Physics Asset 경로")
+	{
+		return RenderPhysicsAssetSelectionCombo(Prop.Name, *Value);
+	}
 
 	// ImGui::InputText는 char 버퍼를 사용하므로 변환 필요
 	char Buffer[256];
@@ -3661,4 +3678,57 @@ bool UPropertyRenderer::RenderDistributionColorProperty(const FProperty& Prop, v
 	}
 
 	return bChanged;
+}
+
+// Physics Asset 선택 콤보박스
+// Label: 콤보박스 라벨
+// CurrentPath: 현재 선택된 Physics Asset 경로 (변경 시 업데이트됨)
+// 반환값: 선택이 변경되었으면 true
+bool UPropertyRenderer::RenderPhysicsAssetSelectionCombo(const char* Label, FString& CurrentPath)
+{
+	// 캐시가 비어있으면 갱신
+	if (CachedPhysicsAssetPaths.IsEmpty())
+	{
+		PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(CachedPhysicsAssetPaths, CachedPhysicsAssetItems);
+	}
+
+	// 목록이 비어있으면 안내 텍스트 표시
+	if (CachedPhysicsAssetPaths.IsEmpty())
+	{
+		ImGui::Text("%s: <Physics Asset 없음>", Label);
+		return false;
+	}
+
+	// 현재 선택된 경로의 인덱스 찾기
+	int SelectedIdx = 0;  // 기본값: None (인덱스 0)
+	for (int i = 0; i < static_cast<int>(CachedPhysicsAssetPaths.size()); ++i)
+	{
+		if (CachedPhysicsAssetPaths[i] == CurrentPath)
+		{
+			SelectedIdx = i;
+			break;
+		}
+	}
+
+	// 콤보박스 렌더링 (ItemsGetter 사용하여 CachedPhysicsAssetItems 표시)
+	ImGui::SetNextItemWidth(300);
+	if (ImGui::Combo(Label, &SelectedIdx, &ItemsGetter, (void*)&CachedPhysicsAssetItems, static_cast<int>(CachedPhysicsAssetItems.size())))
+	{
+		// 선택이 변경됨
+		if (SelectedIdx >= 0 && SelectedIdx < static_cast<int>(CachedPhysicsAssetPaths.size()))
+		{
+			CurrentPath = CachedPhysicsAssetPaths[SelectedIdx];
+			return true;
+		}
+	}
+
+	// 현재 선택된 경로 툴팁 표시
+	if (ImGui::IsItemHovered() && !CurrentPath.empty())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("경로: %s", CurrentPath.c_str());
+		ImGui::EndTooltip();
+	}
+
+	return false;
 }

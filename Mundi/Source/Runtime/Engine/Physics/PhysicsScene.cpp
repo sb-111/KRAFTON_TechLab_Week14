@@ -13,6 +13,11 @@ FPhysicsScene::~FPhysicsScene()
 {
 	if (Scene)
 	{
+		// Scene 해제 전에 데스노트에 남아있는 모든 액터 정리
+		// (~UWorld에서 액터 삭제 시 TermBody() → WriteInTheDeathNote()가 호출되어
+		// 데스노트에 추가된 액터들이 있을 수 있음)
+		PendingDestroyInDeathNote();
+
 		Scene->release();
 		Scene = nullptr;
 	}
