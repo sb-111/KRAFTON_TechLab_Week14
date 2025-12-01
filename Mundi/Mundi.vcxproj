@@ -442,6 +442,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleDefinitions.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleStats.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\BodyInstance.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsScene.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsSystem.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
@@ -965,7 +966,9 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphereElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\FKSphylElem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsAsset.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsScene.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsSystem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\PrePhysics.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
     <ClInclude Include="Source\Runtime\Engine\Scripting\GameObject.h" />
     <ClInclude Include="Source\Runtime\Engine\Scripting\LuaArrayProxy.h" />

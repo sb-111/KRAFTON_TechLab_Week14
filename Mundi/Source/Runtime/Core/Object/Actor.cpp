@@ -54,18 +54,9 @@ void AActor::BeginPlay()
 			Comp->BeginPlay();
 		}
 
-		if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Comp))
-		{
-			if (PrimitiveComponent->CollisionType == ECollisionEnabled::None)
-			{
-				continue;
-			}
 
-			if (PrimitiveComponent == RootComponent || PrimitiveComponent->bSimulatePhysics)
-			{
-				PrimitiveComponent->BodyInstance.InitPhysics(PrimitiveComponent);
-			}
-		}
+		Comp->CreatePhysicsState();
+		
 	}
 }
 

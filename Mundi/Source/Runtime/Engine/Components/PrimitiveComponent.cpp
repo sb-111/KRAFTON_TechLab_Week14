@@ -4,6 +4,7 @@
 #include "Actor.h"
 #include "WorldPartitionManager.h"
 #include "BodyInstance.h"
+#include "PhysicsScene.h"
 
 // IMPLEMENT_CLASS is now auto-generated in .generated.cpp
 UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
@@ -25,6 +26,31 @@ void UPrimitiveComponent::ApplyPhysicsResult()
     }
 }
 
+void UPrimitiveComponent::CreatePhysicsState()
+{
+    if (CollisionType == ECollisionEnabled::None)
+    {
+        return;
+    }
+
+    if (bSimulatePhysics)
+    {
+        BodyInstance.InitPhysics(this);
+        return;
+    }
+
+    UPrimitiveComponent* PhysicsParent = FindPhysicsParent();
+
+    if (PhysicsParent)
+    {
+        BodyInstance.AddShapesRecursively(this, PhysicsParent, PhysicsParent->BodyInstance.RigidActor);
+    }
+    else
+    {
+        BodyInstance.InitPhysics(this);
+    }
+}
+
 // true인 경우 하나의 엑터에 셰입들이 용접됨. 
 bool UPrimitiveComponent::ShouldWelding()
 {
@@ -32,6 +58,7 @@ bool UPrimitiveComponent::ShouldWelding()
     
     if (PrimitiveParent)
     {
+        // TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기(프로퍼티가 setter를 안 불러서 당장 처리가 불가능)
         if (PrimitiveParent->MobilityType == EMobilityType::Movable && MobilityType == EMobilityType::Static)
         {
             UE_LOG("부모가 Movable인데 자식이 Static일 수 없습니다, 자식을 Movable로 변환합니다");
@@ -64,6 +91,53 @@ UPrimitiveComponent* UPrimitiveComponent::GetPrimitiveParent()
         Parent = Parent->GetAttachParent();
     }
     return nullptr;
+}
+
+UPrimitiveComponent* UPrimitiveComponent::FindPhysicsParent()
+{
+    USceneComponent* Parent = AttachParent;
+
+    while (Parent)
+    {
+        if (UPrimitiveComponent* PhysicsParent = Cast<UPrimitiveComponent>(Parent))
+        {
+            if (PhysicsParent->BodyInstance.RigidActor)
+            {
+                return PhysicsParent;
+            }
+        }
+        Parent = Parent->GetAttachParent();
+    }
+    return nullptr;
+}
+
+void UPrimitiveComponent::PrePhysicsUpdate(float DeltaTime)
+{
+    BodyInstance.FlushPendingForce();
+
+    bPrePhysicsTemporal = false;
+    // TODO: 키네마틱 이동 등 처리
+}
+
+void UPrimitiveComponent::AddForce(const FVector& InForce)
+{
+    BodyInstance.AddForce(InForce);
+    if (!bPrePhysicsTemporal)
+    {
+        GWorld->GetPhysicsScene()->RegisterTemporal(this);  
+        bPrePhysicsTemporal = true;
+    }
+}
+
+void UPrimitiveComponent::AddTorque(const FVector& InTorque)
+{
+
+    BodyInstance.AddForce(InTorque);
+    if (!bPrePhysicsTemporal)
+    {
+        GWorld->GetPhysicsScene()->RegisterTemporal(this);
+        bPrePhysicsTemporal = true;
+    }
 }
 
 physx::PxGeometryHolder UPrimitiveComponent::GetGeometry()

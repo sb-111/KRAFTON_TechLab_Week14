@@ -25,6 +25,8 @@ public:
     UWorld* GetDefaultWorld();
     const TArray<FWorldContext>& GetWorldContexts() { return WorldContexts; }
 
+    uint64 GetFrameCounter() { return FrameCounter; }
+
     void AddWorldContext(const FWorldContext& InWorldContext)
     {
         WorldContexts.push_back(InWorldContext);
@@ -53,6 +55,8 @@ private:
 
     //월드 핸들
     TArray<FWorldContext> WorldContexts;
+
+    uint64 FrameCounter = 0;
 
     //틱 상태
     bool bRunning = false;

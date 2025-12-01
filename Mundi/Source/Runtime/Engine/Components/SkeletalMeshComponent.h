@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "SkinnedMeshComponent.h"
+#include "PrePhysics.h"
 #include "USkeletalMeshComponent.generated.h"
 
 class UAnimInstance;
@@ -20,7 +21,12 @@ public:
     USkeletalMeshComponent();
     ~USkeletalMeshComponent() override = default;
 
+    void BeginPlay() override;
+
     void TickComponent(float DeltaTime) override;
+
+    void PrePhysicsUpdate(float DeltaTime) override;
+
     void SetSkeletalMesh(const FString& PathFileName) override;
 
     // Animation Integration
@@ -34,6 +40,12 @@ public:
     void SetAnimationPosition(float InSeconds);
     float GetAnimationPosition();
     bool IsPlayingAnimation() const;
+
+    void UpdateAnimation(float DeltaTime);
+
+    void SetRagdollState(bool InState);
+
+    void ApplyPhysicsResult() override;
 
     //==== Minimal Lua-friendly helper to switch to a state machine anim instance ====
     UFUNCTION(LuaBind, DisplayName="UseStateMachine")
@@ -132,6 +144,8 @@ private:
     bool bIsInitialized = false;
     FTransform TestBoneBasePose;
 
+    uint64 LastFrameCount = 0;
+
     // Animation state
     UAnimInstance* AnimInstance = nullptr;
     bool bUseAnimation = true;
@@ -175,4 +189,6 @@ private:
     // 래그돌 상태
     bool bSimulatePhysics = false;
     UPhysicsAsset* PhysicsAsset = nullptr;
+
+    bool bIsRagdoll = false;
 };
