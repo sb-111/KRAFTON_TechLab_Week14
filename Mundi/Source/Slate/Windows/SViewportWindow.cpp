@@ -1947,7 +1947,7 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 			// MaxCoCRadius 슬라이더
 			float maxCoC = RenderSettings.GetDOFMaxCoCRadius();
 			ImGui::Text("최대 블러 반경");
-			if (ImGui::SliderFloat("##MaxCoC", &maxCoC, 1.0f, 16.0f, "%.1f"))
+			if (ImGui::SliderFloat("##MaxCoC", &maxCoC, 1.0f, 3.0f, "%.1f"))
 			{
 				RenderSettings.SetDOFMaxCoCRadius(maxCoC);
 			}
