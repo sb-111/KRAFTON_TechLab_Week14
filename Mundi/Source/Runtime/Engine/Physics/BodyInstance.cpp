@@ -312,18 +312,18 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 
 	const FKAggregateGeom& AggGeom = Setup->AggGeom;
 
+	PxShape* Shape = nullptr;
 	// === Sphere Shape 생성 ===
 	for (int32 i = 0; i < AggGeom.SphereElems.Num(); ++i)
 	{
 		const FKSphereElem& Sphere = AggGeom.SphereElems[i];
 		PxSphereGeometry Geom(Sphere.Radius);
-		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
-			SetCollisionType(Shape, OwnerComponent);
+			
 			Shape->setLocalPose(LocalPose);
-			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -337,7 +337,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 		HalfExtent.y = std::abs(HalfExtent.y);
 		HalfExtent.z = std::abs(HalfExtent.z);
 		PxBoxGeometry Geom(HalfExtent.x, HalfExtent.y, HalfExtent.z);
-		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			FQuat Rotation = FQuat::MakeFromEulerZYX(Box.Rotation);
@@ -345,9 +345,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxVec3(Box.Center),
 				PhysxConverter::ToPxQuat(Rotation)
 			);
-			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
-			Shape->setSimulationFilterData(RagdollFilterData);
 		}
 	}
 
@@ -356,7 +354,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 	{
 		const FKSphylElem& Capsule = AggGeom.SphylElems[i];
 		PxCapsuleGeometry Geom(Capsule.Radius, Capsule.Length / 2.0f);
-		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			// 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축)
@@ -368,12 +366,17 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxVec3(Capsule.Center),
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
-			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
-			Shape->setSimulationFilterData(RagdollFilterData);
+			
 		}
 	}
 
+	if (Shape)
+	{
+		SetCollisionType(Shape, OwnerComponent);
+		Shape->setSimulationFilterData(RagdollFilterData);
+		Shape->userData = (void*)BoneIndex;
+	}
 	// Material release (Shape들이 참조하고 있으므로 refcount만 감소)
 	Material->release();
 }

@@ -89,6 +89,23 @@ PxMaterial* FPhysicsSystem::GetDefaultMaterial()
 	return Material;
 }
 
+static PxFilterFlags SimulationFilerShader(PxFilterObjectAttributes Attributes0, PxFilterData FilterData0,
+	PxFilterObjectAttributes Attributes1, PxFilterData FilterData1,
+	PxPairFlags& PairFlags, const void* ConstantBlock, PxU32 ConstantBlockSize)
+{
+	// 
+	PairFlags = PxPairFlag::eCONTACT_DEFAULT;
+
+	// 충돌 시작하면 onContact 호출
+	// 여기서 추가한 플래그가 콜백할때 쓰이는 거임.
+	// 충돌 후 떨어졌을 때도 알고 싶으면 eNOTIFY_TOUCH_LOST 추가
+	PairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND
+		| PxPairFlag::eNOTIFY_CONTACT_POINTS;
+	
+
+	return PxFilterFlag::eDEFAULT;
+}
+
 std::unique_ptr<FPhysicsScene> FPhysicsSystem::CreateScene()
 {
 	PxSceneDesc SceneDesc(Physics->getTolerancesScale());
@@ -96,7 +113,7 @@ std::unique_ptr<FPhysicsScene> FPhysicsSystem::CreateScene()
 
 	SceneDesc.cpuDispatcher = Dispatcher;
 	// filterShader: 충돌 처리 로직, 일단 기본 필터 사용 수정 가능
-	SceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	SceneDesc.filterShader = SimulationFilerShader;
 	// Persistent contact manifold: 지속적인 접촉 시 떨림 완화
 	// ENABLE_ACTIVE_ACTORS: 움직인 엑터만 명단 뽑아놓음
 	SceneDesc.flags |= PxSceneFlag::eENABLE_PCM | PxSceneFlag::eENABLE_ACTIVE_ACTORS | PxSceneFlag::eENABLE_CCD;

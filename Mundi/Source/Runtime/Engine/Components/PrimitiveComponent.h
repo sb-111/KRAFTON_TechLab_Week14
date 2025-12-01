@@ -132,6 +132,8 @@ public:
     bool IsOverlappingActor(const AActor* Other) const;
     virtual const TArray<FOverlapInfo>& GetOverlapInfos() const { static TArray<FOverlapInfo> Empty; return Empty; }
 
+    virtual void OnComponentHit(UPrimitiveComponent* OtherComponent);
+
     //Delegate 
     
     // ───── 복사 관련 ────────────────────────────
