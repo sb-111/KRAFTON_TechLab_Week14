@@ -20,10 +20,10 @@ struct FBodyInstance
 	int32 BoneIndex = -1;				// 스켈레톤에서 이 바디에 대응하는 본 인덱스
 	uint32 RagdollOwnerID = 0;			// 같은 래그돌 내 자체 충돌 방지용 ID (0이면 일반 오브젝트)
 
-	FVector PendingForce = FVector::Zero();
+	/*FVector PendingForce = FVector::Zero();
 	FVector PendingTorque = FVector::Zero();
 
-	bool bHasPendingForce = false;
+	bool bHasPendingForce = false;*/
 
 	FBodyInstance() = default;
 
@@ -33,7 +33,9 @@ struct FBodyInstance
 
 	void AddTorque(const FVector& InTorque);
 
-	void FlushPendingForce();
+	void UpdateTransform(const FTransform& InTransform);
+
+	//void FlushPendingForce();
 
 	void UpdateMassProperty();
 

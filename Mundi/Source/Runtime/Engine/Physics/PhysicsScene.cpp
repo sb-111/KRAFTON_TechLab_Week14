@@ -29,39 +29,54 @@ void FPhysicsScene::UnRegisterPrePhysics(IPrePhysics* Object)
 	PreUpdateList.erase(Object);
 }
 
-void FPhysicsScene::RegisterTemporal(IPrePhysics* Object)
+void FPhysicsScene::EnqueueCommand(std::function<void()> Command)
 {
-	PreUpdateListTemporal.Add(Object);
+	CommandQueue.Add(Command);
 }
 
-void FPhysicsScene::UnRegisterTemporal(IPrePhysics* Object)
+void FPhysicsScene::ProcessCommandQueue()
 {
-	for (int Index = 0; Index < PreUpdateListTemporal.Num(); Index++)
+	for (std::function<void()> Command : CommandQueue)
 	{
-		if (PreUpdateListTemporal[Index] == Object)
-		{
-			PreUpdateListTemporal.RemoveAtSwap(Index, 1);
-			return;
-		}
+		Command();
 	}
+	CommandQueue.clear();
 }
+
+
+//void FPhysicsScene::RegisterTemporal(IPrePhysics* Object)
+//{
+//	PreUpdateListTemporal.Add(Object);
+//}
+//
+//void FPhysicsScene::UnRegisterTemporal(IPrePhysics* Object)
+//{
+//	for (int Index = 0; Index < PreUpdateListTemporal.Num(); Index++)
+//	{
+//		if (PreUpdateListTemporal[Index] == Object)
+//		{
+//			PreUpdateListTemporal.RemoveAtSwap(Index, 1);
+//			return;
+//		}
+//	}
+//}
 
 void FPhysicsScene::AddActor(PxActor& NewActor)
 {
 	Scene->addActor(NewActor);
 }
-
+ 
 void FPhysicsScene::Simulate(float DeltaTime)
 {
 	for (IPrePhysics* PrePhysics : PreUpdateList)
 	{
 		PrePhysics->PrePhysicsUpdate(DeltaTime);
 	}
-	for (IPrePhysics* PrePhysics : PreUpdateListTemporal)
-	{
-		PrePhysics->PrePhysicsUpdate(DeltaTime);
-	}
-	PreUpdateListTemporal.clear();
+	//for (IPrePhysics* PrePhysics : PreUpdateListTemporal)
+	//{
+	//	PrePhysics->PrePhysicsUpdate(DeltaTime);
+	//}
+	//PreUpdateListTemporal.clear();
 	Scene->simulate(DeltaTime);
 }
 
@@ -112,7 +127,7 @@ void FPhysicsScene::WriteInTheDeathNote(physx::PxActor* ActorToDie)
 {
 	FBodyInstance* Instance = (FBodyInstance*)ActorToDie->userData;
 	UnRegisterPrePhysics(Instance->OwnerComponent);
-	UnRegisterTemporal(Instance->OwnerComponent);
+	//UnRegisterTemporal(Instance->OwnerComponent);
 	ActorToDie->userData = nullptr;
 	ActorToDie->setActorFlag(PxActorFlag::eDISABLE_SIMULATION, true);
 	ActorDeathNote.Add(ActorToDie);

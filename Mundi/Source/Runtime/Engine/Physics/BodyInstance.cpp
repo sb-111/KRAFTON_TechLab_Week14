@@ -29,34 +29,72 @@ void FBodyInstance::TermBody()
 
 void FBodyInstance::AddForce(const FVector& InForce)
 {
-	bHasPendingForce = true;
-	PendingForce += InForce;
+	PxRigidActor* Actor = RigidActor;
+	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InForce] {
+		if (Actor)
+		{
+			PxRigidBody* Body = Actor->is<PxRigidBody>();
+			if (Body)
+			{
+				Body->addForce(PhysxConverter::ToPxVec3(InForce));
+			}
+		}
+		});
+	/*bHasPendingForce = true;
+	PendingForce += InForce;*/
 }
 
 void FBodyInstance::AddTorque(const FVector& InTorque)
 {
-	bHasPendingForce = true;
-	PendingTorque += InTorque;
+	PxRigidActor* Actor = RigidActor;
+	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InTorque] {
+		if (Actor)
+		{
+			PxRigidBody* Body = Actor->is<PxRigidBody>();
+			if (Body)
+			{
+				Body->addTorque(PhysxConverter::ToPxVec3(InTorque));
+			}
+		}
+		});
+	/*bHasPendingForce = true;
+	PendingTorque += InTorque;*/
 }
 
-void FBodyInstance::FlushPendingForce()
+void FBodyInstance::UpdateTransform(const FTransform& InTransform)
 {
-	if (!bHasPendingForce)
-	{
-		return;
-	}
-	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
-
-	if (RigidBody)
-	{
-		RigidBody->addForce(PhysxConverter::ToPxVec3(PendingForce));
-		RigidBody->addTorque(PhysxConverter::ToPxVec3(PendingTorque));
-	}
-	PendingForce = FVector::Zero();
-	PendingTorque = FVector::Zero();
-
-	bHasPendingForce = false;
+	PxRigidActor* Actor = RigidActor;
+	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InTransform] {
+		if (Actor)
+		{
+			PxRigidBody* Body = Actor->is<PxRigidBody>();
+			if (Body)
+			{
+				Body->setGlobalPose(PhysxConverter::ToPxTransform(InTransform));
+				Body->setLinearVelocity(PxVec3(0, 0, 0));
+			}
+		}
+		});
 }
+
+//void FBodyInstance::FlushPendingForce()
+//{
+//	if (!bHasPendingForce)
+//	{
+//		return;
+//	}
+//	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
+//
+//	if (RigidBody)
+//	{
+//		RigidBody->addForce(PhysxConverter::ToPxVec3(PendingForce));
+//		RigidBody->addTorque(PhysxConverter::ToPxVec3(PendingTorque));
+//	}
+//	PendingForce = FVector::Zero();
+//	PendingTorque = FVector::Zero();
+//
+//	bHasPendingForce = false;
+//}
 
 void FBodyInstance::UpdateMassProperty()
 {

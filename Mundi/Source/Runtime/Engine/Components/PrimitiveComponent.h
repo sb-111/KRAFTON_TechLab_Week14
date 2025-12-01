@@ -96,6 +96,8 @@ public:
     void OnRegister(UWorld* InWorld) override;
     void OnUnregister() override;
 
+    void OnTransformUpdated() override;
+
     void BeginPlay() override;
 
     virtual void EndPlay() override;
@@ -150,6 +152,8 @@ protected:
     bool bIsCulled = false;
      
     // 이미 PrePhysicsTemporalList에 등록된 객체인지 확인
-    bool bPrePhysicsTemporal = false;
+   // bool bPrePhysicsTemporal = false;
+
+    bool bIsSyncingPhysics = false;
   
 };

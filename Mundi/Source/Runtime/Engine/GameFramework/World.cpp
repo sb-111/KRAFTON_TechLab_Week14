@@ -307,6 +307,7 @@ void UWorld::Tick(float DeltaSeconds)
 	if (bPie)
 	{
 		PhysicsScene->FetchAndUpdate();
+		PhysicsScene->ProcessCommandQueue();
 	}
 
 	// 지연 삭제 처리
