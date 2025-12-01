@@ -282,6 +282,7 @@ void UEditorEngine::MainLoop()
 
     while (bRunning)
     {
+        FrameCounter++;
         QueryPerformanceCounter(&CurrTime);
         float DeltaSeconds = static_cast<float>((CurrTime.QuadPart - PrevTime.QuadPart) / double(Frequency.QuadPart));
         PrevTime = CurrTime;

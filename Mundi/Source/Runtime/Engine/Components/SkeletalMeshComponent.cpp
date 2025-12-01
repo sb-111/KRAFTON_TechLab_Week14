@@ -15,6 +15,7 @@
 #include "ConstraintInstance.h"
 #include "PhysicsSystem.h"
 #include "PhysxConverter.h"
+#include "PhysicsScene.h"
 
 using namespace physx;
 
@@ -31,35 +32,27 @@ USkeletalMeshComponent::USkeletalMeshComponent()
 }
 
 
+void USkeletalMeshComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    // TODO: Physics Asset이 있고 movable이면 PrePhysics에 등록해준다(키네마틱이든 레그돌이든(피지컬 애니메이션) 시뮬레이션 전에 계산해야함)
+    if (PhysicsAsset && MobilityType == EMobilityType::Movable)
+    {   
+        GWorld->GetPhysicsScene()->RegisterPrePhysics(this);
+    }
+}
+
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    if (!SkeletalMesh) { return; }
+    UpdateAnimation(DeltaTime);
+}
 
-    // 래그돌 모드: 물리 결과를 본에 동기화
-    if (bSimulatePhysics)
-    {
-        SyncBodiesToBones();
-        return;  // 애니메이션 스킵
-    }
-
-    // Drive animation instance if present
-    if (bUseAnimation && AnimInstance && SkeletalMesh && SkeletalMesh->GetSkeleton())
-    {
-        AnimInstance->NativeUpdateAnimation(DeltaTime);
-
-        FPoseContext OutputPose;
-        OutputPose.Initialize(this, SkeletalMesh->GetSkeleton(), DeltaTime);
-        AnimInstance->EvaluateAnimation(OutputPose);
-
-        // Apply local-space pose to component and rebuild skinning
-        // 애니메이션 포즈를 BaseAnimationPose에 저장 (additive 적용 전 리셋용)
-        BaseAnimationPose = OutputPose.LocalSpacePose;
-        CurrentLocalSpacePose = OutputPose.LocalSpacePose;
-        ForceRecomputePose();
-        return; // skip test code when animation is active
-    }
+void USkeletalMeshComponent::PrePhysicsUpdate(float DeltaTime)
+{
+    Super::PrePhysicsUpdate(DeltaTime);
+    UpdateAnimation(DeltaTime);
 }
 
 void USkeletalMeshComponent::SetSkeletalMesh(const FString& PathFileName)
@@ -226,6 +219,59 @@ void USkeletalMeshComponent::SetAnimationPosition(float InSeconds)
 bool USkeletalMeshComponent::IsPlayingAnimation() const
 {
     return AnimInstance ? AnimInstance->IsPlaying() : false;
+}
+
+void USkeletalMeshComponent::UpdateAnimation(float DeltaTime)
+{
+    // PrePhysicsUpdate에서 이미 계산했는데 다시 계산하는 경우 예방
+    uint64 CurrentFrameCounter = GEngine.GetFrameCounter();
+    if (LastFrameCount == CurrentFrameCounter || bIsRagdoll)
+    {
+        return;
+    }
+    LastFrameCount = CurrentFrameCounter;
+
+    if (!SkeletalMesh) { return; }
+    // Drive animation instance if present
+    if (bUseAnimation && AnimInstance && SkeletalMesh && SkeletalMesh->GetSkeleton())
+    {
+        AnimInstance->NativeUpdateAnimation(DeltaTime);
+
+        FPoseContext OutputPose;
+        OutputPose.Initialize(this, SkeletalMesh->GetSkeleton(), DeltaTime);
+        AnimInstance->EvaluateAnimation(OutputPose);
+
+        // Apply local-space pose to component and rebuild skinning
+        // 애니메이션 포즈를 BaseAnimationPose에 저장 (additive 적용 전 리셋용)
+        BaseAnimationPose = OutputPose.LocalSpacePose;
+        CurrentLocalSpacePose = OutputPose.LocalSpacePose;
+        if (bSimulatePhysics)
+        {
+            // TODO: 피지컬 애니메이션
+        }
+        else
+        {
+            ForceRecomputePose();
+
+            // TODO: 바디 인스턴스 애니메이션에 맞게 Physx에 업데이트
+        }
+    }
+
+}
+
+void USkeletalMeshComponent::SetRagdollState(bool InState)
+{
+    bSimulatePhysics = true;
+    bIsRagdoll = InState;
+}
+
+void USkeletalMeshComponent::ApplyPhysicsResult()
+{
+    Super::ApplyPhysicsResult();
+    if (bIsRagdoll && bSimulatePhysics)
+    {
+        SyncBodiesToBones();
+    }
 }
 
 float USkeletalMeshComponent::GetAnimationPosition()
@@ -407,7 +453,7 @@ void USkeletalMeshComponent::TriggerAnimNotify(const FAnimNotifyEvent& NotifyEve
 void USkeletalMeshComponent::CreatePhysicsState()
 {
     // PhysicsAsset이 이미 설정되어 있으면 Bodies/Constraints 생성
-    if (PhysicsAsset && Bodies.IsEmpty())
+    if (PhysicsAsset)
     {
         InitArticulated(PhysicsAsset);
     }
@@ -546,6 +592,7 @@ void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsse
         FBodyInstance* NewBody = new FBodyInstance();
         NewBody->InitBody(Setup, BodyTransform, BoneIndex);
 
+        NewBody->OwnerComponent = this;
         Bodies.Add(NewBody);
         BodyBoneIndices.Add(BoneIndex);
     }

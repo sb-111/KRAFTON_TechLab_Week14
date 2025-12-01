@@ -2,7 +2,9 @@
 #include "BodyInstance.h"
 #include "PrimitiveComponent.h"
 #include "PhysicsSystem.h"
+#include "PhysicsScene.h"
 #include "StaticMeshComponent.h"
+#include "extensions/PxRigidBodyExt.h"
 #include "BodySetup.h"
 #include "AggregateGeometry.h"
 #include "PhysxConverter.h"
@@ -18,15 +20,67 @@ void FBodyInstance::TermBody()
 {
 	if (RigidActor)
 	{
-		if (RigidActor->getScene())
-		{
-			RigidActor->getScene()->removeActor(*RigidActor);
-		}
-		RigidActor->release();
+		GWorld->GetPhysicsScene()->WriteInTheDeathNote(RigidActor);
 		RigidActor = nullptr;
 	}
 	BodySetup = nullptr;
 	BoneIndex = -1;
+}
+
+void FBodyInstance::AddForce(const FVector& InForce)
+{
+	bHasPendingForce = true;
+	PendingForce += InForce;
+}
+
+void FBodyInstance::AddTorque(const FVector& InTorque)
+{
+	bHasPendingForce = true;
+	PendingTorque += InTorque;
+}
+
+void FBodyInstance::FlushPendingForce()
+{
+	if (!bHasPendingForce)
+	{
+		return;
+	}
+	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
+
+	if (RigidBody)
+	{
+		RigidBody->addForce(PhysxConverter::ToPxVec3(PendingForce));
+		RigidBody->addTorque(PhysxConverter::ToPxVec3(PendingTorque));
+	}
+	PendingForce = FVector::Zero();
+	PendingTorque = FVector::Zero();
+
+	bHasPendingForce = false;
+}
+
+void FBodyInstance::UpdateMassProperty()
+{
+	if (!RigidActor)
+	{
+		return;
+	}
+	PxRigidBody* RigidBody = RigidActor->is<PxRigidBody>();
+
+	if (!RigidBody)
+	{
+		UE_LOG("Static Actor는 질량을 바꿀 수 없습니다.");
+		return;
+	}
+	
+	if (OwnerComponent->bOverrideMass)
+	{
+		PxRigidBodyExt::setMassAndUpdateInertia(*RigidBody, OwnerComponent->Mass);
+	}
+	else
+	{
+		PxRigidBodyExt::updateMassAndInertia(*RigidBody, OwnerComponent->Density);
+	}
+
 }
 
 void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
@@ -50,6 +104,13 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	}
 	else
 	{
+		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침. 
+		// TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			UE_LOG("Static이면서 동시에 SimulatePhysics할 수 없습니다, SimulatePhysics를 Off합니다");
+			InOwnerComponent->bSimulatePhysics = false;
+		}
 		NewActor = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
 	}
 
@@ -60,7 +121,9 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	NewActor->userData = (void*)this;
 	RigidActor = NewActor;
 
-	PhysicsSystem.GetScene()->addActor(*NewActor);
+	UpdateMassProperty();
+
+	GWorld->GetPhysicsScene()->AddActor(*NewActor);
 }
 
 void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPrimitiveComponent* RootComponent, PxRigidActor* PhysicsActor)
@@ -89,6 +152,7 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 				Shape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, Geometry.any(), *Material);
 
 				Shape->setLocalPose(PhysxConverter::ToPxTransform(LocalTransform));
+				
 
 				SetCollisionType(Shape, PrimitiveComponent);
 			}
@@ -156,7 +220,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 	if (RigidActor) return;	// 이미 초기화됨
 
 	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
-	if (!PhysicsSystem.GetPhysics() || !PhysicsSystem.GetScene()) return;
+	if (!PhysicsSystem.GetPhysics() || !GWorld->GetPhysicsScene()) return;
 
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
@@ -176,10 +240,12 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 	Body->setLinearDamping(Setup->LinearDamping);
 	Body->setAngularDamping(Setup->AngularDamping);
 
+	
 	// Scene에 추가
-	PhysicsSystem.GetScene()->addActor(*Body);
+	GWorld->GetPhysicsScene()->AddActor(*Body);
 	Body->wakeUp();
 
+	Body->userData = (void*)this;
 	RigidActor = Body;
 }
 

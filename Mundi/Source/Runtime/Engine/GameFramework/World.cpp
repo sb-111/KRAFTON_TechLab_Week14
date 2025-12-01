@@ -34,6 +34,7 @@
 #include "Hash.h"
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
+#include "PhysicsScene.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMesh.h"
 #include "PhysicsAsset.h"
@@ -112,6 +113,8 @@ void UWorld::Initialize()
 	// 기본 씬을 생성합니다.
 	// (CreateLevel -> SetLevel 내부에서 ParticleEventManager도 생성됨)
 	CreateLevel();
+
+	PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
 
 	// 에디터 전용 액터들을 초기화합니다.
 	InitializeGrid();
@@ -225,6 +228,11 @@ void UWorld::Tick(float DeltaSeconds)
     SlomoOnlyDelta = UnscaledDeltaSeconds * TimeDilation;
     GameDelta = UnscaledDeltaSeconds * TimeDilation * TimeStopDilation;
 
+	if (bPie)
+	{
+		PhysicsScene->Simulate(GetDeltaTime(EDeltaTime::Game));
+	}
+
 	// Actor 별로 Dilation의 Duration을 처리하는 부분
 	if (!ActorTimingMap.IsEmpty())
 	{
@@ -296,15 +304,13 @@ void UWorld::Tick(float DeltaSeconds)
 		LuaManager->Tick(GetDeltaTime(EDeltaTime::Game));
 	}
 
-	// 지연 삭제 처리
-	ProcessPendingKillActors();
-
-	// PIE 모드에서만 물리 시뮬레이션 업데이트
-	// 래그돌 동기화는 USkeletalMeshComponent::TickComponent에서 자동 처리
 	if (bPie)
 	{
-		FPhysicsSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
+		PhysicsScene->FetchAndUpdate();
 	}
+
+	// 지연 삭제 처리
+	ProcessPendingKillActors();
 
 	// [에디터용] H키로 래그돌 충돌체 미리보기 (에디터 모드에서만 동작)
 	// Bodies만 생성하고 시뮬레이션은 하지 않음 (디버그 렌더링용)
@@ -379,34 +385,8 @@ void UWorld::Tick(float DeltaSeconds)
 				}
 				if (!SkelMeshComp) continue;
 
-				USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
-				if (!SkelMesh) continue;
-
-				// PhysicsAsset 자동 생성 (없으면)
-				if (!SkelMesh->GetPhysicsAsset())
-				{
-					SkelMesh->AutoGeneratePhysicsAsset();
-				}
-
-				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
-				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
-
-				// 이미 래그돌이 있으면 토글만, 없으면 생성
-				if (SkelMeshComp->GetBodies().IsEmpty())
-				{
-					// 래그돌 생성 (새로운 컴포넌트 기반 API)
-					SkelMeshComp->InitArticulated(PhysAsset);
-					SkelMeshComp->SetSimulatePhysics(true);
-					UE_LOG("[Ragdoll Test] Created ragdoll for actor: %s", Actor->GetName().c_str());
-				}
-				else
-				{
-					// 이미 있으면 SimulatePhysics 토글
-					bool bCurrentlySimulating = SkelMeshComp->IsSimulatingPhysics();
-					SkelMeshComp->SetSimulatePhysics(!bCurrentlySimulating);
-					UE_LOG("[Ragdoll Test] Toggled ragdoll (%s) for actor: %s",
-						!bCurrentlySimulating ? "ON" : "OFF", Actor->GetName().c_str());
-				}
+				SkelMeshComp->SetRagdollState(true);
+				SkelMeshComp->SetSimulatePhysics(true);
 			}
 		}
 		bGKeyWasPressed = bGKeyPressed;
@@ -440,6 +420,8 @@ UWorld* UWorld::DuplicateWorldForPIE(UWorld* InEditorWorld)
 	PIEWorld->Partition = std::make_unique<UWorldPartitionManager>();
 	PIEWorld->CollisionManager = std::make_unique<UCollisionManager>();
 	PIEWorld->CollisionManager->SetWorld(PIEWorld);
+
+	PIEWorld->PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
 
 	// PIE 월드에 파티클 이벤트 매니저 생성
 	PIEWorld->ParticleEventManager = PIEWorld->SpawnActor<AParticleEventManager>();

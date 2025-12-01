@@ -4,6 +4,8 @@
 #include "Material.h"
 #include "UPrimitiveComponent.generated.h"
 #include "BodyInstance.h"
+#include "PrePhysics.h"
+
 // 전방 선언
 struct FSceneCompData;
 
@@ -20,7 +22,7 @@ struct FOverlapInfo
 };
 
 UCLASS(DisplayName="프리미티브 컴포넌트", Description="렌더링 가능한 기본 컴포넌트입니다")
-class UPrimitiveComponent :public USceneComponent
+class UPrimitiveComponent :public USceneComponent, public IPrePhysics
 {
 public:
 
@@ -52,8 +54,16 @@ public:
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bSimulatePhysics = false;
 
+    // 아래의 물리량은 지금 BodyInstance를 프로퍼티에 등록할 방법이 없어서 컴포넌트에서 처리함.
+    // TODO: BodyInstance 구조체를 프로퍼티에 등록하고 물리량 Instance로 옮기기
     UPROPERTY(EditAnywhere, Category = "Physics")
-    float Mass = false;
+    bool bOverrideMass = false;
+
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    float Mass = 10.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Physics")
+    float Density = 10.0f;
 
     FBodyInstance BodyInstance;
 
@@ -62,11 +72,21 @@ public:
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bIsTrigger = false;
 
-    void ApplyPhysicsResult();
+    virtual void ApplyPhysicsResult();
+
+    void CreatePhysicsState() override;
 
     bool ShouldWelding();
 
     UPrimitiveComponent* GetPrimitiveParent();
+
+    UPrimitiveComponent* FindPhysicsParent();
+
+    void PrePhysicsUpdate(float DeltaTime) override;
+
+    void AddForce(const FVector& InForce);
+
+    void AddTorque(const FVector& InTorque);
 
     virtual physx::PxGeometryHolder GetGeometry();
 
@@ -127,5 +147,7 @@ public:
 protected:
     bool bIsCulled = false;
      
+    // 이미 PrePhysicsTemporalList에 등록된 객체인지 확인
+    bool bPrePhysicsTemporal = false;
   
 };

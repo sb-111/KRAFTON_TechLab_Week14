@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class UPrimitiveComponent;
 class UBodySetup;
@@ -19,9 +19,22 @@ struct FBodyInstance
 	UBodySetup* BodySetup = nullptr;	// 래그돌 본의 물리 설정
 	int32 BoneIndex = -1;				// 스켈레톤에서 이 바디에 대응하는 본 인덱스
 
+	FVector PendingForce = FVector::Zero();
+	FVector PendingTorque = FVector::Zero();
+
+	bool bHasPendingForce = false;
+
 	FBodyInstance() = default;
 
 	~FBodyInstance();
+
+	void AddForce(const FVector& InForce);
+
+	void AddTorque(const FVector& InTorque);
+
+	void FlushPendingForce();
+
+	void UpdateMassProperty();
 
 	// 기존 PrimitiveComponent용 초기화
 	void InitPhysics(UPrimitiveComponent* Component);

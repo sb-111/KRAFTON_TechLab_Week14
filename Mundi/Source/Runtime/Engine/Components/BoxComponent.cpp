@@ -57,6 +57,10 @@ void UBoxComponent::SetBoxExtent(const FVector& InExtent, bool bUpdateBoundsNow)
 	}
 }
 
+void UBoxComponent::TickComponent(float DeltaTime)
+{
+}
+
 FVector UBoxComponent::GetScaledBoxExtent() const
 {
 	FVector Scale = GetWorldScale();

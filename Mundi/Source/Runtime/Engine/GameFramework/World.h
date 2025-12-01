@@ -7,6 +7,7 @@
 #include "LightManager.h"
 
 // Forward Declarations
+class FPhysicsScene;
 class UResourceManager;
 class UUIManager;
 class UInputManager;
@@ -137,6 +138,9 @@ public:
     /** Timing Function */
     float GetDeltaTime(EDeltaTime type);
 
+    // Physics Scene
+    FPhysicsScene* GetPhysicsScene() { return PhysicsScene.get(); }
+
     // 모든게 정지
     void RequestHitStop(float Duration ,float Dilation = 0.0f); 
     void RequestSlomo(float Duration, float Dilation = 0.0f);
@@ -178,6 +182,8 @@ private:
 
     // Per-world selection manager
     std::unique_ptr<USelectionManager> SelectionMgr;
+
+    std::unique_ptr<FPhysicsScene> PhysicsScene = nullptr;
 
     // Per-frame processed overlap pairs (A,B) keyed canonically
     TSet<uint64> FrameOverlapPairs;
