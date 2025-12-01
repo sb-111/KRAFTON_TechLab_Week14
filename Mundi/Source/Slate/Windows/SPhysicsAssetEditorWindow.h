@@ -24,11 +24,17 @@ public:
     virtual void OnMouseDown(FVector2D MousePos, uint32 Button) override;
     virtual void OnMouseUp(FVector2D MousePos, uint32 Button) override;
 
+    // Save/Load 함수
+    void SavePhysicsAsset();
+    void SavePhysicsAssetAs();
+    void LoadPhysicsAsset();
+
 protected:
     virtual ViewerState* CreateViewerState(const char* Name, UEditorAssetPreviewContext* Context) override;
     virtual void DestroyViewerState(ViewerState*& State) override;
     virtual FString GetWindowTitle() const override { return "Physics Asset Editor"; }
     virtual void OnSkeletalMeshLoaded(ViewerState* State, const FString& Path) override;
+    virtual void RenderTabsAndToolbar(EViewerType CurrentViewerType) override;
 
     virtual void RenderLeftPanel(float PanelWidth) override;
     virtual void RenderRightPanel() override;
@@ -86,6 +92,11 @@ private:
 
     // Left panel splitter ratio (상단/하단 분할)
     float LeftPanelSplitRatio = 0.6f;  // 60% tree, 40% graph
+
+    // 툴바 아이콘
+    UTexture* IconSave = nullptr;
+    UTexture* IconSaveAs = nullptr;
+    UTexture* IconLoad = nullptr;
 
     // Context menu state
     int32 ContextMenuBoneIndex = -1;

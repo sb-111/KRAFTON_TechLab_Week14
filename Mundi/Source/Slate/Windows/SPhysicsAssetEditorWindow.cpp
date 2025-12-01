@@ -19,6 +19,8 @@
 #include "Source/Runtime/Engine/GameFramework/CameraActor.h"
 #include "Source/Runtime/Renderer/FViewportClient.h"
 #include "SelectionManager.h"
+#include "PlatformProcess.h"
+#include "PathUtils.h"
 
 // ========== Shape 와이어프레임 생성 함수들 ==========
 
@@ -218,6 +220,19 @@ void SPhysicsAssetEditorWindow::OnRender()
     {
         USlateManager::GetInstance().RequestCloseDetachedWindow(this);
         return;
+    }
+
+    // 아이콘 로드 (한 번만)
+    if (!IconSave && Device)
+    {
+        IconSave = NewObject<UTexture>();
+        IconSave->Load(GDataDir + "/Icon/Toolbar_Save.png", Device);
+
+        IconSaveAs = NewObject<UTexture>();
+        IconSaveAs->Load(GDataDir + "/Icon/Toolbar_SaveAs.png", Device);
+
+        IconLoad = NewObject<UTexture>();
+        IconLoad->Load(GDataDir + "/Icon/Toolbar_Load.png", Device);
     }
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoSavedSettings;
@@ -471,12 +486,139 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
 
 void SPhysicsAssetEditorWindow::OnSave()
 {
+    SavePhysicsAsset();
+}
+
+void SPhysicsAssetEditorWindow::SavePhysicsAsset()
+{
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
-    if (PhysState && PhysState->bIsDirty)
+    if (!PhysState)
+    {
+        UE_LOG("[PhysicsAssetEditor] SavePhysicsAsset: 활성 상태가 없습니다");
+        return;
+    }
+
+    if (!PhysState->EditingAsset)
+    {
+        UE_LOG("[PhysicsAssetEditor] SavePhysicsAsset: 편집 중인 에셋이 없습니다");
+        return;
+    }
+
+    // 파일 경로가 없으면 SaveAs 호출
+    if (PhysState->CurrentFilePath.empty())
+    {
+        SavePhysicsAssetAs();
+        return;
+    }
+
+    // 저장 수행
+    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, PhysState->CurrentFilePath))
     {
         PhysState->bIsDirty = false;
-        UE_LOG("Physics Asset saved: %s", PhysState->CurrentFilePath.c_str());
+        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s", PhysState->CurrentFilePath.c_str());
     }
+    else
+    {
+        UE_LOG("[PhysicsAssetEditor] 저장 실패: %s", PhysState->CurrentFilePath.c_str());
+    }
+}
+
+void SPhysicsAssetEditorWindow::SavePhysicsAssetAs()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState)
+    {
+        UE_LOG("[PhysicsAssetEditor] SavePhysicsAssetAs: 활성 상태가 없습니다");
+        return;
+    }
+
+    if (!PhysState->EditingAsset)
+    {
+        UE_LOG("[PhysicsAssetEditor] SavePhysicsAssetAs: 편집 중인 에셋이 없습니다");
+        return;
+    }
+
+    // 저장 파일 다이얼로그 열기
+    std::filesystem::path SavePath = FPlatformProcess::OpenSaveFileDialog(
+        L"Data/Physics",           // 기본 디렉토리
+        L"physics",                // 기본 확장자
+        L"Physics Asset Files",    // 파일 타입 설명
+        L"NewPhysicsAsset"         // 기본 파일명
+    );
+
+    // 사용자가 취소한 경우
+    if (SavePath.empty())
+    {
+        UE_LOG("[PhysicsAssetEditor] SavePhysicsAssetAs: 사용자가 취소했습니다");
+        return;
+    }
+
+    // std::filesystem::path를 FString으로 변환 (상대 경로로 변환)
+    FString SavePathStr = ResolveAssetRelativePath(NormalizePath(WideToUTF8(SavePath.wstring())), "");
+
+    // 저장 수행
+    if (PhysicsAssetEditorBootstrap::SavePhysicsAsset(PhysState->EditingAsset, SavePathStr))
+    {
+        // 에디터 상태 업데이트
+        PhysState->CurrentFilePath = SavePathStr;
+        PhysState->bIsDirty = false;
+
+        UE_LOG("[PhysicsAssetEditor] 저장 완료: %s", SavePathStr.c_str());
+    }
+    else
+    {
+        UE_LOG("[PhysicsAssetEditor] 저장 실패: %s", SavePathStr.c_str());
+    }
+}
+
+void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState)
+    {
+        UE_LOG("[PhysicsAssetEditor] LoadPhysicsAsset: 활성 상태가 없습니다");
+        return;
+    }
+
+    // 불러오기 파일 다이얼로그 열기
+    std::filesystem::path LoadPath = FPlatformProcess::OpenLoadFileDialog(
+        L"Data/Physics",           // 기본 디렉토리
+        L"physics",                // 확장자 필터
+        L"Physics Asset Files"     // 파일 타입 설명
+    );
+
+    // 사용자가 취소한 경우
+    if (LoadPath.empty())
+    {
+        UE_LOG("[PhysicsAssetEditor] LoadPhysicsAsset: 사용자가 취소했습니다");
+        return;
+    }
+
+    // std::filesystem::path를 FString으로 변환
+    FString LoadPathStr = WideToUTF8(LoadPath.wstring());
+
+    // 파일에서 Physics Asset 로드
+    UPhysicsAsset* LoadedAsset = PhysicsAssetEditorBootstrap::LoadPhysicsAsset(LoadPathStr);
+    if (!LoadedAsset)
+    {
+        UE_LOG("[PhysicsAssetEditor] 로드 실패: %s", LoadPathStr.c_str());
+        return;
+    }
+
+    // 기존 에셋 교체
+    PhysState->EditingAsset = LoadedAsset;
+
+    // 파일 경로 설정 및 Dirty 플래그 해제
+    PhysState->CurrentFilePath = LoadPathStr;
+    PhysState->bIsDirty = false;
+
+    // 선택 상태 초기화
+    PhysState->SelectedBodyIndex = -1;
+    PhysState->SelectedConstraintIndex = -1;
+    PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
+
+    UE_LOG("[PhysicsAssetEditor] 로드 완료: %s", LoadPathStr.c_str());
 }
 
 void SPhysicsAssetEditorWindow::OnMouseUp(FVector2D MousePos, uint32 Button)
@@ -811,6 +953,145 @@ void SPhysicsAssetEditorWindow::RenderRightPanel()
 
 void SPhysicsAssetEditorWindow::RenderBottomPanel()
 {
+}
+
+void SPhysicsAssetEditorWindow::RenderTabsAndToolbar(EViewerType CurrentViewerType)
+{
+    // ============================================
+    // 1. 탭바 렌더링 (뷰어 전환 버튼 제외)
+    // ============================================
+    if (!ImGui::BeginTabBar("PhysicsAssetEditorTabs",
+        ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable))
+        return;
+
+    // 탭 렌더링
+    for (int i = 0; i < Tabs.Num(); ++i)
+    {
+        ViewerState* State = Tabs[i];
+        PhysicsAssetEditorState* PState = static_cast<PhysicsAssetEditorState*>(State);
+        bool open = true;
+
+        // 동적 탭 이름 생성
+        FString TabDisplayName;
+        if (PState->CurrentFilePath.empty())
+        {
+            TabDisplayName = "Untitled";
+        }
+        else
+        {
+            // 파일 경로에서 파일명만 추출 (확장자 제외)
+            size_t lastSlash = PState->CurrentFilePath.find_last_of("/\\");
+            FString filename = (lastSlash != FString::npos)
+                ? PState->CurrentFilePath.substr(lastSlash + 1)
+                : PState->CurrentFilePath;
+
+            // 확장자 제거
+            size_t dotPos = filename.find_last_of('.');
+            if (dotPos != FString::npos)
+                filename = filename.substr(0, dotPos);
+
+            TabDisplayName = filename;
+        }
+
+        // 수정됨 표시 추가
+        if (PState->bIsDirty)
+        {
+            TabDisplayName += "*";
+        }
+
+        // ImGui ID 충돌 방지
+        TabDisplayName += "##";
+        TabDisplayName += State->Name.ToString();
+
+        if (ImGui::BeginTabItem(TabDisplayName.c_str(), &open))
+        {
+            ActiveTabIndex = i;
+            ActiveState = State;
+            ImGui::EndTabItem();
+        }
+        if (!open)
+        {
+            CloseTab(i);
+            ImGui::EndTabBar();
+            return;
+        }
+    }
+
+    // + 버튼 (새 탭 추가)
+    if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing))
+    {
+        int maxViewerNum = 0;
+        for (int i = 0; i < Tabs.Num(); ++i)
+        {
+            const FString& tabName = Tabs[i]->Name.ToString();
+            const char* prefix = "PhysicsTab";
+            if (strncmp(tabName.c_str(), prefix, strlen(prefix)) == 0)
+            {
+                const char* numberPart = tabName.c_str() + strlen(prefix);
+                int num = atoi(numberPart);
+                if (num > maxViewerNum)
+                {
+                    maxViewerNum = num;
+                }
+            }
+        }
+
+        char label[64];
+        sprintf_s(label, "PhysicsTab%d", maxViewerNum + 1);
+        OpenNewTab(label);
+    }
+    ImGui::EndTabBar();
+
+    // ============================================
+    // 2. 툴바 렌더링 (Save, SaveAs, Load 버튼)
+    // ============================================
+    ImGui::BeginChild("PhysicsToolbar", ImVec2(0, 30.0f), false, ImGuiWindowFlags_NoScrollbar);
+
+    const ImGuiStyle& style = ImGui::GetStyle();
+    const ImVec2 IconSizeVec(22, 22);
+    float BtnHeight = IconSizeVec.y + style.FramePadding.y * 2.0f;
+    float availableHeight = ImGui::GetContentRegionAvail().y;
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (availableHeight - BtnHeight) * 0.5f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+    // Save 버튼
+    if (IconSave && IconSave->GetShaderResourceView())
+    {
+        if (ImGui::ImageButton("##SavePhysics", (void*)IconSave->GetShaderResourceView(), IconSizeVec))
+        {
+            SavePhysicsAsset();
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Physics Asset 저장 (Ctrl+S)");
+    }
+    ImGui::SameLine();
+
+    // SaveAs 버튼
+    if (IconSaveAs && IconSaveAs->GetShaderResourceView())
+    {
+        if (ImGui::ImageButton("##SaveAsPhysics", (void*)IconSaveAs->GetShaderResourceView(), IconSizeVec))
+        {
+            SavePhysicsAssetAs();
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("다른 이름으로 저장");
+    }
+    ImGui::SameLine();
+
+    // Load 버튼
+    if (IconLoad && IconLoad->GetShaderResourceView())
+    {
+        if (ImGui::ImageButton("##LoadPhysics", (void*)IconLoad->GetShaderResourceView(), IconSizeVec))
+        {
+            LoadPhysicsAsset();
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Physics Asset 불러오기");
+    }
+
+    ImGui::PopStyleColor();
+    ImGui::EndChild();
 }
 
 PhysicsAssetEditorState* SPhysicsAssetEditorWindow::GetPhysicsState() const
@@ -1375,6 +1656,28 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
             if (PhysState) PhysState->bIsDirty = true;
         }
 
+        ImGui::Separator();
+
+        // Friction (마찰 계수)
+        float friction = Body->Friction;
+        ImGui::Text("Friction");
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat("##Friction", &friction, 0.01f, 0.0f, 1.0f, "%.2f"))
+        {
+            Body->Friction = friction;
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+
+        // Restitution (반발 계수)
+        float restitution = Body->Restitution;
+        ImGui::Text("Restitution");
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat("##Restitution", &restitution, 0.01f, 0.0f, 1.0f, "%.2f"))
+        {
+            Body->Restitution = restitution;
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+
         ImGui::Unindent();
     }
 
@@ -1539,6 +1842,129 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
         {
             Constraint->TwistLimitAngle = twistLimit;
             if (PhysState) PhysState->bIsDirty = true;
+        }
+
+        ImGui::Unindent();
+    }
+
+    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Indent();
+
+        // Position1 (Bone1 공간에서의 조인트 위치)
+        ImGui::Text("Position 1 (Parent Frame)");
+        float pos1[3] = { Constraint->Position1.X, Constraint->Position1.Y, Constraint->Position1.Z };
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat3("##Position1", pos1, 0.001f, -100.0f, 100.0f, "%.3f"))
+        {
+            Constraint->Position1 = FVector(pos1[0], pos1[1], pos1[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
+
+        // Rotation1 (Bone1 공간에서의 조인트 회전)
+        ImGui::Text("Rotation 1 (Euler)");
+        float rot1[3] = { Constraint->Rotation1.X, Constraint->Rotation1.Y, Constraint->Rotation1.Z };
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat3("##Rotation1", rot1, 0.5f, -180.0f, 180.0f, "%.1f"))
+        {
+            Constraint->Rotation1 = FVector(rot1[0], rot1[1], rot1[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
+
+        ImGui::Separator();
+
+        // Position2 (Bone2 공간에서의 조인트 위치)
+        ImGui::Text("Position 2 (Child Frame)");
+        float pos2[3] = { Constraint->Position2.X, Constraint->Position2.Y, Constraint->Position2.Z };
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat3("##Position2", pos2, 0.001f, -100.0f, 100.0f, "%.3f"))
+        {
+            Constraint->Position2 = FVector(pos2[0], pos2[1], pos2[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
+
+        // Rotation2 (Bone2 공간에서의 조인트 회전)
+        ImGui::Text("Rotation 2 (Euler)");
+        float rot2[3] = { Constraint->Rotation2.X, Constraint->Rotation2.Y, Constraint->Rotation2.Z };
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::DragFloat3("##Rotation2", rot2, 0.5f, -180.0f, 180.0f, "%.1f"))
+        {
+            Constraint->Rotation2 = FVector(rot2[0], rot2[1], rot2[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
+
+        ImGui::Unindent();
+    }
+
+    if (ImGui::CollapsingHeader("Collision"))
+    {
+        ImGui::Indent();
+
+        // 인접 본 간 충돌 비활성화
+        bool bDisableCollision = Constraint->bDisableCollision;
+        if (ImGui::Checkbox("Disable Collision", &bDisableCollision))
+        {
+            Constraint->bDisableCollision = bDisableCollision;
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+        ImGui::SameLine();
+        ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Disable collision between connected bodies");
+        }
+
+        ImGui::Unindent();
+    }
+
+    if (ImGui::CollapsingHeader("Angular Motor"))
+    {
+        ImGui::Indent();
+
+        // 모터 활성화
+        bool bMotorEnabled = Constraint->bAngularMotorEnabled;
+        if (ImGui::Checkbox("Enable Motor", &bMotorEnabled))
+        {
+            Constraint->bAngularMotorEnabled = bMotorEnabled;
+            if (PhysState) PhysState->bIsDirty = true;
+        }
+
+        // 모터가 활성화된 경우에만 설정 표시
+        if (Constraint->bAngularMotorEnabled)
+        {
+            float motorStrength = Constraint->AngularMotorStrength;
+            ImGui::Text("Strength");
+            ImGui::SetNextItemWidth(-1);
+            if (ImGui::DragFloat("##MotorStrength", &motorStrength, 1.0f, 0.0f, 10000.0f, "%.1f"))
+            {
+                Constraint->AngularMotorStrength = motorStrength;
+                if (PhysState) PhysState->bIsDirty = true;
+            }
+
+            float motorDamping = Constraint->AngularMotorDamping;
+            ImGui::Text("Damping");
+            ImGui::SetNextItemWidth(-1);
+            if (ImGui::DragFloat("##MotorDamping", &motorDamping, 0.1f, 0.0f, 1000.0f, "%.2f"))
+            {
+                Constraint->AngularMotorDamping = motorDamping;
+                if (PhysState) PhysState->bIsDirty = true;
+            }
         }
 
         ImGui::Unindent();

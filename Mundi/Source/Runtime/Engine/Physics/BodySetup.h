@@ -46,4 +46,5 @@ public:
 
     UBodySetup() = default;
     virtual ~UBodySetup() = default;
+
 };
