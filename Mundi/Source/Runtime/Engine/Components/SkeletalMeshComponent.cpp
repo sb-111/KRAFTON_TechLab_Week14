@@ -553,10 +553,12 @@ void USkeletalMeshComponent::SetSimulatePhysics(bool bEnable)
             {
                 if (bEnable)
                 {
+                    RigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
                     RigidBody->wakeUp();
                 }
                 else
                 {
+                    RigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
                     RigidBody->putToSleep();
                 }
             }
@@ -590,7 +592,7 @@ void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsse
 
         // FBodyInstance 생성 및 초기화
         FBodyInstance* NewBody = new FBodyInstance();
-        NewBody->InitBody(Setup, BodyTransform, BoneIndex);
+        NewBody->InitBody(Setup, this, BodyTransform, BoneIndex);
 
         NewBody->OwnerComponent = this;
         Bodies.Add(NewBody);

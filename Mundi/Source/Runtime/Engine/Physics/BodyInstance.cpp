@@ -100,7 +100,16 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	if (InOwnerComponent->MobilityType == EMobilityType::Movable)
 	{
 		// RigidDynamic: 움직이는 강체
-		NewActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+		}
+		else
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
+		NewActor = DynamicActor;
 	}
 	else
 	{
@@ -182,6 +191,12 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 {
 	switch (Component->CollisionType)
 	{
+	case ECollisionEnabled::None:
+	{
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+	}
 	case ECollisionEnabled::QueryOnly:
 	{
 		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
@@ -214,7 +229,7 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 
 // ===== 래그돌용 함수들 (언리얼 방식) =====
 
-void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex)
+void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex)
 {
 	if (!Setup) return;
 	if (RigidActor) return;	// 이미 초기화됨
@@ -227,29 +242,51 @@ void FBodyInstance::InitBody(UBodySetup* Setup, const FTransform& WorldTransform
 
 	// RigidDynamic 생성
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
-	PxRigidDynamic* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+	PxRigidActor* Body = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
 	if (!Body) return;
 
+	if (InOwnerComponent->MobilityType == EMobilityType::Movable || !GWorld->bPie)
+	{
+		// RigidDynamic: 움직이는 강체
+		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+		}
+		else
+		{
+			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
+		Body = DynamicActor;
+		// 질량 설정
+			// Damping 설정
+		DynamicActor->setLinearDamping(Setup->LinearDamping);
+		DynamicActor->setAngularDamping(Setup->AngularDamping);
+		PxRigidBodyExt::setMassAndUpdateInertia(*DynamicActor, Setup->MassInKg);
+	}
+	else
+	{
+		// 프로퍼티에서 Setter를 부르지 않아서 ShouldWelding과 코드가 겹침. 
+		// TODO: 프로퍼티에서 수정 시 즉시 Invalid상태 방어하기
+		if (InOwnerComponent->bSimulatePhysics)
+		{
+			UE_LOG("Static이면서 동시에 SimulatePhysics할 수 없습니다, SimulatePhysics를 Off합니다");
+			InOwnerComponent->bSimulatePhysics = false;
+		}
+		Body = PhysicsSystem.GetPhysics()->createRigidStatic(InitTransform);
+	}
+
 	// UBodySetup의 AggGeom에서 Shape들 생성
-	CreateShapesFromBodySetup(Setup, Body);
+	CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 
-	// 질량 설정
-	PxRigidBodyExt::setMassAndUpdateInertia(*Body, Setup->MassInKg);
-
-	// Damping 설정
-	Body->setLinearDamping(Setup->LinearDamping);
-	Body->setAngularDamping(Setup->AngularDamping);
-
-	
 	// Scene에 추가
 	GWorld->GetPhysicsScene()->AddActor(*Body);
-	Body->wakeUp();
 
 	Body->userData = (void*)this;
 	RigidActor = Body;
 }
 
-void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic* Body)
+void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* Body, UPrimitiveComponent* OwnerComponent)
 {
 	if (!Setup || !Body) return;
 
@@ -275,6 +312,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 		if (Shape)
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 		}
 	}
@@ -297,6 +335,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxVec3(Box.Center),
 				PhysxConverter::ToPxQuat(Rotation)
 			);
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 		}
 	}
@@ -318,6 +357,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic*
 				PhysxConverter::ToPxVec3(Capsule.Center),
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
+			SetCollisionType(Shape, OwnerComponent);
 			Shape->setLocalPose(LocalPose);
 		}
 	}

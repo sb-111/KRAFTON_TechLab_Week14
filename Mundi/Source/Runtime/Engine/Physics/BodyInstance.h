@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class UPrimitiveComponent;
 class UBodySetup;
@@ -40,7 +40,7 @@ struct FBodyInstance
 	void InitPhysics(UPrimitiveComponent* Component);
 
 	// 래그돌용 초기화 (UBodySetup 기반)
-	void InitBody(UBodySetup* Setup, const FTransform& WorldTransform, int32 InBoneIndex = -1);
+	void InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex = -1);
 
 	// 물리 바디 정리
 	void TermBody();
@@ -59,5 +59,5 @@ struct FBodyInstance
 
 private:
 	// UBodySetup의 AggGeom에서 Shape들 생성 (래그돌용)
-	void CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidDynamic* Body);
+	void CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* Body, UPrimitiveComponent* OwnerComponent);
 };
