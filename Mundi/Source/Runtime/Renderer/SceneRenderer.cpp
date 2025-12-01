@@ -63,61 +63,7 @@
 #include "Modules/ParticleModuleTypeDataBeam.h"
 #include "Modules/ParticleModuleTypeDataRibbon.h"
 
-// =================== Compute Shader Helper ===================
-
-static ID3D11ComputeShader* CompileComputeShader(ID3D11Device* Device, const FString& ShaderPath)
-{
-	// FString을 FWideString으로 변환 (UTF8ToWide 사용)
-	FWideString wpath = UTF8ToWide(ShaderPath);
-
-	ID3DBlob* shaderBlob = nullptr;
-	ID3DBlob* errorBlob = nullptr;
-
-	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#if defined(_DEBUG)
-	compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-	HRESULT hr = D3DCompileFromFile(
-		wpath.c_str(),
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"mainCS",           // Entry point
-		"cs_5_0",          // Compute Shader 5.0
-		compileFlags,
-		0,
-		&shaderBlob,
-		&errorBlob
-	);
-
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			UE_LOG("Compute Shader Compile Error: %s\n", (char*)errorBlob->GetBufferPointer());
-			errorBlob->Release();
-		}
-		return nullptr;
-	}
-
-	ID3D11ComputeShader* computeShader = nullptr;
-	hr = Device->CreateComputeShader(
-		shaderBlob->GetBufferPointer(),
-		shaderBlob->GetBufferSize(),
-		nullptr,
-		&computeShader
-	);
-
-	shaderBlob->Release();
-
-	if (FAILED(hr))
-	{
-		UE_LOG("Failed to create Compute Shader\n");
-		return nullptr;
-	}
-
-	return computeShader;
-}
+// Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
 
 // =================== FSceneRenderer 생성/소멸 ===================
 
@@ -2037,19 +1983,16 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &NullRTV, nullptr);
 
 	// Pass 2: BlurH (수평)
-	
-	// Compute Shader 컴파일 (한 번만 컴파일하고 Pass 2 & 3에서 재사용)
-	ID3D11ComputeShader* BlurCS = CompileComputeShader(
-		RHIDevice->GetDevice(),
-		"Shaders/PostProcess/DepthOfField_Blur_CS.hlsl"
-	);
 
-	if (!BlurCS)
+	// Compute Shader 로드 (UResourceManager 프레임워크 사용)
+	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_CS.hlsl");
+	if (!BlurCS_Shader || !BlurCS_Shader->GetComputeShader())
 	{
-		UE_LOG("DOF: Blur Compute Shader 컴파일 실패!\n");
+		UE_LOG("DOF: Blur Compute Shader 로드 실패!\n");
 		return;
 	}
 
+	ID3D11ComputeShader* BlurCS = BlurCS_Shader->GetComputeShader();
 	ID3D11DeviceContext* context = RHIDevice->GetDeviceContext();
 
 	// ===== Pass 2: BlurH (수평) =====
@@ -2142,8 +2085,7 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
 	context->CSSetShader(nullptr, nullptr, 0);
 
-	// Pass 2 & 3 완료 후 Compute Shader 리소스 해제
-	BlurCS->Release();
+	// UResourceManager가 Compute Shader 리소스를 관리하므로 직접 Release 불필요
 	
 	// Pass 1-3 블록 종료
 

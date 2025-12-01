@@ -228,6 +228,7 @@ bool UShader::CompileVariantInternal(ID3D11Device* InDevice, const FString& InSh
 	HRESULT Hr;
 	bool bVsCompiled = false;
 	bool bPsCompiled = false;
+	bool bCsCompiled = false;
 
 	// --- 3. 컴파일 결과를 OutVariant에 저장 ---
 	if (EndsWith(InShaderPath, "_VS.hlsl"))
@@ -246,6 +247,16 @@ bool UShader::CompileVariantInternal(ID3D11Device* InDevice, const FString& InSh
 		if (bPsCompiled)
 		{
 			Hr = InDevice->CreatePixelShader(OutVariant.PSBlob->GetBufferPointer(), OutVariant.PSBlob->GetBufferSize(), nullptr, &OutVariant.PixelShader);
+			assert(SUCCEEDED(Hr));
+		}
+	}
+	else if (EndsWith(InShaderPath, "_CS.hlsl"))
+	{
+		// Compute Shader 컴파일
+		bCsCompiled = CompileShaderInternal(WFilePath, "mainCS", "cs_5_0", CompileFlags, Defines.data(), &OutVariant.CSBlob);
+		if (bCsCompiled)
+		{
+			Hr = InDevice->CreateComputeShader(OutVariant.CSBlob->GetBufferPointer(), OutVariant.CSBlob->GetBufferSize(), nullptr, &OutVariant.ComputeShader);
 			assert(SUCCEEDED(Hr));
 		}
 	}
@@ -270,8 +281,8 @@ bool UShader::CompileVariantInternal(ID3D11Device* InDevice, const FString& InSh
 	// 4. 핫 리로드용 매크로 저장
 	OutVariant.SourceMacros = InMacros;
 
-	// 5. 컴파일 성공 여부 반환 (VS 또는 PS 둘 중 하나라도 성공 시)
-	return bVsCompiled || bPsCompiled;
+	// 5. 컴파일 성공 여부 반환 (VS, PS, CS 중 하나라도 성공 시)
+	return bVsCompiled || bPsCompiled || bCsCompiled;
 }
 
 //FShaderVariant* UShader::GetShaderVariant(const TArray<FShaderMacro>& InMacros)
@@ -306,6 +317,16 @@ ID3D11PixelShader* UShader::GetPixelShader(const TArray<FShaderMacro>& InMacros)
 	if (Variant)
 	{
 		return Variant->PixelShader;
+	}
+	return nullptr;
+}
+
+ID3D11ComputeShader* UShader::GetComputeShader(const TArray<FShaderMacro>& InMacros)
+{
+	FShaderVariant* Variant = GetOrCompileShaderVariant(InMacros);
+	if (Variant)
+	{
+		return Variant->ComputeShader;
 	}
 	return nullptr;
 }
