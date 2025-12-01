@@ -578,6 +578,11 @@ void UResourceManager::InitShaderILMap()
     layout.Add({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 52, D3D11_INPUT_PER_VERTEX_DATA, 0 });
     ShaderToInputLayoutMap["Shaders/Particle/ParticleRibbon.hlsl"] = layout;
     layout.clear();
+
+    // ────────────────────────────────
+    // Compute Shaders (InputLayout 불필요)
+    // ────────────────────────────────
+    ShaderToInputLayoutMap["Shaders/PostProcess/DepthOfField_Blur_CS.hlsl"] = {};  // Compute Shader는 InputLayout이 없음
 }
 
 TArray<D3D11_INPUT_ELEMENT_DESC>& UResourceManager::GetProperInputLayout(const FString& InShaderName)
