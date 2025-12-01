@@ -460,7 +460,7 @@ bool D3D11RHI::EnsureDOFResources(uint32 HalfWidth, uint32 HalfHeight)
 
     HRESULT hr;
 
-    // 공통 텍스처 설정
+    // 공통 텍스처 설정 (Compute Shader UAV 지원 포함)
     D3D11_TEXTURE2D_DESC TexDesc = {};
     TexDesc.Width = HalfWidth;
     TexDesc.Height = HalfHeight;
@@ -470,7 +470,7 @@ bool D3D11RHI::EnsureDOFResources(uint32 HalfWidth, uint32 HalfHeight)
     TexDesc.SampleDesc.Count = 1;
     TexDesc.SampleDesc.Quality = 0;
     TexDesc.Usage = D3D11_USAGE_DEFAULT;
-    TexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    TexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
     TexDesc.CPUAccessFlags = 0;
     TexDesc.MiscFlags = 0;
 
@@ -508,6 +508,33 @@ bool D3D11RHI::EnsureDOFResources(uint32 HalfWidth, uint32 HalfHeight)
     DOFCachedHalfWidth = HalfWidth;
     DOFCachedHalfHeight = HalfHeight;
 
+    // UAV (텍스처 포맷과 일치시킴)
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+
+    hr = Device->CreateUnorderedAccessView(
+        DOFHalfResColorCoCTexture,
+        &uavDesc,
+        &DOFHalfResColorCoCUAV
+    );
+    if (FAILED(hr)) return false;
+
+    hr = Device->CreateUnorderedAccessView(
+        DOFHalfResBlurTempTexture,
+        &uavDesc,
+        &DOFHalfResBlurTempUAV
+    );
+    if (FAILED(hr)) return false;
+
+    hr = Device->CreateUnorderedAccessView(
+        DOFHalfResBlurredTexture,
+        &uavDesc,
+        &DOFHalfResBlurredUAV
+    );
+    if (FAILED(hr)) return false;
+    
     return true;
 }
 
@@ -516,14 +543,17 @@ void D3D11RHI::ReleaseDOFResources()
     if (DOFHalfResBlurredSRV) { DOFHalfResBlurredSRV->Release(); DOFHalfResBlurredSRV = nullptr; }
     if (DOFHalfResBlurredRTV) { DOFHalfResBlurredRTV->Release(); DOFHalfResBlurredRTV = nullptr; }
     if (DOFHalfResBlurredTexture) { DOFHalfResBlurredTexture->Release(); DOFHalfResBlurredTexture = nullptr; }
+    if (DOFHalfResBlurredUAV) { DOFHalfResBlurredUAV->Release(); DOFHalfResBlurredUAV = nullptr; }
 
     if (DOFHalfResBlurTempSRV) { DOFHalfResBlurTempSRV->Release(); DOFHalfResBlurTempSRV = nullptr; }
     if (DOFHalfResBlurTempRTV) { DOFHalfResBlurTempRTV->Release(); DOFHalfResBlurTempRTV = nullptr; }
     if (DOFHalfResBlurTempTexture) { DOFHalfResBlurTempTexture->Release(); DOFHalfResBlurTempTexture = nullptr; }
+    if (DOFHalfResBlurTempUAV) { DOFHalfResBlurTempUAV->Release(); DOFHalfResBlurTempUAV = nullptr; }
 
     if (DOFHalfResColorCoCSRV) { DOFHalfResColorCoCSRV->Release(); DOFHalfResColorCoCSRV = nullptr; }
     if (DOFHalfResColorCoCRTV) { DOFHalfResColorCoCRTV->Release(); DOFHalfResColorCoCRTV = nullptr; }
     if (DOFHalfResColorCoCTexture) { DOFHalfResColorCoCTexture->Release(); DOFHalfResColorCoCTexture = nullptr; }
+    if (DOFHalfResColorCoCUAV) { DOFHalfResColorCoCUAV->Release(); DOFHalfResColorCoCUAV = nullptr; }
 
     DOFCachedHalfWidth = 0;
     DOFCachedHalfHeight = 0;

@@ -195,6 +195,13 @@ public:
 	ID3D11RenderTargetView* GetDOFHalfResBlurredRTV() const { return DOFHalfResBlurredRTV; }
 	ID3D11ShaderResourceView* GetDOFHalfResBlurredSRV() const { return DOFHalfResBlurredSRV; }
 
+	ID3D11UnorderedAccessView* GetDOFHalfResColorCoCUAV() const { return DOFHalfResColorCoCUAV; }
+	ID3D11UnorderedAccessView* GetDOFHalfResBlurTempUAV() const { return DOFHalfResBlurTempUAV; }
+	ID3D11UnorderedAccessView* GetDOFHalfResBlurredUAV() const { return DOFHalfResBlurredUAV; }
+
+	// DOF Constant Buffer 접근자 (Compute Shader용)
+	ID3D11Buffer* GetDOFConstantBuffer() const { return DOFBufferTypeBuffer; }
+
 public:
 	// getter
 	inline ID3D11Device* GetDevice()
@@ -299,7 +306,7 @@ private:
 	ID3D11SamplerState* ShadowSamplerState = nullptr;
 	ID3D11SamplerState* VSMSamplerState = nullptr;
 
-	// DOF 임시 렌더 타겟 (캐싱, 최초 1회 생성 후 재사용)
+	// DOF 렌더 타겟 (캐싱, 최초 1회 생성 후 재사용)
 	ID3D11Texture2D* DOFHalfResColorCoCTexture = nullptr;
 	ID3D11RenderTargetView* DOFHalfResColorCoCRTV = nullptr;
 	ID3D11ShaderResourceView* DOFHalfResColorCoCSRV = nullptr;
@@ -311,6 +318,11 @@ private:
 	ID3D11Texture2D* DOFHalfResBlurredTexture = nullptr;
 	ID3D11RenderTargetView* DOFHalfResBlurredRTV = nullptr;
 	ID3D11ShaderResourceView* DOFHalfResBlurredSRV = nullptr;
+
+	// DOF UAV 리소스
+	ID3D11UnorderedAccessView* DOFHalfResColorCoCUAV = nullptr;
+	ID3D11UnorderedAccessView* DOFHalfResBlurTempUAV = nullptr;
+	ID3D11UnorderedAccessView* DOFHalfResBlurredUAV = nullptr;
 
 	uint32 DOFCachedHalfWidth = 0;
 	uint32 DOFCachedHalfHeight = 0;
