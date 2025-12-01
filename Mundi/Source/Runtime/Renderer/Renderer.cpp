@@ -470,8 +470,8 @@ void URenderer::BeginDebugPrimitiveBatch()
 	// Set blend state for transparency (SrcAlpha, InvSrcAlpha)
 	RHIDevice->OMSetBlendState(true);
 
-	// Set depth stencil state: depth test enabled, depth write disabled (X-ray effect)
-	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqualReadOnly);
+	// Set depth stencil state: depth test disabled for X-ray effect (always render on top)
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::Always);
 
 	// Set rasterizer state to solid fill
 	RHIDevice->RSSetState(ERasterizerMode::Solid);
