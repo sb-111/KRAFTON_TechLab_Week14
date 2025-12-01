@@ -3,6 +3,39 @@
 #include "BodyInstance.h"
 #include "PrimitiveComponent.h"
 
+// ===== 래그돌 자체 충돌 비활성화를 위한 커스텀 필터 셰이더 =====
+// filterData.word0 = 래그돌 Owner ID (0이면 일반 오브젝트)
+// filterData.word1 = 1이면 래그돌 Shape
+static PxFilterFlags RagdollFilterShader(
+    PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+    PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+    PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+{
+    // 트리거 처리
+    if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+    {
+        pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+        return PxFilterFlag::eDEFAULT;
+    }
+
+    // 래그돌 자체 충돌 검사
+    bool isRagdoll0 = (filterData0.word1 == 1);
+    bool isRagdoll1 = (filterData1.word1 == 1);
+
+    if (isRagdoll0 && isRagdoll1)
+    {
+        // 둘 다 래그돌 Shape이고, 같은 Owner ID면 충돌 무시
+        if (filterData0.word0 == filterData1.word0 && filterData0.word0 != 0)
+        {
+            return PxFilterFlag::eSUPPRESS;
+        }
+    }
+
+    // 일반 충돌 처리
+    pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+    return PxFilterFlag::eDEFAULT;
+}
+
 FPhysicsSystem* FPhysicsSystem::Instance = nullptr;
 FPhysicsSystem& FPhysicsSystem::GetInstance()
 {
@@ -77,8 +110,8 @@ void FPhysicsSystem::Initialize()
 
 	Dispatcher = PxDefaultCpuDispatcherCreate(3);
 	SceneDesc.cpuDispatcher = Dispatcher;
-	// filterShader: 충돌 처리 로직, 일단 기본 필터 사용 수정 가능
-	SceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	// filterShader: 래그돌 자체 충돌 비활성화를 위한 커스텀 필터 사용
+	SceneDesc.filterShader = RagdollFilterShader;
 	// Persistent contact manifold: 지속적인 접촉 시 떨림 완화
 	// ENABLE_ACTIVE_ACTORS: 움직인 엑터만 명단 뽑아놓음
 	SceneDesc.flags |=  PxSceneFlag::eENABLE_PCM | PxSceneFlag::eENABLE_ACTIVE_ACTORS;

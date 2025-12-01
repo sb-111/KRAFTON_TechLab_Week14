@@ -514,6 +514,42 @@ struct FQuat
 		return FQuat(N.X * S, N.Y * S, N.Z * S, std::cos(Half));
 	}
 
+	// 두 벡터 사이의 회전 쿼터니언 생성 (From → To)
+	static FQuat FindBetweenVectors(const FVector& From, const FVector& To)
+	{
+		FVector A = From.GetNormalized();
+		FVector B = To.GetNormalized();
+
+		float Dot = FVector::Dot(A, B);
+
+		// 거의 같은 방향
+		if (Dot > 0.9999f)
+		{
+			return FQuat::Identity();
+		}
+
+		// 거의 반대 방향 (180도 회전)
+		if (Dot < -0.9999f)
+		{
+			// 수직인 축 찾기
+			FVector Axis = FVector::Cross(FVector(1, 0, 0), A);
+			if (Axis.SizeSquared() < 0.01f)
+			{
+				Axis = FVector::Cross(FVector(0, 1, 0), A);
+			}
+			Axis = Axis.GetNormalized();
+			// 180도 회전 쿼터니언
+			return FQuat(Axis.X, Axis.Y, Axis.Z, 0);
+		}
+
+		// 일반 경우
+		FVector Axis = FVector::Cross(A, B);
+		float S = std::sqrt((1.0f + Dot) * 2.0f);
+		float InvS = 1.0f / S;
+
+		return FQuat(Axis.X * InvS, Axis.Y * InvS, Axis.Z * InvS, S * 0.5f);
+	}
+
 	// 오일러 → 쿼터니언 (Pitch=X, Yaw=Y, Roll=Z in degrees)
 	// ZYX 순서 (Roll → Yaw → Pitch) - 로컬 축 회전
 	static FQuat MakeFromEulerZYX(const FVector& EulerDeg)

@@ -524,6 +524,11 @@ void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsse
 {
     const FSkeleton* Skeleton = SkeletalMesh ? SkeletalMesh->GetSkeleton() : nullptr;
 
+    // 래그돌 자체 충돌 방지를 위한 고유 Owner ID 생성
+    // 같은 래그돌 내 모든 Body는 동일한 ID를 공유
+    static uint32 NextRagdollOwnerID = 1;
+    uint32 RagdollOwnerID = NextRagdollOwnerID++;
+
     for (int32 i = 0; i < PhysAsset->Bodies.Num(); ++i)
     {
         UBodySetup* Setup = PhysAsset->Bodies[i];
@@ -542,9 +547,9 @@ void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsse
             }
         }
 
-        // FBodyInstance 생성 및 초기화
+        // FBodyInstance 생성 및 초기화 (RagdollOwnerID 전달)
         FBodyInstance* NewBody = new FBodyInstance();
-        NewBody->InitBody(Setup, BodyTransform, BoneIndex);
+        NewBody->InitBody(Setup, BodyTransform, BoneIndex, RagdollOwnerID);
 
         Bodies.Add(NewBody);
         BodyBoneIndices.Add(BoneIndex);
