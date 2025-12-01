@@ -2652,14 +2652,28 @@ void SPhysicsAssetEditorWindow::RemoveBody(int32 BodyIndex)
     if (BodyIndex < 0 || BodyIndex >= PhysState->EditingAsset->Bodies.Num()) return;
 
     UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
-    if (Body)
+    if (!Body) return;
+
+    FName BoneName = Body->BoneName;
+    UE_LOG("[PhysicsAssetEditor] Removed body for bone: %s", BoneName.ToString().c_str());
+
+    // 이 Body와 연결된 모든 Constraint 삭제 (역순으로 삭제해야 인덱스 문제 없음)
+    for (int32 i = PhysState->EditingAsset->Constraints.Num() - 1; i >= 0; --i)
     {
-        UE_LOG("[PhysicsAssetEditor] Removed body for bone: %s", Body->BoneName.ToString().c_str());
+        const FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[i];
+        if (Constraint.ConstraintBone1 == BoneName || Constraint.ConstraintBone2 == BoneName)
+        {
+            UE_LOG("[PhysicsAssetEditor] Removed constraint: %s - %s",
+                Constraint.ConstraintBone1.ToString().c_str(),
+                Constraint.ConstraintBone2.ToString().c_str());
+            PhysState->EditingAsset->Constraints.RemoveAt(i);
+        }
     }
 
     PhysState->EditingAsset->Bodies.RemoveAt(BodyIndex);
     ClearSelection();
     PhysState->bIsDirty = true;
+    PhysState->bShapesDirty = true;
 }
 
 UBodySetup* SPhysicsAssetEditorWindow::CreateDefaultBodySetup(const FString& BoneName)
