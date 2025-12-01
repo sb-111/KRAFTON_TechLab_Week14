@@ -48,7 +48,9 @@ enum class EDebugPrimitiveType : uint8
 {
     Sphere,
     Box,
-    Capsule
+    Capsule,
+    Cone,
+    Arc
 };
 
 // Debug Primitive 렌더링 요청 구조체
@@ -59,6 +61,8 @@ struct FDebugPrimitive
     FLinearColor Color;
     float Radius = 0.0f;      // Sphere, Capsule용
     float HalfHeight = 0.0f;  // Capsule용
+    float Angle1 = 0.0f;      // Cone: Swing1 각도 (라디안), Arc: Twist 각도 (라디안)
+    float Angle2 = 0.0f;      // Cone: Swing2 각도 (라디안)
     uint32 UUID = 0;
 };
 
@@ -250,6 +254,33 @@ public:
         Prim.Transform = Transform;
         Prim.Radius = Radius;
         Prim.HalfHeight = HalfHeight;
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    // Swing 원뿔: Transform은 위치/회전, Angle1=Swing1(Y축), Angle2=Swing2(Z축), Radius=높이
+    void AddDebugCone(const FMatrix& Transform, float Swing1Angle, float Swing2Angle, float Height, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Cone;
+        Prim.Transform = Transform;
+        Prim.Angle1 = Swing1Angle;
+        Prim.Angle2 = Swing2Angle;
+        Prim.Radius = Height;  // Height를 Radius 필드에 저장
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    // Twist 부채꼴: Transform은 위치/회전, Angle1=Twist 각도(라디안), Radius=반지름
+    void AddDebugArc(const FMatrix& Transform, float TwistAngle, float Radius, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Arc;
+        Prim.Transform = Transform;
+        Prim.Angle1 = TwistAngle;
+        Prim.Radius = Radius;
         Prim.Color = Color;
         Prim.UUID = UUID;
         DebugPrimitiveQueue.Add(Prim);

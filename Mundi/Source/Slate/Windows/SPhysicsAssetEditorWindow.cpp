@@ -1597,28 +1597,21 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
     USkeletalMeshComponent* MeshComp = PreviewActor->GetSkeletalMeshComponent();
     if (!MeshComp) return;
 
-    ULineComponent* LineComp = PhysState->ConstraintLineComponent;
-    if (!LineComp) return;
+    UWorld* World = PhysState->World;
 
-    // 매 프레임 클리어
-    LineComp->ClearLines();
+    // 색상 정의 - 언리얼 스타일
+    const FLinearColor SwingConeColor(1.0f, 0.3f, 0.3f, 0.4f);      // 빨간색 반투명 (Swing 원뿔)
+    const FLinearColor SwingConeSelectedColor(1.0f, 0.3f, 0.3f, 0.6f);  // 선택 시 더 진하게
+    const FLinearColor TwistArcColor(0.3f, 1.0f, 0.3f, 0.4f);       // 녹색 반투명 (Twist 부채꼴)
+    const FLinearColor TwistArcSelectedColor(0.3f, 1.0f, 0.3f, 0.6f);   // 선택 시 더 진하게
+    const FLinearColor MarkerColor(1.0f, 1.0f, 1.0f, 0.8f);         // 흰색 (마커)
 
-    // 색상 정의
-    const FVector4 UnselectedConnectorColor(0.8f, 0.8f, 0.3f, 0.7f);   // 연한 노란색
-    const FVector4 SelectedConnectorColor(1.0f, 1.0f, 0.0f, 1.0f);     // 밝은 노란색
-    const FVector4 MarkerColor(1.0f, 1.0f, 1.0f, 1.0f);                // 흰색
-
-    const FVector4 TwistAxisColor(1.0f, 0.3f, 0.3f, 0.8f);   // 빨간색 (X)
-    const FVector4 Swing1AxisColor(0.3f, 1.0f, 0.3f, 0.8f);  // 녹색 (Y)
-    const FVector4 Swing2AxisColor(0.3f, 0.3f, 1.0f, 0.8f);  // 파란색 (Z)
-
-    const FVector4 SwingConeColor(1.0f, 0.3f, 0.3f, 0.3f);   // 빨간색 반투명 (Swing 원뿔)
-    const FVector4 TwistArcColor(0.3f, 1.0f, 0.3f, 0.3f);    // 녹색 반투명 (Twist 부채꼴)
-
-    const float AxisLength = 10.0f;
-    const float MarkerRadius = 0.5f;
-    const float ConeLength = 15.0f;
-    const float TwistArcRadius = 8.0f;
+    // 크기 설정
+    const float NormalConeHeight = 0.3f;
+    const float SelectedConeHeight = 0.5f;  // 선택 시 확대
+    const float NormalArcRadius = 0.3f;
+    const float SelectedArcRadius = 0.5f;   // 선택 시 확대
+    const float MarkerRadius = 0.03f;
 
     // 모든 Constraint 순회
     for (int32 ConstraintIndex = 0; ConstraintIndex < PhysState->EditingAsset->Constraints.Num(); ++ConstraintIndex)
@@ -1640,127 +1633,58 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
 
         // 본 월드 트랜스폼
         FTransform Bone1World = MeshComp->GetBoneWorldTransform(Bone1Index);
-        FTransform Bone2World = MeshComp->GetBoneWorldTransform(Bone2Index);
 
         // Joint 위치 계산 (본 로컬 -> 월드)
         FQuat JointRot1 = FQuat::MakeFromEulerZYX(Constraint.Rotation1);
-
         FVector JointPos1 = Bone1World.Translation +
             Bone1World.Rotation.RotateVector(Constraint.Position1);
-        FVector JointPos2 = Bone2World.Translation +
-            Bone2World.Rotation.RotateVector(Constraint.Position2);
-
         FQuat JointWorldRot = Bone1World.Rotation * JointRot1;
 
-        // 색상 선택
-        FVector4 ConnectorColor = bIsSelected ? SelectedConnectorColor : UnselectedConnectorColor;
+        // 선택 상태에 따른 크기
+        float ConeHeight = bIsSelected ? SelectedConeHeight : NormalConeHeight;
+        float ArcRadius = bIsSelected ? SelectedArcRadius : NormalArcRadius;
 
-        // 1. 두 Joint 위치 연결선
-        LineComp->AddLine(JointPos1, JointPos2, ConnectorColor);
+        // 1. Joint 마커 (작은 구)
+        FMatrix MarkerTransform = FMatrix::FromTRS(JointPos1, FQuat::Identity(), FVector(MarkerRadius, MarkerRadius, MarkerRadius));
+        World->AddDebugSphere(MarkerTransform, MarkerColor);
 
-        // 2. Joint 위치 마커 (작은 십자)
-        LineComp->AddLine(JointPos1 - FVector(MarkerRadius, 0, 0), JointPos1 + FVector(MarkerRadius, 0, 0), MarkerColor);
-        LineComp->AddLine(JointPos1 - FVector(0, MarkerRadius, 0), JointPos1 + FVector(0, MarkerRadius, 0), MarkerColor);
-        LineComp->AddLine(JointPos1 - FVector(0, 0, MarkerRadius), JointPos1 + FVector(0, 0, MarkerRadius), MarkerColor);
-
-        // 선택된 Constraint만 상세 시각화
-        if (bIsSelected)
+        // 2. Swing 원뿔 (양방향 다이아몬드 형태, 빨간색)
+        if (Constraint.Swing1Motion == EAngularConstraintMotion::Limited ||
+            Constraint.Swing2Motion == EAngularConstraintMotion::Limited)
         {
-            // 3. 축 표시 (X=Twist, Y=Swing1, Z=Swing2)
-            FVector XAxis = JointWorldRot.RotateVector(FVector(1, 0, 0)) * AxisLength;
-            FVector YAxis = JointWorldRot.RotateVector(FVector(0, 1, 0)) * AxisLength;
-            FVector ZAxis = JointWorldRot.RotateVector(FVector(0, 0, 1)) * AxisLength;
+            float Swing1Rad = Constraint.Swing1Motion == EAngularConstraintMotion::Limited
+                ? Constraint.Swing1LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
+            float Swing2Rad = Constraint.Swing2Motion == EAngularConstraintMotion::Limited
+                ? Constraint.Swing2LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
 
-            LineComp->AddLine(JointPos1, JointPos1 + XAxis, TwistAxisColor);
-            LineComp->AddLine(JointPos1, JointPos1 + YAxis, Swing1AxisColor);
-            LineComp->AddLine(JointPos1, JointPos1 + ZAxis, Swing2AxisColor);
+            // Swing 각도가 너무 작으면 최소값 설정
+            Swing1Rad = FMath::Max(Swing1Rad, 0.05f);
+            Swing2Rad = FMath::Max(Swing2Rad, 0.05f);
 
-            // 4. Swing 원뿔 (X축 방향으로 원뿔, Limited일 때만)
-            if (Constraint.Swing1Motion == EAngularConstraintMotion::Limited ||
-                Constraint.Swing2Motion == EAngularConstraintMotion::Limited)
-            {
-                float Swing1Rad = Constraint.Swing1Motion == EAngularConstraintMotion::Limited
-                    ? Constraint.Swing1LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
-                float Swing2Rad = Constraint.Swing2Motion == EAngularConstraintMotion::Limited
-                    ? Constraint.Swing2LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
+            FLinearColor ConeColor = bIsSelected ? SwingConeSelectedColor : SwingConeColor;
 
-                const int32 NumConeSegments = 16;
-                for (int32 i = 0; i < NumConeSegments; ++i)
-                {
-                    float Theta1 = (float(i) / NumConeSegments) * 2.0f * PI_CONST;
-                    float Theta2 = (float((i + 1) % NumConeSegments) / NumConeSegments) * 2.0f * PI_CONST;
+            // 양방향 원뿔 (메시 자체가 양방향)
+            FMatrix ConeTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            World->AddDebugCone(ConeTransform, Swing1Rad, Swing2Rad, ConeHeight, ConeColor);
+        }
 
-                    // 타원형 원뿔 - Y축(Swing1), Z축(Swing2) 방향으로 각도 적용
-                    float Y1 = sin(Swing1Rad) * sin(Theta1);
-                    float Z1 = sin(Swing2Rad) * cos(Theta1);
-                    float X1 = cos(FMath::Max(Swing1Rad * FMath::Abs(sin(Theta1)), Swing2Rad * FMath::Abs(cos(Theta1))));
+        // 3. Twist 부채꼴 (YZ 평면, 녹색)
+        // 반지름은 고정, TwistAngle에 따라 부채꼴 각도만 변함
+        if (Constraint.TwistMotion == EAngularConstraintMotion::Limited)
+        {
+            float TwistRad = Constraint.TwistLimitAngle * PI_CONST / 180.0f;
+            TwistRad = FMath::Max(TwistRad, 0.05f);
 
-                    float Y2 = sin(Swing1Rad) * sin(Theta2);
-                    float Z2 = sin(Swing2Rad) * cos(Theta2);
-                    float X2 = cos(FMath::Max(Swing1Rad * FMath::Abs(sin(Theta2)), Swing2Rad * FMath::Abs(cos(Theta2))));
-
-                    FVector LocalDir1 = FVector(X1, Y1, Z1).GetNormalized() * ConeLength;
-                    FVector LocalDir2 = FVector(X2, Y2, Z2).GetNormalized() * ConeLength;
-
-                    FVector WorldPoint1 = JointPos1 + JointWorldRot.RotateVector(LocalDir1);
-                    FVector WorldPoint2 = JointPos1 + JointWorldRot.RotateVector(LocalDir2);
-
-                    // Apex에서 원뿔 밑면까지 라인
-                    LineComp->AddLine(JointPos1, WorldPoint1, SwingConeColor);
-                    // 밑면 연결
-                    LineComp->AddLine(WorldPoint1, WorldPoint2, SwingConeColor);
-                }
-            }
-
-            // 5. Twist 부채꼴 (YZ 평면에 호, Limited일 때만)
-            if (Constraint.TwistMotion == EAngularConstraintMotion::Limited)
-            {
-                float TwistRad = Constraint.TwistLimitAngle * PI_CONST / 180.0f;
-
-                const int32 NumArcSegments = 16;
-                float StartAngle = -TwistRad;
-                float EndAngle = TwistRad;
-                float AngleStep = (EndAngle - StartAngle) / NumArcSegments;
-
-                for (int32 i = 0; i < NumArcSegments; ++i)
-                {
-                    float Angle1 = StartAngle + i * AngleStep;
-                    float Angle2 = StartAngle + (i + 1) * AngleStep;
-
-                    // YZ 평면에서 호 그리기 (X축 = Twist 축)
-                    FVector LocalP1(0, cos(Angle1) * TwistArcRadius, sin(Angle1) * TwistArcRadius);
-                    FVector LocalP2(0, cos(Angle2) * TwistArcRadius, sin(Angle2) * TwistArcRadius);
-
-                    FVector WorldP1 = JointPos1 + JointWorldRot.RotateVector(LocalP1);
-                    FVector WorldP2 = JointPos1 + JointWorldRot.RotateVector(LocalP2);
-
-                    LineComp->AddLine(WorldP1, WorldP2, TwistArcColor);
-                }
-
-                // 호 끝점에서 중심으로 라인
-                FVector ArcStart(0, cos(StartAngle) * TwistArcRadius, sin(StartAngle) * TwistArcRadius);
-                FVector ArcEnd(0, cos(EndAngle) * TwistArcRadius, sin(EndAngle) * TwistArcRadius);
-                LineComp->AddLine(JointPos1, JointPos1 + JointWorldRot.RotateVector(ArcStart), TwistArcColor);
-                LineComp->AddLine(JointPos1, JointPos1 + JointWorldRot.RotateVector(ArcEnd), TwistArcColor);
-            }
-            else if (Constraint.TwistMotion == EAngularConstraintMotion::Free)
-            {
-                // Free면 전체 원 그리기
-                const int32 NumCircleSegments = 16;
-                for (int32 i = 0; i < NumCircleSegments; ++i)
-                {
-                    float Angle1 = (float(i) / NumCircleSegments) * 2.0f * PI_CONST;
-                    float Angle2 = (float((i + 1) % NumCircleSegments) / NumCircleSegments) * 2.0f * PI_CONST;
-
-                    FVector LocalP1(0, cos(Angle1) * TwistArcRadius, sin(Angle1) * TwistArcRadius);
-                    FVector LocalP2(0, cos(Angle2) * TwistArcRadius, sin(Angle2) * TwistArcRadius);
-
-                    FVector WorldP1 = JointPos1 + JointWorldRot.RotateVector(LocalP1);
-                    FVector WorldP2 = JointPos1 + JointWorldRot.RotateVector(LocalP2);
-
-                    LineComp->AddLine(WorldP1, WorldP2, TwistArcColor);
-                }
-            }
+            FMatrix ArcTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            FLinearColor ArcColor = bIsSelected ? TwistArcSelectedColor : TwistArcColor;
+            World->AddDebugArc(ArcTransform, TwistRad, ArcRadius, ArcColor);
+        }
+        else if (Constraint.TwistMotion == EAngularConstraintMotion::Free)
+        {
+            // Free면 전체 원 (PI = 180도, 최대 크기)
+            FMatrix ArcTransform = FMatrix::FromTRS(JointPos1, JointWorldRot, FVector::One());
+            FLinearColor ArcColor = bIsSelected ? TwistArcSelectedColor : TwistArcColor;
+            World->AddDebugArc(ArcTransform, PI_CONST, ArcRadius, ArcColor);
         }
     }
 }
@@ -2160,9 +2084,9 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
         FKBoxElem Box;
         Box.Center = FVector(0.0f, 0.0f, 0.0f);
         Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Box.X = 2.0f;  // Half extent
-        Box.Y = 2.0f;
-        Box.Z = 2.0f;
+        Box.X = 0.15f;  // Half extent
+        Box.Y = 0.15f;
+        Box.Z = 0.15f;
         Body->AggGeom.BoxElems.Add(Box);
         break;
     }
@@ -2170,7 +2094,7 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
     {
         FKSphereElem Sphere;
         Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
-        Sphere.Radius = 2.0f;
+        Sphere.Radius = 0.15f;
         Body->AggGeom.SphereElems.Add(Sphere);
         break;
     }
@@ -2180,8 +2104,8 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
         FKSphylElem Capsule;
         Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
         Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
-        Capsule.Radius = 1.5f;
-        Capsule.Length = 4.0f;  // 전체 실린더 길이
+        Capsule.Radius = 0.1f;
+        Capsule.Length = 0.3f;  // 전체 실린더 길이
         Body->AggGeom.SphylElems.Add(Capsule);
         break;
     }

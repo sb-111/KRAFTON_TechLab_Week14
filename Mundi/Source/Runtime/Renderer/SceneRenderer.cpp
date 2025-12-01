@@ -1548,6 +1548,12 @@ void FSceneRenderer::RenderDebugPrimitivesPass()
 		case EDebugPrimitiveType::Capsule:
 			OwnerRenderer->DrawDebugCapsule(Prim.Transform, Prim.Radius, Prim.HalfHeight, Prim.Color, Prim.UUID);
 			break;
+		case EDebugPrimitiveType::Cone:
+			OwnerRenderer->DrawDebugCone(Prim.Transform, Prim.Angle1, Prim.Angle2, Prim.Radius, Prim.Color, Prim.UUID);
+			break;
+		case EDebugPrimitiveType::Arc:
+			OwnerRenderer->DrawDebugArc(Prim.Transform, Prim.Angle1, Prim.Radius, Prim.Color, Prim.UUID);
+			break;
 		}
 	}
 

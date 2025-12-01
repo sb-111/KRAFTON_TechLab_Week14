@@ -90,7 +90,12 @@ public:
 	UStaticMesh* CreateUnitSphereMesh(int32 Segments = 64, int32 Rings = 32);
 	UStaticMesh* CreateUnitCapsuleMesh(int32 Segments = 64, int32 Rings = 32);
 	UStaticMesh* CreateUnitBoxMesh();
+	UStaticMesh* CreateUnitConeMesh(int32 Segments = 32);
 	UStaticMesh* GetOrCreatePrimitiveMesh(const FString& PrimitiveName);
+
+	// 동적 부채꼴 메시 생성 (각도별, 캐싱됨)
+	// TwistAngle: 라디안 단위, ±범위이므로 총 2*TwistAngle 범위의 부채꼴 생성
+	UStaticMesh* GetOrCreateDynamicArcMesh(float TwistAngle, int32 Segments = 32);
 
 	// --- 캐시 관리 ---
 	FMeshBVH* GetMeshBVH(const FString& ObjPath);

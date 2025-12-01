@@ -674,6 +674,77 @@ UStaticMesh* UResourceManager::CreateUnitBoxMesh()
     return Mesh;
 }
 
+UStaticMesh* UResourceManager::CreateUnitConeMesh(int32 Segments)
+{
+    FMeshData* MeshData = new FMeshData();
+
+    // 단일 원뿔 (Double-sided): 꼭지점이 원점, 밑면이 +X 방향
+    // 양면 렌더링을 위해 같은 지오메트리에 CW/CCW 양쪽 삼각형 생성
+    // Scale.X = 높이, Scale.YZ = 밑면 반지름 (Swing1, Swing2)
+    const float Height = 1.0f;
+    const float Radius = 1.0f;
+
+    // 원뿔 꼭지점 (원점)
+    FVector ApexPos(0.0f, 0.0f, 0.0f);
+
+    // 꼭지점 추가 (인덱스 0)
+    MeshData->Vertices.Add(ApexPos);
+    MeshData->Normal.Add(FVector(-1.0f, 0.0f, 0.0f));  // 원뿔 축 방향
+    MeshData->UV.Add(FVector2D(0.5f, 0.0f));
+    MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    // 밑면 원의 정점들 (인덱스 1 ~ Segments)
+    for (int32 i = 0; i < Segments; ++i)
+    {
+        float Angle = 2.0f * PRIM_PI * i / Segments;
+        float Y = Radius * cosf(Angle);
+        float Z = Radius * sinf(Angle);
+
+        FVector BasePoint(Height, Y, Z);
+
+        // 노말 계산 (측면 노말)
+        FVector ToBase = (BasePoint - ApexPos).GetSafeNormal();
+        FVector Tangent = FVector(0.0f, -sinf(Angle), cosf(Angle));
+        FVector Normal = FVector::Cross(ToBase, Tangent).GetSafeNormal();
+
+        MeshData->Vertices.Add(BasePoint);
+        MeshData->Normal.Add(Normal);
+        MeshData->UV.Add(FVector2D((float)i / Segments, 1.0f));
+        MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+
+    // 원뿔 측면 삼각형 (앞면 - CCW)
+    for (int32 i = 0; i < Segments; ++i)
+    {
+        int32 Current = i + 1;
+        int32 Next = (i + 1) % Segments + 1;
+
+        // 앞면 (CCW)
+        MeshData->Indices.Add(0);       // Apex
+        MeshData->Indices.Add(Current); // Current base point
+        MeshData->Indices.Add(Next);    // Next base point
+    }
+
+    // 원뿔 측면 삼각형 (뒷면 - CW, 양면 렌더링용)
+    for (int32 i = 0; i < Segments; ++i)
+    {
+        int32 Current = i + 1;
+        int32 Next = (i + 1) % Segments + 1;
+
+        // 뒷면 (CW - 삼각형 순서 반대)
+        MeshData->Indices.Add(0);       // Apex
+        MeshData->Indices.Add(Next);    // Next base point
+        MeshData->Indices.Add(Current); // Current base point
+    }
+
+    UStaticMesh* Mesh = NewObject<UStaticMesh>();
+    Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
+    Add<UStaticMesh>("__PrimitiveCone", Mesh);
+
+    delete MeshData;
+    return Mesh;
+}
+
 UStaticMesh* UResourceManager::GetOrCreatePrimitiveMesh(const FString& PrimitiveName)
 {
     // 내부적으로 사용할 키 이름 생성
@@ -691,8 +762,78 @@ UStaticMesh* UResourceManager::GetOrCreatePrimitiveMesh(const FString& Primitive
         return CreateUnitCapsuleMesh();
     else if (PrimitiveName == "Box")
         return CreateUnitBoxMesh();
+    else if (PrimitiveName == "Cone")
+        return CreateUnitConeMesh();
 
     return nullptr;
+}
+
+UStaticMesh* UResourceManager::GetOrCreateDynamicArcMesh(float TwistAngle, int32 Segments)
+{
+    // 각도를 5도 단위로 양자화하여 캐시 키 생성 (캐시 효율성)
+    const float QuantizeDegrees = 5.0f;
+    float AngleDegrees = TwistAngle * 180.0f / PRIM_PI;
+    int32 QuantizedAngle = (int32)(AngleDegrees / QuantizeDegrees) * (int32)QuantizeDegrees;
+    QuantizedAngle = FMath::Clamp(QuantizedAngle, 0, 180);
+
+    // 캐시 키 생성
+    char KeyBuffer[64];
+    sprintf_s(KeyBuffer, "__DynamicArc_%d", QuantizedAngle);
+    FString CacheKey(KeyBuffer);
+
+    // 이미 생성된 메시가 있으면 반환
+    UStaticMesh* Existing = Get<UStaticMesh>(CacheKey);
+    if (Existing)
+        return Existing;
+
+    // 새 부채꼴 메시 생성
+    FMeshData* MeshData = new FMeshData();
+
+    // 부채꼴: 반지름 1.0, ±TwistAngle 범위, YZ 평면
+    // 양자화된 각도 사용
+    float ActualAngle = (float)QuantizedAngle * PRIM_PI / 180.0f;
+    const float Radius = 1.0f;
+
+    // 중심점 (인덱스 0)
+    FVector Center(0.0f, 0.0f, 0.0f);
+    MeshData->Vertices.Add(Center);
+    MeshData->Normal.Add(FVector(1.0f, 0.0f, 0.0f));  // +X 방향 노말
+    MeshData->UV.Add(FVector2D(0.5f, 0.5f));
+    MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    // 부채꼴 원호 점들: -ActualAngle ~ +ActualAngle
+    for (int32 i = 0; i <= Segments; ++i)
+    {
+        float t = (float)i / Segments;
+        float Angle = -ActualAngle + 2.0f * ActualAngle * t;  // -Angle ~ +Angle
+        float Y = Radius * cosf(Angle);
+        float Z = Radius * sinf(Angle);
+
+        MeshData->Vertices.Add(FVector(0.0f, Y, Z));
+        MeshData->Normal.Add(FVector(1.0f, 0.0f, 0.0f));
+        MeshData->UV.Add(FVector2D(t, 1.0f));
+        MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+
+    // 부채꼴 삼각형 인덱스 (양면 렌더링)
+    for (int32 i = 0; i < Segments; ++i)
+    {
+        // 앞면
+        MeshData->Indices.Add(0);
+        MeshData->Indices.Add(i + 1);
+        MeshData->Indices.Add(i + 2);
+        // 뒷면
+        MeshData->Indices.Add(0);
+        MeshData->Indices.Add(i + 2);
+        MeshData->Indices.Add(i + 1);
+    }
+
+    UStaticMesh* Mesh = NewObject<UStaticMesh>();
+    Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
+    Add<UStaticMesh>(CacheKey, Mesh);
+
+    delete MeshData;
+    return Mesh;
 }
 
 void UResourceManager::CreateDefaultShader()
