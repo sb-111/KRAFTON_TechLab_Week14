@@ -330,14 +330,14 @@ void UWorld::Tick(float DeltaSeconds)
 				USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
 				if (!SkelMesh) continue;
 
-				// PhysicsAsset 자동 생성 (없으면)
-				if (!SkelMesh->GetPhysicsAsset())
-				{
-					SkelMesh->AutoGeneratePhysicsAsset();
-				}
-
+				// PhysicsAsset 확인 (없으면 에디터에서 생성 필요)
 				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
-				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
+				if (!PhysAsset || PhysAsset->Bodies.Num() == 0)
+				{
+					UE_LOG("[Ragdoll Preview] No PhysicsAsset for '%s'. Create one in Physics Asset Editor first.",
+						   SkelMesh->GetName().c_str());
+					continue;
+				}
 
 				// 이미 Bodies가 있으면 제거, 없으면 생성 (미리보기 토글)
 				if (SkelMeshComp->GetBodies().IsEmpty())
@@ -382,14 +382,14 @@ void UWorld::Tick(float DeltaSeconds)
 				USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
 				if (!SkelMesh) continue;
 
-				// PhysicsAsset 자동 생성 (없으면)
-				if (!SkelMesh->GetPhysicsAsset())
-				{
-					SkelMesh->AutoGeneratePhysicsAsset();
-				}
-
+				// PhysicsAsset 확인 (없으면 에디터에서 생성 필요)
 				UPhysicsAsset* PhysAsset = SkelMesh->GetPhysicsAsset();
-				if (!PhysAsset || PhysAsset->Bodies.Num() == 0) continue;
+				if (!PhysAsset || PhysAsset->Bodies.Num() == 0)
+				{
+					UE_LOG("[Ragdoll Test] No PhysicsAsset for '%s'. Create one in Physics Asset Editor first.",
+						   SkelMesh->GetName().c_str());
+					continue;
+				}
 
 				// 이미 래그돌이 있으면 토글만, 없으면 생성
 				if (SkelMeshComp->GetBodies().IsEmpty())
