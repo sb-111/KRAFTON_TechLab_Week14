@@ -516,6 +516,12 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
 
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
 
+    // 본 포즈 업데이트 (새 메시 로드 후 본 트랜스폼이 올바르게 계산되도록)
+    if (USkeletalMeshComponent* MeshComp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
+    {
+        MeshComp->ResetToRefPose();
+    }
+
     // 본이 선택된 경우: 기즈모 위치 업데이트는 SelectBone에서만 수행
     // (BlendSpaceEditor 패턴: 기즈모를 조작해도 본 위치로 돌아가지 않음,
     //  다른 본 선택 시에만 새 본 위치로 이동)
@@ -736,6 +742,8 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
                 LineComp->ClearLines();
                 LineComp->SetLineVisible(ActiveState->bShowBones);
             }
+            // 본 라인 캐시 초기화 (다른 메시의 캐시가 남아있으면 본 모양이 이상해짐)
+            ActiveState->PreviewActor->ResetBoneLinesCache();
 
             // Shape 라인 재구성 필요
             PhysState->bShapesDirty = true;
@@ -2903,6 +2911,9 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
         UBodySetup* Body = PhysState->EditingAsset->Bodies[BodyIndex];
         if (!Body) continue;
 
+        // Body의 BoneName이 유효한지 확인 (dangling 방지)
+        if (Body->BoneName.IsNone()) continue;
+
         // 본 인덱스 찾기
         int32 BoneIndex = -1;
         for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
@@ -3023,6 +3034,9 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
     for (int32 ConstraintIndex = 0; ConstraintIndex < PhysState->EditingAsset->Constraints.Num(); ++ConstraintIndex)
     {
         const FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[ConstraintIndex];
+
+        // Constraint의 BoneName이 유효한지 확인 (dangling 방지)
+        if (Constraint.ConstraintBone1.IsNone() || Constraint.ConstraintBone2.IsNone()) continue;
 
         bool bIsSelected = (ConstraintIndex == PhysState->SelectedConstraintIndex);
 

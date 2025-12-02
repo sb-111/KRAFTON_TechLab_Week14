@@ -42,6 +42,9 @@ struct FName
     }
 
     bool operator==(const FName& Other) const { return ComparisonIndex == Other.ComparisonIndex; }
+    bool operator!=(const FName& Other) const { return ComparisonIndex != Other.ComparisonIndex; }
+    bool IsNone() const { return DisplayIndex == static_cast<uint32>(-1); }
+    bool IsValid() const { return DisplayIndex != static_cast<uint32>(-1); }
     FString ToString() const { return FNamePool::Get(DisplayIndex).Display; }
 
     friend FName operator+(const FName& A, const FName& B)
