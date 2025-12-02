@@ -738,6 +738,13 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
             USkeletalMesh* Mesh = UResourceManager::GetInstance().Load<USkeletalMesh>(Path);
             if (Mesh && ActiveState->PreviewActor)
             {
+                // 같은 메시를 다시 로드하는 경우 스킵 (불필요한 재초기화 및 본 라인 누적 방지)
+                if (ActiveState->CurrentMesh == Mesh)
+                {
+                    // 이미 같은 메시가 로드되어 있음 - 아무것도 하지 않음
+                }
+                else
+                {
                 ActiveState->PreviewActor->SetSkeletalMesh(Path);
                 ActiveState->CurrentMesh = Mesh;
 
@@ -777,6 +784,9 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
                 {
                     LineComp->ClearLines();
                     LineComp->SetLineVisible(ActiveState->bShowBones);
+                }
+                // 본 라인 캐시 초기화 플래그 리셋 (새 메시 로드 시 라인 재빌드 필요)
+                ActiveState->PreviewActor->ResetBoneLinesCache();
                 }
             }
         }

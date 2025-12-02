@@ -1018,6 +1018,21 @@ void SPhysicsAssetEditorWindow::OnSkeletalMeshLoaded(ViewerState* State, const F
     if (!State || !State->CurrentMesh) return;
 
     PhysicsAssetEditorState* PhysState = static_cast<PhysicsAssetEditorState*>(State);
+
+    // 선택 상태 초기화 (Bodies/Constraints가 비워지기 전에 먼저 초기화)
+    PhysState->SelectedBodyIndex = -1;
+    PhysState->SelectedConstraintIndex = -1;
+    PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
+    PhysState->ConstraintStartBodyIndex = -1;
+    PhysState->GraphFocusBodyIndex = -1;
+    PhysState->bShapesDirty = true;
+    PhysState->bConstraintsDirty = true;
+
+    // 기즈모 숨김
+    UpdateShapeGizmo();
+    UpdateConstraintGizmo();
+
     if (PhysState->EditingAsset)
     {
         PhysState->EditingAsset->Bodies.Empty();

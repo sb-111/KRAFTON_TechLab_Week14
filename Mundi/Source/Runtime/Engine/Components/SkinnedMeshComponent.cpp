@@ -311,9 +311,16 @@ void USkinnedMeshComponent::OnTransformUpdated()
 
 void USkinnedMeshComponent::SetSkeletalMesh(const FString& PathFileName)
 {
+   // 같은 메시를 다시 설정하는 경우 스킵 (불필요한 재초기화 방지)
+   USkeletalMesh* NewMesh = UResourceManager::GetInstance().Load<USkeletalMesh>(PathFileName);
+   if (NewMesh == SkeletalMesh && SkeletalMesh != nullptr)
+   {
+      return;  // 이미 같은 메시가 설정되어 있음
+   }
+
    ClearDynamicMaterials();
 
-   SkeletalMesh = UResourceManager::GetInstance().Load<USkeletalMesh>(PathFileName);
+   SkeletalMesh = NewMesh;
 
    // 기존 버퍼 지연 해제 (새 메시 로드 시)
    URenderer* Renderer = GEngine.GetRenderer();
