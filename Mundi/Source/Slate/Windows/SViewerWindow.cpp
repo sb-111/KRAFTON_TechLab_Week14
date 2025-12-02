@@ -250,6 +250,16 @@ void SViewerWindow::OnMouseMove(FVector2D MousePos)
     if (bLeftMousePressed || CenterRect.Contains(MousePos))
     {
         FVector2D LocalPos = MousePos - FVector2D(CenterRect.Left, CenterRect.Top);
+
+        // 뷰포트 밖으로 너무 멀리 나가면 좌표 클램프 (극단적인 값 방지)
+        // 뷰포트 크기의 2배 범위까지만 허용
+        float ViewportWidth = CenterRect.GetWidth();
+        float ViewportHeight = CenterRect.GetHeight();
+        if (LocalPos.X < -ViewportWidth) LocalPos.X = -ViewportWidth;
+        if (LocalPos.X > ViewportWidth * 2.0f) LocalPos.X = ViewportWidth * 2.0f;
+        if (LocalPos.Y < -ViewportHeight) LocalPos.Y = -ViewportHeight;
+        if (LocalPos.Y > ViewportHeight * 2.0f) LocalPos.Y = ViewportHeight * 2.0f;
+
         ActiveState->Viewport->ProcessMouseMove((int32)LocalPos.X, (int32)LocalPos.Y);
     }
 }

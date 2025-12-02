@@ -453,6 +453,7 @@ void AGizmoActor::ProcessGizmoDragging(ACameraActor* Camera, FViewport* Viewport
 	if (InputManager->IsMouseButtonDown(LeftButton) && !bIsDragging && GizmoAxis > 0)
 	{
 		bIsDragging = true;
+		InputManager->CaptureMouse();  // 뷰포트 밖에서도 마우스 이벤트 수신
 		DraggingAxis = GizmoAxis;
 		DragCamera = Camera;
 
@@ -555,6 +556,7 @@ void AGizmoActor::ProcessGizmoDragging(ACameraActor* Camera, FViewport* Viewport
 		if (bIsDragging)
 		{
 			bIsDragging = false;
+			InputManager->ReleaseMouseCapture();  // 마우스 캡처 해제
 			DraggingAxis = 0; // 고정된 축 해제
 			DragCamera = nullptr;
 			GizmoAxis = 0; // 하이라이트 해제

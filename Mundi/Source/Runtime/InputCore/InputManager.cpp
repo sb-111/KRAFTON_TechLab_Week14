@@ -471,3 +471,14 @@ void UInputManager::ReleaseCursor()
     MousePosition = LockedCursorPosition;
     PreviousMousePosition = LockedCursorPosition;
 }
+
+void UInputManager::CaptureMouse()
+{
+    if (!WindowHandle) return;
+    ::SetCapture(WindowHandle);
+}
+
+void UInputManager::ReleaseMouseCapture()
+{
+    ::ReleaseCapture();
+}

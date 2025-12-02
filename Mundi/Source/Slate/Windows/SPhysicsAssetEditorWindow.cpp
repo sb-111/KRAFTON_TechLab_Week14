@@ -788,6 +788,18 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     // 기즈모 피킹 먼저 시도
     PhysState->Viewport->ProcessMouseButtonDown((int32)LocalPos.X, (int32)LocalPos.Y, (int32)Button);
 
+    // 드래그 상태 추적 (뷰포트 밖에서도 드래그가 동작하도록)
+    if (Button == 0)
+    {
+        bLeftMousePressed = true;
+    }
+    if (Button == 1)
+    {
+        INPUT.SetCursorVisible(false);
+        INPUT.LockCursor();
+        bRightMousePressed = true;
+    }
+
     // 좌클릭일 때만 Shape/Constraint 피킹 시도
     if (Button != 0) return;
 
