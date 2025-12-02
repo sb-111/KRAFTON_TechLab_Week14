@@ -2608,10 +2608,20 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
         float swing1Limit = Constraint->Swing1LimitAngle;
         ImGui::Text("Swing 1 Limit");
         ImGui::SetNextItemWidth(-1);
+        // FREE나 LOCKED 모드일 때는 Limit 값 수정 비활성화
+        bool bSwing1LimitDisabled = (Constraint->Swing1Motion != EAngularConstraintMotion::Limited);
+        if (bSwing1LimitDisabled)
+        {
+            ImGui::BeginDisabled();
+        }
         if (ImGui::DragFloat("##Swing1Limit", &swing1Limit, 0.5f, 0.0f, 180.0f, "%.1f"))
         {
             Constraint->Swing1LimitAngle = swing1Limit;
             if (PhysState) PhysState->bIsDirty = true;
+        }
+        if (bSwing1LimitDisabled)
+        {
+            ImGui::EndDisabled();
         }
 
         ImGui::Text("Swing 2 Motion");
@@ -2626,10 +2636,20 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
         float swing2Limit = Constraint->Swing2LimitAngle;
         ImGui::Text("Swing 2 Limit");
         ImGui::SetNextItemWidth(-1);
+        // FREE나 LOCKED 모드일 때는 Limit 값 수정 비활성화
+        bool bSwing2LimitDisabled = (Constraint->Swing2Motion != EAngularConstraintMotion::Limited);
+        if (bSwing2LimitDisabled)
+        {
+            ImGui::BeginDisabled();
+        }
         if (ImGui::DragFloat("##Swing2Limit", &swing2Limit, 0.5f, 0.0f, 180.0f, "%.1f"))
         {
             Constraint->Swing2LimitAngle = swing2Limit;
             if (PhysState) PhysState->bIsDirty = true;
+        }
+        if (bSwing2LimitDisabled)
+        {
+            ImGui::EndDisabled();
         }
 
         ImGui::Text("Twist Motion");
@@ -2644,10 +2664,20 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
         float twistLimit = Constraint->TwistLimitAngle;
         ImGui::Text("Twist Limit");
         ImGui::SetNextItemWidth(-1);
+        // FREE나 LOCKED 모드일 때는 Limit 값 수정 비활성화
+        bool bTwistLimitDisabled = (Constraint->TwistMotion != EAngularConstraintMotion::Limited);
+        if (bTwistLimitDisabled)
+        {
+            ImGui::BeginDisabled();
+        }
         if (ImGui::DragFloat("##TwistLimit", &twistLimit, 0.5f, 0.0f, 180.0f, "%.1f"))
         {
             Constraint->TwistLimitAngle = twistLimit;
             if (PhysState) PhysState->bIsDirty = true;
+        }
+        if (bTwistLimitDisabled)
+        {
+            ImGui::EndDisabled();
         }
 
         ImGui::Unindent();
@@ -2966,17 +2996,31 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
         World->AddDebugSphere(MarkerTransform, MarkerColor);
 
         // 2. Swing 원뿔 (양방향 다이아몬드 형태, 빨간색)
-        if (Constraint.Swing1Motion == EAngularConstraintMotion::Limited ||
-            Constraint.Swing2Motion == EAngularConstraintMotion::Limited)
+        // Locked-Locked인 경우 시각화 안 함 (완전히 잠긴 상태)
+        bool bSwing1Locked = (Constraint.Swing1Motion == EAngularConstraintMotion::Locked);
+        bool bSwing2Locked = (Constraint.Swing2Motion == EAngularConstraintMotion::Locked);
+        if (!(bSwing1Locked && bSwing2Locked))
         {
-            float Swing1Rad = Constraint.Swing1Motion == EAngularConstraintMotion::Limited
-                ? Constraint.Swing1LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
-            float Swing2Rad = Constraint.Swing2Motion == EAngularConstraintMotion::Limited
-                ? Constraint.Swing2LimitAngle * PI_CONST / 180.0f : PI_CONST * 0.5f;
+            // Free인 경우 90도(PI/2), Limited인 경우 설정값, Locked인 경우 최소값(거의 없음)
+            float Swing1Rad, Swing2Rad;
+
+            if (Constraint.Swing1Motion == EAngularConstraintMotion::Free)
+                Swing1Rad = PI_CONST * 0.5f;  // 90도 (자유 회전)
+            else if (Constraint.Swing1Motion == EAngularConstraintMotion::Limited)
+                Swing1Rad = Constraint.Swing1LimitAngle * PI_CONST / 180.0f;
+            else  // Locked
+                Swing1Rad = 0.01f;  // 거의 없음 (잠김 표시)
+
+            if (Constraint.Swing2Motion == EAngularConstraintMotion::Free)
+                Swing2Rad = PI_CONST * 0.5f;  // 90도 (자유 회전)
+            else if (Constraint.Swing2Motion == EAngularConstraintMotion::Limited)
+                Swing2Rad = Constraint.Swing2LimitAngle * PI_CONST / 180.0f;
+            else  // Locked
+                Swing2Rad = 0.01f;  // 거의 없음 (잠김 표시)
 
             // Swing 각도가 너무 작으면 최소값 설정
-            Swing1Rad = FMath::Max(Swing1Rad, 0.05f);
-            Swing2Rad = FMath::Max(Swing2Rad, 0.05f);
+            Swing1Rad = FMath::Max(Swing1Rad, 0.01f);
+            Swing2Rad = FMath::Max(Swing2Rad, 0.01f);
 
             FLinearColor ConeColor = bIsSelected ? SwingConeSelectedColor : SwingConeColor;
 
