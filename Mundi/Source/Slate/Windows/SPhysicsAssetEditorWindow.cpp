@@ -1406,7 +1406,7 @@ void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
 {
     if (!ActiveState) return;
 
-    ImGui::Text("DISPLAY OPTIONS");
+    ImGui::Text(reinterpret_cast<const char*>(u8"디스플레이 옵션"));
     ImGui::Dummy(ImVec2(0, 2));
 
     ImGui::BeginGroup();
@@ -1416,8 +1416,8 @@ void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.20f, 0.22f, 0.25f, 1.00f));
     ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.75f, 0.80f, 0.90f, 1.00f));
 
-    // Show Mesh 체크박스
-    if (ImGui::Checkbox("Show Mesh", &ActiveState->bShowMesh))
+    // 메쉬 체크박스
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"메쉬"), &ActiveState->bShowMesh))
     {
         if (ActiveState->PreviewActor)
         {
@@ -1428,8 +1428,8 @@ void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
 
     ImGui::SameLine(0.0f, 12.0f);
 
-    // Show Bones 체크박스
-    if (ImGui::Checkbox("Show Bones", &ActiveState->bShowBones))
+    // 스켈레탈 체크박스
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"스켈레탈"), &ActiveState->bShowBones))
     {
         if (ActiveState->PreviewActor)
         {
@@ -1438,6 +1438,22 @@ void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
         }
         if (ActiveState->bShowBones)
             ActiveState->bBoneLinesDirty = true;
+    }
+
+    ImGui::SameLine(0.0f, 12.0f);
+
+    // 래그돌 체크박스
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (PhysState && PhysState->World)
+    {
+        bool bShowRagdoll = PhysState->World->GetRenderSettings().IsShowFlagEnabled(EEngineShowFlags::SF_Ragdoll);
+        if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"래그돌"), &bShowRagdoll))
+        {
+            if (bShowRagdoll)
+                PhysState->World->GetRenderSettings().EnableShowFlag(EEngineShowFlags::SF_Ragdoll);
+            else
+                PhysState->World->GetRenderSettings().DisableShowFlag(EEngineShowFlags::SF_Ragdoll);
+        }
     }
 
     ImGui::PopStyleColor(4);
