@@ -38,6 +38,7 @@
 #include <filesystem>
 #include <sstream>
 #include <iterator>
+#include <mutex>
 
 // Windows & DirectX
 #include <windows.h>

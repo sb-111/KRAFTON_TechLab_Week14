@@ -51,6 +51,7 @@ public:
 
     // 독립적인 물리 액터인지 결정
     // 키네마틱 여부(false인 경우 정해진 동작만 수행함)
+    // 기본값 false: 래그돌은 SkeletalMeshComponent의 BeginPlay에서 처리
     UPROPERTY(EditAnywhere, Category = "Physics")
     bool bSimulatePhysics = false;
 
@@ -96,6 +97,8 @@ public:
     void OnRegister(UWorld* InWorld) override;
     void OnUnregister() override;
 
+    void OnTransformUpdated() override;
+
     void BeginPlay() override;
 
     virtual void EndPlay() override;
@@ -132,6 +135,8 @@ public:
     bool IsOverlappingActor(const AActor* Other) const;
     virtual const TArray<FOverlapInfo>& GetOverlapInfos() const { static TArray<FOverlapInfo> Empty; return Empty; }
 
+    virtual void OnComponentHit(UPrimitiveComponent* OtherComponent);
+
     //Delegate 
     
     // ───── 복사 관련 ────────────────────────────
@@ -148,6 +153,8 @@ protected:
     bool bIsCulled = false;
      
     // 이미 PrePhysicsTemporalList에 등록된 객체인지 확인
-    bool bPrePhysicsTemporal = false;
+   // bool bPrePhysicsTemporal = false;
+
+    bool bIsSyncingPhysics = false;
   
 };

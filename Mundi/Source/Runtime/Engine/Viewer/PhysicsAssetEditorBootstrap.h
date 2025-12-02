@@ -21,4 +21,13 @@ public:
 
 	// JSON 파일에서 Physics Asset 로드 (FBX 경로도 함께 반환)
 	static UPhysicsAsset* LoadPhysicsAsset(const FString& FilePath, FString* OutSourceFbxPath = nullptr);
+
+	// Physics Asset 파일 목록 스캔 (Data/Physics 폴더)
+	// OutPaths: .physics 파일 경로들
+	// OutDisplayNames: 표시용 이름들 (파일명)
+	static void GetAllPhysicsAssetPaths(TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames);
+
+	// 특정 FBX와 매칭되는 Physics Asset 파일들만 반환
+	// FbxPath: 매칭할 FBX 파일 경로
+	static void GetCompatiblePhysicsAssetPaths(const FString& FbxPath, TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames);
 };

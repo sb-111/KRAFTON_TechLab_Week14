@@ -2,6 +2,7 @@
 
 class UPrimitiveComponent;
 class UBodySetup;
+class FPhysicsScene;
 
 using namespace physx;
 
@@ -15,15 +16,18 @@ struct FBodyInstance
 	// RigidActor 참조 이유: 업데이트 or 물리 명령 시뮬레이션 액터에 보내야 함.
 	PxRigidActor* RigidActor = nullptr;
 
+	// 소속된 PhysicsScene (PIE 전환 시 올바른 Scene에서 제거하기 위해 저장)
+	FPhysicsScene* OwnerScene = nullptr;
+
 	// === 래그돌 지원 (언리얼 방식) ===
 	UBodySetup* BodySetup = nullptr;	// 래그돌 본의 물리 설정
 	int32 BoneIndex = -1;				// 스켈레톤에서 이 바디에 대응하는 본 인덱스
 	uint32 RagdollOwnerID = 0;			// 같은 래그돌 내 자체 충돌 방지용 ID (0이면 일반 오브젝트)
 
-	FVector PendingForce = FVector::Zero();
+	/*FVector PendingForce = FVector::Zero();
 	FVector PendingTorque = FVector::Zero();
 
-	bool bHasPendingForce = false;
+	bool bHasPendingForce = false;*/
 
 	FBodyInstance() = default;
 
@@ -33,7 +37,9 @@ struct FBodyInstance
 
 	void AddTorque(const FVector& InTorque);
 
-	void FlushPendingForce();
+	void UpdateTransform(const FTransform& InTransform);
+
+	//void FlushPendingForce();
 
 	void UpdateMassProperty();
 

@@ -54,12 +54,18 @@ private:
 
     // Physics Asset (Ragdoll, 충돌체 설정)
     UPhysicsAsset* PhysicsAsset = nullptr;
+    FString PhysicsAssetPath;  // Physics Asset 파일 경로 (예: "Data/Physics/character.physics")
 
 public:
-    // Physics Asset getter/setter
-    UPhysicsAsset* GetPhysicsAsset() const { return PhysicsAsset; }
-    void SetPhysicsAsset(UPhysicsAsset* InPhysicsAsset) { PhysicsAsset = InPhysicsAsset; }
+    // Physics Asset 경로 설정 (저장 시 호출, 자동으로 로드)
+    void SetPhysicsAssetPath(const FString& Path);
 
-    // 테스트용: 스켈레톤 기반으로 PhysicsAsset 자동 생성
-    void AutoGeneratePhysicsAsset();
+    // Physics Asset 가져오기 (경로가 있으면 필요시 로드)
+    UPhysicsAsset* GetPhysicsAsset();
+
+    // 경로만 가져오기
+    const FString& GetPhysicsAssetPath() const { return PhysicsAssetPath; }
+
+    // 직접 설정 (에디터용)
+    void SetPhysicsAsset(UPhysicsAsset* InPhysicsAsset) { PhysicsAsset = InPhysicsAsset; }
 };

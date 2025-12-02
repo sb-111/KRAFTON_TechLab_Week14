@@ -19,9 +19,10 @@ class FRagdollDebugRenderer
 {
 public:
     // USkeletalMeshComponent 기반 래그돌 렌더링 (새 API)
+    // non-const: 에디터 모드에서 Bodies lazy 초기화를 위해
     static void RenderSkeletalMeshRagdoll(
         URenderer* Renderer,
-        const USkeletalMeshComponent* SkelMeshComp,
+        USkeletalMeshComponent* SkelMeshComp,
         const FVector4& BoneColor = FVector4(0.0f, 1.0f, 0.0f, 1.0f),
         const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
     );

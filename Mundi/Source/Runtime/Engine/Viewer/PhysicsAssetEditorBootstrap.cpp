@@ -13,6 +13,8 @@
 #include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
 #include "Source/Runtime/AssetManagement/ResourceManager.h"
 #include "EditorAssetPreviewContext.h"
+#include "PhysicsSystem.h"
+#include "PhysicsScene.h"
 
 ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UWorld* InWorld,
 	ID3D11Device* InDevice, UEditorAssetPreviewContext* Context)
@@ -24,6 +26,7 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 	State->Name = Name ? Name : "Physics Asset Editor";
 
 	// Preview world 생성
+	// Initialize()에서 PhysicsScene도 자동으로 생성됨
 	State->World = NewObject<UWorld>();
 	State->World->SetWorldType(EWorldType::PreviewMinimal);
 	State->World->Initialize();
@@ -527,4 +530,128 @@ UPhysicsAsset* PhysicsAssetEditorBootstrap::LoadPhysicsAsset(const FString& File
 
 	UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicsAsset: 로드 성공: %s", NormalizedFilePath.c_str());
 	return LoadedAsset;
+}
+
+// ============================================================================
+// Physics Asset 파일 스캔 함수들
+// ============================================================================
+
+void PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames)
+{
+	OutPaths.Empty();
+	OutDisplayNames.Empty();
+
+	// "없음" 옵션 추가
+	OutPaths.Add("");
+	OutDisplayNames.Add("None");
+
+	// Data/Physics 폴더 스캔
+	FString PhysicsDir = GDataDir + "/Physics";
+	std::filesystem::path SearchPath(PhysicsDir);
+
+	if (!std::filesystem::exists(SearchPath))
+	{
+		return;
+	}
+
+	for (const auto& Entry : std::filesystem::recursive_directory_iterator(SearchPath))
+	{
+		if (Entry.is_regular_file())
+		{
+			std::filesystem::path FilePath = Entry.path();
+			if (FilePath.extension() == ".physics")
+			{
+				FString FullPath = FilePath.string();
+				FString FileName = FilePath.filename().string();
+
+				// 경로 정규화
+				FullPath = NormalizePath(FullPath);
+
+				OutPaths.Add(FullPath);
+				OutDisplayNames.Add(FileName);
+			}
+		}
+	}
+}
+
+void PhysicsAssetEditorBootstrap::GetCompatiblePhysicsAssetPaths(const FString& FbxPath, TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames)
+{
+	OutPaths.Empty();
+	OutDisplayNames.Empty();
+
+	// "없음" 옵션 추가
+	OutPaths.Add("");
+	OutDisplayNames.Add("None");
+
+	if (FbxPath.empty())
+	{
+		// FBX 경로가 없으면 모든 Physics Asset 반환
+		TArray<FString> AllPaths, AllNames;
+		GetAllPhysicsAssetPaths(AllPaths, AllNames);
+
+		// "None" 제외하고 추가
+		for (int32 i = 1; i < AllPaths.Num(); ++i)
+		{
+			OutPaths.Add(AllPaths[i]);
+			OutDisplayNames.Add(AllNames[i]);
+		}
+		return;
+	}
+
+	// FBX 경로 정규화
+	FString NormalizedFbxPath = NormalizePath(FbxPath);
+
+	// Data/Physics 폴더 스캔
+	FString PhysicsDir = GDataDir + "/Physics";
+	std::filesystem::path SearchPath(PhysicsDir);
+
+	if (!std::filesystem::exists(SearchPath))
+	{
+		return;
+	}
+
+	for (const auto& Entry : std::filesystem::recursive_directory_iterator(SearchPath))
+	{
+		if (Entry.is_regular_file())
+		{
+			std::filesystem::path FilePath = Entry.path();
+			if (FilePath.extension() == ".physics")
+			{
+				FString FullPath = NormalizePath(FilePath.string());
+
+				// .physics 파일에서 SourceFbxPath 읽기
+				FString SourceFbx;
+				FWideString WidePath = UTF8ToWide(FullPath);
+				JSON JsonHandle;
+
+				if (FJsonSerializer::LoadJsonFromFile(JsonHandle, WidePath))
+				{
+					FJsonSerializer::ReadString(JsonHandle, "SourceFbxPath", SourceFbx, "", false);
+					SourceFbx = NormalizePath(SourceFbx);
+
+					// FBX 경로가 매칭되면 추가
+					if (SourceFbx == NormalizedFbxPath)
+					{
+						FString FileName = FilePath.filename().string();
+						OutPaths.Add(FullPath);
+						OutDisplayNames.Add(FileName);
+					}
+				}
+			}
+		}
+	}
+
+	// 매칭되는 것이 없으면 모든 Physics Asset도 표시 (선택 가능하게)
+	if (OutPaths.Num() == 1)  // "None"만 있으면
+	{
+		TArray<FString> AllPaths, AllNames;
+		GetAllPhysicsAssetPaths(AllPaths, AllNames);
+
+		// "None" 제외하고 추가 (다른 메쉬용이라고 표시)
+		for (int32 i = 1; i < AllPaths.Num(); ++i)
+		{
+			OutPaths.Add(AllPaths[i]);
+			OutDisplayNames.Add(AllNames[i] + " (other)");
+		}
+	}
 }

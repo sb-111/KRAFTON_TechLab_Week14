@@ -11,6 +11,7 @@
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/Physics/AggregateGeometry.h"
+#include "Source/Runtime/Engine/Physics/PhysicsScene.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
@@ -21,6 +22,7 @@
 #include "SelectionManager.h"
 #include "PlatformProcess.h"
 #include "PathUtils.h"
+#include "BoneUtils.h"
 
 // Static 변수 정의
 bool SPhysicsAssetEditorWindow::bIsAnyPhysicsAssetEditorFocused = false;
@@ -443,6 +445,39 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
     SViewerWindow::OnUpdate(DeltaSeconds);
 
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
+
+    // === 에디터 시뮬레이션 처리 ===
+    if (bSimulateInEditor && PhysState && PhysState->World)
+    {
+        // PhysicsScene 시뮬레이션 실행 (PIE가 아니므로 직접 호출)
+        FPhysicsScene* PhysScene = PhysState->World->GetPhysicsScene();
+        if (PhysScene)
+        {
+            PhysScene->Simulate(DeltaSeconds);
+        }
+
+        // 래그돌 결과를 본에 적용
+        ASkeletalMeshActor* PreviewActor = PhysState->PreviewActor;
+        USkeletalMeshComponent* PreviewComp = PreviewActor ? PreviewActor->GetSkeletalMeshComponent() : nullptr;
+        if (PreviewComp && PreviewComp->IsSimulatingPhysics())
+        {
+            PreviewComp->ApplyPhysicsResult();
+        }
+    }
+
+    //// Delete 키로 선택된 Constraint 또는 Shape 삭제
+    //if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+    //{
+    //    if (PhysState && PhysState->SelectedConstraintIndex >= 0)
+    //    {
+    //        RemoveConstraint(PhysState->SelectedConstraintIndex);
+    //    }
+    //    else
+    //    {
+    //        DeleteSelectedShape();
+    //    }
+    //}
+
     if (!PhysState) return;
 
     // 기즈모 드래그 상태 체크 - 드래그 중일 때만 UpdateAnchorFromShape 방지
@@ -530,6 +565,17 @@ void SPhysicsAssetEditorWindow::SavePhysicsAsset()
     {
         PhysState->bIsDirty = false;
         UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", PhysState->CurrentFilePath.c_str(), SourceFbxPath.c_str());
+
+        // === Physics Asset 자동 연결 시스템 ===
+        // 1. SkeletalMesh에 PhysicsAsset 경로 연결
+        if (PhysState->CurrentMesh)
+        {
+            PhysState->CurrentMesh->SetPhysicsAssetPath(PhysState->CurrentFilePath);
+            UE_LOG("[PhysicsAssetEditor] SkeletalMesh에 PhysicsAsset 경로 연결: %s", PhysState->CurrentFilePath.c_str());
+        }
+
+        // 2. 에디터 월드의 모든 관련 SkeletalMeshComponent 갱신
+        RefreshPhysicsAssetInWorld(PhysState->EditingAsset);
     }
     else
     {
@@ -846,8 +892,11 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
             FVector ShapeCenter = BoneWorldTransform.Translation +
                 BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
 
-            FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
-            FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
+            // 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축) - BodyInstance/RagdollDebugRenderer와 동일
+            FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
+            FQuat UserRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+            FQuat FinalLocalRotation = UserRotation * BaseRotation;
+            FQuat FinalRotation = BoneWorldTransform.Rotation * FinalLocalRotation;
 
             // 언리얼 방식: HalfHeight = CylinderHalfHeight + Radius
             // Capsule.Length는 실린더 부분의 전체 길이이므로, 반구 포함 HalfHeight로 변환
@@ -1020,6 +1069,11 @@ void SPhysicsAssetEditorWindow::RenderRightPanel()
     {
         ImGui::TextDisabled("Select a body or constraint to edit");
     }
+
+    // === Tools 패널 (하단) ===
+    ImGui::Spacing();
+    ImGui::Spacing();
+    RenderToolsPanel();
 }
 
 void SPhysicsAssetEditorWindow::RenderBottomPanel()
@@ -2428,8 +2482,11 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
             const FKSphylElem& Capsule = Body->AggGeom.SphylElems[i];
             FVector ShapeCenter = BoneWorldTransform.Translation +
                 BoneWorldTransform.Rotation.RotateVector(Capsule.Center);
-            FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
-            FQuat FinalRotation = BoneWorldTransform.Rotation * CapsuleRotation;
+            // 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축) - BodyInstance/RagdollDebugRenderer와 동일
+            FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
+            FQuat UserRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+            FQuat FinalLocalRotation = UserRotation * BaseRotation;
+            FQuat FinalRotation = BoneWorldTransform.Rotation * FinalLocalRotation;
             FMatrix Transform = FMatrix::FromTRS(ShapeCenter, FinalRotation, FVector::One());
             // 언리얼 방식: HalfHeight = CylinderHalfHeight + Radius
             float HalfHeight = (Capsule.Length * 0.5f) + Capsule.Radius;
@@ -3336,5 +3393,665 @@ void SPhysicsAssetEditorWindow::RenderConstraintContextMenu(int32 ConstraintInde
             }
         }
         ImGui::EndPopup();
+    }
+}
+
+// ===== Tools 패널 (언리얼 피직스 에셋 에디터 스타일) =====
+// 본 타입 감지 함수들은 BoneUtils.h에서 제공 (BoneUtils:: 네임스페이스)
+
+void SPhysicsAssetEditorWindow::RenderToolsPanel()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState) return;
+
+    if (ImGui::CollapsingHeader("Tools", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("Body Creation");
+        ImGui::Separator();
+
+        // 프리미티브 타입 선택 (콤보박스)
+        // EShapeType: None=0, Sphere=1, Box=2, Capsule=3
+        // 콤보박스 배열 인덱스: 0=Sphere, 1=Box, 2=Capsule
+        const char* PrimitiveTypes[] = { "Sphere", "Box", "Capsule" };
+        int CurrentType = (int)SelectedPrimitiveType - 1;  // Sphere(1)->0, Box(2)->1, Capsule(3)->2
+        if (ImGui::Combo("Primitive Type", &CurrentType, PrimitiveTypes, 3))
+        {
+            SelectedPrimitiveType = (EShapeType)(CurrentType + 1);  // 0->Sphere(1), 1->Box(2), 2->Capsule(3)
+        }
+
+        ImGui::Spacing();
+
+        // FBX가 로드되어 있어야 버튼 활성화
+        bool bCanGenerate = PhysState->CurrentMesh != nullptr;
+
+        if (!bCanGenerate)
+        {
+            ImGui::BeginDisabled();
+        }
+
+        // "모든 바디 생성" 버튼
+        if (ImGui::Button("Generate All Bodies", ImVec2(-1, 30)))
+        {
+            GenerateAllBodies();
+        }
+
+        if (!bCanGenerate)
+        {
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::SetTooltip("Load an FBX file first");
+            }
+        }
+        else if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Generate bodies for all bones based on skeleton structure");
+        }
+    }
+
+    // ===== Simulation 섹션 =====
+    if (ImGui::CollapsingHeader("Simulation", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        // 시뮬레이션 체크박스
+        if (ImGui::Checkbox("Simulate", &bSimulateInEditor))
+        {
+            // PreviewActor에서 SkeletalMeshComponent 가져오기
+            ASkeletalMeshActor* PreviewActor = PhysState->PreviewActor;
+            USkeletalMeshComponent* PreviewComp = PreviewActor ? PreviewActor->GetSkeletalMeshComponent() : nullptr;
+            if (PreviewComp)
+            {
+                if (bSimulateInEditor)
+                {
+                    // 시뮬레이션 시작
+                    if (PreviewComp->GetBodies().IsEmpty())
+                    {
+                        PreviewComp->InitArticulated(PhysState->EditingAsset);
+                    }
+                    PreviewComp->SetSimulatePhysics(true);
+                    PreviewComp->SetRagdollState(true);
+                    UE_LOG("[PhysicsAssetEditor] 시뮬레이션 시작");
+                }
+                else
+                {
+                    // 시뮬레이션 중지 + 포즈 복원
+                    PreviewComp->SetSimulatePhysics(false);
+                    PreviewComp->SetRagdollState(false);
+                    PreviewComp->ResetToRefPose();
+                    UE_LOG("[PhysicsAssetEditor] 시뮬레이션 중지, 포즈 복원");
+                }
+            }
+        }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Toggle physics simulation in preview");
+        }
+    }
+
+    // 확인 팝업 렌더링
+    RenderGenerateConfirmPopup();
+}
+
+void SPhysicsAssetEditorWindow::RenderGenerateConfirmPopup()
+{
+    if (!bShowGenerateConfirmPopup) return;
+
+    ImGui::OpenPopup("Confirm Generate");
+
+    if (ImGui::BeginPopupModal("Confirm Generate", &bShowGenerateConfirmPopup,
+        ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Existing bodies and constraints will be deleted.");
+        ImGui::Text("Do you want to continue?");
+        ImGui::Separator();
+
+        if (ImGui::Button("Yes", ImVec2(120, 0)))
+        {
+            bShowGenerateConfirmPopup = false;
+            DoGenerateAllBodies();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            bShowGenerateConfirmPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SPhysicsAssetEditorWindow::GenerateAllBodies()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset) return;
+    if (!PhysState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = PhysState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || Skeleton->Bones.empty()) return;
+
+    UPhysicsAsset* Asset = PhysState->EditingAsset;
+
+    // 기존 데이터가 있으면 확인 팝업 표시
+    if (Asset->Bodies.Num() > 0 || Asset->Constraints.Num() > 0)
+    {
+        bShowGenerateConfirmPopup = true;
+        return;
+    }
+
+    // 기존 데이터 없으면 바로 생성
+    DoGenerateAllBodies();
+}
+
+float SPhysicsAssetEditorWindow::CalculateBoneLengthForGenerate(const FSkeleton& Skeleton, int32 BoneIndex, FVector& OutBoneLocalDir)
+{
+    const FBone& CurrentBone = Skeleton.Bones[BoneIndex];
+    FVector CurrentPos = BoneUtils::GetBonePosition(CurrentBone.BindPose);
+
+    // Hand 본인지 확인 - 여러 자식(손가락)의 평균 방향 사용
+    bool bIsHandBone = BoneUtils::IsHandBone(CurrentBone.Name);
+
+    if (bIsHandBone)
+    {
+        // Hand 본: 모든 자식 손가락들의 평균 방향 계산
+        FVector AvgDirGlobal = FVector::Zero();
+        float MaxLength = 0.0f;
+        int32 ChildCount = 0;
+
+        for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
+        {
+            if (Skeleton.Bones[i].ParentIndex == BoneIndex)
+            {
+                const FBone& ChildBone = Skeleton.Bones[i];
+                FVector ChildPos = BoneUtils::GetBonePosition(ChildBone.BindPose);
+                FVector DirToChild = ChildPos - CurrentPos;
+                float Length = DirToChild.Size();
+
+                if (Length > KINDA_SMALL_NUMBER)
+                {
+                    AvgDirGlobal = AvgDirGlobal + DirToChild.GetNormalized();
+                    ChildCount++;
+                    if (Length > MaxLength) MaxLength = Length;
+                }
+            }
+        }
+
+        if (ChildCount > 0 && AvgDirGlobal.SizeSquared() > KINDA_SMALL_NUMBER)
+        {
+            AvgDirGlobal = AvgDirGlobal.GetNormalized();
+            OutBoneLocalDir = BoneUtils::TransformDirection(CurrentBone.InverseBindPose, AvgDirGlobal);
+            OutBoneLocalDir = OutBoneLocalDir.GetNormalized();
+            return MaxLength;
+        }
+    }
+
+    // 일반 본: 첫 번째 자식 본 방향 사용
+    for (int32 i = 0; i < Skeleton.Bones.Num(); ++i)
+    {
+        if (Skeleton.Bones[i].ParentIndex == BoneIndex)
+        {
+            const FBone& ChildBone = Skeleton.Bones[i];
+            FVector ChildPos = BoneUtils::GetBonePosition(ChildBone.BindPose);
+
+            // 글로벌 방향 계산
+            FVector BoneDirGlobal = ChildPos - CurrentPos;
+            float BoneLength = BoneDirGlobal.Size();
+
+            if (BoneLength > KINDA_SMALL_NUMBER)
+            {
+                BoneDirGlobal = BoneDirGlobal / BoneLength;  // 정규화
+
+                // 글로벌 방향 → 본의 로컬 좌표계로 변환
+                // InverseBindPose의 회전 부분만 사용하여 방향 변환
+                OutBoneLocalDir = BoneUtils::TransformDirection(CurrentBone.InverseBindPose, BoneDirGlobal);
+                OutBoneLocalDir = OutBoneLocalDir.GetNormalized();
+            }
+            else
+            {
+                OutBoneLocalDir = FVector(0, 0, 1);  // 기본 방향
+            }
+
+            return BoneLength;
+        }
+    }
+
+    // 자식이 없으면 (말단 본) 기본값
+    OutBoneLocalDir = FVector(0, 0, 1);
+    return 0.0f;
+}
+
+void SPhysicsAssetEditorWindow::AdjustShapeForBoneType(UBodySetup* Body, const FString& BoneName, float BoneLength)
+{
+    if (!Body) return;
+
+    // BoneUtils 네임스페이스의 상수 사용
+    using namespace BoneUtils;
+
+    // 본 타입 감지
+    bool bIsHandBone = IsHandBone(BoneName);
+    bool bIsHeadBone = IsHeadBone(BoneName);
+    bool bIsSpineBone = IsSpineOrPelvisBone(BoneName);
+    bool bIsNeckBone = IsNeckBone(BoneName);
+    bool bIsShoulderBone = IsShoulderBone(BoneName);
+    bool bIsFootBone = IsFootBone(BoneName);
+
+    // Hand 본은 고정 크기
+    if (bIsHandBone)
+    {
+        BoneLength = HandBoneSize;
+    }
+
+    // Head 본은 길이 제한
+    if (bIsHeadBone)
+    {
+        BoneLength = HeadBoneSize;
+    }
+
+    // 클램프
+    float ClampedLength = std::min(std::max(BoneLength, MinBoneSize), MaxBoneSize);
+
+    // 비율 결정
+    float EffectiveRadiusRatio = RadiusRatio;
+    float EffectiveLengthRatio = LengthRatio;
+
+    if (bIsHandBone) EffectiveRadiusRatio = HandRadiusRatio;
+    else if (bIsHeadBone) EffectiveRadiusRatio = HeadRadiusRatio;
+    else if (bIsSpineBone) { EffectiveRadiusRatio = SpineRadiusRatio; EffectiveLengthRatio = SpineLengthRatio; }
+    else if (bIsNeckBone) { EffectiveRadiusRatio = NeckRadiusRatio; EffectiveLengthRatio = NeckLengthRatio; }
+    else if (bIsShoulderBone) EffectiveRadiusRatio = ShoulderRadiusRatio;
+    else if (bIsFootBone) EffectiveRadiusRatio = FootRadiusRatio;
+
+    float ShapeRadius = ClampedLength * EffectiveRadiusRatio;
+    float ShapeLength = ClampedLength * EffectiveLengthRatio;
+
+    // Shape 타입별 크기 조정
+    if (Body->AggGeom.SphylElems.Num() > 0)
+    {
+        // 캡슐
+        FKSphylElem& Capsule = Body->AggGeom.SphylElems[0];
+        Capsule.Radius = ShapeRadius;
+        Capsule.Length = ShapeLength;
+        Capsule.Center = FVector(0, 0, ClampedLength * 0.5f);
+
+        if (bIsHeadBone)
+        {
+            Capsule.Center.Z += HeadCenterOffset;
+        }
+
+        if (bIsSpineBone)
+        {
+            Capsule.Rotation = FVector(180.0f, 90.0f, 90.0f);
+        }
+        else
+        {
+            Capsule.Rotation = FVector(180.0f, 0.0f, 0.0f);
+        }
+    }
+    else if (Body->AggGeom.SphereElems.Num() > 0)
+    {
+        // 구
+        FKSphereElem& Sphere = Body->AggGeom.SphereElems[0];
+        Sphere.Radius = ShapeRadius * 1.5f;  // 구는 좀 더 크게
+        Sphere.Center = FVector(0, 0, ClampedLength * 0.5f);
+
+        if (bIsHeadBone)
+        {
+            Sphere.Center.Z += HeadCenterOffset;
+        }
+    }
+    else if (Body->AggGeom.BoxElems.Num() > 0)
+    {
+        // 박스
+        FKBoxElem& Box = Body->AggGeom.BoxElems[0];
+        Box.X = ShapeRadius;
+        Box.Y = ShapeRadius;
+        Box.Z = ShapeLength * 0.5f;
+        Box.Center = FVector(0, 0, ClampedLength * 0.5f);
+
+        if (bIsHeadBone)
+        {
+            Box.Center.Z += HeadCenterOffset;
+        }
+
+        if (bIsSpineBone)
+        {
+            Box.Rotation = FVector(0.0f, 0.0f, 90.0f);
+        }
+    }
+}
+
+void SPhysicsAssetEditorWindow::GenerateConstraintsForBodies()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset || !PhysState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = PhysState->CurrentMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    UPhysicsAsset* Asset = PhysState->EditingAsset;
+
+    // Body가 있는 본들의 이름 집합 생성
+    TSet<FString> BonesWithBodies;
+    for (const UBodySetup* Body : Asset->Bodies)
+    {
+        if (Body)
+        {
+            BonesWithBodies.insert(Body->BoneName.ToString());
+        }
+    }
+
+    // 각 자식 본과 부모 본 사이에 Constraint 생성
+    for (int32 i = 0; i < Skeleton->Bones.Num(); ++i)
+    {
+        const FBone& ChildBone = Skeleton->Bones[i];
+        int32 ParentIndex = ChildBone.ParentIndex;
+
+        if (ParentIndex < 0 || ParentIndex >= Skeleton->Bones.Num())
+            continue;
+
+        const FBone& ParentBone = Skeleton->Bones[ParentIndex];
+
+        // 두 본 모두 Body가 있어야 Constraint 생성
+        if (BonesWithBodies.find(ChildBone.Name) == BonesWithBodies.end() ||
+            BonesWithBodies.find(ParentBone.Name) == BonesWithBodies.end())
+        {
+            continue;
+        }
+
+        FConstraintInstance CI = CreateDefaultConstraint(FName(ParentBone.Name), FName(ChildBone.Name));
+
+        // Constraint 위치 계산: 부모 본에서 특정 자식 본까지의 위치
+        FVector ParentPosGlobal = BoneUtils::GetBonePosition(ParentBone.BindPose);
+        FVector ChildPosGlobal = BoneUtils::GetBonePosition(ChildBone.BindPose);
+        FVector DirToChildGlobal = ChildPosGlobal - ParentPosGlobal;
+        float DistanceToChild = DirToChildGlobal.Size();
+
+        if (DistanceToChild > KINDA_SMALL_NUMBER)
+        {
+            // 1. 방향 정규화
+            FVector DirNormalized = DirToChildGlobal / DistanceToChild;
+
+            // 2. 정규화된 방향을 로컬 좌표로 변환
+            FVector DirLocal = BoneUtils::TransformDirection(ParentBone.InverseBindPose, DirNormalized);
+            DirLocal = DirLocal.GetNormalized();
+
+            // 3. 로컬 방향에 원래 거리를 곱해서 위치 계산
+            CI.Position1 = DirLocal * DistanceToChild;
+        }
+        else
+        {
+            CI.Position1 = FVector::Zero();
+        }
+
+        // Position2: 자식 본의 원점
+        CI.Position2 = FVector::Zero();
+
+        Asset->Constraints.Add(CI);
+    }
+}
+
+void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->EditingAsset || !PhysState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = PhysState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || Skeleton->Bones.empty()) return;
+
+    UPhysicsAsset* Asset = PhysState->EditingAsset;
+
+    // 기존 데이터 클리어
+    for (UBodySetup* Body : Asset->Bodies)
+    {
+        if (Body) delete Body;
+    }
+    Asset->Bodies.Empty();
+    Asset->Constraints.Empty();
+
+    // BoneUtils 상수 사용
+    using namespace BoneUtils;
+
+    // === Phase 1: Bodies 생성 ===
+    for (int32 i = 0; i < Skeleton->Bones.Num(); ++i)
+    {
+        const FBone& Bone = Skeleton->Bones[i];
+
+        // 손가락/발가락/말단 본 스킵
+        if (ShouldSkipBone(Bone.Name))
+        {
+            continue;
+        }
+
+        // 본 길이 및 로컬 방향 계산
+        FVector BoneLocalDir;
+        float BoneLength = CalculateBoneLengthForGenerate(*Skeleton, i, BoneLocalDir);
+
+        // 본 타입 감지
+        bool bIsHandBone = IsHandBone(Bone.Name);
+        bool bIsHeadBone = IsHeadBone(Bone.Name);
+        bool bIsSpineBone = IsSpineOrPelvisBone(Bone.Name);
+        bool bIsNeckBone = IsNeckBone(Bone.Name);
+        bool bIsShoulderBone = IsShoulderBone(Bone.Name);
+        bool bIsFootBone = IsFootBone(Bone.Name);
+
+        // Hand 본은 고정 크기 사용
+        if (bIsHandBone)
+        {
+            BoneLength = HandBoneSize;
+        }
+
+        // Head 본은 고정 크기 사용 (자식이 없어도 생성)
+        if (bIsHeadBone)
+        {
+            BoneLength = HeadBoneSize;
+        }
+
+        // 너무 작은 본은 스킵 (Hand, Head 제외)
+        if (BoneLength < MinBoneSize && !bIsHandBone && !bIsHeadBone)
+        {
+            continue;
+        }
+
+        // 클램프
+        float ClampedLength = std::min(BoneLength, MaxBoneSize);
+
+        // 비율 결정
+        float EffectiveRadiusRatio = RadiusRatio;
+        float EffectiveLengthRatio = LengthRatio;
+
+        if (bIsHandBone) EffectiveRadiusRatio = HandRadiusRatio;
+        else if (bIsHeadBone) EffectiveRadiusRatio = HeadRadiusRatio;
+        else if (bIsSpineBone) { EffectiveRadiusRatio = SpineRadiusRatio; EffectiveLengthRatio = SpineLengthRatio; }
+        else if (bIsNeckBone) { EffectiveRadiusRatio = NeckRadiusRatio; EffectiveLengthRatio = NeckLengthRatio; }
+        else if (bIsShoulderBone) EffectiveRadiusRatio = ShoulderRadiusRatio;
+        else if (bIsFootBone) EffectiveRadiusRatio = FootRadiusRatio;
+
+        float ShapeRadius = ClampedLength * EffectiveRadiusRatio;
+        float ShapeLength = ClampedLength * EffectiveLengthRatio;
+
+        // BodySetup 생성
+        UBodySetup* BodySetup = NewObject<UBodySetup>();
+        BodySetup->BoneName = FName(Bone.Name);
+
+        // 선택된 프리미티브 타입에 따라 Shape 생성
+        switch (SelectedPrimitiveType)
+        {
+        case EShapeType::Capsule:
+        {
+            // === 캡슐: 본 방향 기반 자동 정렬 ===
+            FKSphylElem Capsule;
+            Capsule.Name = FName(Bone.Name);
+            Capsule.Radius = ShapeRadius;
+            Capsule.Length = ShapeLength;
+
+            // Center: 본 방향을 따라 본 길이의 절반 위치
+            if (bIsHeadBone)
+            {
+                // Head: 월드 Z축(위쪽)을 본 로컬 좌표로 변환하여 오프셋
+                FVector WorldUp(0.0f, 0.0f, 1.0f);
+                FVector LocalUp = BoneUtils::TransformDirection(Bone.InverseBindPose, WorldUp).GetNormalized();
+                Capsule.Center = LocalUp * HeadCenterOffset;
+                // 캡슐이 위쪽을 향하도록 회전
+                Capsule.Rotation = CalculateCapsuleRotationFromBoneDir(LocalUp);
+            }
+            else if (bIsSpineBone)
+            {
+                // Spine/Pelvis/Chest: 월드 Y축(좌우)을 본 로컬 좌표로 변환하여 가로 배치
+                FVector WorldRight(0.0f, 1.0f, 0.0f);
+                FVector LocalRight = BoneUtils::TransformDirection(Bone.InverseBindPose, WorldRight).GetNormalized();
+                Capsule.Center = FVector::Zero();  // 본 원점에 배치
+                // 캡슐이 좌우 방향으로 눕도록 회전
+                Capsule.Rotation = CalculateCapsuleRotationFromBoneDir(LocalRight);
+            }
+            else
+            {
+                Capsule.Center = BoneLocalDir * (ClampedLength * 0.5f);
+                // 본의 로컬 방향에서 캡슐 회전값 자동 계산
+                Capsule.Rotation = CalculateCapsuleRotationFromBoneDir(BoneLocalDir);
+            }
+
+            BodySetup->AggGeom.SphylElems.Add(Capsule);
+            break;
+        }
+        case EShapeType::Sphere:
+        {
+            // === 구: 본 방향 기반 자동 정렬 ===
+            FKSphereElem Sphere;
+            Sphere.Name = FName(Bone.Name);
+            Sphere.Radius = ShapeRadius * 1.2f;
+
+            // Center: 본 방향을 따라 본 길이의 절반 위치
+            if (bIsHeadBone)
+            {
+                // Head: 월드 Z축(위쪽)을 본 로컬 좌표로 변환하여 오프셋
+                FVector WorldUp(0.0f, 0.0f, 1.0f);
+                FVector LocalUp = BoneUtils::TransformDirection(Bone.InverseBindPose, WorldUp).GetNormalized();
+                Sphere.Center = LocalUp * HeadCenterOffset;
+            }
+            else
+            {
+                Sphere.Center = BoneLocalDir * (ClampedLength * 0.5f);
+            }
+
+            BodySetup->AggGeom.SphereElems.Add(Sphere);
+            break;
+        }
+        case EShapeType::Box:
+        {
+            // === 박스: 본 방향 기반 자동 정렬 ===
+            FKBoxElem Box;
+            Box.Name = FName(Bone.Name);
+
+            // Center: 본 방향을 따라 본 길이의 절반 위치
+            if (bIsHeadBone)
+            {
+                // Head: 정육면체에 가까운 박스
+                float HeadBoxSize = ShapeRadius;
+                Box.X = HeadBoxSize;
+                Box.Y = HeadBoxSize;
+                Box.Z = HeadBoxSize;
+
+                // Head: 월드 Z축(위쪽)을 본 로컬 좌표로 변환하여 오프셋
+                FVector WorldUp(0.0f, 0.0f, 1.0f);
+                FVector LocalUp = BoneUtils::TransformDirection(Bone.InverseBindPose, WorldUp).GetNormalized();
+                Box.Center = LocalUp * HeadCenterOffset;
+                Box.Rotation = FVector(0.0f, 0.0f, 0.0f);  // 회전 없음
+            }
+            else if (bIsSpineBone)
+            {
+                // 박스 크기: Z축이 길이 방향
+                Box.X = ShapeRadius;
+                Box.Y = ShapeRadius;
+                Box.Z = ShapeLength * 0.5f;
+
+                // Spine/Pelvis/Chest: 월드 Y축(좌우)을 본 로컬 좌표로 변환하여 가로 배치
+                FVector WorldRight(0.0f, 1.0f, 0.0f);
+                FVector LocalRight = BoneUtils::TransformDirection(Bone.InverseBindPose, WorldRight).GetNormalized();
+                Box.Center = FVector::Zero();  // 본 원점에 배치
+                // 박스가 좌우 방향으로 눕도록 회전
+                Box.Rotation = CalculateBoxRotationFromBoneDir(LocalRight);
+            }
+            else
+            {
+                // 박스 크기: Z축이 길이 방향
+                Box.X = ShapeRadius;
+                Box.Y = ShapeRadius;
+                Box.Z = ShapeLength * 0.5f;
+
+                Box.Center = BoneLocalDir * (ClampedLength * 0.5f);
+                // 본의 로컬 방향에서 박스 회전값 자동 계산
+                Box.Rotation = CalculateBoxRotationFromBoneDir(BoneLocalDir);
+            }
+
+            BodySetup->AggGeom.BoxElems.Add(Box);
+            break;
+        }
+        default:
+            continue;
+        }
+
+        // 기본 물리 속성
+        BodySetup->MassInKg = 1.0f;
+        BodySetup->Friction = 0.5f;
+        BodySetup->Restitution = 0.3f;
+        BodySetup->LinearDamping = 0.1f;
+        BodySetup->AngularDamping = 0.1f;
+
+        Asset->Bodies.Add(BodySetup);
+    }
+
+    // === Phase 2: Constraints 생성 ===
+    GenerateConstraintsForBodies();
+
+    // Dirty 플래그 설정
+    PhysState->bIsDirty = true;
+
+    // 선택 초기화
+    ClearSelection();
+
+    UE_LOG("Generated %d bodies and %d constraints", Asset->Bodies.Num(), Asset->Constraints.Num());
+}
+
+// ============================================================================
+// Physics Asset 에디터 월드 새로고침
+// ============================================================================
+
+void SPhysicsAssetEditorWindow::RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset)
+{
+    if (!Asset) return;
+
+    // 에디터 월드 가져오기 (GWorld 전역 변수 사용)
+    if (!GWorld) return;
+
+    ULevel* Level = GWorld->GetLevel();
+    if (!Level) return;
+
+    int32 RefreshedCount = 0;
+
+    // 모든 액터의 SkeletalMeshComponent 순회
+    for (AActor* Actor : Level->GetActors())
+    {
+        if (!Actor) continue;
+
+        for (UActorComponent* Comp : Actor->GetOwnedComponents())
+        {
+            USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Comp);
+            if (!SkelComp) continue;
+
+            // 동일한 PhysicsAsset을 사용하는 컴포넌트만 갱신
+            USkeletalMesh* Mesh = SkelComp->GetSkeletalMesh();
+            if (Mesh && Mesh->GetPhysicsAsset() == Asset)
+            {
+                // Bodies/Constraints 재초기화
+                SkelComp->InitArticulated(Asset);
+                RefreshedCount++;
+                UE_LOG("[PhysicsAsset] Refreshed: %s", Actor->GetName().c_str());
+            }
+        }
+    }
+
+    if (RefreshedCount > 0)
+    {
+        UE_LOG("[PhysicsAsset] 총 %d개 컴포넌트 갱신 완료", RefreshedCount);
     }
 }

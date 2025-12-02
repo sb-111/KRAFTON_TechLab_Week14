@@ -120,8 +120,11 @@ void UShapeAnchorComponent::UpdateAnchorFromShape()
         const FKSphylElem& Capsule = TargetBody->AggGeom.SphylElems[ShapeIndex];
         ShapeCenter = CachedBoneWorldTransform.Translation +
                       CachedBoneWorldTransform.Rotation.RotateVector(Capsule.Center);
-        FQuat CapsuleRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
-        ShapeRotation = CachedBoneWorldTransform.Rotation * CapsuleRotation;
+        // 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축) - BodyInstance/RagdollDebugRenderer와 동일
+        FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
+        FQuat UserRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
+        FQuat FinalLocalRotation = UserRotation * BaseRotation;
+        ShapeRotation = CachedBoneWorldTransform.Rotation * FinalLocalRotation;
         // 캡슐: 균일 스케일 1로 설정 (스케일 대신 직접 Radius/Length 조작)
         SetWorldScale(FVector::One());
         InitialShapeSize = FVector(Capsule.Radius, Capsule.Length, 0);
@@ -221,7 +224,12 @@ void UShapeAnchorComponent::OnTransformUpdated()
         if (ShapeIndex >= TargetBody->AggGeom.SphylElems.Num()) return;
         FKSphylElem& Capsule = TargetBody->AggGeom.SphylElems[ShapeIndex];
         Capsule.Center = LocalCenter;
-        Capsule.Rotation = LocalEuler;
+        // BaseRotation 역변환: 기즈모 회전에서 UserRotation만 추출
+        // GizmoRot = BoneWorldRot * UserRotation * BaseRotation
+        // UserRotation = BoneWorldRotInv * GizmoRot * BaseRotationInv
+        FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
+        FQuat CapsuleLocalRotation = BoneWorldRotInv * AnchorWorldRot * BaseRotation.Inverse();
+        Capsule.Rotation = CapsuleLocalRotation.ToEulerZYXDeg();
         // Capsule: 스케일 무시 (위치/회전만 적용, Radius/Length는 디테일 패널에서 조작)
         break;
     }

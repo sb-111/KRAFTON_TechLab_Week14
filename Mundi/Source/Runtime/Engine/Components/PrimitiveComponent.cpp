@@ -14,6 +14,10 @@ UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
 
 void UPrimitiveComponent::ApplyPhysicsResult()
 {
+    // 물리 업데이트 시: SetWorldTransform에서 bJustTeleported 설정하지만 if문 벗어나자마자 false로 바꿈.
+    // 프로퍼티 변경 시: ApplyPhysicsResult 호출 전에 bJustTeleported가 설정됨.
+    // 이후 ApplyPhysicsResult는 무시되고 ProcessCommandQueue가 실행되면서 Physx Actor 위치 업데이트함
+    // 결론적으로 시뮬레이션 지장 없이 프로퍼티창에서 transform 변경 가능.
     if (BodyInstance.RigidActor)
     {
         physx::PxTransform PhysicsTransform = BodyInstance.RigidActor->getGlobalPose();
@@ -22,7 +26,10 @@ void UPrimitiveComponent::ApplyPhysicsResult()
 
         Transform.Scale3D = GetWorldScale();
 
+        bIsSyncingPhysics = true;
         SetWorldTransform(Transform);
+        bIsSyncingPhysics = false;
+       
     }
 }
 
@@ -113,31 +120,31 @@ UPrimitiveComponent* UPrimitiveComponent::FindPhysicsParent()
 
 void UPrimitiveComponent::PrePhysicsUpdate(float DeltaTime)
 {
-    BodyInstance.FlushPendingForce();
+   // BodyInstance.FlushPendingForce();
 
-    bPrePhysicsTemporal = false;
+   // bPrePhysicsTemporal = false;
     // TODO: 키네마틱 이동 등 처리
 }
 
 void UPrimitiveComponent::AddForce(const FVector& InForce)
 {
     BodyInstance.AddForce(InForce);
-    if (!bPrePhysicsTemporal)
-    {
-        GWorld->GetPhysicsScene()->RegisterTemporal(this);  
-        bPrePhysicsTemporal = true;
-    }
+    //if (!bPrePhysicsTemporal)
+    //{
+    //    GWorld->GetPhysicsScene()->RegisterTemporal(this);  
+    //    bPrePhysicsTemporal = true;
+    //}
 }
 
 void UPrimitiveComponent::AddTorque(const FVector& InTorque)
 {
 
-    BodyInstance.AddForce(InTorque);
-    if (!bPrePhysicsTemporal)
+    BodyInstance.AddTorque(InTorque);
+    /*if (!bPrePhysicsTemporal)
     {
         GWorld->GetPhysicsScene()->RegisterTemporal(this);
         bPrePhysicsTemporal = true;
-    }
+    }*/
 }
 
 physx::PxGeometryHolder UPrimitiveComponent::GetGeometry()
@@ -173,6 +180,16 @@ void UPrimitiveComponent::OnUnregister()
     Super::OnUnregister();
 }
 
+void UPrimitiveComponent::OnTransformUpdated()
+{
+    Super::OnTransformUpdated();
+
+    if (!bIsSyncingPhysics && BodyInstance.RigidActor )
+    {
+        BodyInstance.UpdateTransform(GetWorldTransform());
+    }
+}
+
 void UPrimitiveComponent::BeginPlay()
 {
 }
@@ -189,6 +206,15 @@ void UPrimitiveComponent::SetMaterialByName(uint32 InElementIndex, const FString
 void UPrimitiveComponent::DuplicateSubObjects()
 {
     Super::DuplicateSubObjects();
+
+    // BodyInstance의 포인터들 리셋 (복제 시 원본의 stale pointer가 복사되는 것 방지)
+    // 새 컴포넌트는 자신만의 physics body를 새로 생성해야 함
+    BodyInstance.RigidActor = nullptr;
+    BodyInstance.OwnerScene = nullptr;
+    BodyInstance.OwnerComponent = nullptr;
+    BodyInstance.BodySetup = nullptr;
+    BodyInstance.BoneIndex = -1;
+    BodyInstance.RagdollOwnerID = 0;
 }
 
 void UPrimitiveComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
@@ -218,4 +244,9 @@ bool UPrimitiveComponent::IsOverlappingActor(const AActor* Other) const
         }
     }
     return false;
+}
+
+void UPrimitiveComponent::OnComponentHit(UPrimitiveComponent* OtherComponent)
+{
+    UE_LOG("CollisionEvent Callback");
 }

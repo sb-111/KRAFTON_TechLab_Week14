@@ -141,4 +141,27 @@ private:
     // Constraint 트리 표시
     void RenderConstraintTreeNode(int32 ConstraintIndex, const FName& CurrentBoneName);
     void RenderConstraintContextMenu(int32 ConstraintIndex);
+
+    // === Tools 패널 (언리얼 피직스 에셋 에디터 스타일) ===
+    void RenderToolsPanel();
+    void RenderGenerateConfirmPopup();
+
+    // 모든 바디 자동 생성
+    void GenerateAllBodies();
+    void DoGenerateAllBodies();
+
+    // Helper 함수들 (바디 자동 생성용)
+    void GenerateConstraintsForBodies();
+    void AdjustShapeForBoneType(UBodySetup* Body, const FString& BoneName, float BoneLength);
+    float CalculateBoneLengthForGenerate(const FSkeleton& Skeleton, int32 BoneIndex, FVector& OutBoneDir);
+
+    // Tools 패널 상태
+    EShapeType SelectedPrimitiveType = EShapeType::Capsule;
+    bool bShowGenerateConfirmPopup = false;
+
+    // ===== 에디터 시뮬레이션 =====
+    bool bSimulateInEditor = false;  // 시뮬레이션 활성화 여부
+
+    // 에디터 월드의 SkeletalMeshComponent들에 PhysicsAsset 새로고침
+    void RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset);
 };
