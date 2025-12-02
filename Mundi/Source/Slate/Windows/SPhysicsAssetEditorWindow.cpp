@@ -2121,7 +2121,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     if (ImGui::DragFloat3("##Center", center, 0.1f))
                     {
                         Sphere.Center = FVector(center[0], center[1], center[2]);
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Radius
@@ -2129,7 +2134,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##Radius", &Sphere.Radius, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Name
@@ -2195,7 +2205,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     if (ImGui::DragFloat3("##Center", center, 0.1f))
                     {
                         Box.Center = FVector(center[0], center[1], center[2]);
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Rotation
@@ -2205,7 +2220,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
                     {
                         Box.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // X Size
@@ -2213,7 +2233,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##X", &Box.X, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Y Size
@@ -2221,7 +2246,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##Y", &Box.Y, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Z Size
@@ -2229,7 +2259,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##Z", &Box.Z, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Name
@@ -2295,7 +2330,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     if (ImGui::DragFloat3("##Center", center, 0.1f))
                     {
                         Capsule.Center = FVector(center[0], center[1], center[2]);
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Rotation
@@ -2305,7 +2345,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
                     {
                         Capsule.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Radius
@@ -2313,7 +2358,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##Radius", &Capsule.Radius, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Length
@@ -2321,7 +2371,12 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     ImGui::SetNextItemWidth(-1);
                     if (ImGui::DragFloat("##Length", &Capsule.Length, 0.1f, 0.1f, 1000.0f, "%.2f"))
                     {
-                        if (PhysState) PhysState->bIsDirty = true;
+                        if (PhysState)
+                        {
+                            PhysState->bIsDirty = true;
+                            PhysState->bShapesDirty = true;
+                            if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                        }
                     }
 
                     // Name
