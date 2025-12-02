@@ -3704,6 +3704,19 @@ bool UPropertyRenderer::RenderPhysicsAssetSelectionCombo(const char* Label, FStr
 		PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(CachedPhysicsAssetPaths, CachedPhysicsAssetItems);
 	}
 
+	// 새로고침 버튼 (직접 파일 추가 시 사용)
+	if (ImGui::Button("R##RefreshPhysicsAsset"))
+	{
+		CachedPhysicsAssetPaths.Empty();
+		CachedPhysicsAssetItems.Empty();
+		PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(CachedPhysicsAssetPaths, CachedPhysicsAssetItems);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Refresh physics asset list");
+	}
+	ImGui::SameLine();
+
 	// 목록이 비어있으면 안내 텍스트 표시
 	if (CachedPhysicsAssetPaths.IsEmpty())
 	{
@@ -3723,7 +3736,7 @@ bool UPropertyRenderer::RenderPhysicsAssetSelectionCombo(const char* Label, FStr
 	}
 
 	// 콤보박스 렌더링 (ItemsGetter 사용하여 CachedPhysicsAssetItems 표시)
-	ImGui::SetNextItemWidth(300);
+	ImGui::SetNextItemWidth(270);
 	if (ImGui::Combo(Label, &SelectedIdx, &ItemsGetter, (void*)&CachedPhysicsAssetItems, static_cast<int>(CachedPhysicsAssetItems.size())))
 	{
 		// 선택이 변경됨

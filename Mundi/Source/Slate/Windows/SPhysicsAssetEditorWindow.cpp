@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "SlateManager.h"
 #include "SPhysicsAssetEditorWindow.h"
+#include "Source/Slate/Widgets/PropertyRenderer.h"
 #include "Source/Editor/Gizmo/GizmoActor.h"
 #include "Source/Runtime/Engine/Viewer/EditorAssetPreviewContext.h"
 #include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
@@ -540,6 +541,9 @@ void SPhysicsAssetEditorWindow::SavePhysicsAsset()
         PhysState->bIsDirty = false;
         UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", PhysState->CurrentFilePath.c_str(), SourceFbxPath.c_str());
 
+        // 리소스 캐시 갱신 (콤보박스 목록에 새 파일 반영)
+        UPropertyRenderer::ClearResourcesCache();
+
         // === Physics Asset 자동 연결 시스템 ===
         // 1. SkeletalMesh에 PhysicsAsset 경로 연결
         if (PhysState->CurrentMesh)
@@ -597,6 +601,9 @@ void SPhysicsAssetEditorWindow::SavePhysicsAssetAs()
         // 에디터 상태 업데이트
         PhysState->CurrentFilePath = SavePathStr;
         PhysState->bIsDirty = false;
+
+        // 리소스 캐시 갱신 (콤보박스 목록에 새 파일 반영)
+        UPropertyRenderer::ClearResourcesCache();
 
         UE_LOG("[PhysicsAssetEditor] 저장 완료: %s (FBX: %s)", SavePathStr.c_str(), SourceFbxPath.c_str());
     }
@@ -3689,7 +3696,19 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
 
 void SPhysicsAssetEditorWindow::RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset)
 {
-    if (!Asset) return;
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || PhysState->CurrentFilePath.empty()) return;
+
+    // 경로 정규화 및 상대 경로로 변환
+    FString SavedPath = NormalizePath(PhysState->CurrentFilePath);
+    // 절대 경로면 상대 경로로 변환 (Data/ 부터 시작하도록)
+    size_t DataPos = SavedPath.find("Data/");
+    if (DataPos != FString::npos)
+    {
+        SavedPath = SavedPath.substr(DataPos);
+    }
+
+    UE_LOG("[PhysicsAsset] RefreshPhysicsAssetInWorld - SavedPath: %s", SavedPath.c_str());
 
     // 에디터 월드 가져오기 (GWorld 전역 변수 사용)
     if (!GWorld) return;
@@ -3709,12 +3728,22 @@ void SPhysicsAssetEditorWindow::RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset)
             USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Comp);
             if (!SkelComp) continue;
 
-            // 동일한 PhysicsAsset을 사용하는 컴포넌트만 갱신
-            USkeletalMesh* Mesh = SkelComp->GetSkeletalMesh();
-            if (Mesh && Mesh->GetPhysicsAsset() == Asset)
+            // 경로 기반으로 비교 (동일한 경로를 사용하는 컴포넌트만 갱신)
+            FString CompPhysicsPath = NormalizePath(SkelComp->GetEffectivePhysicsAssetPath());
+
+            UE_LOG("[PhysicsAsset] Checking: %s -> CompPath: %s", Actor->GetName().c_str(), CompPhysicsPath.c_str());
+
+            if (CompPhysicsPath == SavedPath)
             {
-                // Bodies/Constraints 재초기화
-                SkelComp->InitArticulated(Asset);
+                // SkeletalMesh의 PhysicsAsset 캐시도 무효화
+                USkeletalMesh* SkelMesh = SkelComp->GetSkeletalMesh();
+                if (SkelMesh)
+                {
+                    SkelMesh->SetPhysicsAsset(nullptr);
+                }
+
+                // SkeletalMeshComponent의 PhysicsAsset 캐시 무효화
+                SkelComp->SetPhysicsAssetPathOverride(CompPhysicsPath);
                 RefreshedCount++;
                 UE_LOG("[PhysicsAsset] Refreshed: %s", Actor->GetName().c_str());
             }
@@ -3724,5 +3753,9 @@ void SPhysicsAssetEditorWindow::RefreshPhysicsAssetInWorld(UPhysicsAsset* Asset)
     if (RefreshedCount > 0)
     {
         UE_LOG("[PhysicsAsset] 총 %d개 컴포넌트 갱신 완료", RefreshedCount);
+    }
+    else
+    {
+        UE_LOG("[PhysicsAsset] 갱신된 컴포넌트 없음");
     }
 }

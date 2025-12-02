@@ -77,7 +77,7 @@ void AActor::Tick(float DeltaSeconds)
 			if (!bLoggedComp && !World->bPie)
 			{
 				UE_LOG("[Actor::Tick] Comp=%s, bShouldTick=%d, CanTickInEditor=%d",
-					Comp->ObjectName.ToString(), bShouldTick, Comp->CanTickInEditor());
+					Comp->ObjectName.ToString().c_str(), bShouldTick, Comp->CanTickInEditor());
 				bLoggedComp = true;
 			}
 

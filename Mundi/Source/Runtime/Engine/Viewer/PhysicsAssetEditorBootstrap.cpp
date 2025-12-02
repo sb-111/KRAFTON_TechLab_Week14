@@ -63,6 +63,31 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 			? Preview->GetSkeletalMeshComponent()->GetSkeletalMesh() : nullptr;
 	}
 
+	// 기본 FBX 경로 설정 및 로드
+	const FString DefaultFbxPath = "Data/DancingRacer.fbx";
+	strncpy_s(State->MeshPathBuffer, DefaultFbxPath.c_str(), sizeof(State->MeshPathBuffer) - 1);
+
+	// 기본 메시 로드
+	if (State->PreviewActor)
+	{
+		USkeletalMesh* DefaultMesh = UResourceManager::GetInstance().Load<USkeletalMesh>(DefaultFbxPath);
+		if (DefaultMesh)
+		{
+			State->PreviewActor->SetSkeletalMesh(DefaultFbxPath);
+			State->CurrentMesh = DefaultMesh;
+			State->LoadedMeshPath = DefaultFbxPath;
+
+			// 모든 본 노드 확장
+			if (const FSkeleton* Skeleton = DefaultMesh->GetSkeleton())
+			{
+				for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
+				{
+					State->ExpandedBoneIndices.insert(i);
+				}
+			}
+		}
+	}
+
 	// Physics Asset 생성
 	State->EditingAsset = NewObject<UPhysicsAsset>();
 
@@ -599,7 +624,7 @@ void PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(TArray<FString>& OutPa
 
 	// Data/Physics 폴더 스캔
 	FString PhysicsDir = GDataDir + "/Physics";
-	std::filesystem::path SearchPath(PhysicsDir);
+	std::filesystem::path SearchPath(UTF8ToWide(PhysicsDir));
 
 	if (!std::filesystem::exists(SearchPath))
 	{
@@ -613,8 +638,9 @@ void PhysicsAssetEditorBootstrap::GetAllPhysicsAssetPaths(TArray<FString>& OutPa
 			std::filesystem::path FilePath = Entry.path();
 			if (FilePath.extension() == ".physics")
 			{
-				FString FullPath = FilePath.string();
-				FString FileName = FilePath.filename().string();
+				// 한글 경로 지원: wstring -> UTF-8 변환
+				FString FullPath = WideToUTF8(FilePath.wstring());
+				FString FileName = WideToUTF8(FilePath.filename().wstring());
 
 				// 경로 정규화
 				FullPath = NormalizePath(FullPath);
@@ -655,7 +681,7 @@ void PhysicsAssetEditorBootstrap::GetCompatiblePhysicsAssetPaths(const FString& 
 
 	// Data/Physics 폴더 스캔
 	FString PhysicsDir = GDataDir + "/Physics";
-	std::filesystem::path SearchPath(PhysicsDir);
+	std::filesystem::path SearchPath(UTF8ToWide(PhysicsDir));
 
 	if (!std::filesystem::exists(SearchPath))
 	{
@@ -669,7 +695,8 @@ void PhysicsAssetEditorBootstrap::GetCompatiblePhysicsAssetPaths(const FString& 
 			std::filesystem::path FilePath = Entry.path();
 			if (FilePath.extension() == ".physics")
 			{
-				FString FullPath = NormalizePath(FilePath.string());
+				// 한글 경로 지원: wstring -> UTF-8 변환
+				FString FullPath = NormalizePath(WideToUTF8(FilePath.wstring()));
 
 				// .physics 파일에서 SourceFbxPath 읽기
 				FString SourceFbx;
@@ -684,7 +711,7 @@ void PhysicsAssetEditorBootstrap::GetCompatiblePhysicsAssetPaths(const FString& 
 					// FBX 경로가 매칭되면 추가
 					if (SourceFbx == NormalizedFbxPath)
 					{
-						FString FileName = FilePath.filename().string();
+						FString FileName = WideToUTF8(FilePath.filename().wstring());
 						OutPaths.Add(FullPath);
 						OutDisplayNames.Add(FileName);
 					}

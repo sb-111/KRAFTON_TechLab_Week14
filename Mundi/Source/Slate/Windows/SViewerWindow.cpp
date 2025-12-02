@@ -9,6 +9,7 @@
 #include "SBlendSpaceEditorWindow.h"
 #include "Source/Editor/FBXLoader.h"
 #include "Source/Editor/PlatformProcess.h"
+#include "Source/Runtime/Core/Misc/PathUtils.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
 #include "Source/Runtime/Engine/GameFramework/CameraActor.h"
 #include "Source/Runtime/Engine/Components/CameraComponent.h"
@@ -715,8 +716,10 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
 
         if (!widePath.empty())
         {
-            std::string s = WideToUTF8(widePath.wstring());
-            strncpy_s(ActiveState->MeshPathBuffer, s.c_str(),
+            // 절대 경로를 상대 경로로 변환 (Data/로 시작하도록)
+            FString AbsPath = NormalizePath(WideToUTF8(widePath.wstring()));
+            FString RelPath = ResolveAssetRelativePath(AbsPath, "");
+            strncpy_s(ActiveState->MeshPathBuffer, RelPath.c_str(),
                 sizeof(ActiveState->MeshPathBuffer) - 1);
         }
     }
