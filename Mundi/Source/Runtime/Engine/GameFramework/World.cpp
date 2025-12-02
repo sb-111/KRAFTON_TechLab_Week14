@@ -348,6 +348,7 @@ UWorld* UWorld::DuplicateWorldForPIE(UWorld* InEditorWorld)
 	PIEWorld->CollisionManager->SetWorld(PIEWorld);
 
 	PIEWorld->PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
+	PIEWorld->PhysicsScene->InitVehicleSDK();
 
 	// PIE 월드에 파티클 이벤트 매니저 생성
 	PIEWorld->ParticleEventManager = PIEWorld->SpawnActor<AParticleEventManager>();

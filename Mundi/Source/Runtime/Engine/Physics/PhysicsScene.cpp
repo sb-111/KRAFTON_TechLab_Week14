@@ -2,6 +2,7 @@
 #include "PhysicsScene.h"
 #include "BodyInstance.h"
 #include "PrimitiveComponent.h"
+#include "PhysicsSystem.h"
 
 FPhysicsScene::FPhysicsScene(PxScene* InScene)
 	:Scene(InScene),
@@ -12,6 +13,10 @@ FPhysicsScene::FPhysicsScene(PxScene* InScene)
 
 FPhysicsScene::~FPhysicsScene()
 {
+	if (VehicleSDKInitialized)
+	{
+		ReleaseVehicleSDK();
+	}
 	if (Scene)
 	{
 		// Scene 해제 전에 데스노트에 남아있는 모든 액터 정리
@@ -22,6 +27,7 @@ FPhysicsScene::~FPhysicsScene()
 		Scene->release();
 		Scene = nullptr;
 	}
+
 }
 
 void FPhysicsScene::RegisterPrePhysics(IPrePhysics* Object)
@@ -151,6 +157,99 @@ void FPhysicsScene::PendingDestroyInDeathNote()
 		ActorToDie->release();
 	}
 	ActorDeathNote.clear();
+}
+
+
+static PxQueryHitType::Enum WheelRaycasyPreFilter(
+	PxFilterData filterData0, PxFilterData filterData1,
+	const void* constantBlock, PxU32 constantBlockSize,
+	PxHitFlags& queryFlags
+)
+{
+	
+	// 캐스터와 Shape이 ID가 같으면 무시(word3: 안 쓰는 비트에 차량 ID 넣어줌)
+	if (filterData0.word3 == filterData1.word3 && filterData1.word3 != 0)
+	{
+		return PxQueryHitType::eNONE; 
+	}
+
+	
+	return PxQueryHitType::eBLOCK;
+}
+
+void FPhysicsScene::InitVehicleSDK()
+{
+	uint32 NumRaysMax = MAX_VEHICLE * MAX_WHEELS_PER_VEHICLE;
+
+	RaycastResult.SetNum(NumRaysMax);
+	RaycastHits.SetNum(NumRaysMax);
+
+	//t
+	PxBatchQueryDesc QueryDesc(NumRaysMax, 0, 0);
+	QueryDesc.queryMemory.userRaycastResultBuffer = RaycastResult.GetData();
+	QueryDesc.queryMemory.userRaycastTouchBuffer = RaycastHits.GetData();
+	QueryDesc.queryMemory.raycastTouchBufferSize = NumRaysMax;
+	QueryDesc.preFilterShader = WheelRaycasyPreFilter;
+
+	BatchQuery = Scene->createBatchQuery(QueryDesc);
+
+	
+
+	PxVehicleDrivableSurfaceType SurfaceType[1];
+	SurfaceType[0].mType = 0;
+
+	const PxMaterial* Materials[] = { FPhysicsSystem::GetInstance().GetDefaultMaterial() };
+
+	// 타이어 1개, 표면 재질 1개만 매핑
+	FrictionPairs = PxVehicleDrivableSurfaceToTireFrictionPairs::allocate(1, 1);
+	// 표면과 표면 타입 매핑
+	FrictionPairs->setup(1, 1, Materials, SurfaceType);
+
+	// 0번 표면 타입에서 0번 타이어 마찰력은 1.0f
+	FrictionPairs->setTypePairFriction(0, 0, 1.0f);
+
+	VehicleSDKInitialized = true;
+}
+
+void FPhysicsScene::ReleaseVehicleSDK()
+{
+	if (BatchQuery)
+	{
+
+		BatchQuery->release();
+		BatchQuery = nullptr;
+	}
+
+	if (FrictionPairs)
+	{
+		FrictionPairs->release();
+		FrictionPairs = nullptr;
+	}
+}
+
+PxVec3 FPhysicsScene::GetGravity()
+{
+	return Scene->getGravity();
+}
+
+PxBatchQuery* FPhysicsScene::GetBatchQuery()
+{
+	return BatchQuery;
+}
+
+PxRaycastQueryResult* FPhysicsScene::GetRaycastQueryResult()
+{
+	return RaycastResult.GetData();
+}
+
+uint32 FPhysicsScene::GetRaycastQueryResultSize()
+{
+	return RaycastResult.Num();
+}
+
+PxVehicleDrivableSurfaceToTireFrictionPairs* FPhysicsScene::GetFrictionPairs()
+{
+	return FrictionPairs;
 }
 
 // PairHeader: 누가 누구랑 부딪혔는지 저장

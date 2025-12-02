@@ -72,6 +72,22 @@ public:
 	void WriteInTheDeathNote(physx::PxActor* ActorToDie);
 
 	void PendingDestroyInDeathNote();
+
+
+	// Vehicle
+	void InitVehicleSDK();
+
+	void ReleaseVehicleSDK();
+
+	PxVec3 GetGravity();
+
+	PxBatchQuery* GetBatchQuery();
+
+	PxRaycastQueryResult* GetRaycastQueryResult();
+
+	uint32 GetRaycastQueryResultSize();
+
+	PxVehicleDrivableSurfaceToTireFrictionPairs* GetFrictionPairs();
 private:
 
 	// Un/Register 쉽게하려고 Set 사용
@@ -89,4 +105,21 @@ private:
 
 	std::unique_ptr<FPhysicsSimulationEventCallback> EventCallback = nullptr;
 
+	
+	// 자동차 레이캐스팅 묶음 
+	PxBatchQuery* BatchQuery = nullptr;
+
+	// 충돌 정보 인덱싱용
+	TArray<PxRaycastQueryResult> RaycastResult;
+	// 실제 충돌 정보
+	TArray<PxRaycastHit> RaycastHits;
+
+	// 어떤 타이어가 어떤 바닥을 밟았느냐에 따른 마찰력을 저장하는 테이블
+	PxVehicleDrivableSurfaceToTireFrictionPairs* FrictionPairs = nullptr;
+
+	// 메모리 미리 잡아두려고 최댓값 정해놓음
+	const uint32 MAX_VEHICLE = 4;
+	const uint32 MAX_WHEELS_PER_VEHICLE = 4;
+
+	bool VehicleSDKInitialized = false;
 };

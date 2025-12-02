@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <FxCompile Include="Shaders\Materials\Fireball.hlsl">
@@ -70,6 +70,7 @@
     <FxCompile Include="Shaders\Particle\ParticleRibbon.hlsl">
       <Filter>Shaders\Particle</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Debug\DebugPrimitive.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Generated\UParticleModuleSizeScaleBySpeed.generated.cpp">
@@ -266,9 +267,6 @@
     <ClCompile Include="Source\Runtime\Engine\Animation\AnimSequencePlayer.cpp">
       <Filter>Source\Runtime\Engine\Animation</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Runtime\Engine\Components\CharacterMovementComponent.cpp">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\Components\InputComponent.cpp">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClCompile>
@@ -311,13 +309,7 @@
     <ClCompile Include="Source\Runtime\Engine\Components\LuaScriptComponent.cpp">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Runtime\Engine\Components\MovementComponent.cpp">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\Components\PointLightComponent.cpp">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Runtime\Engine\Components\ProjectileMovementComponent.cpp">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\Components\RotatingMovementComponent.cpp">
@@ -1137,6 +1129,27 @@
     <ClCompile Include="Generated\FConstraintInstance.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\CharacterMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\MovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\ProjectileMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent4W.cpp" />
+    <ClCompile Include="Generated\UVehicleMovementComponent.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\UVehicleMovementComponent4W.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\AWheeledVehiclePawn.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\ATestCar.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -1386,19 +1399,10 @@
     <ClInclude Include="Source\Runtime\Engine\Components\CapsuleComponent.h">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Runtime\Engine\Components\CharacterMovementComponent.h">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Runtime\Engine\Components\InputComponent.h">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClInclude>
     <ClInclude Include="Source\Runtime\Engine\Components\LuaScriptComponent.h">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Runtime\Engine\Components\MovementComponent.h">
-      <Filter>Source\Runtime\Engine\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Runtime\Engine\Components\ProjectileMovementComponent.h">
       <Filter>Source\Runtime\Engine\Components</Filter>
     </ClInclude>
     <ClInclude Include="Source\Runtime\Engine\Components\PropertyTestComponent.h">
@@ -2388,6 +2392,26 @@
     <ClInclude Include="Source\Runtime\Engine\Physics\PrePhysics.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsScene.h" />
     <ClInclude Include="Generated\FConstraintInstance.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\CharacterMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\MovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\ProjectileMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent4W.h" />
+    <ClInclude Include="Generated\UVehicleMovementComponent.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UVehicleMovementComponent4W.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\AWheeledVehiclePawn.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\ATestCar.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>

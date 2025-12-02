@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_StandAlone|x64">
@@ -100,7 +100,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Generated;$(ProjectDir)Source\Runtime\Core\Object;$(ProjectDir)Source\Runtime\Core\Math;$(ProjectDir)Source\Runtime\Core\Containers;$(ProjectDir)Source\Runtime\Core\Misc;$(ProjectDir)Source\Runtime\Core\Memory;$(ProjectDir)Source\Runtime\Engine\Physics;$(ProjectDir)Source\Runtime\Engine\Animation;$(ProjectDir)Source\Runtime\Engine\GameFramework;$(ProjectDir)Source\Runtime\Engine\Scripting;$(ProjectDir)Source\Runtime\Engine\Components\Movement;$(ProjectDir)Source\Runtime\Engine\Components;$(ProjectDir)Source\Runtime\Engine\Collision;$(ProjectDir)Source\Runtime\Engine\Spatial;$(ProjectDir)Source\Runtime\Engine\Audio;$(ProjectDir)Source\Runtime\Engine\Particles;$(ProjectDir)Source\Runtime\Engine\Particles\Modules;$(ProjectDir)Source\Runtime\RHI;$(ProjectDir)Source\Runtime\Renderer;$(ProjectDir)Source\Runtime\AssetManagement;$(ProjectDir)Source\Runtime\InputCore;$(ProjectDir)Source\Editor;$(ProjectDir)Source\Slate;ThirdParty\include\DirectXTex;ThirdParty\include\DirectXTK;ThirdParty\include\Lua;ThirdParty\include\sol;ThirdParty\include;ThirdParty\include\FBXSDK;ThirdParty\include\Physx</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 /bigobj /MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -313,8 +313,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Source\Runtime\Engine\Animation\AnimStateMachine.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Animation\AnimStateMachineInstance.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Animation\AnimSequencePlayer.cpp" />
-    <ClCompile Include="Source\Runtime\Engine\Components\CharacterMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\CharacterMovementComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\InputComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent4W.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\PropertyTestComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\SkinnedMeshComponent.cpp" />
@@ -413,9 +415,9 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Source\Runtime\Engine\Components\LightComponentBase.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\LocalLightComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\LuaScriptComponent.cpp" />
-    <ClCompile Include="Source\Runtime\Engine\Components\MovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\MovementComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\PointLightComponent.cpp" />
-    <ClCompile Include="Source\Runtime\Engine\Components\ProjectileMovementComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\Movement\ProjectileMovementComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\RotatingMovementComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\SphereComponent.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Components\SpotLightComponent.cpp" />
@@ -435,6 +437,8 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Source\Runtime\Engine\GameFramework\Info.cpp" />
     <ClCompile Include="Source\Runtime\Engine\GameFramework\PointLightActor.cpp" />
     <ClCompile Include="Source\Runtime\Engine\GameFramework\SpotLightActor.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\GameFramework\TestCar.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\GameFramework\WheelVehiclePawn.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Distribution.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleMeshRotation.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTrailSource.cpp" />
@@ -716,6 +720,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Generated\UPhysicsAsset.generated.cpp" />
     <ClCompile Include="Generated\UBodySetupCore.generated.cpp" />
     <ClCompile Include="Generated\FConstraintInstance.generated.cpp" />
+    <ClCompile Include="Generated\UVehicleMovementComponent.generated.cpp" />
+    <ClCompile Include="Generated\UVehicleMovementComponent4W.generated.cpp" />
+    <ClCompile Include="Generated\AWheeledVehiclePawn.generated.cpp" />
+    <ClCompile Include="Generated\ATestCar.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -902,11 +910,12 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Audio\Sound.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\AudioComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\CapsuleComponent.h" />
-    <ClInclude Include="Source\Runtime\Engine\Components\CharacterMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\CharacterMovementComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\InputComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\LuaScriptComponent.h" />
-    <ClInclude Include="Source\Runtime\Engine\Components\MovementComponent.h" />
-    <ClInclude Include="Source\Runtime\Engine\Components\ProjectileMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\MovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\ProjectileMovementComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent4W.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\PropertyTestComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\RotatingMovementComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\BoxComponent.h" />
@@ -918,7 +927,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Components\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\SphereComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\SpringArmComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\Movement\VehicleMovementComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\GameFramework\AmbientLightActor.h" />
+    <ClInclude Include="Source\Runtime\Engine\GameFramework\TestCar.h" />
+    <ClInclude Include="Source\Runtime\Engine\GameFramework\WheelVehiclePawn.h" />
     <ClInclude Include="Source\Runtime\Engine\GameFramework\Camera\CamMod_LetterBox.h" />
     <ClInclude Include="Source\Runtime\Engine\GameFramework\Camera\CamMod_Vignette.h" />
     <ClInclude Include="Source\Runtime\Engine\GameFramework\Character.h" />
@@ -1265,6 +1277,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Generated\UPhysicsAsset.generated.h" />
     <ClInclude Include="Generated\UBodySetupCore.generated.h" />
     <ClInclude Include="Generated\FConstraintInstance.generated.h" />
+    <ClInclude Include="Generated\UVehicleMovementComponent.generated.h" />
+    <ClInclude Include="Generated\UVehicleMovementComponent4W.generated.h" />
+    <ClInclude Include="Generated\AWheeledVehiclePawn.generated.h" />
+    <ClInclude Include="Generated\ATestCar.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />

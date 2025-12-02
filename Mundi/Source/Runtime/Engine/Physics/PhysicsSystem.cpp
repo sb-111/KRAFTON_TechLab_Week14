@@ -68,6 +68,14 @@ void FPhysicsSystem::Initialize()
 
 	// 확장팩: Joint 물리 추가, Pvd에 조인트 디버그 렌더링 기능 추가
 	PxInitExtensions(*Physics, Pvd);
+	if (!PxInitVehicleSDK(*Physics))
+	{
+		UE_LOG("비히클 SDK 초기화 실패! 망했다!");
+	}
+	// Up과 Forward 인자로 받음
+	PxVehicleSetBasisVectors(PhysxConverter::ToPxVec3(FVector(0.0f, 0.0f, 1.0f)), PhysxConverter::ToPxVec3(FVector(1.0f, 0.0f, 0.0f)));
+
+	PxVehicleSetUpdateMode(PxVehicleUpdateMode::eVELOCITY_CHANGE);
 
 	// Params: Scale, TargetPlatform(기본값: 현재 플랫폼. 플랫폼마다 최적화 방식이 다름) 등 
 	Cooking = PxCreateCooking(PX_PHYSICS_VERSION, *Foundation, PxCookingParams(PxTolerancesScale()));
@@ -148,6 +156,7 @@ void FPhysicsSystem::Destroy()
 void FPhysicsSystem::Shutdown()
 {
 	PxCloseExtensions();
+	PxCloseVehicleSDK();
 	if (Dispatcher) Dispatcher->release();
 	if (Cooking) Cooking->release();
 	if (Material) Material->release();
