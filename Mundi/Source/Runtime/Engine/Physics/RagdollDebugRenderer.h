@@ -13,6 +13,8 @@ struct FKSphereElem;
 struct FKBoxElem;
 struct FKSphylElem;
 
+class UPhysicsAsset;
+
 // ===== Ragdoll Debug Renderer =====
 // Ragdoll Shape 및 Joint 디버그 시각화
 class FRagdollDebugRenderer
@@ -23,6 +25,16 @@ public:
     static void RenderSkeletalMeshRagdoll(
         URenderer* Renderer,
         USkeletalMeshComponent* SkelMeshComp,
+        const FVector4& BoneColor = FVector4(0.0f, 1.0f, 0.0f, 1.0f),
+        const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
+    );
+
+    // PhysicsAsset 기반 미리보기 렌더링 (Bodies 없이도 작동)
+    // SkeletalMeshComponent의 본 트랜스폼을 사용하여 PhysicsAsset의 Shape들을 렌더링
+    static void RenderPhysicsAssetPreview(
+        URenderer* Renderer,
+        USkeletalMeshComponent* SkelMeshComp,
+        UPhysicsAsset* PhysAsset,
         const FVector4& BoneColor = FVector4(0.0f, 1.0f, 0.0f, 1.0f),
         const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
     );

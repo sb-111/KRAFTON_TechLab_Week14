@@ -881,6 +881,23 @@ FString USkeletalMeshComponent::GetEffectivePhysicsAssetPath() const
     return "";
 }
 
+void USkeletalMeshComponent::SetPhysicsAssetPathOverride(const FString& NewPath)
+{
+    // 기존 Bodies가 있으면 정리
+    if (!Bodies.IsEmpty())
+    {
+        DestroyPhysicsState();
+    }
+    else
+    {
+        // Bodies가 없어도 캐시된 PhysicsAsset은 무효화
+        PhysicsAsset = nullptr;
+    }
+
+    // 새 경로 설정
+    PhysicsAssetPathOverride = NewPath;
+}
+
 UPhysicsAsset* USkeletalMeshComponent::GetEffectivePhysicsAsset()
 {
     // 이미 캐시된 PhysicsAsset이 있으면 반환

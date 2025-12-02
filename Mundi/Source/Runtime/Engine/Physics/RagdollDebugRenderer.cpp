@@ -6,6 +6,9 @@
 #include "AggregateGeometry.h"
 #include "PhysxConverter.h"
 #include "Renderer.h"
+#include "PhysicsAsset.h"
+#include "SkeletalMesh.h"
+#include "VertexData.h"  // FSkeleton
 
 void FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
     URenderer* Renderer,
@@ -357,5 +360,79 @@ void FRagdollDebugRenderer::AddSemicircle(
         OutColors.Add(Color);
 
         PrevPoint = CurrentPoint;
+    }
+}
+
+// PhysicsAsset 기반 미리보기 렌더링 (Bodies 없이도 작동)
+void FRagdollDebugRenderer::RenderPhysicsAssetPreview(
+    URenderer* Renderer,
+    USkeletalMeshComponent* SkelMeshComp,
+    UPhysicsAsset* PhysAsset,
+    const FVector4& BoneColor,
+    const FVector4& JointColor)
+{
+    if (!Renderer || !SkelMeshComp || !PhysAsset) return;
+
+    USkeletalMesh* SkelMesh = SkelMeshComp->GetSkeletalMesh();
+    if (!SkelMesh) return;
+
+    const FSkeleton* Skeleton = SkelMesh->GetSkeleton();
+    if (!Skeleton) return;
+
+    TArray<FVector> StartPoints;
+    TArray<FVector> EndPoints;
+    TArray<FVector4> Colors;
+
+    // 본 이름 → 월드 트랜스폼 매핑 (Joint 렌더링용)
+    TMap<FString, PxTransform> BoneWorldTransforms;
+
+    // 각 BodySetup에 대해 렌더링
+    for (int32 i = 0; i < PhysAsset->Bodies.Num(); ++i)
+    {
+        UBodySetup* Setup = PhysAsset->Bodies[i];
+        if (!Setup) continue;
+
+        // BodySetup의 BoneName으로 스켈레톤에서 본 인덱스 찾기
+        const auto* BoneIndexPtr = Skeleton->BoneNameToIndex.Find(Setup->BoneName.ToString());
+        if (!BoneIndexPtr) continue;
+
+        int32 BoneIndex = *BoneIndexPtr;
+
+        // 본의 월드 트랜스폼 가져오기
+        FTransform BoneWorldTransform = SkelMeshComp->GetBoneWorldTransform(BoneIndex);
+        PxTransform WorldTransform = PhysxConverter::ToPxTransform(BoneWorldTransform);
+
+        // 본 이름으로 트랜스폼 저장 (Joint 렌더링용)
+        BoneWorldTransforms.Add(Setup->BoneName.ToString(), WorldTransform);
+
+        // BodySetup의 AggGeom에서 Shape들 렌더링
+        RenderAggGeom(Renderer, Setup->AggGeom, WorldTransform, BoneColor,
+                      StartPoints, EndPoints, Colors);
+    }
+
+    // Constraint (Joint) 렌더링
+    for (int32 i = 0; i < PhysAsset->Constraints.Num(); ++i)
+    {
+        const FConstraintInstance& Constraint = PhysAsset->Constraints[i];
+
+        // 두 본의 트랜스폼 찾기
+        PxTransform* Transform1 = BoneWorldTransforms.Find(Constraint.ConstraintBone1.ToString());
+        PxTransform* Transform2 = BoneWorldTransforms.Find(Constraint.ConstraintBone2.ToString());
+
+        if (Transform1 && Transform2)
+        {
+            FVector Start = PhysxConverter::ToFVector(Transform1->p);
+            FVector End = PhysxConverter::ToFVector(Transform2->p);
+
+            StartPoints.Add(Start);
+            EndPoints.Add(End);
+            Colors.Add(JointColor);
+        }
+    }
+
+    // 라인 렌더링
+    if (StartPoints.Num() > 0)
+    {
+        Renderer->AddLines(StartPoints, EndPoints, Colors);
     }
 }

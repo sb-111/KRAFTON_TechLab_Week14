@@ -3471,10 +3471,10 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
 
     UPhysicsAsset* Asset = PhysState->EditingAsset;
 
-    // 기존 데이터 클리어
+    // 기존 데이터 클리어 (UObject는 ObjectFactory로 삭제)
     for (UBodySetup* Body : Asset->Bodies)
     {
-        if (Body) delete Body;
+        if (Body) ObjectFactory::DeleteObject(Body);
     }
     Asset->Bodies.Empty();
     Asset->Constraints.Empty();

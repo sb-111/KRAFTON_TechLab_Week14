@@ -53,6 +53,8 @@
 // RagdollDebugRenderer는 USkeletalMeshComponent 기반으로 수정 필요
 #include "RagdollDebugRenderer.h"
 #include "SkeletalMeshComponent.h"
+#include "SkeletalMesh.h"
+#include "PhysicsAsset.h"
 #include "BodyInstance.h"
 #include "SkinnedMeshComponent.h"
 #include "ParticleSystemComponent.h"
@@ -1569,7 +1571,7 @@ void FSceneRenderer::RenderDebugPrimitivesPass()
 }
 
 // 래그돌 디버그 렌더링 (에디터/PIE 모두 동작)
-// 조건: SF_Ragdoll Show flag가 켜져 있고, Bodies가 존재하면 렌더링
+// 조건: SF_Ragdoll Show flag가 켜져 있고, Bodies 또는 PhysicsAsset이 존재하면 렌더링
 void FSceneRenderer::RenderRagdollDebugPass()
 {
 	// Show flag 체크
@@ -1587,15 +1589,34 @@ void FSceneRenderer::RenderRagdollDebugPass()
 	{
 		if (USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(MeshComp))
 		{
-			// Bodies가 있으면 렌더링 (시뮬레이션 여부와 무관)
-			if (!SkelMeshComp->GetBodies().IsEmpty())
+			// PhysicsAsset 가져오기 (GetBodies의 lazy 초기화를 피하기 위해)
+			UPhysicsAsset* PhysAsset = SkelMeshComp->GetEffectivePhysicsAsset();
+			if (!PhysAsset)
 			{
-				FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
-					OwnerRenderer, SkelMeshComp,
-					FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
-					FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
-				);
+				continue;
 			}
+
+			// PIE 모드에서 시뮬레이션 중이면 Bodies 기반 렌더링
+			// GetBodies()가 lazy 초기화를 수행하므로, PIE 모드에서만 호출
+			if (World->bPie || GEngine.IsPIEActive())
+			{
+				if (!SkelMeshComp->GetBodies().IsEmpty())
+				{
+					FRagdollDebugRenderer::RenderSkeletalMeshRagdoll(
+						OwnerRenderer, SkelMeshComp,
+						FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
+						FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
+					);
+					continue;
+				}
+			}
+
+			// 에디터 모드: PhysicsAsset 기반 미리보기 렌더링
+			FRagdollDebugRenderer::RenderPhysicsAssetPreview(
+				OwnerRenderer, SkelMeshComp, PhysAsset,
+				FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
+				FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
+			);
 		}
 	}
 
