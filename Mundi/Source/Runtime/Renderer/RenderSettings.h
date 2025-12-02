@@ -52,6 +52,9 @@ public:
     void SetDOFMaxCoCRadius(float Value) { DOFMaxCoCRadius = Value; }
     float GetDOFMaxCoCRadius() const { return DOFMaxCoCRadius; }
 
+    void SetDOFBlurPassCount(int32 Value) { DOFBlurPassCount = FMath::Clamp(Value, 1, 2); }
+    int32 GetDOFBlurPassCount() const { return DOFBlurPassCount; }
+
     // Tile-based light culling
     void SetTileSize(uint32 Value) { TileSize = Value; }
     uint32 GetTileSize() const { return TileSize; }
@@ -84,6 +87,7 @@ private:
     float DOFNearTransitionRange = 5.0f;     // 포그라운드 전환 범위 (미터, 기본값: 5.0)
     float DOFFarTransitionRange = 10.0f;     // 백그라운드 전환 범위 (미터, 기본값: 10.0)
     float DOFMaxCoCRadius = 1.0f;            // 최대 CoC 반경 (픽셀, 기본값: 1.0)
+    int32 DOFBlurPassCount = 2;              // Poisson Blur 적용 횟수 (1=Bokeh 강조, 2=깔끔한 블러, 기본값: 2)
 
     // Tile-based light culling
     uint32 TileSize = 16;                   // 타일 크기 (픽셀, 기본값: 16)
