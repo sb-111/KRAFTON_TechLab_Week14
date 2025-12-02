@@ -1802,13 +1802,17 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
+    // 폰트 스케일을 줌에 맞게 조절 (언리얼 스타일: 노드와 텍스트가 함께 스케일링)
+    const float fontScale = PhysState->GraphZoom;
+    ImGui::SetWindowFontScale(fontScale);
+
     // 배경
     DrawList->AddRectFilled(canvasPos,
         ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y),
         IM_COL32(30, 30, 30, 255));
 
     // 그리드
-    float gridSize = 20.0f * PhysState->GraphZoom;
+    float gridSize = 80.0f * PhysState->GraphZoom;
     for (float x = fmodf(PhysState->GraphOffset.X, gridSize); x < canvasSize.x; x += gridSize)
     {
         DrawList->AddLine(ImVec2(canvasPos.x + x, canvasPos.y),
@@ -1952,7 +1956,7 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         return boneName;
     };
 
-    // 노드 크기 및 레이아웃 상수 (노드 크기 확대)
+    // 노드 크기와 간격 모두 줌에 비례 (언리얼 스타일: 비율 유지)
     const float NodeWidth = 100.0f * PhysState->GraphZoom;
     const float NodeHeight = 65.0f * PhysState->GraphZoom;
     const float ConstraintNodeWidth = 160.0f * PhysState->GraphZoom;
@@ -2006,7 +2010,7 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
 
     // ========== 노드 그리기 ==========
 
-    // 헬퍼 람다: Body 노드 그리기 (언리얼 스타일)
+    // 헬퍼 람다: Body 노드 그리기 (언리얼 스타일 - 폰트도 함께 스케일링)
     auto DrawBodyNode = [&](ImVec2 pos, const FString& boneName, int32 bodyIdx, int32 shapeCount, bool bSelected)
     {
         ImVec2 nodeMin(pos.x - NodeWidth * 0.5f, pos.y - NodeHeight * 0.5f);
@@ -2014,25 +2018,27 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
 
         // 배경색 (연두색)
         ImU32 bgColor = bSelected ? BodySelectedColor : BodyColor;
-        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f);
+        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f * PhysState->GraphZoom);
         if (bSelected)
-            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f, 0, 2.0f);
+            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f * PhysState->GraphZoom, 0, 2.0f);
 
-        // "바디" 라벨 (검은 글씨)
+        // 텍스트 (폰트 스케일이 적용되어 노드와 비례함)
+        FString displayName = StripBonePrefix(boneName);
+
+        // "바디" 라벨
         const char* bodyLabel = "바디";
         ImVec2 labelSize = ImGui::CalcTextSize(bodyLabel);
-        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, bodyLabel);
+        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6 * PhysState->GraphZoom), TextColor, bodyLabel);
 
-        // 본 이름 (prefix 제거 후 표시)
-        FString displayName = StripBonePrefix(boneName);
+        // 본 이름
         ImVec2 nameSize = ImGui::CalcTextSize(displayName.c_str());
-        DrawList->AddText(ImVec2(pos.x - nameSize.x * 0.5f, pos.y - 5), TextColor, displayName.c_str());
+        DrawList->AddText(ImVec2(pos.x - nameSize.x * 0.5f, pos.y - 5 * PhysState->GraphZoom), TextColor, displayName.c_str());
 
-        // "셰이프 N개" (검은 글씨)
+        // "셰이프 N개"
         char shapeText[32];
         sprintf_s(shapeText, "셰이프 %d개", shapeCount);
         ImVec2 shapeSize = ImGui::CalcTextSize(shapeText);
-        DrawList->AddText(ImVec2(pos.x - shapeSize.x * 0.5f, nodeMax.y - 18), TextColor, shapeText);
+        DrawList->AddText(ImVec2(pos.x - shapeSize.x * 0.5f, nodeMax.y - 18 * PhysState->GraphZoom), TextColor, shapeText);
 
         // 클릭 감지
         if (ImGui::IsMouseHoveringRect(nodeMin, nodeMax) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -2041,7 +2047,7 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         }
     };
 
-    // 헬퍼 람다: Constraint 노드 그리기 (언리얼 스타일)
+    // 헬퍼 람다: Constraint 노드 그리기 (언리얼 스타일 - 폰트도 함께 스케일링)
     // 표시 형식: 자식본:부모본 (스켈레톤 계층 구조 기준, Bone1/Bone2 순서 무관)
     auto DrawConstraintNode = [&](ImVec2 pos, const FString& bone1, const FString& bone2, int32 constraintIdx, bool bSelected)
     {
@@ -2050,22 +2056,23 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
 
         // 배경색 (노란색/주황색)
         ImU32 bgColor = bSelected ? ConstraintSelectedColor : ConstraintColor;
-        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f);
+        DrawList->AddRectFilled(nodeMin, nodeMax, bgColor, 4.0f * PhysState->GraphZoom);
         if (bSelected)
-            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f, 0, 2.0f);
+            DrawList->AddRect(nodeMin, nodeMax, IM_COL32(255, 255, 255, 255), 4.0f * PhysState->GraphZoom, 0, 2.0f);
 
-        // "컨스트레인트" 라벨 (검은 글씨)
-        const char* constraintLabel = "컨스트레인트";
-        ImVec2 labelSize = ImGui::CalcTextSize(constraintLabel);
-        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, constraintLabel);
-
-        // Bone2 : Bone1 표시 (언리얼 방식: ConstraintBone2(Child) : ConstraintBone1(Parent))
-        // prefix 제거 후 표시
+        // 텍스트 (폰트 스케일이 적용되어 노드와 비례함)
         FString shortBone1 = StripBonePrefix(bone1);
         FString shortBone2 = StripBonePrefix(bone2);
         FString connectionText = shortBone2 + " : " + shortBone1;
+
+        // "컨스트레인트" 라벨
+        const char* constraintLabel = "컨스트레인트";
+        ImVec2 labelSize = ImGui::CalcTextSize(constraintLabel);
+        DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6 * PhysState->GraphZoom), TextColor, constraintLabel);
+
+        // 연결 정보
         ImVec2 connSize = ImGui::CalcTextSize(connectionText.c_str());
-        DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18), TextColor, connectionText.c_str());
+        DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18 * PhysState->GraphZoom), TextColor, connectionText.c_str());
 
         // 클릭 감지
         if (ImGui::IsMouseHoveringRect(nodeMin, nodeMax) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -2112,19 +2119,32 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
     if (canvasSize.x > 1 && canvasSize.y > 1)
     {
         ImGui::SetCursorScreenPos(canvasPos);
-        ImGui::InvisibleButton("GraphCanvas", canvasSize);
-        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
+        ImGui::InvisibleButton("GraphCanvas", canvasSize, ImGuiButtonFlags_MouseButtonMiddle | ImGuiButtonFlags_MouseButtonRight);
+
+        bool bIsHovered = ImGui::IsItemHovered();
+        bool bIsActive = ImGui::IsItemActive();
+
+        // 패닝: 마우스 휠 버튼 또는 우클릭 드래그
+        if (bIsHovered || bIsActive)
         {
-            PhysState->GraphOffset.X += ImGui::GetIO().MouseDelta.x;
-            PhysState->GraphOffset.Y += ImGui::GetIO().MouseDelta.y;
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle) || ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+            {
+                PhysState->GraphOffset.X += ImGui::GetIO().MouseDelta.x;
+                PhysState->GraphOffset.Y += ImGui::GetIO().MouseDelta.y;
+            }
         }
-        if (ImGui::IsItemHovered())
+
+        // 줌: 마우스 휠
+        if (bIsHovered)
         {
             float wheel = ImGui::GetIO().MouseWheel;
             if (wheel != 0.0f)
-                PhysState->GraphZoom = std::clamp(PhysState->GraphZoom + wheel * 0.1f, 0.5f, 2.0f);
+                PhysState->GraphZoom = std::clamp(PhysState->GraphZoom + wheel * 0.1f, 0.1f, 2.0f);
         }
     }
+
+    // 폰트 스케일 복원
+    ImGui::SetWindowFontScale(1.0f);
 
     ImGui::EndChild();
 }
