@@ -33,6 +33,68 @@ bool SPhysicsAssetEditorWindow::bIsAnyPhysicsAssetEditorFocused = false;
 
 static const float PI_CONST = 3.14159265358979323846f;
 
+// ========== 부피 기반 질량 계산 함수들 ==========
+// 기본 밀도 (kg/m³) - 인체 평균 밀도 (~1000 kg/m³, 물과 비슷)
+static const float DEFAULT_BODY_DENSITY = 1000.0f;
+
+// Sphere 부피: (4/3) * π * r³
+static float CalculateSphereVolume(float Radius)
+{
+    return (4.0f / 3.0f) * PI_CONST * Radius * Radius * Radius;
+}
+
+// Box 부피: (2*X) * (2*Y) * (2*Z) = 8 * X * Y * Z (half extent 기준)
+static float CalculateBoxVolume(float HalfX, float HalfY, float HalfZ)
+{
+    return 8.0f * HalfX * HalfY * HalfZ;
+}
+
+// Capsule 부피: 실린더 + 양쪽 반구 = π * r² * length + (4/3) * π * r³
+static float CalculateCapsuleVolume(float Radius, float Length)
+{
+    float CylinderVolume = PI_CONST * Radius * Radius * Length;
+    float SphereVolume = (4.0f / 3.0f) * PI_CONST * Radius * Radius * Radius;
+    return CylinderVolume + SphereVolume;
+}
+
+// Body의 총 부피 계산 (모든 Shape 합산)
+static float CalculateBodyTotalVolume(UBodySetup* Body)
+{
+    if (!Body) return 0.0f;
+
+    float TotalVolume = 0.0f;
+
+    // Sphere들
+    for (const auto& Sphere : Body->AggGeom.SphereElems)
+    {
+        TotalVolume += CalculateSphereVolume(Sphere.Radius);
+    }
+
+    // Box들
+    for (const auto& Box : Body->AggGeom.BoxElems)
+    {
+        TotalVolume += CalculateBoxVolume(Box.X, Box.Y, Box.Z);
+    }
+
+    // Capsule(Sphyl)들
+    for (const auto& Capsule : Body->AggGeom.SphylElems)
+    {
+        TotalVolume += CalculateCapsuleVolume(Capsule.Radius, Capsule.Length);
+    }
+
+    return TotalVolume;
+}
+
+// 부피와 밀도로 질량 계산 후 Body에 적용
+static void UpdateBodyMassFromVolume(UBodySetup* Body, float Density = DEFAULT_BODY_DENSITY)
+{
+    if (!Body) return;
+
+    float Volume = CalculateBodyTotalVolume(Body);
+    // 최소 질량 0.1kg, 최대 질량 10000kg
+    Body->MassInKg = FMath::Clamp(Volume * Density, 0.1f, 10000.0f);
+}
+
 // 박스 와이어프레임 (12개 라인) - 회전 지원
 static void CreateBoxWireframe(ULineComponent* LineComp, const FVector& Center, const FVector& HalfExtent, const FQuat& Rotation, const FVector4& Color)
 {
@@ -2162,16 +2224,6 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
     {
         ImGui::Indent();
 
-        // Simulate Physics 체크박스
-        bool bSimulate = Body->bSimulatePhysics;
-        if (ImGui::Checkbox("Simulate Physics", &bSimulate))
-        {
-            Body->bSimulatePhysics = bSimulate;
-            if (PhysState) PhysState->bIsDirty = true;
-        }
-
-        ImGui::Separator();
-
         float mass = Body->MassInKg;
         ImGui::Text("Mass (kg)");
         ImGui::SetNextItemWidth(-1);
@@ -2280,6 +2332,8 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            // Shape 크기 변경 시 부피 기반 질량 재계산
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -2379,6 +2433,7 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -2392,6 +2447,7 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -2405,6 +2461,7 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -2504,6 +2561,7 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -2517,6 +2575,7 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                             PhysState->bIsDirty = true;
                             PhysState->bShapesDirty = true;
                             if (PhysState->ShapeGizmoAnchor) PhysState->ShapeGizmoAnchor->UpdateAnchorFromShape();
+                            UpdateBodyMassFromVolume(Body);
                         }
                     }
 
@@ -3558,10 +3617,9 @@ void SPhysicsAssetEditorWindow::AddShapeToBone(int32 BoneIndex, EShapeType Shape
     }
     else
     {
-        // 새 Body 생성 후 Shape 추가
+        // 새 Body 생성 후 Shape 추가 (MassInKg는 AddShapeToBody에서 부피 기반으로 계산됨)
         UBodySetup* NewBody = NewObject<UBodySetup>();
         NewBody->BoneName = FName(BoneName);
-        NewBody->MassInKg = 1.0f;
         NewBody->LinearDamping = 0.01f;
         NewBody->AngularDamping = 0.0f;
 
@@ -3626,6 +3684,9 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
         break;
     }
     }
+
+    // Shape 추가 후 부피 기반 질량 재계산
+    UpdateBodyMassFromVolume(Body);
 }
 
 void SPhysicsAssetEditorWindow::AddBodyToBoneWithShape(int32 BoneIndex, EShapeType ShapeType)
@@ -3670,11 +3731,10 @@ UBodySetup* SPhysicsAssetEditorWindow::CreateBodySetupWithShape(const FString& B
     UBodySetup* Body = NewObject<UBodySetup>();
     Body->BoneName = FName(BoneName);
 
-    // Shape 추가 (AddShapeToBody 호출로 통일)
+    // Shape 추가 (AddShapeToBody가 부피 기반 질량도 계산함)
     AddShapeToBody(Body, ShapeType);
 
-    // 기본 물리 속성
-    Body->MassInKg = 1.0f;
+    // 기본 물리 속성 (MassInKg는 AddShapeToBody에서 부피 기반으로 이미 계산됨)
     Body->LinearDamping = 0.01f;
     Body->AngularDamping = 0.05f;
 
@@ -4476,8 +4536,8 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
             continue;
         }
 
-        // 기본 물리 속성
-        BodySetup->MassInKg = 1.0f;
+        // 기본 물리 속성 (MassInKg는 부피 기반으로 계산)
+        UpdateBodyMassFromVolume(BodySetup);
         BodySetup->Friction = 0.5f;
         BodySetup->Restitution = 0.3f;
         BodySetup->LinearDamping = 0.1f;

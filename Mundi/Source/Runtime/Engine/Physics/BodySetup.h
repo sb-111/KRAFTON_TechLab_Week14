@@ -16,10 +16,6 @@ public:
     UPROPERTY(EditAnywhere, Category="Primitives")
     FKAggregateGeom AggGeom;
 
-    // Physics type
-    UPROPERTY(EditAnywhere, Category="Physics")
-    bool bSimulatePhysics = false;
-
     // Mass in kg
     UPROPERTY(EditAnywhere, Category="Physics")
     float MassInKg = 1.0f;

@@ -144,6 +144,18 @@ void FConstraintInstance::InitConstraint(FBodyInstance* Body1, FBodyInstance* Bo
     // bDisableCollision = true면 Joint로 연결된 두 Body 간 충돌 비활성화
     Joint->setConstraintFlag(PxConstraintFlag::eCOLLISION_ENABLED, !bDisableCollision);
 
+    // ===== Angular Motor (Drive) 설정 =====
+    // 래그돌이 특정 자세를 유지하려 하거나 힘을 줄 때 사용
+    if (bAngularMotorEnabled && (AngularMotorStrength > 0.0f || AngularMotorDamping > 0.0f))
+    {
+        // SLERP 드라이브: 모든 회전 축에 대해 부드럽게 목표로 끌어당김
+        PxD6JointDrive angularDrive(AngularMotorStrength, AngularMotorDamping, PX_MAX_F32, true);
+        Joint->setDrive(PxD6Drive::eSLERP, angularDrive);
+
+        // 드라이브 목표: 초기 상대 위치로 설정 (기본 자세 유지)
+        Joint->setDrivePosition(PxTransform(PxIdentity));
+    }
+
     // userData에 이 인스턴스 포인터 저장 (과제 요구사항)
     Joint->userData = this;
 
