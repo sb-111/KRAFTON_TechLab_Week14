@@ -41,7 +41,7 @@ void UConstraintAnchorComponent::ClearTarget()
 
 void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
 {
-    if (!TargetConstraint || !MeshComp || ChildBoneIndex < 0)
+    if (!TargetConstraint || !MeshComp || ParentBoneIndex < 0)
         return;
 
     // 기즈모 조작 중에는 Constraint에서 Anchor로의 업데이트 무시
@@ -51,15 +51,16 @@ void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
     // OnTransformUpdated()에서 Constraint 수정 방지
     bUpdatingFromConstraint = true;
 
-    CachedChildBoneWorldTransform = MeshComp->GetBoneWorldTransform(ChildBoneIndex);
-    if (ParentBoneIndex >= 0)
-        CachedParentBoneWorldTransform = MeshComp->GetBoneWorldTransform(ParentBoneIndex);
+    CachedParentBoneWorldTransform = MeshComp->GetBoneWorldTransform(ParentBoneIndex);
+    if (ChildBoneIndex >= 0)
+        CachedChildBoneWorldTransform = MeshComp->GetBoneWorldTransform(ChildBoneIndex);
 
-    // Constraint의 Position1, Rotation1을 월드 좌표로 변환 (언리얼 규칙: Bone1 = Child)
-    FQuat JointRot = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation1);
-    FVector JointWorldPos = CachedChildBoneWorldTransform.Translation +
-                            CachedChildBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position1);
-    FQuat JointWorldRot = CachedChildBoneWorldTransform.Rotation * JointRot;
+    // Position2, Rotation2 (Parent 기준)를 월드 좌표로 변환
+    // Position1/Rotation1은 항상 (0,0,0)이므로 Parent 기준으로 기즈모 위치 계산
+    FQuat JointRot = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation2);
+    FVector JointWorldPos = CachedParentBoneWorldTransform.Translation +
+                            CachedParentBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position2);
+    FQuat JointWorldRot = CachedParentBoneWorldTransform.Rotation * JointRot;
 
     SetWorldLocation(JointWorldPos);
     SetWorldRotation(JointWorldRot);
@@ -77,7 +78,7 @@ void UConstraintAnchorComponent::OnTransformUpdated()
 {
     USceneComponent::OnTransformUpdated();
 
-    if (!TargetConstraint || !MeshComp || ChildBoneIndex < 0)
+    if (!TargetConstraint || !MeshComp || ParentBoneIndex < 0)
         return;
 
     // UpdateAnchorFromConstraint() 실행 중에는 Constraint 수정하지 않음
@@ -110,27 +111,39 @@ void UConstraintAnchorComponent::OnTransformUpdated()
     LastAnchorLocation = AnchorWorldPos;
     LastAnchorRotation = AnchorWorldRot;
 
-    // ===== Child 본 (Bone1) 기준으로 Position1, Rotation1 계산 (언리얼 규칙) =====
-    FTransform ChildBoneWorld = MeshComp->GetBoneWorldTransform(ChildBoneIndex);
-    FQuat ChildBoneWorldRotInv = ChildBoneWorld.Rotation.Inverse();
+    // ===== Child (Position1/Rotation1)은 항상 (0,0,0)으로 고정 (언리얼 규칙) =====
+    TargetConstraint->Position1 = FVector::Zero();
+    TargetConstraint->Rotation1 = FVector::Zero();
 
-    FVector LocalPosition1 = ChildBoneWorldRotInv.RotateVector(AnchorWorldPos - ChildBoneWorld.Translation);
-    FQuat LocalRotation1 = ChildBoneWorldRotInv * AnchorWorldRot;
+    // ===== Parent 본 (Bone2) 기준으로 Position2, Rotation2 계산 =====
+    FTransform ParentBoneWorld = MeshComp->GetBoneWorldTransform(ParentBoneIndex);
+    FQuat ParentBoneWorldRotInv = ParentBoneWorld.Rotation.Inverse();
 
-    TargetConstraint->Position1 = LocalPosition1;
-    TargetConstraint->Rotation1 = LocalRotation1.ToEulerZYXDeg();
-
-    // ===== Parent 본 (Bone2) 기준으로 Position2, Rotation2 계산 (언리얼 규칙) =====
-    if (ParentBoneIndex >= 0)
+    // 위치가 변경된 경우에만 Position 업데이트
+    if (bLocationChanged)
     {
-        FTransform ParentBoneWorld = MeshComp->GetBoneWorldTransform(ParentBoneIndex);
-        FQuat ParentBoneWorldRotInv = ParentBoneWorld.Rotation.Inverse();
-
         FVector LocalPosition2 = ParentBoneWorldRotInv.RotateVector(AnchorWorldPos - ParentBoneWorld.Translation);
-        FQuat LocalRotation2 = ParentBoneWorldRotInv * AnchorWorldRot;
-
         TargetConstraint->Position2 = LocalPosition2;
-        TargetConstraint->Rotation2 = LocalRotation2.ToEulerZYXDeg();
+    }
+
+    // 회전이 변경된 경우에만 Rotation 업데이트
+    if (bRotationChanged)
+    {
+        FQuat LocalRotation2 = ParentBoneWorldRotInv * AnchorWorldRot;
+        FVector NewEuler2 = LocalRotation2.ToEulerZYXDeg();
+        FVector OldEuler2 = TargetConstraint->Rotation2;
+
+        // Euler 각도 연속성 보장: 180° 이상 차이나면 ±360° 조정
+        for (int i = 0; i < 3; ++i)
+        {
+            float Diff = NewEuler2[i] - OldEuler2[i];
+            if (Diff > 180.0f)
+                NewEuler2[i] -= 360.0f;
+            else if (Diff < -180.0f)
+                NewEuler2[i] += 360.0f;
+        }
+
+        TargetConstraint->Rotation2 = NewEuler2;
     }
 
     bConstraintModified = true;
