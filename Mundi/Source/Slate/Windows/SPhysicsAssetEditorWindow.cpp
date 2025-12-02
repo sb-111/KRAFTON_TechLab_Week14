@@ -15,6 +15,7 @@
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
+#include "Source/Runtime/Engine/Components/BoneAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/SkeletalMeshComponent.h"
 #include "Source/Runtime/Engine/Collision/Picking.h"
 #include "Source/Runtime/Engine/GameFramework/CameraActor.h"
@@ -511,7 +512,18 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
 {
     if (!ActiveState || !ActiveState->PreviewActor) return;
 
-    if (ActiveState->bShowBones && ActiveState->CurrentMesh && ActiveState->bBoneLinesDirty)
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+
+    // 본이 선택된 경우: 기즈모 위치 업데이트는 SelectBone에서만 수행
+    // (BlendSpaceEditor 패턴: 기즈모를 조작해도 본 위치로 돌아가지 않음,
+    //  다른 본 선택 시에만 새 본 위치로 이동)
+
+    // 본 라인 하이라이트 업데이트 (SSkeletalMeshViewerWindow 패턴)
+    if (ActiveState->bShowBones)
+    {
+        ActiveState->bBoneLinesDirty = true;
+    }
+    if (ActiveState->bShowBones && ActiveState->PreviewActor && ActiveState->CurrentMesh && ActiveState->bBoneLinesDirty)
     {
         if (ULineComponent* LineComp = ActiveState->PreviewActor->GetBoneLineComponent())
         {
@@ -525,7 +537,6 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
     RenderConstraintVisuals();
 
     // Constraint 기즈모 앵커 위치 업데이트 (드래그 중이 아닐 때만)
-    PhysicsAssetEditorState* PhysState = GetPhysicsState();
     if (PhysState && PhysState->ConstraintGizmoAnchor && !PhysState->ConstraintGizmoAnchor->bIsBeingManipulated)
     {
         PhysState->ConstraintGizmoAnchor->UpdateAnchorFromConstraint();
@@ -771,8 +782,10 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
         UActorComponent* SelectedComp = PhysState->World->GetSelectionManager()->GetSelectedComponent();
         if (SelectedComp)
         {
-            // ShapeAnchorComponent 또는 ConstraintAnchorComponent가 선택됐으면 피킹 스킵
-            if (Cast<UShapeAnchorComponent>(SelectedComp) || Cast<UConstraintAnchorComponent>(SelectedComp))
+            // ShapeAnchorComponent, ConstraintAnchorComponent, 또는 BoneAnchorComponent가 선택됐으면 피킹 스킵
+            if (Cast<UShapeAnchorComponent>(SelectedComp) ||
+                Cast<UConstraintAnchorComponent>(SelectedComp) ||
+                Cast<UBoneAnchorComponent>(SelectedComp))
             {
                 return;
             }
@@ -1012,6 +1025,9 @@ void SPhysicsAssetEditorWindow::RenderLeftPanel(float PanelWidth)
 
     // Asset Browser 섹션 (부모 클래스에서 가져옴)
     RenderAssetBrowser(PanelWidth);
+
+    // Display Options 섹션
+    RenderDisplayOptions(PanelWidth);
 
     float totalHeight = ImGui::GetContentRegionAvail().y;
     float splitterHeight = 4.0f;
@@ -1369,6 +1385,102 @@ void SPhysicsAssetEditorWindow::RenderSkeletonTreeSettings()
     }
 }
 
+void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
+{
+    if (!ActiveState) return;
+
+    ImGui::Text("DISPLAY OPTIONS");
+    ImGui::Dummy(ImVec2(0, 2));
+
+    ImGui::BeginGroup();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.5f, 1.5f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.23f, 0.25f, 0.27f, 0.80f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.28f, 0.30f, 0.33f, 0.90f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.20f, 0.22f, 0.25f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.75f, 0.80f, 0.90f, 1.00f));
+
+    // Show Mesh 체크박스
+    if (ImGui::Checkbox("Show Mesh", &ActiveState->bShowMesh))
+    {
+        if (ActiveState->PreviewActor)
+        {
+            if (auto* comp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
+                comp->SetVisibility(ActiveState->bShowMesh);
+        }
+    }
+
+    ImGui::SameLine(0.0f, 12.0f);
+
+    // Show Bones 체크박스
+    if (ImGui::Checkbox("Show Bones", &ActiveState->bShowBones))
+    {
+        if (ActiveState->PreviewActor)
+        {
+            if (auto* lineComp = ActiveState->PreviewActor->GetBoneLineComponent())
+                lineComp->SetLineVisible(ActiveState->bShowBones);
+        }
+        if (ActiveState->bShowBones)
+            ActiveState->bBoneLinesDirty = true;
+    }
+
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar();
+    ImGui::EndGroup();
+
+    ImGui::Dummy(ImVec2(0, 4));
+    ImGui::Separator();
+    ImGui::Dummy(ImVec2(0, 4));
+}
+
+void SPhysicsAssetEditorWindow::SelectBone(int32 BoneIndex)
+{
+    PhysicsAssetEditorState* PhysState = GetPhysicsState();
+    if (!PhysState || !PhysState->World) return;
+    if (!ActiveState || !ActiveState->CurrentMesh) return;
+
+    const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
+    if (!Skeleton || BoneIndex < 0 || BoneIndex >= (int32)Skeleton->Bones.size()) return;
+
+    ASkeletalMeshActor* PreviewActor = static_cast<ASkeletalMeshActor*>(ActiveState->PreviewActor);
+    if (!PreviewActor) return;
+
+    // 본 인덱스 저장
+    ActiveState->SelectedBoneIndex = BoneIndex;
+
+    // Body/Shape/Constraint 선택 해제
+    PhysState->SelectedBodyIndex = -1;
+    PhysState->SelectedShapeType = EShapeType::None;
+    PhysState->SelectedShapeIndex = -1;
+    PhysState->SelectedConstraintIndex = -1;
+
+    // Shape 기즈모 숨기기
+    if (PhysState->ShapeGizmoAnchor)
+    {
+        PhysState->ShapeGizmoAnchor->ClearTarget();
+        PhysState->ShapeGizmoAnchor->SetVisibility(false);
+        PhysState->ShapeGizmoAnchor->SetEditability(false);
+    }
+
+    // Constraint 기즈모 숨기기
+    if (PhysState->ConstraintGizmoAnchor)
+    {
+        PhysState->ConstraintGizmoAnchor->ClearTarget();
+        PhysState->ConstraintGizmoAnchor->SetVisibility(false);
+        PhysState->ConstraintGizmoAnchor->SetEditability(false);
+    }
+
+    // 본 라인 하이라이트 업데이트
+    ActiveState->bBoneLinesDirty = true;
+
+    // BlendSpaceEditor 패턴 사용: RepositionAnchorToBone + GetBoneGizmoAnchor
+    PreviewActor->RepositionAnchorToBone(BoneIndex);
+    if (USceneComponent* Anchor = PreviewActor->GetBoneGizmoAnchor())
+    {
+        PhysState->World->GetSelectionManager()->SelectActor(PreviewActor);
+        PhysState->World->GetSelectionManager()->SelectComponent(Anchor);
+    }
+}
+
 void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
 {
     if (!ActiveState || !ActiveState->CurrentMesh) return;
@@ -1416,12 +1528,8 @@ void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
 
     if (ImGui::IsItemClicked())
     {
-        ActiveState->SelectedBoneIndex = BoneIndex;
-        // 본 클릭 시 Body 선택 해제
-        if (PhysState)
-        {
-            PhysState->SelectedBodyIndex = -1;
-        }
+        // 본 클릭 시 기즈모 표시
+        SelectBone(BoneIndex);
     }
 
     // 우클릭 컨텍스트 메뉴

@@ -70,7 +70,11 @@ private:
     // Selection helpers
     void SelectBody(int32 Index, PhysicsAssetEditorState::ESelectionSource Source);
     void SelectConstraint(int32 Index, PhysicsAssetEditorState::ESelectionSource Source);
+    void SelectBone(int32 BoneIndex);  // 본 선택 시 기즈모 표시
     void ClearSelection();
+
+    // Display Options
+    void RenderDisplayOptions(float PanelWidth);
 
     // Body 생성/삭제
     void AddBodyToSelectedBone();
