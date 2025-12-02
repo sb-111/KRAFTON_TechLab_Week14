@@ -133,12 +133,13 @@ void ASkeletalMeshActor::RebuildBoneLines(int32 SelectedBoneIndex)
         CachedSelected = SelectedBoneIndex;
     }
 
-    // Update transforms based on whether animation is playing
+    // Update transforms based on whether animation is playing or physics is simulating
     const bool bIsAnimationPlaying = SkeletalMeshComponent && SkeletalMeshComponent->IsPlayingAnimation();
+    const bool bIsSimulatingPhysics = SkeletalMeshComponent && SkeletalMeshComponent->IsSimulatingPhysics();
 
-    if (bIsAnimationPlaying)
+    if (bIsAnimationPlaying || bIsSimulatingPhysics)
     {
-        // During animation, update all bone transforms (root bone subtree = entire skeleton)
+        // During animation or physics simulation, update all bone transforms (root bone subtree = entire skeleton)
         UpdateBoneSubtreeTransforms(0);
     }
     else if (SelectedBoneIndex >= 0 && SelectedBoneIndex < BoneCount)

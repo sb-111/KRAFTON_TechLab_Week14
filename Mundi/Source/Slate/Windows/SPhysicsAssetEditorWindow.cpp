@@ -517,9 +517,13 @@ void SPhysicsAssetEditorWindow::PreRenderViewportUpdate()
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
 
     // 본 포즈 업데이트 (새 메시 로드 후 본 트랜스폼이 올바르게 계산되도록)
-    if (USkeletalMeshComponent* MeshComp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
+    // 시뮬레이션 중에는 호출하지 않음 (물리 시뮬레이션 결과가 덮어써지는 것 방지)
+    if (!bSimulateInEditor)
     {
-        MeshComp->ResetToRefPose();
+        if (USkeletalMeshComponent* MeshComp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
+        {
+            MeshComp->ResetToRefPose();
+        }
     }
 
     // 본이 선택된 경우: 기즈모 위치 업데이트는 SelectBone에서만 수행
@@ -4008,6 +4012,14 @@ void SPhysicsAssetEditorWindow::RenderToolsPanel()
                     PreviewComp->SetSimulatePhysics(false);
                     PreviewComp->SetRagdollState(false);
                     PreviewComp->ResetToRefPose();
+
+                    // 본 라인 캐시 리셋 (래그돌 위치에서 레퍼런스 포즈로 갱신)
+                    if (PreviewActor)
+                    {
+                        PreviewActor->ResetBoneLinesCache();
+                    }
+                    ActiveState->bBoneLinesDirty = true;
+
                     UE_LOG("[PhysicsAssetEditor] 시뮬레이션 중지, 포즈 복원");
                 }
             }
