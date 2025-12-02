@@ -2044,10 +2044,10 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	ID3D11RenderTargetView* NullRTV = nullptr;
 	RHIDevice->GetDeviceContext()->OMSetRenderTargets(1, &NullRTV, nullptr);
 
-	// Pass 2: BlurH (수평)
+	// ===== Pass 2-3: Poisson Blur (옵션에 따라 1회 또는 2회) =====
 
-	// Compute Shader 로드 (UResourceManager 프레임워크 사용)
-	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Blur_CS.hlsl");
+	// Compute Shader 로드
+	UShader* BlurCS_Shader = UResourceManager::GetInstance().Load<UShader>("Shaders/PostProcess/DepthOfField_Poisson_Blur_CS.hlsl");
 	if (!BlurCS_Shader || !BlurCS_Shader->GetComputeShader())
 	{
 		UE_LOG("DOF: Blur Compute Shader 로드 실패!\n");
@@ -2057,99 +2057,104 @@ void FSceneRenderer::ApplyDepthOfFieldPass()
 	ID3D11ComputeShader* BlurCS = BlurCS_Shader->GetComputeShader();
 	ID3D11DeviceContext* context = RHIDevice->GetDeviceContext();
 
-	// ===== Pass 2: BlurH (수평) =====
+	// Blur 적용 횟수 확인 (1 = Bokeh 강조, 2 = 깔끔한 블러)
+	int32 blurPassCount = RenderSettings.GetDOFBlurPassCount();
 
-	// 1. SRV 바인딩 (입력: ColorCoC)
-	ID3D11ShaderResourceView* inputSRV = RHIDevice->GetDOFHalfResColorCoCSRV();
-	context->CSSetShaderResources(0, 1, &inputSRV);
+	// Dispatch 파라미터 (8x8 스레드 그룹)
+	uint32 groupCountX = (halfWidth + 7) / 8;
+	uint32 groupCountY = (halfHeight + 7) / 8;
 
-	// 2. UAV 바인딩 (출력: BlurTemp)
-	ID3D11UnorderedAccessView* outputUAV = RHIDevice->GetDOFHalfResBlurTempUAV();
-	context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
+	// Sampler 설정
+	ID3D11SamplerState* linearSampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
+	context->CSSetSamplers(0, 1, &linearSampler);
 
-	// 3. Sampler Binding
-	ID3D11SamplerState* sampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
-	context->CSSetSamplers(0, 1, &sampler);
+	// Constant Buffer 준비
+	ID3D11Buffer* cb = RHIDevice->GetDOFConstantBuffer();
+	FVector2D texelSize = FVector2D(1.0f / halfWidth, 1.0f / halfHeight);
 
-	// 4. Constant Buffer 바인딩 (수평 블러)
-	RHIDevice->SetAndUpdateConstantBuffer(
-		DOFBufferType(
+	// ===== Pass 2: First Blur Pass =====
+	{
+		// 입력/출력 리소스 설정
+		ID3D11ShaderResourceView* inputSRV = RHIDevice->GetDOFHalfResColorCoCSRV();
+		ID3D11UnorderedAccessView* outputUAV = nullptr;
+
+		if (blurPassCount == 1)
+		{
+			// 1회 blur: ColorCoC → Blurred (최종 출력)
+			outputUAV = RHIDevice->GetDOFHalfResBlurredUAV();
+		}
+		else
+		{
+			// 2회 blur: ColorCoC → BlurTemp (중간 버퍼)
+			outputUAV = RHIDevice->GetDOFHalfResBlurTempUAV();
+		}
+
+		// SRV/UAV 바인딩
+		context->CSSetShaderResources(0, 1, &inputSRV);
+		context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
+
+		// Constant Buffer 업데이트 (BlurDirection은 Poisson Disk Blur에서 사용하지 않음)
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
 			RenderSettings.GetDOFFocalDistance(),
 			RenderSettings.GetDOFNearTransitionRange(),
 			RenderSettings.GetDOFFarTransitionRange(),
 			RenderSettings.GetDOFMaxCoCRadius(),
 			projAB,
 			isOrtho,
-			FVector2D(1.0f, 0.0f), //BlurDirection: 수평
-			FVector2D(1.0f / halfWidth, 1.0f / halfHeight)
-		)
-	);
+			FVector2D(0.0f, 0.0f),  // BlurDirection (미사용)
+			texelSize
+		));
+		context->CSSetConstantBuffers(2, 1, &cb);
 
-	ID3D11Buffer* cb = RHIDevice->GetDOFConstantBuffer();
-	context->CSSetConstantBuffers(2, 1, &cb);
+		// Compute Shader 실행
+		context->CSSetShader(BlurCS, nullptr, 0);
+		context->Dispatch(groupCountX, groupCountY, 1);
 
-	// 5. Compute Shader 설정
-	context->CSSetShader(BlurCS, nullptr, 0);
+		// 리소스 언바인드
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		ID3D11UnorderedAccessView* nullUAV = nullptr;
+		context->CSSetShaderResources(0, 1, &nullSRV);
+		context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
+		context->CSSetShader(nullptr, nullptr, 0);
+	}
 
-	// 6. Dispatch
-	uint32 groupCountX = (halfWidth + 7) / 8;	// 8x8 스레드 그룹
-	uint32 groupCountY = (halfHeight + 7) / 8;
-	context->Dispatch(groupCountX, groupCountY, 1);
+	// ===== Pass 3: Second Blur Pass (2회 blur 모드일 때만 실행) =====
+	if (blurPassCount == 2)
+	{
+		// 입력/출력 리소스 설정: BlurTemp → Blurred
+		ID3D11ShaderResourceView* inputSRV = RHIDevice->GetDOFHalfResBlurTempSRV();
+		ID3D11UnorderedAccessView* outputUAV = RHIDevice->GetDOFHalfResBlurredUAV();
 
-	// 7. Unbind
-	ID3D11ShaderResourceView* nullSRV = nullptr;
-	ID3D11UnorderedAccessView* nullUAV = nullptr;
-	context->CSSetShaderResources(0, 1, &nullSRV);
-	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
-	context->CSSetShader(nullptr, nullptr, 0);
-	
-	// ===== Pass 3: BlurV (수직) =====
-	// 동일한 BlurCS 재사용
+		// SRV/UAV 바인딩
+		context->CSSetShaderResources(0, 1, &inputSRV);
+		context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
 
-	// 1. 입력: BlurTemp → 출력: Blurred
-	inputSRV = RHIDevice->GetDOFHalfResBlurTempSRV();
-	outputUAV = RHIDevice->GetDOFHalfResBlurredUAV();
+		// Constant Buffer 업데이트 (동일한 파라미터)
+		RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
+			RenderSettings.GetDOFFocalDistance(),
+			RenderSettings.GetDOFNearTransitionRange(),
+			RenderSettings.GetDOFFarTransitionRange(),
+			RenderSettings.GetDOFMaxCoCRadius(),
+			projAB,
+			isOrtho,
+			FVector2D(0.0f, 0.0f),  // BlurDirection (미사용)
+			texelSize
+		));
+		context->CSSetConstantBuffers(2, 1, &cb);
 
-	context->CSSetShaderResources(0, 1, &inputSRV);
-	context->CSSetUnorderedAccessViews(0, 1, &outputUAV, nullptr);
+		// Compute Shader 실행
+		context->CSSetShader(BlurCS, nullptr, 0);
+		context->Dispatch(groupCountX, groupCountY, 1);
 
-	// 2. Sampler (동일)
-	sampler = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
-	context->CSSetSamplers(0, 1, &sampler);
+		// 리소스 언바인드
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		ID3D11UnorderedAccessView* nullUAV = nullptr;
+		context->CSSetShaderResources(0, 1, &nullSRV);
+		context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
+		context->CSSetShader(nullptr, nullptr, 0);
+	}
 
-	// 3. Constant Buffer - BlurDirection = (0, 1) 수직
-	RHIDevice->SetAndUpdateConstantBuffer(DOFBufferType(
-		RenderSettings.GetDOFFocalDistance(),
-		RenderSettings.GetDOFNearTransitionRange(),
-		RenderSettings.GetDOFFarTransitionRange(),
-		RenderSettings.GetDOFMaxCoCRadius(),
-		projAB,
-		isOrtho,
-		FVector2D(0.0f, 1.0f),  // BlurDirection: 수직
-		FVector2D(1.0f / halfWidth, 1.0f / halfHeight)
-	));
-
-	cb = RHIDevice->GetDOFConstantBuffer();
-	context->CSSetConstantBuffers(2, 1, &cb);
-
-	// 4. Compute Shader 설정 (동일한 BlurCS 재사용)
-	context->CSSetShader(BlurCS, nullptr, 0);
-
-	// 5. Dispatch
-	groupCountX = (halfWidth + 7) / 8;
-	groupCountY = (halfHeight + 7) / 8;
-	context->Dispatch(groupCountX, groupCountY, 1);
-
-	// 6. Unbind
-	nullSRV = nullptr;
-	nullUAV = nullptr;
-	context->CSSetShaderResources(0, 1, &nullSRV);
-	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, nullptr);
-	context->CSSetShader(nullptr, nullptr, 0);
-
-	// UResourceManager가 Compute Shader 리소스를 관리하므로 직접 Release 불필요
-	
-	// Pass 1-3 블록 종료
+	// Pass 2-3 블록 종료
 
 	// ===== Pass 4: Composite 또는 CoCVisualize =====
 	// 뷰포트 복구 (Pass 1-3에서 변경된 뷰포트를 원래대로)
