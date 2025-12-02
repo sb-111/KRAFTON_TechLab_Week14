@@ -547,22 +547,23 @@ void URenderer::DrawDebugCapsule(const FMatrix& Transform, float Radius, float H
 	// - Radius = 반구 반지름
 	// - CylinderHalfHeight = HalfHeight - Radius (반구 중심까지 거리)
 	//
-	// Unit Capsule 메시 구조:
-	// - Radius = 1.0, CylinderHalfHeight = 1.0
-	// - 반구 중심: Y = ±1.0
-	// - 언리얼방식 HalfHeight = 2.0 (반구중심거리 1.0 + 반지름 1.0)
-	//
-	// 비균일 스케일 (Radius, HalfHeight/2, Radius)로 변환
+	// 동적 캡슐 메시: 정확한 Radius와 CylinderHalfHeight로 메시 생성
+	// - 반구를 위/아래로 오프셋하여 자연스러운 캡슐 형태
+	// - 스케일링 없이 정확한 크기
 
 	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
 	FQuat Rotation(Transform);
 
-	UStaticMesh* CapsuleMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Capsule");
+	// 실린더 반높이 계산 (FKSphylElem.Length / 2)
+	float CylinderHalfHeight = HalfHeight - Radius;
+	if (CylinderHalfHeight < 0.0f) CylinderHalfHeight = 0.0f;
+
+	// 동적 캡슐 메시: 정확한 크기로 생성됨, 스케일 불필요
+	UStaticMesh* CapsuleMesh = UResourceManager::GetInstance().GetOrCreateDynamicCapsuleMesh(CylinderHalfHeight, Radius);
 	if (CapsuleMesh)
 	{
-		// Unit Capsule의 언리얼방식 HalfHeight = 2.0 이므로 HalfHeight/2.0으로 스케일
-		float ScaleY = HalfHeight / 2.0f;
-		FMatrix CapsuleTransform = FMatrix::FromTRS(Position, Rotation, FVector(Radius, ScaleY, Radius));
+		// 메시가 이미 정확한 크기로 생성되었으므로 스케일 1.0
+		FMatrix CapsuleTransform = FMatrix::FromTRS(Position, Rotation, FVector::One());
 		DrawPrimitiveMesh(CapsuleMesh, CapsuleTransform, Color, UUID);
 	}
 }
