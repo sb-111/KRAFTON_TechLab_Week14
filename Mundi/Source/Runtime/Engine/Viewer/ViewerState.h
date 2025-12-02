@@ -147,6 +147,10 @@ struct PhysicsAssetEditorState : public ViewerState
     // ==== Constraint 생성 중간 상태 ====
     int32 ConstraintStartBodyIndex = -1;  // -1이면 Constraint 생성 대기 안함
 
+    // ==== 바닥 (시뮬레이션용) ====
+    class AStaticMeshActor* FloorMeshActor = nullptr;    // 시각적 바닥 (StaticMesh)
+    class AActor* FloorCollisionActor = nullptr;         // 물리 바닥 (BoxComponent)
+
     // ==== Graph View 상태
     FVector2D GraphOffset = FVector2D::Zero();  // 그래프 패닝 오프셋
     float GraphZoom = 1.0f;                     // 그래프 줌 레벨

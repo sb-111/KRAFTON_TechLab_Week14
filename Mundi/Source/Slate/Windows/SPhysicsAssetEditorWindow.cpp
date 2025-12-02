@@ -455,6 +455,7 @@ void SPhysicsAssetEditorWindow::OnUpdate(float DeltaSeconds)
         if (PhysScene)
         {
             PhysScene->Simulate(DeltaSeconds);
+            PhysScene->FetchAndUpdate();  // fetchResults() 호출해야 결과가 업데이트됨!
         }
 
         // 래그돌 결과를 본에 적용
@@ -3904,11 +3905,13 @@ void SPhysicsAssetEditorWindow::RenderToolsPanel()
             {
                 if (bSimulateInEditor)
                 {
-                    // 시뮬레이션 시작
-                    if (PreviewComp->GetBodies().IsEmpty())
-                    {
-                        PreviewComp->InitArticulated(PhysState->EditingAsset);
-                    }
+                    // 시뮬레이션 시작 - 기존 Bodies 삭제 후 새로 생성 (초기 위치에서 시작)
+                    PreviewComp->DestroyPhysicsState();  // 기존 Bodies 정리
+                    PreviewComp->ResetToRefPose();       // 본 포즈 초기화
+                    PreviewComp->MobilityType = EMobilityType::Movable;
+                    PreviewComp->CollisionType = ECollisionEnabled::PhysicsAndQuery;
+                    PreviewComp->bSimulatePhysics = true;
+                    PreviewComp->InitArticulated(PhysState->EditingAsset);
                     PreviewComp->SetSimulatePhysics(true);
                     PreviewComp->SetRagdollState(true);
                     UE_LOG("[PhysicsAssetEditor] 시뮬레이션 시작");
@@ -4242,10 +4245,10 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
 
     UPhysicsAsset* Asset = PhysState->EditingAsset;
 
-    // 기존 데이터 클리어
+    // 기존 데이터 클리어 (UObject는 ObjectFactory로 삭제)
     for (UBodySetup* Body : Asset->Bodies)
     {
-        if (Body) delete Body;
+        if (Body) ObjectFactory::DeleteObject(Body);
     }
     Asset->Bodies.Empty();
     Asset->Constraints.Empty();

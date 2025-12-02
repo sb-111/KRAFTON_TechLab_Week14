@@ -735,7 +735,19 @@ bool UPropertyRenderer::RenderStringProperty(const FProperty& Prop, void* Instan
 	// === PhysicsAssetPathOverride 특수 처리: 드롭다운으로 선택 ===
 	if (FString(Prop.Name) == "PhysicsAssetPathOverride" || FString(Prop.Name) == "Physics Asset 경로")
 	{
-		return RenderPhysicsAssetSelectionCombo(Prop.Name, *Value);
+		FString OldPath = *Value;
+		bool bChanged = RenderPhysicsAssetSelectionCombo(Prop.Name, *Value);
+
+		// 경로가 변경되면 캐시 무효화를 위해 setter 호출
+		if (bChanged && OldPath != *Value)
+		{
+			if (USkeletalMeshComponent* SkelMeshComp = Cast<USkeletalMeshComponent>(static_cast<UObject*>(Instance)))
+			{
+				// setter가 Bodies와 PhysicsAsset 캐시를 무효화함
+				SkelMeshComp->SetPhysicsAssetPathOverride(*Value);
+			}
+		}
+		return bChanged;
 	}
 
 	// ImGui::InputText는 char 버퍼를 사용하므로 변환 필요

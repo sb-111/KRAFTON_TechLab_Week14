@@ -63,7 +63,7 @@ void mainCS(uint3 dispatchThreadID : SV_DispatchThreadID)
         return;
     }
 
-    // === 새로운 동적 가우시안 샘플링 ===
+    // === 동적 가우시안 샘플링 ===
 
     float3 colorSum = 0.0f;
     float weightSum = 0.0f;
@@ -73,7 +73,7 @@ void mainCS(uint3 dispatchThreadID : SV_DispatchThreadID)
     if (KernelRadius % 2 == 0)
         KernelRadius++;
 
-    // 최소/최대 제한 (격자 아티팩트 완화를 위해 최대값 증가)
+    // 최소/최대 제한
     KernelRadius = clamp(KernelRadius, 1u, 31u);
 
     // Sigma 동적 계산 (CoC에 비례)

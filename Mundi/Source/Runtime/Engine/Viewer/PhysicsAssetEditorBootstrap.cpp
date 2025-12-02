@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "PhysicsAssetEditorBootstrap.h"
 #include "ViewerState.h"
 #include "CameraActor.h"
@@ -8,6 +8,9 @@
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
+#include "Source/Runtime/Engine/GameFramework/StaticMeshActor.h"
+#include "Source/Runtime/Engine/Components/StaticMeshComponent.h"
+#include "Source/Runtime/Engine/Components/BoxComponent.h"
 #include "Source/Runtime/Engine/Components/LineComponent.h"
 #include "Source/Runtime/Engine/Components/ShapeAnchorComponent.h"
 #include "Source/Runtime/Engine/Components/ConstraintAnchorComponent.h"
@@ -101,6 +104,51 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 		State->ConstraintGizmoAnchor->RegisterComponent(State->World);
 	}
 
+	// ===== 바닥 생성 (시뮬레이션용) =====
+	// 1. 물리 바닥 (BoxComponent 사용 - PIE와 동일한 방식)
+	if (State->World)
+	{
+		// 바닥용 액터 생성
+		State->FloorCollisionActor = State->World->SpawnActor<AActor>();
+		if (State->FloorCollisionActor)
+		{
+			// BoxComponent 생성 및 설정
+			UBoxComponent* FloorBox = NewObject<UBoxComponent>();
+			// X,Y가 바닥 평면, Z가 up - 100x100x1 크기
+			FloorBox->BoxExtent = FVector(50.f, 50.f, 0.5f);
+			FloorBox->MobilityType = EMobilityType::Static;
+			FloorBox->CollisionType = ECollisionEnabled::PhysicsAndQuery;
+			FloorBox->bSimulatePhysics = false;  // Static이므로 시뮬레이션 안함
+
+			State->FloorCollisionActor->AddOwnedComponent(FloorBox);
+			State->FloorCollisionActor->SetRootComponent(FloorBox);
+			FloorBox->RegisterComponent(State->World);
+
+			// 바닥 위치: Z=-0.5 (윗면이 Z=0)
+			State->FloorCollisionActor->SetActorLocation(FVector(0.f, 0.f, -0.5f));
+
+			// InitPhysics에서 올바른 World를 사용하도록 직접 호출
+			FloorBox->BodyInstance.InitPhysics(FloorBox);
+		}
+	}
+
+	// 2. 시각적 바닥 (StaticMeshActor)
+	if (State->World)
+	{
+		State->FloorMeshActor = State->World->SpawnActor<AStaticMeshActor>();
+		if (State->FloorMeshActor)
+		{
+			UStaticMeshComponent* FloorMeshComp = State->FloorMeshActor->GetStaticMeshComponent();
+			if (FloorMeshComp)
+			{
+				FloorMeshComp->SetStaticMesh("Data/Model/bathroomFloor.fbx");
+				// 바닥 위치 및 스케일 조정 (Y=0 평면에 맞춤, Z방향 더 넓게)
+				State->FloorMeshActor->SetActorLocation(FVector(0.f, 0.f, 0.f));
+				State->FloorMeshActor->SetActorScale(FVector(30.f, 30.f, 1.f));  // Z방향 더 넓게
+			}
+		}
+	}
+
 	return State;
 }
 
@@ -123,6 +171,10 @@ void PhysicsAssetEditorBootstrap::DestroyViewerState(ViewerState*& State)
 		delete PhysState->Client;
 		PhysState->Client = nullptr;
 	}
+
+	// FloorCollisionActor와 FloorMeshActor는 World 삭제 시 자동 정리됨
+	PhysState->FloorCollisionActor = nullptr;
+	PhysState->FloorMeshActor = nullptr;
 
 	if (PhysState->World)
 	{

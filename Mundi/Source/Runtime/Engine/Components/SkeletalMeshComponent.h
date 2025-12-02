@@ -171,6 +171,9 @@ public:
     // 실제 사용할 PhysicsAsset 경로 반환 (오버라이드 > 기본값)
     FString GetEffectivePhysicsAssetPath() const;
 
+    // PhysicsAsset 오버라이드 경로 설정 (캐시 무효화 포함)
+    void SetPhysicsAssetPathOverride(const FString& NewPath);
+
     // 실제 사용할 PhysicsAsset 반환 (오버라이드 경로 > SkeletalMesh 기본값)
     UPhysicsAsset* GetEffectivePhysicsAsset();
 

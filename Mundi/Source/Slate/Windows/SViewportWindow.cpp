@@ -1968,13 +1968,46 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 			// MaxCoCRadius 슬라이더
 			float maxCoC = RenderSettings.GetDOFMaxCoCRadius();
 			ImGui::Text("최대 블러 반경");
-			if (ImGui::SliderFloat("##MaxCoC", &maxCoC, 1.0f, 16.0f, "%.1f"))
+			if (ImGui::SliderFloat("##MaxCoC", &maxCoC, 1.0f, 160.0f, "%.1f"))
 			{
 				RenderSettings.SetDOFMaxCoCRadius(maxCoC);
 			}
 			if (ImGui::IsItemHovered())
 			{
 				ImGui::SetTooltip("흐림 효과의 최대 크기입니다. 높을수록 더 흐릿해집니다.");
+			}
+
+			// BlurPassCount 옵션
+			int32 blurPassCount = RenderSettings.GetDOFBlurPassCount();
+			ImGui::Text("블러 품질");
+
+			// 라디오 버튼으로 선택
+			bool changed = false;
+			if (ImGui::RadioButton("1회 (Bokeh 강조)", blurPassCount == 1))
+			{
+				blurPassCount = 1;
+				changed = true;
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("Poisson Disk Blur를 1회만 적용합니다.\nBokeh 효과가 강조되고 성능이 향상됩니다.");
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::RadioButton("2회 (깔끔한 블러)", blurPassCount == 2))
+			{
+				blurPassCount = 2;
+				changed = true;
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("Poisson Disk Blur를 2회 적용합니다.\n깔끔하게 뭉개진 블러 효과를 제공합니다.");
+			}
+
+			if (changed)
+			{
+				RenderSettings.SetDOFBlurPassCount(blurPassCount);
 			}
 
 			ImGui::Separator();

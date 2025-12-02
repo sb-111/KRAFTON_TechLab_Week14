@@ -182,7 +182,10 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	UpdateMassProperty();
 
 	// Scene에 추가하고 OwnerScene 저장 (PIE 전환 시 올바른 Scene에서 제거하기 위해)
-	FPhysicsScene* Scene = GWorld->GetPhysicsScene();
+	// 컴포넌트의 World 사용 (Preview World 지원)
+	UWorld* OwnerWorld = InOwnerComponent->GetWorld();
+	if (!OwnerWorld) OwnerWorld = GWorld;
+	FPhysicsScene* Scene = OwnerWorld->GetPhysicsScene();
 	Scene->AddActor(*NewActor);
 	OwnerScene = Scene;
 }
@@ -288,7 +291,11 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 	if (RigidActor) return;	// 이미 초기화됨
 
 	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
-	if (!PhysicsSystem.GetPhysics() || !GWorld->GetPhysicsScene()) return;
+
+	// OwnerComponent의 World 사용 (피직스 에셋 에디터의 Preview World 지원)
+	UWorld* OwnerWorld = InOwnerComponent->GetWorld();
+	if (!OwnerWorld) OwnerWorld = GWorld;
+	if (!PhysicsSystem.GetPhysics() || !OwnerWorld || !OwnerWorld->GetPhysicsScene()) return;
 
 	BodySetup = Setup;
 	BoneIndex = InBoneIndex;
@@ -298,13 +305,16 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 	PxTransform InitTransform = PhysxConverter::ToPxTransform(WorldTransform);
 	PxRigidActor* Body = nullptr;
 
-	if (InOwnerComponent->MobilityType == EMobilityType::Movable || !GWorld->bPie)
+	// Preview World이거나 Movable이거나 PIE가 아니면 RigidDynamic 생성
+	bool bIsPreviewWorld = (OwnerWorld->GetWorldType() == EWorldType::PreviewMinimal);
+	if (InOwnerComponent->MobilityType == EMobilityType::Movable || !OwnerWorld->bPie || bIsPreviewWorld)
 	{
 		// RigidDynamic: 움직이는 강체
 		PxRigidDynamic* DynamicActor = PhysicsSystem.GetPhysics()->createRigidDynamic(InitTransform);
 		if (!DynamicActor) return;
 
-		if (InOwnerComponent->bSimulatePhysics)
+		// Preview World에서는 항상 kinematic false로 시작 (시뮬레이션 가능하게)
+		if (InOwnerComponent->bSimulatePhysics || bIsPreviewWorld)
 		{
 			DynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
 		}
@@ -333,10 +343,8 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 		CreateShapesFromBodySetup(Setup, Body, InOwnerComponent);
 	}
 
-
-
 	// Scene에 추가하고 OwnerScene 저장 (PIE 전환 시 올바른 Scene에서 제거하기 위해)
-	FPhysicsScene* Scene = GWorld->GetPhysicsScene();
+	FPhysicsScene* Scene = OwnerWorld->GetPhysicsScene();
 	Scene->AddActor(*Body);
 	OwnerScene = Scene;
 
@@ -367,18 +375,27 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 
 	const FKAggregateGeom& AggGeom = Setup->AggGeom;
 
-	PxShape* Shape = nullptr;
+	// 각 Shape 생성 시 즉시 충돌 설정 적용하는 람다
+	auto ConfigureShape = [&](PxShape* Shape) {
+		if (Shape)
+		{
+			SetCollisionType(Shape, OwnerComponent);
+			Shape->setSimulationFilterData(RagdollFilterData);
+			Shape->userData = (void*)(uintptr_t)BoneIndex;
+		}
+	};
+
 	// === Sphere Shape 생성 ===
 	for (int32 i = 0; i < AggGeom.SphereElems.Num(); ++i)
 	{
 		const FKSphereElem& Sphere = AggGeom.SphereElems[i];
 		PxSphereGeometry Geom(Sphere.Radius);
-		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
-			
 			Shape->setLocalPose(LocalPose);
+			ConfigureShape(Shape);
 		}
 	}
 
@@ -392,7 +409,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 		HalfExtent.y = std::abs(HalfExtent.y);
 		HalfExtent.z = std::abs(HalfExtent.z);
 		PxBoxGeometry Geom(HalfExtent.x, HalfExtent.y, HalfExtent.z);
-		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			FQuat Rotation = FQuat::MakeFromEulerZYX(Box.Rotation);
@@ -401,6 +418,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxQuat(Rotation)
 			);
 			Shape->setLocalPose(LocalPose);
+			ConfigureShape(Shape);
 		}
 	}
 
@@ -409,7 +427,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 	{
 		const FKSphylElem& Capsule = AggGeom.SphylElems[i];
 		PxCapsuleGeometry Geom(Capsule.Radius, Capsule.Length / 2.0f);
-		Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
+		PxShape* Shape = PxRigidActorExt::createExclusiveShape(*Body, Geom, *Material);
 		if (Shape)
 		{
 			// 기본 축 회전: 엔진 캡슐(Z축) → PhysX 캡슐(X축)
@@ -422,15 +440,8 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
 			Shape->setLocalPose(LocalPose);
-			
+			ConfigureShape(Shape);
 		}
-	}
-
-	if (Shape)
-	{
-		SetCollisionType(Shape, OwnerComponent);
-		Shape->setSimulationFilterData(RagdollFilterData);
-		Shape->userData = (void*)BoneIndex;
 	}
 	// Material release (Shape들이 참조하고 있으므로 refcount만 감소)
 	Material->release();
