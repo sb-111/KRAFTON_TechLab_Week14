@@ -2029,17 +2029,6 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
             if (PhysState) PhysState->bIsDirty = true;
         }
 
-        // Collision Enabled 콤보박스
-        const char* collisionModes[] = { "None", "Query Only", "Physics Only", "Physics and Query" };
-        int currentCollision = static_cast<int>(Body->CollisionEnabled);
-        ImGui::Text("Collision Enabled");
-        ImGui::SetNextItemWidth(-1);
-        if (ImGui::Combo("##CollisionEnabled", &currentCollision, collisionModes, 4))
-        {
-            Body->CollisionEnabled = static_cast<ECollisionEnabled>(currentCollision);
-            if (PhysState) PhysState->bIsDirty = true;
-        }
-
         ImGui::Separator();
 
         float mass = Body->MassInKg;
@@ -2097,37 +2086,287 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
     if (ImGui::CollapsingHeader("Body Setup", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Indent();
+
+        // Bone Name
         ImGui::Text("Bone Name");
         ImGui::TextDisabled("%s", Body->BoneName.ToString().c_str());
-        ImGui::Unindent();
-    }
 
-    if (ImGui::CollapsingHeader("Primitives", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::Indent();
+        ImGui::Separator();
 
-        // Sphere 개수
+        // ===== Primitives (트리 구조) =====
+        // CollisionEnabled 옵션 배열
+        const char* collisionModes[] = { "No Collision", "Query Only", "Physics Only", "Collision Enabled" };
+
+        // ===== Sphere 섹션 =====
         int32 sphereCount = Body->AggGeom.SphereElems.Num();
-        ImGui::Text("Sphere");
-        ImGui::SameLine(150);
-        ImGui::TextDisabled("Elements: %d", sphereCount);
+        ImGui::PushID("Spheres");
+        if (ImGui::TreeNode("Sphere"))
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", sphereCount);
 
-        // Box 개수
+            for (int32 i = 0; i < sphereCount; ++i)
+            {
+                FKSphereElem& Sphere = Body->AggGeom.SphereElems[i];
+                ImGui::PushID(i);
+                if (ImGui::TreeNode("##SphereElem", "Index [%d]", i))
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Sphere.Name.ToString().c_str());
+
+                    // Center
+                    float center[3] = { Sphere.Center.X, Sphere.Center.Y, Sphere.Center.Z };
+                    ImGui::Text("Center");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat3("##Center", center, 0.1f))
+                    {
+                        Sphere.Center = FVector(center[0], center[1], center[2]);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Radius
+                    ImGui::Text("Radius");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##Radius", &Sphere.Radius, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Name
+                    char nameBuffer[256];
+                    strcpy_s(nameBuffer, Sphere.Name.ToString().c_str());
+                    ImGui::Text("Name");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+                    {
+                        Sphere.Name = FName(nameBuffer);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // CollisionEnabled
+                    int collisionMode = static_cast<int>(Sphere.CollisionEnabled);
+                    ImGui::Text("Collision Enabled");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+                    {
+                        Sphere.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    ImGui::TreePop();
+                }
+                else
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Sphere.Name.ToString().c_str());
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+        else
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", sphereCount);
+        }
+        ImGui::PopID();
+
+        // ===== Box 섹션 =====
         int32 boxCount = Body->AggGeom.BoxElems.Num();
-        ImGui::Text("Box");
-        ImGui::SameLine(150);
-        ImGui::TextDisabled("Elements: %d", boxCount);
+        ImGui::PushID("Boxes");
+        if (ImGui::TreeNode("Box"))
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", boxCount);
 
-        // Capsule 개수
+            for (int32 i = 0; i < boxCount; ++i)
+            {
+                FKBoxElem& Box = Body->AggGeom.BoxElems[i];
+                ImGui::PushID(i);
+                if (ImGui::TreeNode("##BoxElem", "Index [%d]", i))
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Box.Name.ToString().c_str());
+
+                    // Center
+                    float center[3] = { Box.Center.X, Box.Center.Y, Box.Center.Z };
+                    ImGui::Text("Center");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat3("##Center", center, 0.1f))
+                    {
+                        Box.Center = FVector(center[0], center[1], center[2]);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Rotation
+                    float rotation[3] = { Box.Rotation.X, Box.Rotation.Y, Box.Rotation.Z };
+                    ImGui::Text("Rotation");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
+                    {
+                        Box.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // X Size
+                    ImGui::Text("X");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##X", &Box.X, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Y Size
+                    ImGui::Text("Y");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##Y", &Box.Y, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Z Size
+                    ImGui::Text("Z");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##Z", &Box.Z, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Name
+                    char nameBuffer[256];
+                    strcpy_s(nameBuffer, Box.Name.ToString().c_str());
+                    ImGui::Text("Name");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+                    {
+                        Box.Name = FName(nameBuffer);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // CollisionEnabled
+                    int collisionMode = static_cast<int>(Box.CollisionEnabled);
+                    ImGui::Text("Collision Enabled");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+                    {
+                        Box.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    ImGui::TreePop();
+                }
+                else
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Box.Name.ToString().c_str());
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+        else
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", boxCount);
+        }
+        ImGui::PopID();
+
+        // ===== Capsule 섹션 =====
         int32 capsuleCount = Body->AggGeom.SphylElems.Num();
-        ImGui::Text("Capsule");
-        ImGui::SameLine(150);
-        ImGui::TextDisabled("Elements: %d", capsuleCount);
+        ImGui::PushID("Capsules");
+        if (ImGui::TreeNode("Capsule"))
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", capsuleCount);
 
-        // Convex 개수
+            for (int32 i = 0; i < capsuleCount; ++i)
+            {
+                FKSphylElem& Capsule = Body->AggGeom.SphylElems[i];
+                ImGui::PushID(i);
+                if (ImGui::TreeNode("##CapsuleElem", "Index [%d]", i))
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Capsule.Name.ToString().c_str());
+
+                    // Center
+                    float center[3] = { Capsule.Center.X, Capsule.Center.Y, Capsule.Center.Z };
+                    ImGui::Text("Center");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat3("##Center", center, 0.1f))
+                    {
+                        Capsule.Center = FVector(center[0], center[1], center[2]);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Rotation
+                    float rotation[3] = { Capsule.Rotation.X, Capsule.Rotation.Y, Capsule.Rotation.Z };
+                    ImGui::Text("Rotation");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
+                    {
+                        Capsule.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Radius
+                    ImGui::Text("Radius");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##Radius", &Capsule.Radius, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Length
+                    ImGui::Text("Length");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat("##Length", &Capsule.Length, 0.1f, 0.1f, 1000.0f, "%.2f"))
+                    {
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // Name
+                    char nameBuffer[256];
+                    strcpy_s(nameBuffer, Capsule.Name.ToString().c_str());
+                    ImGui::Text("Name");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+                    {
+                        Capsule.Name = FName(nameBuffer);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    // CollisionEnabled
+                    int collisionMode = static_cast<int>(Capsule.CollisionEnabled);
+                    ImGui::Text("Collision Enabled");
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+                    {
+                        Capsule.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+                        if (PhysState) PhysState->bIsDirty = true;
+                    }
+
+                    ImGui::TreePop();
+                }
+                else
+                {
+                    ImGui::SameLine(200);
+                    ImGui::TextDisabled("%s", Capsule.Name.ToString().c_str());
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+        else
+        {
+            ImGui::SameLine(200);
+            ImGui::TextDisabled("Elements: %d", capsuleCount);
+        }
+        ImGui::PopID();
+
+        // ===== Convex 섹션 (읽기 전용 - 개수만 표시) =====
         int32 convexCount = Body->AggGeom.ConvexElems.Num();
         ImGui::Text("Convex");
-        ImGui::SameLine(150);
+        ImGui::SameLine(200);
         ImGui::TextDisabled("Elements: %d", convexCount);
 
         ImGui::Unindent();
@@ -3109,11 +3348,14 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
 {
     if (!Body) return;
 
+    FString BoneName = Body->BoneName.ToString();
+
     switch (ShapeType)
     {
     case EShapeType::Box:
     {
         FKBoxElem Box;
+        Box.Name = FName(BoneName + "_box");
         Box.Center = FVector(0.0f, 0.0f, 0.0f);
         Box.Rotation = FVector(0.0f, 0.0f, 0.0f);
         Box.X = 0.15f;  // Half extent
@@ -3125,6 +3367,7 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
     case EShapeType::Sphere:
     {
         FKSphereElem Sphere;
+        Sphere.Name = FName(BoneName + "_sphere");
         Sphere.Center = FVector(0.0f, 0.0f, 0.0f);
         Sphere.Radius = 0.15f;
         Body->AggGeom.SphereElems.Add(Sphere);
@@ -3134,6 +3377,7 @@ void SPhysicsAssetEditorWindow::AddShapeToBody(UBodySetup* Body, EShapeType Shap
     default:
     {
         FKSphylElem Capsule;
+        Capsule.Name = FName(BoneName + "_sphyl");
         Capsule.Center = FVector(0.0f, 0.0f, 0.0f);
         Capsule.Rotation = FVector(0.0f, 0.0f, 0.0f);
         Capsule.Radius = 0.1f;
@@ -3880,7 +4124,7 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
         {
             // === 캡슐: 본 방향 기반 자동 정렬 ===
             FKSphylElem Capsule;
-            Capsule.Name = FName(Bone.Name);
+            Capsule.Name = FName(Bone.Name + "_sphyl");
             Capsule.Radius = ShapeRadius;
             Capsule.Length = ShapeLength;
 
@@ -3917,7 +4161,7 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
         {
             // === 구: 본 방향 기반 자동 정렬 ===
             FKSphereElem Sphere;
-            Sphere.Name = FName(Bone.Name);
+            Sphere.Name = FName(Bone.Name + "_sphere");
             Sphere.Radius = ShapeRadius * 1.2f;
 
             // Center: 본 방향을 따라 본 길이의 절반 위치
@@ -3940,7 +4184,7 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
         {
             // === 박스: 본 방향 기반 자동 정렬 ===
             FKBoxElem Box;
-            Box.Name = FName(Bone.Name);
+            Box.Name = FName(Bone.Name + "_box");
 
             // Center: 본 방향을 따라 본 길이의 절반 위치
             if (bIsHeadBone)

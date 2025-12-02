@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector.h"
+#include "PhysxConverter.h"
 #include "FKSphereElem.generated.h"
 
 // ===== Sphere Collision Element =====
@@ -19,6 +20,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Sphere")
     float Radius = 1.0f;
+
+    UPROPERTY(EditAnywhere, Category="Collision")
+    ECollisionEnabled CollisionEnabled = ECollisionEnabled::PhysicsAndQuery;
 
     FKSphereElem() = default;
     FKSphereElem(float InRadius) : Radius(InRadius) {}

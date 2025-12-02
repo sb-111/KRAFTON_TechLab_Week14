@@ -152,6 +152,7 @@ static JSON SerializeSphereElem(const FKSphereElem& Elem)
 	Obj["Name"] = Elem.Name.ToString();
 	Obj["Center"] = FJsonSerializer::VectorToJson(Elem.Center);
 	Obj["Radius"] = Elem.Radius;
+	Obj["CollisionEnabled"] = static_cast<int32>(Elem.CollisionEnabled);
 	return Obj;
 }
 
@@ -164,6 +165,7 @@ static JSON SerializeBoxElem(const FKBoxElem& Elem)
 	Obj["X"] = Elem.X;
 	Obj["Y"] = Elem.Y;
 	Obj["Z"] = Elem.Z;
+	Obj["CollisionEnabled"] = static_cast<int32>(Elem.CollisionEnabled);
 	return Obj;
 }
 
@@ -175,6 +177,7 @@ static JSON SerializeSphylElem(const FKSphylElem& Elem)
 	Obj["Rotation"] = FJsonSerializer::VectorToJson(Elem.Rotation);
 	Obj["Radius"] = Elem.Radius;
 	Obj["Length"] = Elem.Length;
+	Obj["CollisionEnabled"] = static_cast<int32>(Elem.CollisionEnabled);
 	return Obj;
 }
 
@@ -214,7 +217,6 @@ static JSON SerializeBodySetup(UBodySetup* Body)
 	JSON Obj = JSON::Make(JSON::Class::Object);
 	Obj["BoneName"] = Body->BoneName.ToString();
 	Obj["bSimulatePhysics"] = Body->bSimulatePhysics;
-	Obj["CollisionEnabled"] = static_cast<int32>(Body->CollisionEnabled);
 	Obj["MassInKg"] = Body->MassInKg;
 	Obj["LinearDamping"] = Body->LinearDamping;
 	Obj["AngularDamping"] = Body->AngularDamping;
@@ -325,6 +327,9 @@ static FKSphereElem DeserializeSphereElem(const JSON& Data)
 	Elem.Name = FName(NameStr);
 	FJsonSerializer::ReadVector(Data, "Center", Elem.Center, FVector::Zero(), false);
 	FJsonSerializer::ReadFloat(Data, "Radius", Elem.Radius, 1.0f, false);
+	int32 CollisionInt = static_cast<int32>(ECollisionEnabled::PhysicsAndQuery);
+	FJsonSerializer::ReadInt32(Data, "CollisionEnabled", CollisionInt, CollisionInt, false);
+	Elem.CollisionEnabled = static_cast<ECollisionEnabled>(CollisionInt);
 	return Elem;
 }
 
@@ -339,6 +344,9 @@ static FKBoxElem DeserializeBoxElem(const JSON& Data)
 	FJsonSerializer::ReadFloat(Data, "X", Elem.X, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "Y", Elem.Y, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "Z", Elem.Z, 1.0f, false);
+	int32 CollisionInt = static_cast<int32>(ECollisionEnabled::PhysicsAndQuery);
+	FJsonSerializer::ReadInt32(Data, "CollisionEnabled", CollisionInt, CollisionInt, false);
+	Elem.CollisionEnabled = static_cast<ECollisionEnabled>(CollisionInt);
 	return Elem;
 }
 
@@ -352,6 +360,9 @@ static FKSphylElem DeserializeSphylElem(const JSON& Data)
 	FJsonSerializer::ReadVector(Data, "Rotation", Elem.Rotation, FVector::Zero(), false);
 	FJsonSerializer::ReadFloat(Data, "Radius", Elem.Radius, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "Length", Elem.Length, 1.0f, false);
+	int32 CollisionInt = static_cast<int32>(ECollisionEnabled::PhysicsAndQuery);
+	FJsonSerializer::ReadInt32(Data, "CollisionEnabled", CollisionInt, CollisionInt, false);
+	Elem.CollisionEnabled = static_cast<ECollisionEnabled>(CollisionInt);
 	return Elem;
 }
 
@@ -399,10 +410,6 @@ static UBodySetup* DeserializeBodySetup(const JSON& Data)
 	Body->BoneName = FName(BoneNameStr);
 
 	FJsonSerializer::ReadBool(Data, "bSimulatePhysics", Body->bSimulatePhysics, false, false);
-
-	int32 CollisionEnabledInt = 0;
-	FJsonSerializer::ReadInt32(Data, "CollisionEnabled", CollisionEnabledInt, static_cast<int32>(ECollisionEnabled::PhysicsAndQuery), false);
-	Body->CollisionEnabled = static_cast<ECollisionEnabled>(CollisionEnabledInt);
 
 	FJsonSerializer::ReadFloat(Data, "MassInKg", Body->MassInKg, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "LinearDamping", Body->LinearDamping, 0.01f, false);
