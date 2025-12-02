@@ -140,7 +140,7 @@ private:
     void AddConstraintBetweenBodies(int32 BodyIndex1, int32 BodyIndex2);
     void AddConstraintToParentBody(int32 ChildBodyIndex);
     void RemoveConstraint(int32 ConstraintIndex);
-    FConstraintInstance CreateDefaultConstraint(const FName& Bone1, const FName& Bone2);
+    FConstraintInstance CreateDefaultConstraint(const FName& ChildBone, const FName& ParentBone);
 
     // Constraint 트리 표시
     void RenderConstraintTreeNode(int32 ConstraintIndex, const FName& CurrentBoneName);
