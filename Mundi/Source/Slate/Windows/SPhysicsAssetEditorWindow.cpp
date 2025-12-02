@@ -1034,22 +1034,23 @@ void SPhysicsAssetEditorWindow::OnMouseDown(FVector2D MousePos, uint32 Button)
     {
         FConstraintInstance& Constraint = PhysState->EditingAsset->Constraints[i];
 
-        // Bone1 (Child 본) 인덱스 찾기 - Constraint는 Child 본 위치에 있음 (언리얼 규칙)
-        int32 Bone1Index = -1;
+        // Bone2 (Parent 본) 인덱스 찾기 - Constraint 위치는 Position2 기준 (Parent 본)
+        int32 Bone2Index = -1;
         for (int32 j = 0; j < (int32)Skeleton->Bones.size(); ++j)
         {
-            if (Skeleton->Bones[j].Name == Constraint.ConstraintBone1.ToString())
+            if (Skeleton->Bones[j].Name == Constraint.ConstraintBone2.ToString())
             {
-                Bone1Index = j;
+                Bone2Index = j;
                 break;
             }
         }
-        if (Bone1Index < 0) continue;
+        if (Bone2Index < 0) continue;
 
-        // Constraint 월드 위치 계산 (Bone1/Child 본 기준, 언리얼 규칙)
-        FTransform Bone1WorldTransform = MeshComp->GetBoneWorldTransform(Bone1Index);
-        FVector ConstraintWorldPos = Bone1WorldTransform.Translation +
-            Bone1WorldTransform.Rotation.RotateVector(Constraint.Position1);
+        // Constraint 월드 위치 계산 (Bone2/Parent 본 기준, Position2 사용)
+        // ConstraintAnchorComponent::UpdateAnchorFromConstraint()와 동일한 계산
+        FTransform Bone2WorldTransform = MeshComp->GetBoneWorldTransform(Bone2Index);
+        FVector ConstraintWorldPos = Bone2WorldTransform.Translation +
+            Bone2WorldTransform.Rotation.RotateVector(Constraint.Position2);
 
         // Ray와 점 사이의 최단 거리 계산
         FVector RayToPoint = ConstraintWorldPos - Ray.Origin;
