@@ -651,6 +651,15 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
     // 기존 에셋 교체
     PhysState->EditingAsset = LoadedAsset;
 
+    // SkeletalMeshComponent에 EditingAsset 설정 (디버그 렌더링을 위해)
+    if (PhysState->PreviewActor)
+    {
+        if (USkeletalMeshComponent* SkelComp = PhysState->PreviewActor->GetSkeletalMeshComponent())
+        {
+            SkelComp->SetPhysicsAssetPreview(LoadedAsset);
+        }
+    }
+
     // 파일 경로 설정 및 Dirty 플래그 해제
     PhysState->CurrentFilePath = LoadPathStr;
     PhysState->bIsDirty = false;
@@ -984,6 +993,16 @@ void SPhysicsAssetEditorWindow::OnSkeletalMeshLoaded(ViewerState* State, const F
         PhysState->EditingAsset->Bodies.Empty();
         PhysState->EditingAsset->Constraints.Empty();
     }
+
+    // SkeletalMeshComponent에 EditingAsset 설정 (디버그 렌더링을 위해)
+    if (PhysState->PreviewActor)
+    {
+        if (USkeletalMeshComponent* SkelComp = PhysState->PreviewActor->GetSkeletalMeshComponent())
+        {
+            SkelComp->SetPhysicsAssetPreview(PhysState->EditingAsset);
+        }
+    }
+
     UE_LOG("SPhysicsAssetEditorWindow: Loaded skeletal mesh from %s", Path.c_str());
 }
 

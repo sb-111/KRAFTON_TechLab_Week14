@@ -177,6 +177,9 @@ public:
     // 실제 사용할 PhysicsAsset 반환 (오버라이드 경로 > SkeletalMesh 기본값)
     UPhysicsAsset* GetEffectivePhysicsAsset();
 
+    // PhysicsAsset 직접 설정 (에디터 미리보기/디버그 렌더링용)
+    void SetPhysicsAssetPreview(UPhysicsAsset* InAsset) { PhysicsAsset = InAsset; }
+
     // 래그돌 활성화/비활성화 (부모 UPrimitiveComponent의 bSimulatePhysics 사용)
     void SetSimulatePhysics(bool bEnable);
     bool IsSimulatingPhysics() const { return bIsRagdoll; }

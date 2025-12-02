@@ -91,6 +91,15 @@ ViewerState* PhysicsAssetEditorBootstrap::CreateViewerState(const char* Name, UW
 	// Physics Asset 생성
 	State->EditingAsset = NewObject<UPhysicsAsset>();
 
+	// SkeletalMeshComponent에 EditingAsset 설정 (디버그 렌더링을 위해)
+	if (State->PreviewActor)
+	{
+		if (USkeletalMeshComponent* SkelComp = State->PreviewActor->GetSkeletalMeshComponent())
+		{
+			SkelComp->SetPhysicsAssetPreview(State->EditingAsset);
+		}
+	}
+
 	// Shape 와이어프레임용 LineComponent 생성 및 연결
 	State->ShapeLineComponent = NewObject<ULineComponent>();
 	State->ShapeLineComponent->SetAlwaysOnTop(true);
