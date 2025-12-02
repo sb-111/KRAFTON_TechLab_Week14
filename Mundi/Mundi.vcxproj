@@ -291,10 +291,11 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release_StandAlone|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <Content Include="Shaders\PostProcess\DepthOfField_Blur_CS.hlsl" />
+    <Content Include="Shaders\PostProcess\DepthOfField_Gaussian_Blur_CS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_CoCVisualize_PS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_Composite_PS.hlsl" />
     <Compile Include="Shaders\PostProcess\DepthOfField_DownsampleCoC_PS.hlsl" />
+    <Content Include="Shaders\PostProcess\DepthOfField_Poisson_Blur_CS.hlsl" />
     <ClCompile Include="Source\Editor\FbxLoader.cpp" />
     <ClCompile Include="Source\Runtime\AssetManagement\SkeletalMesh.cpp" />
     <ClCompile Include="Source\Runtime\Core\Misc\DebugUtils.cpp" />
