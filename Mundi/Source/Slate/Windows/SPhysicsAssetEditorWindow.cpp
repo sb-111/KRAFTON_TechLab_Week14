@@ -705,16 +705,6 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
             memcpy(ActiveState->MeshPathBuffer, SourceFbxPath.c_str(), copyLen);
             ActiveState->MeshPathBuffer[copyLen] = '\0';
 
-            // 본 노드 확장
-            ActiveState->ExpandedBoneIndices.clear();
-            if (const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton())
-            {
-                for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
-                {
-                    ActiveState->ExpandedBoneIndices.insert(i);
-                }
-            }
-
             // Physics Asset 로드 시에는 OnSkeletalMeshLoaded를 호출하지 않음
             // (이미 로드된 Body/Constraint 데이터를 유지하기 위해)
 
@@ -1016,6 +1006,7 @@ void SPhysicsAssetEditorWindow::OnSkeletalMeshLoaded(ViewerState* State, const F
         PhysState->EditingAsset->Bodies.Empty();
         PhysState->EditingAsset->Constraints.Empty();
     }
+
     UE_LOG("SPhysicsAssetEditorWindow: Loaded skeletal mesh from %s", Path.c_str());
 }
 
@@ -1517,7 +1508,7 @@ void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
     }
 
     // Body가 있거나 자식이 있으면 Leaf가 아님
-    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
     if (ChildIndices.Num() == 0 && !bHasBody)
         nodeFlags |= ImGuiTreeNodeFlags_Leaf;
 
@@ -1562,7 +1553,7 @@ void SPhysicsAssetEditorWindow::RenderBoneTreeNode(int32 BoneIndex, int32 Depth)
             }
 
             bool bBodySelected = (PhysState && PhysState->SelectedBodyIndex == BodyIndex);
-            ImGuiTreeNodeFlags bodyFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+            ImGuiTreeNodeFlags bodyFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
             // Constraint가 없으면 Leaf 노드
             if (ConstraintCount == 0)
                 bodyFlags |= ImGuiTreeNodeFlags_Leaf;
@@ -1695,7 +1686,7 @@ void SPhysicsAssetEditorWindow::RenderBodyTreeNode(int32 BodyIndex, const FSkele
 
     // 트리 노드 렌더링
     bool bSelected = (PhysState->SelectedBodyIndex == BodyIndex);
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
     // 자식 Body도 없고 Constraint도 없으면 Leaf
     if (ChildBodyIndices.Num() == 0 && ConstraintCount == 0)
         flags |= ImGuiTreeNodeFlags_Leaf;
