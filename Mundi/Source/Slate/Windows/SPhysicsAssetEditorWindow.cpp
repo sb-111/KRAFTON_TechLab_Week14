@@ -1749,12 +1749,21 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         return;
     }
 
+    // 본 이름에서 prefix 제거 헬퍼 (예: "mixamorig6:Hips" -> "Hips")
+    auto StripBonePrefix = [](const FString& boneName) -> FString
+    {
+        size_t colonPos = boneName.find(':');
+        if (colonPos != std::string::npos && colonPos + 1 < boneName.length())
+            return boneName.substr(colonPos + 1);
+        return boneName;
+    };
+
     // 노드 크기 및 레이아웃 상수 (노드 크기 확대)
-    const float NodeWidth = 120.0f * PhysState->GraphZoom;
+    const float NodeWidth = 100.0f * PhysState->GraphZoom;
     const float NodeHeight = 65.0f * PhysState->GraphZoom;
-    const float ConstraintNodeWidth = 140.0f * PhysState->GraphZoom;
+    const float ConstraintNodeWidth = 160.0f * PhysState->GraphZoom;
     const float ConstraintNodeHeight = 45.0f * PhysState->GraphZoom;
-    const float HorizontalSpacing = 160.0f * PhysState->GraphZoom;
+    const float HorizontalSpacing = 170.0f * PhysState->GraphZoom;
     const float VerticalSpacing = 85.0f * PhysState->GraphZoom;
 
     // 색상 정의 (언리얼 스타일)
@@ -1820,17 +1829,9 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         ImVec2 labelSize = ImGui::CalcTextSize(bodyLabel);
         DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, bodyLabel);
 
-        // 본 이름 (검은 글씨)
-        FString displayName = boneName;
+        // 본 이름 (prefix 제거 후 표시)
+        FString displayName = StripBonePrefix(boneName);
         ImVec2 nameSize = ImGui::CalcTextSize(displayName.c_str());
-        if (nameSize.x > NodeWidth - 10)
-        {
-            // 이름이 너무 길면 뒤에서 자르기
-            size_t maxLen = 12;
-            if (boneName.length() > maxLen)
-                displayName = boneName.substr(boneName.length() - maxLen);
-            nameSize = ImGui::CalcTextSize(displayName.c_str());
-        }
         DrawList->AddText(ImVec2(pos.x - nameSize.x * 0.5f, pos.y - 5), TextColor, displayName.c_str());
 
         // "셰이프 N개" (검은 글씨)
@@ -1865,9 +1866,9 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6), TextColor, constraintLabel);
 
         // Bone2 : Bone1 표시 (언리얼 방식: ConstraintBone2(Child) : ConstraintBone1(Parent))
-        // 이름 축약 (뒤에서 10자)
-        FString shortBone1 = bone1.length() > 10 ? bone1.substr(bone1.length() - 10) : bone1;
-        FString shortBone2 = bone2.length() > 10 ? bone2.substr(bone2.length() - 10) : bone2;
+        // prefix 제거 후 표시
+        FString shortBone1 = StripBonePrefix(bone1);
+        FString shortBone2 = StripBonePrefix(bone2);
         FString connectionText = shortBone2 + " : " + shortBone1;
         ImVec2 connSize = ImGui::CalcTextSize(connectionText.c_str());
         DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18), TextColor, connectionText.c_str());
