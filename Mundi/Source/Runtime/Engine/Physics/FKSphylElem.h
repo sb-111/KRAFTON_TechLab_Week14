@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Vector.h"
+#include "PhysxConverter.h"
 #include "FKSphylElem.generated.h"
 
 // ===== Capsule (Sphyl) Collision Element =====
@@ -23,6 +24,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Capsule")
     float Length = 1.0f;  // Total cylinder length
+
+    UPROPERTY(EditAnywhere, Category="Collision")
+    ECollisionEnabled CollisionEnabled = ECollisionEnabled::PhysicsAndQuery;
 
     FKSphylElem() = default;
     FKSphylElem(float InRadius, float InLength) : Radius(InRadius), Length(InLength) {}

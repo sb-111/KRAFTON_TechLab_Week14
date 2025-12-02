@@ -6,16 +6,16 @@ struct FConstraintInstance;
 class USkeletalMeshComponent;
 
 // Constraint 기즈모용 앵커 컴포넌트
-// 기즈모 조작 시 Constraint 데이터(Position1, Rotation1)를 업데이트
+// 기즈모 조작 시 Constraint 데이터(Position2, Rotation2)를 업데이트 (Child 본 기준)
 // 언리얼과 동일하게 스케일 조작은 지원하지 않음
 class UConstraintAnchorComponent : public USceneComponent
 {
 public:
     DECLARE_CLASS(UConstraintAnchorComponent, USceneComponent)
 
-    // Constraint 타겟 설정
+    // Constraint 타겟 설정 (BoneIndex는 Child 본 인덱스)
     void SetTarget(FConstraintInstance* InConstraint,
-                   USkeletalMeshComponent* InMeshComp, int32 InBone1Index);
+                   USkeletalMeshComponent* InMeshComp, int32 InBoneIndex);
 
     // 타겟 정보 클리어
     void ClearTarget();
@@ -45,7 +45,7 @@ private:
 
     FConstraintInstance* TargetConstraint = nullptr;
     USkeletalMeshComponent* MeshComp = nullptr;
-    int32 Bone1Index = -1;
+    int32 BoneIndex = -1;  // Child 본 (Bone2) 인덱스
 
     // 본 월드 트랜스폼 캐시 (로컬 변환 계산용)
     FTransform CachedBoneWorldTransform;

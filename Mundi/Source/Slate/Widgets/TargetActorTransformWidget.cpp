@@ -10,6 +10,7 @@
 #include "WorldPartitionManager.h"
 #include "PropertyRenderer.h"
 #include "Source/Slate/Windows/SParticleEditorWindow.h"
+#include "Source/Slate/Windows/SPhysicsAssetEditorWindow.h"
 
 #include "Actor.h"
 #include "Grid/GridActor.h"
@@ -433,9 +434,9 @@ void UTargetActorTransformWidget::RenderComponentHierarchy(AActor* SelectedActor
 		RenderActorComponent(SelectedActor, SelectedComponent, ComponentPendingRemoval);
 	}
 
-	// 삭제 입력 처리 (파티클 에디터가 포커스되어 있으면 스킵)
+	// 삭제 입력 처리 (파티클 에디터 또는 피직스 에셋 에디터가 포커스되어 있으면 스킵)
 	const bool bDeletePressed = ImGui::IsKeyPressed(ImGuiKey_Delete);
-	if (bDeletePressed && !SParticleEditorWindow::bIsAnyParticleEditorFocused)
+	if (bDeletePressed && !SParticleEditorWindow::bIsAnyParticleEditorFocused && !SPhysicsAssetEditorWindow::bIsAnyPhysicsAssetEditorFocused)
 	{
 		if (bActorSelected) ActorPendingRemoval = SelectedActor;
 		else if (SelectedComponent && !SelectedComponent->IsNative()) ComponentPendingRemoval = SelectedComponent;

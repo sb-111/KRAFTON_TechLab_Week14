@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector.h"
+#include "PhysxConverter.h"
 #include "FKBoxElem.generated.h"
 
 // ===== Box Collision Element =====
@@ -26,6 +27,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Box")
     float Z = 1.0f;  // Half extent Z
+
+    UPROPERTY(EditAnywhere, Category="Collision")
+    ECollisionEnabled CollisionEnabled = ECollisionEnabled::PhysicsAndQuery;
 
     FKBoxElem() = default;
     FKBoxElem(float InX, float InY, float InZ) : X(InX), Y(InY), Z(InZ) {}

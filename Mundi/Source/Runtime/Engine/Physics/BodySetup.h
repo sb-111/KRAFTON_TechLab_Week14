@@ -20,10 +20,6 @@ public:
     UPROPERTY(EditAnywhere, Category="Physics")
     bool bSimulatePhysics = false;
 
-    // Collision enabled
-    UPROPERTY(EditAnywhere, Category="Physics")
-    ECollisionEnabled CollisionEnabled = ECollisionEnabled::PhysicsAndQuery;
-
     // Mass in kg
     UPROPERTY(EditAnywhere, Category="Physics")
     float MassInKg = 1.0f;
