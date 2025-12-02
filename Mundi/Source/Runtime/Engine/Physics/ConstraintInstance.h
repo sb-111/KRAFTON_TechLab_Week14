@@ -36,12 +36,12 @@ struct FConstraintInstance
     GENERATED_REFLECTION_BODY()
 public:
     // ===== Constraint Bodies =====
-    // 어떤 뼈와 어떤 뼈를 연결할지 (예: Parent=Pelvis, Child=Thigh)
+    // 어떤 뼈와 어떤 뼈를 연결할지 (언리얼 규칙: 1=Child, 2=Parent)
     UPROPERTY(EditAnywhere, Category = "Constraint")
-    FName ConstraintBone1;  // Parent Bone (이전 본)
+    FName ConstraintBone1;  // Child Bone (자손 본, 현재 본)
 
     UPROPERTY(EditAnywhere, Category = "Constraint")
-    FName ConstraintBone2;  // Child Bone (현재 본)
+    FName ConstraintBone2;  // Parent Bone (부모 본, 이전 본)
 
     // ===== Linear Limits (이동 제한) =====
     // Ragdoll은 뼈가 빠지면 안 되므로 보통 다 Locked
@@ -95,14 +95,14 @@ public:
     // Rotation 변수 존재 이유: 뼈의 좌표계가 어떻게 생겨 먹었든, PhysX가 좋아하는 X축(Twist) 방향으로 뼈의 길이 방향을 맞춰주기 위해서임
     // 예를들어 팔뚝뼈가 Y축 길이 방향이라고 하면, PhysX는 X축으로 비틀면 대참사가 일어남. Rotation1에 Z축으로 -90도 회전값을 넣음. 그러면 Joint .X축이 회전해서 뼈의 Y축(길이 방향)과 일치하게 됨
 
-    // Bone1 공간에서의 조인트 위치 및 회전
+    // Child Bone (Bone1) 공간에서의 조인트 위치 및 회전
     UPROPERTY(EditAnywhere, Category = "Transform")
     FVector Position1 = FVector::Zero();
 
     UPROPERTY(EditAnywhere, Category = "Transform")
     FVector Rotation1 = FVector::Zero();    // Euler Angles (Degrees)
 
-    // Bone2 공간에서의 조인트 위치 및 회전
+    // Parent Bone (Bone2) 공간에서의 조인트 위치 및 회전
     UPROPERTY(EditAnywhere, Category = "Transform")
     FVector Position2 = FVector::Zero();
 
@@ -137,6 +137,7 @@ public:
     ~FConstraintInstance();
 
     // Joint 초기화 (두 FBodyInstance 사이에 Joint 생성)
+    // Body1 = Child Body, Body2 = Parent Body (언리얼 규칙)
     void InitConstraint(FBodyInstance* Body1, FBodyInstance* Body2, UPrimitiveComponent* InOwnerComponent);
 
     // Joint 해제

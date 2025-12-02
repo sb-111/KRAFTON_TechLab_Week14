@@ -302,7 +302,6 @@ static JSON SerializeBodySetup(UBodySetup* Body)
 {
 	JSON Obj = JSON::Make(JSON::Class::Object);
 	Obj["BoneName"] = Body->BoneName.ToString();
-	Obj["bSimulatePhysics"] = Body->bSimulatePhysics;
 	Obj["MassInKg"] = Body->MassInKg;
 	Obj["LinearDamping"] = Body->LinearDamping;
 	Obj["AngularDamping"] = Body->AngularDamping;
@@ -494,8 +493,6 @@ static UBodySetup* DeserializeBodySetup(const JSON& Data)
 	FString BoneNameStr;
 	FJsonSerializer::ReadString(Data, "BoneName", BoneNameStr, "", false);
 	Body->BoneName = FName(BoneNameStr);
-
-	FJsonSerializer::ReadBool(Data, "bSimulatePhysics", Body->bSimulatePhysics, false, false);
 
 	FJsonSerializer::ReadFloat(Data, "MassInKg", Body->MassInKg, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "LinearDamping", Body->LinearDamping, 0.01f, false);

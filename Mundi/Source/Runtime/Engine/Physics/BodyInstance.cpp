@@ -283,6 +283,35 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 	}
 }
 
+// Shape별 CollisionEnabled를 직접 받는 함수 (래그돌용)
+static void SetCollisionTypeFromShapeSettings(PxShape* Shape, ECollisionEnabled CollisionEnabled)
+{
+	switch (CollisionEnabled)
+	{
+	case ECollisionEnabled::None:
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		break;
+	case ECollisionEnabled::QueryOnly:
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		break;
+	case ECollisionEnabled::PhysicsOnly:
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		break;
+	case ECollisionEnabled::PhysicsAndQuery:
+	default:
+		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		break;
+	}
+}
+
 // ===== 래그돌용 함수들 (언리얼 방식) =====
 
 void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComponent, const FTransform& WorldTransform, int32 InBoneIndex, uint32 InRagdollOwnerID)
@@ -327,7 +356,8 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 		// Damping 설정
 		DynamicActor->setLinearDamping(Setup->LinearDamping);
 		DynamicActor->setAngularDamping(Setup->AngularDamping);
-		PxRigidBodyExt::updateMassAndInertia(*DynamicActor, 1.0f);
+		// Setup의 MassInKg 값을 직접 사용하여 질량 설정
+		PxRigidBodyExt::setMassAndUpdateInertia(*DynamicActor, Setup->MassInKg);
 	}
 	else
 	{
@@ -375,11 +405,12 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 
 	const FKAggregateGeom& AggGeom = Setup->AggGeom;
 
-	// 각 Shape 생성 시 즉시 충돌 설정 적용하는 람다
-	auto ConfigureShape = [&](PxShape* Shape) {
+	// 각 Shape 생성 시 충돌 설정 적용하는 람다 (Shape별 CollisionEnabled 지원)
+	auto ConfigureShape = [&](PxShape* Shape, ECollisionEnabled ShapeCollisionEnabled) {
 		if (Shape)
 		{
-			SetCollisionType(Shape, OwnerComponent);
+			// Shape별 CollisionEnabled 적용 (에디터에서 설정한 값 사용)
+			SetCollisionTypeFromShapeSettings(Shape, ShapeCollisionEnabled);
 			Shape->setSimulationFilterData(RagdollFilterData);
 			Shape->userData = (void*)(uintptr_t)BoneIndex;
 		}
@@ -395,7 +426,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 		{
 			PxTransform LocalPose(PhysxConverter::ToPxVec3(Sphere.Center));
 			Shape->setLocalPose(LocalPose);
-			ConfigureShape(Shape);
+			ConfigureShape(Shape, Sphere.CollisionEnabled);
 		}
 	}
 
@@ -418,7 +449,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxQuat(Rotation)
 			);
 			Shape->setLocalPose(LocalPose);
-			ConfigureShape(Shape);
+			ConfigureShape(Shape, Box.CollisionEnabled);
 		}
 	}
 
@@ -440,7 +471,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 				PhysxConverter::ToPxQuat(FinalRotation)
 			);
 			Shape->setLocalPose(LocalPose);
-			ConfigureShape(Shape);
+			ConfigureShape(Shape, Capsule.CollisionEnabled);
 		}
 	}
 	// Material release (Shape들이 참조하고 있으므로 refcount만 감소)

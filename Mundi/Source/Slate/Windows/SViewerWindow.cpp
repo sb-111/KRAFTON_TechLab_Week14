@@ -830,7 +830,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::BeginGroup();
 
     // Title
-    ImGui::Text("DISPLAY OPTIONS");
+    ImGui::Text(reinterpret_cast<const char*>(u8"디스플레이 옵션"));
     ImGui::Dummy(ImVec2(0, 4));
     // Checkbox Style
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.5, 1.5));
@@ -840,7 +840,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.75f, 0.80f, 0.90f, 1.00f));
 
     // Checkboxes
-    if (ImGui::Checkbox("Show Mesh", &ActiveState->bShowMesh))
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"메쉬"), &ActiveState->bShowMesh))
     {
         if (auto* comp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
             comp->SetVisibility(ActiveState->bShowMesh);
@@ -848,7 +848,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
 
     ImGui::SameLine(0.0f, 12.0f);
 
-    if (ImGui::Checkbox("Show Bones", &ActiveState->bShowBones))
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"스켈레탈"), &ActiveState->bShowBones))
     {
         if (auto* lineComp = ActiveState->PreviewActor->GetBoneLineComponent())
             lineComp->SetLineVisible(ActiveState->bShowBones);
@@ -869,7 +869,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::Dummy(ImVec2(0, 8));
 
     // Bone Hierarchy Section
-    ImGui::Text("BONE HIERARCHY");
+    ImGui::Text(reinterpret_cast<const char*>(u8"본 계층구조"));
     ImGui::Dummy(ImVec2(0, 2));
     ImGui::Spacing();
 
