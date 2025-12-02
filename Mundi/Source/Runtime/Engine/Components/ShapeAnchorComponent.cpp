@@ -125,8 +125,8 @@ void UShapeAnchorComponent::UpdateAnchorFromShape()
         FQuat UserRotation = FQuat::MakeFromEulerZYX(Capsule.Rotation);
         FQuat FinalLocalRotation = UserRotation * BaseRotation;
         ShapeRotation = CachedBoneWorldTransform.Rotation * FinalLocalRotation;
-        // 캡슐: 균일 스케일 1로 설정 (스케일 대신 직접 Radius/Length 조작)
-        SetWorldScale(FVector::One());
+        // 캡슐: Radius는 X/Y 스케일, Length는 Z 스케일로 표현
+        SetWorldScale(FVector(Capsule.Radius, Capsule.Radius, Capsule.Length));
         InitialShapeSize = FVector(Capsule.Radius, Capsule.Length, 0);
         break;
     }
@@ -230,7 +230,9 @@ void UShapeAnchorComponent::OnTransformUpdated()
         FQuat BaseRotation = FQuat::MakeFromEulerZYX(FVector(-90.0f, 0.0f, 0.0f));
         FQuat CapsuleLocalRotation = BoneWorldRotInv * AnchorWorldRot * BaseRotation.Inverse();
         Capsule.Rotation = CapsuleLocalRotation.ToEulerZYXDeg();
-        // Capsule: 스케일 무시 (위치/회전만 적용, Radius/Length는 디테일 패널에서 조작)
+        // Capsule: X/Y 스케일 평균 → Radius, Z 스케일 → Length
+        Capsule.Radius = FMath::Max(0.01f, (AnchorScale.X + AnchorScale.Y) * 0.5f);
+        Capsule.Length = FMath::Max(0.01f, AnchorScale.Z);
         break;
     }
     default:
