@@ -781,6 +781,9 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
                     }
                 }
 
+                // 본 선택 초기화 (이전 메시의 선택이 남아있으면 하이라이트가 이상해짐)
+                ActiveState->SelectedBoneIndex = -1;
+
                 // Call virtual hook for derived classes to perform post-load processing
                 OnSkeletalMeshLoaded(ActiveState, Path);
 

@@ -749,6 +749,9 @@ void SPhysicsAssetEditorWindow::LoadPhysicsAsset()
             // 본 라인 캐시 초기화 (다른 메시의 캐시가 남아있으면 본 모양이 이상해짐)
             ActiveState->PreviewActor->ResetBoneLinesCache();
 
+            // 본 선택 상태 초기화 (이전 메시의 선택이 남아있으면 하이라이트가 이상해짐)
+            ActiveState->SelectedBoneIndex = -1;
+
             // Shape 라인 재구성 필요
             PhysState->bShapesDirty = true;
 
@@ -1050,8 +1053,10 @@ void SPhysicsAssetEditorWindow::OnSkeletalMeshLoaded(ViewerState* State, const F
     PhysState->SelectedShapeType = EShapeType::None;
     PhysState->ConstraintStartBodyIndex = -1;
     PhysState->GraphFocusBodyIndex = -1;
+    State->SelectedBoneIndex = -1;  // 본 선택 초기화
     PhysState->bShapesDirty = true;
     PhysState->bConstraintsDirty = true;
+    State->bBoneLinesDirty = true;
 
     // 기즈모 숨김
     UpdateShapeGizmo();
