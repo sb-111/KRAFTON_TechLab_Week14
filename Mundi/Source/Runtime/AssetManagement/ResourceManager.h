@@ -97,6 +97,12 @@ public:
 	// TwistAngle: 라디안 단위, ±범위이므로 총 2*TwistAngle 범위의 부채꼴 생성
 	UStaticMesh* GetOrCreateDynamicArcMesh(float TwistAngle, int32 Segments = 32);
 
+	// 동적 캡슐 메시 생성 (실린더 반높이/반지름 비율별, 캐싱됨)
+	// CylinderHalfHeight: 실린더 부분의 반높이
+	// Radius: 반구 반지름
+	// 메시는 반지름 1.0으로 생성되며, 실린더 반높이는 CylinderHalfHeight/Radius 비율로 생성
+	UStaticMesh* GetOrCreateDynamicCapsuleMesh(float CylinderHalfHeight, float Radius, int32 Segments = 32, int32 Rings = 16);
+
 	// --- 캐시 관리 ---
 	FMeshBVH* GetMeshBVH(const FString& ObjPath);
 	FMeshBVH* GetOrBuildMeshBVH(const FString& ObjPath, const struct FStaticMesh* StaticMeshAsset);

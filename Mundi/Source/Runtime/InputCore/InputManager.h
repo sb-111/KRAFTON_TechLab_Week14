@@ -76,6 +76,10 @@ public:
     void ReleaseCursor();
     bool IsCursorLocked() const { return bIsCursorLocked; }
 
+    // 마우스 캡처 (뷰포트 밖에서도 마우스 이벤트 수신)
+    void CaptureMouse();
+    void ReleaseMouseCapture();
+
 private:
     // 내부 헬퍼 함수들
     void UpdateMousePosition(int X, int Y);

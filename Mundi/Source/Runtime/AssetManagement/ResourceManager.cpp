@@ -768,6 +768,119 @@ UStaticMesh* UResourceManager::GetOrCreatePrimitiveMesh(const FString& Primitive
     return nullptr;
 }
 
+UStaticMesh* UResourceManager::GetOrCreateDynamicCapsuleMesh(float CylinderHalfHeight, float Radius, int32 Slices, int32 Stacks)
+{
+    // 캡슐 메시 동적 생성 (25년차 개발자 조언 기반)
+    // 핵심: 구를 반으로 쪼개고 Z축으로 오프셋을 줘서 캡슐 생성
+    // - Length=0이면 구, Length가 커지면 자연스럽게 캡슐
+    // - 양자화 없이 정확한 크기로 생성
+
+    FMeshData* MeshData = new FMeshData();
+
+    // 캡슐 축은 Y축 (엔진 기준)
+    float HalfLength = CylinderHalfHeight;  // 실린더 반높이 = 원기둥 길이 / 2
+
+    // --- A. 위쪽 반구 (Top Hemisphere) ---
+    // i=0: 꼭대기 (Y = HalfLength + Radius)
+    // i=Stacks: 적도 (Y = HalfLength)
+    for (int32 i = 0; i <= Stacks; ++i)
+    {
+        // Phi: 0(꼭대기) ~ PI/2(적도)
+        float Phi = (PRIM_PI * 0.5f) * ((float)i / Stacks);
+        float SinPhi = sinf(Phi);  // 0 ~ 1 (적도에서 최대)
+        float CosPhi = cosf(Phi);  // 1 ~ 0 (꼭대기에서 최대)
+
+        // Y 오프셋: 원기둥 절반만큼 위로 올림
+        float YOffset = HalfLength;
+
+        for (int32 j = 0; j <= Slices; ++j)
+        {
+            float Theta = 2.0f * PRIM_PI * ((float)j / Slices);
+            float SinTheta = sinf(Theta);
+            float CosTheta = cosf(Theta);
+
+            // 구면 좌표계: 반지름 방향으로 퍼지고, Y는 위로
+            float x = Radius * SinPhi * CosTheta;
+            float z = Radius * SinPhi * SinTheta;
+            float y = (Radius * CosPhi) + YOffset;  // CosPhi: 꼭대기에서 1, 적도에서 0
+
+            // 노말은 구면 방향
+            FVector normal(SinPhi * CosTheta, CosPhi, SinPhi * SinTheta);
+
+            MeshData->Vertices.Add(FVector(x, y, z));
+            MeshData->Normal.Add(normal);
+            MeshData->UV.Add(FVector2D((float)j / Slices, (float)i / (Stacks * 2 + 1)));
+            MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+    }
+
+    // --- B. 아래쪽 반구 (Bottom Hemisphere) ---
+    // i=0: 적도 (Y = -HalfLength, 반지름 = Radius)
+    // i=Stacks: 바닥 (Y = -HalfLength - Radius, 반지름 = 0)
+    for (int32 i = 0; i <= Stacks; ++i)
+    {
+        // Phi: PI/2(적도) ~ PI(바닥)으로 계산
+        // i=0: 적도, i=Stacks: 바닥
+        float Phi = (PRIM_PI * 0.5f) + (PRIM_PI * 0.5f) * ((float)i / Stacks);
+        float SinPhi = sinf(Phi);  // 1 ~ 0 (적도에서 최대, 바닥에서 0)
+        float CosPhi = cosf(Phi);  // 0 ~ -1 (적도에서 0, 바닥에서 -1)
+
+        // Y 오프셋: 원기둥 절반만큼 아래로 내림
+        float YOffset = -HalfLength;
+
+        for (int32 j = 0; j <= Slices; ++j)
+        {
+            float Theta = 2.0f * PRIM_PI * ((float)j / Slices);
+            float SinTheta = sinf(Theta);
+            float CosTheta = cosf(Theta);
+
+            // 구면 좌표계
+            float x = Radius * SinPhi * CosTheta;
+            float z = Radius * SinPhi * SinTheta;
+            float y = (Radius * CosPhi) + YOffset;  // CosPhi: 적도에서 0, 바닥에서 -1
+
+            // 노말은 구면 방향
+            FVector normal(SinPhi * CosTheta, CosPhi, SinPhi * SinTheta);
+
+            MeshData->Vertices.Add(FVector(x, y, z));
+            MeshData->Normal.Add(normal);
+            MeshData->UV.Add(FVector2D((float)j / Slices, (float)(i + Stacks + 1) / (Stacks * 2 + 1)));
+            MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+    }
+
+    // --- 인덱스 생성 ---
+    // 정점 배치: [위 반구 ... 적도 ... 아래 적도 ... 바닥]
+    // 총 링 개수 = (Stacks + 1) * 2
+    int32 RingVertexCount = Slices + 1;
+    int32 TotalRings = (Stacks + 1) * 2;
+
+    for (int32 i = 0; i < TotalRings - 1; ++i)
+    {
+        for (int32 j = 0; j < Slices; ++j)
+        {
+            int32 Current = i * RingVertexCount + j;
+            int32 Next = Current + RingVertexCount;
+
+            // Quad를 두 개의 Triangle로 나눔
+            MeshData->Indices.Add(Current);
+            MeshData->Indices.Add(Next);
+            MeshData->Indices.Add(Current + 1);
+
+            MeshData->Indices.Add(Current + 1);
+            MeshData->Indices.Add(Next);
+            MeshData->Indices.Add(Next + 1);
+        }
+    }
+
+    UStaticMesh* Mesh = NewObject<UStaticMesh>();
+    Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
+    // 캐싱하지 않음 - 매번 새로 생성 (에디터용)
+
+    delete MeshData;
+    return Mesh;
+}
+
 UStaticMesh* UResourceManager::GetOrCreateDynamicArcMesh(float TwistAngle, int32 Segments)
 {
     // 각도를 5도 단위로 양자화하여 캐시 키 생성 (캐시 효율성)

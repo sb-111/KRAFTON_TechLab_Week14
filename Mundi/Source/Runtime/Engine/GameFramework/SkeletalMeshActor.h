@@ -34,6 +34,9 @@ public:
     // SelectedBoneIndex: highlight this bone and its parent connection
     void RebuildBoneLines(int32 SelectedBoneIndex);
 
+    // Reset bone lines cache (forces rebuild on next RebuildBoneLines call)
+    void ResetBoneLinesCache() { bBoneLinesInitialized = false; BoneLinesCache.Empty(); BoneChildren.Empty(); }
+
     // Position the anchor
     void RepositionAnchorToBone(int32 BoneIndex);
 

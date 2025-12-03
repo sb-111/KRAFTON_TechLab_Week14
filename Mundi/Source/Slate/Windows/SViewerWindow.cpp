@@ -250,6 +250,16 @@ void SViewerWindow::OnMouseMove(FVector2D MousePos)
     if (bLeftMousePressed || CenterRect.Contains(MousePos))
     {
         FVector2D LocalPos = MousePos - FVector2D(CenterRect.Left, CenterRect.Top);
+
+        // 뷰포트 밖으로 너무 멀리 나가면 좌표 클램프 (극단적인 값 방지)
+        // 뷰포트 크기의 2배 범위까지만 허용
+        float ViewportWidth = CenterRect.GetWidth();
+        float ViewportHeight = CenterRect.GetHeight();
+        if (LocalPos.X < -ViewportWidth) LocalPos.X = -ViewportWidth;
+        if (LocalPos.X > ViewportWidth * 2.0f) LocalPos.X = ViewportWidth * 2.0f;
+        if (LocalPos.Y < -ViewportHeight) LocalPos.Y = -ViewportHeight;
+        if (LocalPos.Y > ViewportHeight * 2.0f) LocalPos.Y = ViewportHeight * 2.0f;
+
         ActiveState->Viewport->ProcessMouseMove((int32)LocalPos.X, (int32)LocalPos.Y);
     }
 }
@@ -738,6 +748,13 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
             USkeletalMesh* Mesh = UResourceManager::GetInstance().Load<USkeletalMesh>(Path);
             if (Mesh && ActiveState->PreviewActor)
             {
+                // 같은 메시를 다시 로드하는 경우 스킵 (불필요한 재초기화 및 본 라인 누적 방지)
+                if (ActiveState->CurrentMesh == Mesh)
+                {
+                    // 이미 같은 메시가 로드되어 있음 - 아무것도 하지 않음
+                }
+                else
+                {
                 ActiveState->PreviewActor->SetSkeletalMesh(Path);
                 ActiveState->CurrentMesh = Mesh;
 
@@ -764,6 +781,9 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
                     }
                 }
 
+                // 본 선택 초기화 (이전 메시의 선택이 남아있으면 하이라이트가 이상해짐)
+                ActiveState->SelectedBoneIndex = -1;
+
                 // Call virtual hook for derived classes to perform post-load processing
                 OnSkeletalMeshLoaded(ActiveState, Path);
 
@@ -777,6 +797,9 @@ void SViewerWindow::RenderAssetBrowser(float PanelWidth)
                 {
                     LineComp->ClearLines();
                     LineComp->SetLineVisible(ActiveState->bShowBones);
+                }
+                // 본 라인 캐시 초기화 플래그 리셋 (새 메시 로드 시 라인 재빌드 필요)
+                ActiveState->PreviewActor->ResetBoneLinesCache();
                 }
             }
         }
@@ -807,7 +830,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::BeginGroup();
 
     // Title
-    ImGui::Text("DISPLAY OPTIONS");
+    ImGui::Text(reinterpret_cast<const char*>(u8"디스플레이 옵션"));
     ImGui::Dummy(ImVec2(0, 4));
     // Checkbox Style
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.5, 1.5));
@@ -817,7 +840,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.75f, 0.80f, 0.90f, 1.00f));
 
     // Checkboxes
-    if (ImGui::Checkbox("Show Mesh", &ActiveState->bShowMesh))
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"메쉬"), &ActiveState->bShowMesh))
     {
         if (auto* comp = ActiveState->PreviewActor->GetSkeletalMeshComponent())
             comp->SetVisibility(ActiveState->bShowMesh);
@@ -825,7 +848,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
 
     ImGui::SameLine(0.0f, 12.0f);
 
-    if (ImGui::Checkbox("Show Bones", &ActiveState->bShowBones))
+    if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"스켈레탈"), &ActiveState->bShowBones))
     {
         if (auto* lineComp = ActiveState->PreviewActor->GetBoneLineComponent())
             lineComp->SetLineVisible(ActiveState->bShowBones);
@@ -846,7 +869,7 @@ void SViewerWindow::RenderLeftPanel(float PanelWidth)
     ImGui::Dummy(ImVec2(0, 8));
 
     // Bone Hierarchy Section
-    ImGui::Text("BONE HIERARCHY");
+    ImGui::Text(reinterpret_cast<const char*>(u8"본 계층구조"));
     ImGui::Dummy(ImVec2(0, 2));
     ImGui::Spacing();
 
