@@ -64,6 +64,9 @@
 #include "Modules/ParticleModuleTypeDataMesh.h"
 #include "Modules/ParticleModuleTypeDataBeam.h"
 #include "Modules/ParticleModuleTypeDataRibbon.h"
+#include "ClothComponent.h"
+#include "DynamicMesh.h"
+#include "VertexData.h"
 
 // Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
 
@@ -233,6 +236,7 @@ void FSceneRenderer::RenderLitPath()
 	RenderRagdollDebugPass();
 
 	RenderDecalPass();
+	RenderClothPass();
 	RenderParticleSystemPass();
 }
 
@@ -815,6 +819,10 @@ void FSceneRenderer::GatherVisibleProxies()
 					{
 						Proxies.Decals.Add(DecalComponent);
 					}
+					else if (UClothComponent* ClothComponent = Cast<UClothComponent>(PrimitiveComponent))
+					{
+						Proxies.ClothComponents.Add(ClothComponent);
+					}
 					else if (UParticleSystemComponent* ParticleSystemComponent = Cast<UParticleSystemComponent>(PrimitiveComponent))
 					{
 						Proxies.ParticleSystems.Add(ParticleSystemComponent);
@@ -1264,6 +1272,33 @@ void FSceneRenderer::RenderParticleSystemPass()
 	RHIDevice->RSSetState(ERasterizerMode::Solid);
 	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
 	RHIDevice->OMSetBlendState(false);
+}
+
+void FSceneRenderer::RenderClothPass()
+{
+	if (Proxies.ClothComponents.empty())
+		return;
+
+	// 렌더 상태 설정
+	RHIDevice->RSSetState(ERasterizerMode::Solid);
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
+	RHIDevice->OMSetBlendState(false);
+
+	// --- 1. 수집 (Collect) ---
+	MeshBatchElements.Empty();
+	for (UClothComponent* ClothComp : Proxies.ClothComponents)
+	{
+		if (ClothComp && ClothComp->IsVisible())
+		{
+			ClothComp->CollectMeshBatches(MeshBatchElements, View);
+		}
+	}
+
+	// --- 2. 정렬 (Sort) ---
+	MeshBatchElements.Sort();
+
+	// --- 3. 그리기 (Draw) ---
+	DrawMeshBatches(MeshBatchElements, true);
 }
 
 void FSceneRenderer::RenderPostProcessingPasses()

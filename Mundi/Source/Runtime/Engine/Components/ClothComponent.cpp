@@ -1,6 +1,14 @@
 #include "pch.h"
 #include "ClothComponent.h"
 #include "ClothSystem.h"
+#include "DynamicMesh.h"
+#include "VertexData.h"
+#include "Renderer.h"
+#include "ResourceManager.h"
+#include "Material.h"
+#include "Shader.h"
+#include "SceneView.h"
+#include "MeshBatchElement.h"
 #include <NvCloth/Factory.h>
 #include <NvCloth/Cloth.h>
 #include <NvCloth/Fabric.h>
@@ -16,11 +24,21 @@ UClothComponent::UClothComponent()
     bCanEverTick = true;
     bTickEnabled = true;
     bTickInEditor = true;  // 에디터에서도 시뮬레이션 보기
+
+    // 렌더링 리소스 생성
+    DynamicMesh = NewObject<UDynamicMesh>();
+    MeshData = new FMeshData();
 }
 
 UClothComponent::~UClothComponent()
 {
     ReleaseCloth();
+
+    if (MeshData)
+    {
+        delete MeshData;
+        MeshData = nullptr;
+    }
 }
 
 void UClothComponent::InitializeComponent()
@@ -40,6 +58,7 @@ void UClothComponent::TickComponent(float DeltaTime)
     if (ClothInstance)
     {
         UpdateSimulationResult();
+        UpdateDynamicMesh();
     }
 }
 
@@ -220,6 +239,58 @@ void UClothComponent::InitializeCloth()
 
     // ===== 4. 파라미터 적용 =====
     ApplySimulationParameters();
+
+    // ===== 5. DynamicMesh 초기화 =====
+    int numVertices = (int)ClothVertices.size();
+    int numIndices = (int)ClothIndices.size();
+
+    URenderer* renderer = GEngine.GetRenderer();
+    if (renderer && DynamicMesh)
+    {
+        DynamicMesh->Initialize(
+            numVertices,
+            numIndices,
+            renderer->GetRHIDevice()->GetDevice(),
+            EVertexLayoutType::PositionColorTexturNormal
+        );
+    }
+
+    // ===== 6. 초기 MeshData 설정 =====
+    if (MeshData)
+    {
+        MeshData->Vertices = ClothVertices;
+        MeshData->Indices.clear();
+        for (uint32_t idx : ClothIndices)
+        {
+            MeshData->Indices.push_back(idx);
+        }
+
+        // 기본 색상 (흰색)
+        MeshData->Color.clear();
+        for (size_t i = 0; i < ClothVertices.size(); i++)
+        {
+            MeshData->Color.push_back(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+
+        // 기본 UV (단순 매핑)
+        MeshData->UV.clear();
+        int gridWidth = (int)sqrt(ClothVertices.size());
+        for (size_t i = 0; i < ClothVertices.size(); i++)
+        {
+            int x = i % gridWidth;
+            int y = i / gridWidth;
+            float u = (float)x / (gridWidth - 1);
+            float v = (float)y / (gridWidth - 1);
+            MeshData->UV.push_back(FVector2D(u, v));
+        }
+
+        // 노말은 UpdateDynamicMesh에서 계산
+        MeshData->Normal.clear();
+        for (size_t i = 0; i < ClothVertices.size(); i++)
+        {
+            MeshData->Normal.push_back(FVector(0.0f, 0.0f, 1.0f));
+        }
+    }
 }
 
 void UClothComponent::ReleaseCloth()
@@ -278,4 +349,114 @@ void UClothComponent::ApplySimulationParameters()
     // 공기 저항 (Drag, Lift)
     ClothInstance->setDragCoefficient(0.1f);
     ClothInstance->setLiftCoefficient(0.1f);
+}
+
+void UClothComponent::UpdateDynamicMesh()
+{
+    if (!DynamicMesh || !MeshData)
+    {
+        return;
+    }
+
+    // MeshData 정점 위치 업데이트
+    MeshData->Vertices = ClothVertices;
+
+    // 노말 벡터 계산
+    MeshData->Normal.clear();
+    MeshData->Normal.resize(ClothVertices.size(), FVector(0.0f, 0.0f, 0.0f));
+
+    // 각 삼각형의 노말을 계산하고 정점에 누적
+    for (size_t i = 0; i < ClothIndices.size(); i += 3)
+    {
+        uint32_t idx0 = ClothIndices[i];
+        uint32_t idx1 = ClothIndices[i + 1];
+        uint32_t idx2 = ClothIndices[i + 2];
+
+        const FVector& v0 = ClothVertices[idx0];
+        const FVector& v1 = ClothVertices[idx1];
+        const FVector& v2 = ClothVertices[idx2];
+
+        // 삼각형 에지
+        FVector edge1 = v1 - v0;
+        FVector edge2 = v2 - v0;
+
+        // 면 노말 (외적)
+        FVector faceNormal = FVector::Cross(edge1, edge2);
+
+        // 각 정점에 면 노말 누적
+        MeshData->Normal[idx0] = MeshData->Normal[idx0] + faceNormal;
+        MeshData->Normal[idx1] = MeshData->Normal[idx1] + faceNormal;
+        MeshData->Normal[idx2] = MeshData->Normal[idx2] + faceNormal;
+    }
+
+    // 노말 정규화
+    for (size_t i = 0; i < MeshData->Normal.size(); i++)
+    {
+        MeshData->Normal[i].Normalize();
+    }
+
+    // DynamicMesh에 반영
+    URenderer* renderer = GEngine.GetRenderer();
+    if (renderer)
+    {
+        DynamicMesh->UpdateData(MeshData, GEngine.GetRHIDevice()->GetDeviceContext());
+    }
+}
+
+void UClothComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMeshBatchElements, const FSceneView* View)
+{
+    if (!DynamicMesh || !DynamicMesh->IsInitialized())
+    {
+        return;
+    }
+
+    if (DynamicMesh->GetCurrentIndexCount() == 0 || DynamicMesh->GetCurrentVertexCount() == 0)
+    {
+        return;
+    }
+
+    // Get default material
+    UMaterial* Material = UResourceManager::GetInstance().GetDefaultMaterial();
+    if (!Material)
+    {
+        return;
+    }
+
+    UShader* Shader = Material->GetShader();
+    if (!Shader)
+    {
+        return;
+    }
+
+    // Combine View shader macros with Material shader macros
+    TArray<FShaderMacro> ShaderMacros = View->ViewShaderMacros;
+    if (Material->GetShaderMacros().Num() > 0)
+    {
+        ShaderMacros.Append(Material->GetShaderMacros());
+    }
+
+    // Compile shader variant
+    FShaderVariant* ShaderVariant = Shader->GetOrCompileShaderVariant(ShaderMacros);
+    if (!ShaderVariant)
+    {
+        return;
+    }
+
+    // Create batch element
+    FMeshBatchElement BatchElement;
+    BatchElement.VertexShader = ShaderVariant->VertexShader;
+    BatchElement.PixelShader = ShaderVariant->PixelShader;
+    BatchElement.InputLayout = ShaderVariant->InputLayout;
+    BatchElement.Material = Material;
+    BatchElement.VertexBuffer = DynamicMesh->GetVertexBuffer();
+    BatchElement.IndexBuffer = DynamicMesh->GetIndexBuffer();
+    BatchElement.VertexStride = sizeof(FVertexDynamic);  // PositionColorTexturNormal format
+    BatchElement.IndexCount = DynamicMesh->GetCurrentIndexCount();
+    BatchElement.StartIndex = 0;
+    BatchElement.BaseVertexIndex = 0;
+    BatchElement.WorldMatrix = GetWorldMatrix();
+    BatchElement.ObjectID = InternalIndex;
+    BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    OutMeshBatchElements.Add(BatchElement);
 }

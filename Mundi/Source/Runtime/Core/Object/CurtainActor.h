@@ -3,8 +3,6 @@
 #include "ACurtainActor.generated.h"
 
 class UClothComponent;
-class UDynamicMesh;
-struct FMeshData;
 
 UCLASS(DisplayName="Curtain Actor", Description="천 시뮬레이션 테스트 액터 (커튼)")
 class ACurtainActor : public AActor
@@ -19,11 +17,9 @@ protected:
 
 public:
     void BeginPlay() override;
-    void Tick(float DeltaSeconds) override;
 
     // ===== Components =====
     UClothComponent* ClothComp = nullptr;
-    UDynamicMesh* DynamicMesh = nullptr;
 
     // ===== Cloth Settings =====
     UPROPERTY(EditAnywhere, Category="Cloth Settings")
@@ -34,8 +30,4 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Cloth Settings")
     float QuadSize = 10.0f;  // cm
-
-protected:
-    FMeshData* MeshData = nullptr;
-    void UpdateMeshFromCloth();
 };

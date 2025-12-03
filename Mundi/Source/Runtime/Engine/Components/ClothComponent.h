@@ -1,7 +1,10 @@
 ﻿#pragma once
-#include "ActorComponent.h"
+#include "PrimitiveComponent.h"
 #include "Vector.h"
 #include "UClothComponent.generated.h"
+
+class UDynamicMesh;
+struct FMeshData;
 
 namespace nv
 {
@@ -18,8 +21,8 @@ namespace physx
     class PxVec3;
 }
 
-UCLASS(DisplayName="Cloth Component", Description="NvCloth 기반 천 시뮬레이션 컴포넌트")
-class UClothComponent : public UActorComponent
+UCLASS(DisplayName="Cloth Component", Description="NvCloth 기반 천 시뮬레이션 및 렌더링 컴포넌트")
+class UClothComponent : public UPrimitiveComponent
 {
 public:
     GENERATED_REFLECTION_BODY()
@@ -59,6 +62,13 @@ public:
     const TArray<FVector>& GetClothVertices() const { return ClothVertices; }
     const TArray<uint32_t>& GetClothIndices() const { return ClothIndices; }
 
+    // ===== Rendering =====
+    UDynamicMesh* GetDynamicMesh() const { return DynamicMesh; }
+    void UpdateDynamicMesh();
+
+    // ===== Batch Rendering =====
+    void CollectMeshBatches(TArray<struct FMeshBatchElement>& OutMeshBatchElements, const struct FSceneView* View) override;
+
 protected:
     // ===== Cloth Instance =====
     nv::cloth::Cloth* ClothInstance = nullptr;
@@ -68,6 +78,10 @@ protected:
     TArray<FVector> ClothVertices;      // 현재 정점 위치
     TArray<float> InverseMasses;        // 정점별 역질량 (0 = 고정)
     TArray<uint32_t> ClothIndices;      // 삼각형 인덱스
+
+    // ===== Rendering Resources =====
+    UDynamicMesh* DynamicMesh = nullptr;
+    FMeshData* MeshData = nullptr;
 
     // ===== Helper Functions =====
     void UpdateSimulationResult();      // Cloth에서 정점 데이터 가져오기

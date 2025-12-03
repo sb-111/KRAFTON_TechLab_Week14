@@ -41,6 +41,7 @@ struct FVisibleRenderProxySet
 	TArray<UDecalComponent*> Decals;
 	TArray<UTextRenderComponent*> Texts;
 	TArray<UParticleSystemComponent*> ParticleSystems;
+	TArray<class UClothComponent*> ClothComponents; // Cloth 시뮬레이션 컴포넌트
 
 	// --- Type 2: In-Scene Editor (PP X, Depth-Test O) ---
 	TArray<ULineComponent*> EditorLines;	// 그리드
@@ -112,6 +113,9 @@ private:
 
 	/** @brief 파티클 시스템을 렌더링하기 위한 패스입니다. **/
 	void RenderParticleSystemPass();
+
+	/** @brief Cloth 시뮬레이션 메시를 렌더링하는 패스입니다. */
+	void RenderClothPass();
 
 	void RenderPostProcessingPasses();
 	void RenderSceneDepthPostProcess();
