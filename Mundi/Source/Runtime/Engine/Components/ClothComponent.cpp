@@ -109,9 +109,13 @@ void UClothComponent::TickComponent(float DeltaTime)
 
     if (ClothInstance)
     {
-        // ===== 바람 효과 업데이트 =====
+        // ===== DeltaTime 안전 제한 (프레임 드랍 대비) =====
+        // 최대 0.01초 (100 FPS 이하로 떨어지면 슬로우모션)
+        // 이렇게 하지 않으면 프레임이 튈 때 거대한 힘이 가해져 정점이 날아감
+        float ClampedDeltaTime = (DeltaTime > 0.01f) ? 0.01f : DeltaTime;
+
         ApplySimulationParameters();
-        UpdateWind(DeltaTime);
+        UpdateWind(ClampedDeltaTime);
 
         // ===== 시뮬레이션 결과 업데이트 및 렌더링 =====
         UpdateSimulationResult();
@@ -703,13 +707,35 @@ void UClothComponent::UpdateSimulationResult()
     //       정점을 직접 수정하려면 setParticles()를 사용해야 합니다
     auto particles = ClothInstance->getCurrentParticles();
 
-    // ===== CPU 측 정점 위치 업데이트 (NaN/Inf 방어 포함) =====
-    // 시뮬레이션 결과를 ClothVertices에 복사하여 렌더링에 사용
-    // bool bHasInvalidValues = false;
+    // ===== CPU 측 정점 위치 업데이트 (NaN/Inf/거리 제한 방어) =====
+    // MaxDistance를 QuadSize에 비례하게 설정 (QuadSize * 3.0)
+    const float MaxDistanceFromInitial = ClothQuadSize * 3.0f;
+
     for (size_t i = 0; i < ClothVertices.size(); i++)
     {
         const physx::PxVec4& p = particles[i];
-        ClothVertices[i] = FVector(p.x, p.y, p.z);
+
+        // NaN/Inf 체크
+        if (isnan(p.x) || isnan(p.y) || isnan(p.z) ||
+            isinf(p.x) || isinf(p.y) || isinf(p.z))
+        {
+            ClothVertices[i] = InitialLocalPositions[i];
+            continue;
+        }
+
+        FVector newPos(p.x, p.y, p.z);
+
+        // 초기 위치로부터 최대 거리 제한 (Tether 실패 대비)
+        FVector initialPos = InitialLocalPositions[i];
+        FVector delta = newPos - initialPos;
+        float distance = delta.Size();
+
+        if (distance > MaxDistanceFromInitial)
+        {
+            newPos = initialPos + delta * (MaxDistanceFromInitial / distance);
+        }
+
+        ClothVertices[i] = newPos;
     }
 }
 
@@ -859,13 +885,6 @@ void UClothComponent::UpdateDynamicMesh()
     for (size_t i = 0; i < ClothVertices.size(); i++)
     {
         MeshData->Color.push_back(FVector4(ClothColor.X, ClothColor.Y, ClothColor.Z, 1.0f));
-    }
-
-    // 디버그: 색상 값 확인
-    static int colorLogCount = 0;
-    if (colorLogCount++ % 120 == 0)
-    {
-        UE_LOG("[ClothComponent] Color: (%.2f, %.2f, %.2f)", ClothColor.X, ClothColor.Y, ClothColor.Z);
     }
 
     // 노말 벡터 계산

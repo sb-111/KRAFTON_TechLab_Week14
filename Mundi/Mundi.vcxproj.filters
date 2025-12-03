@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <FxCompile Include="Shaders\Materials\Fireball.hlsl">
@@ -70,6 +70,7 @@
     <FxCompile Include="Shaders\Particle\ParticleRibbon.hlsl">
       <Filter>Shaders\Particle</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Debug\DebugPrimitive.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Generated\UParticleModuleSizeScaleBySpeed.generated.cpp">
@@ -1143,6 +1144,13 @@
     <ClCompile Include="Generated\ACurtainActor.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Core\Object\CurtainActor.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ClothComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ClothSystem.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2402,6 +2410,12 @@
     <ClInclude Include="Generated\ACurtainActor.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Runtime\Core\Object\CurtainActor.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ClothComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\ClothSystem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py">
