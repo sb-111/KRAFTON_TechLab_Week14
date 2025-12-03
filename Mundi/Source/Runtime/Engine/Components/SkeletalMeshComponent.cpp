@@ -913,6 +913,13 @@ void USkeletalMeshComponent::SetPhysicsAssetPathOverride(const FString& NewPath)
 
     // 새 경로 설정
     PhysicsAssetPathOverride = NewPath;
+
+    // 경로가 비어있으면 (None으로 설정) SkeletalMesh의 PhysicsAsset 캐시도 정리
+    // 이렇게 해야 GetEffectivePhysicsAsset()에서 SkeletalMesh 캐시를 반환하지 않음
+    if (NewPath.empty() && SkeletalMesh)
+    {
+        SkeletalMesh->SetPhysicsAsset(nullptr);
+    }
 }
 
 UPhysicsAsset* USkeletalMeshComponent::GetEffectivePhysicsAsset()

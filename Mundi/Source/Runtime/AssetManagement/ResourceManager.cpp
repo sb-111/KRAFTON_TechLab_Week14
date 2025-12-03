@@ -770,15 +770,37 @@ UStaticMesh* UResourceManager::GetOrCreatePrimitiveMesh(const FString& Primitive
 
 UStaticMesh* UResourceManager::GetOrCreateDynamicCapsuleMesh(float CylinderHalfHeight, float Radius, int32 Slices, int32 Stacks)
 {
-    // 캡슐 메시 동적 생성 (25년차 개발자 조언 기반)
+    // 캡슐 메시 동적 생성 
     // 핵심: 구를 반으로 쪼개고 Z축으로 오프셋을 줘서 캡슐 생성
     // - Length=0이면 구, Length가 커지면 자연스럽게 캡슐
-    // - 양자화 없이 정확한 크기로 생성
+    // - 양자화하여 캐싱 (성능 최적화)
+
+    // 0.01 단위로 양자화하여 캐시 키 생성 (정밀도와 캐시 효율성 균형)
+    const float QuantizeUnit = 0.01f;
+    int32 QuantizedHalfHeight = (int32)(CylinderHalfHeight / QuantizeUnit + 0.5f);
+    int32 QuantizedRadius = (int32)(Radius / QuantizeUnit + 0.5f);
+
+    // 캐시 키 생성
+    char KeyBuffer[64];
+    sprintf_s(KeyBuffer, "__DynamicCapsule_%d_%d", QuantizedHalfHeight, QuantizedRadius);
+    FString CacheKey(KeyBuffer);
+
+    // 이미 생성된 메시가 있으면 반환
+    UStaticMesh* Existing = Get<UStaticMesh>(CacheKey);
+    if (Existing)
+        return Existing;
+
+    // 양자화된 값으로 실제 크기 복원
+    float ActualHalfHeight = QuantizedHalfHeight * QuantizeUnit;
+    float ActualRadius = QuantizedRadius * QuantizeUnit;
+    if (ActualRadius < 0.001f) ActualRadius = 0.001f;  // 최소 반지름
 
     FMeshData* MeshData = new FMeshData();
 
     // 캡슐 축은 Y축 (엔진 기준)
-    float HalfLength = CylinderHalfHeight;  // 실린더 반높이 = 원기둥 길이 / 2
+    // 양자화된 값 사용
+    float HalfLength = ActualHalfHeight;  // 실린더 반높이 = 원기둥 길이 / 2
+    Radius = ActualRadius;  // 양자화된 반지름 사용
 
     // --- A. 위쪽 반구 (Top Hemisphere) ---
     // i=0: 꼭대기 (Y = HalfLength + Radius)
@@ -875,7 +897,9 @@ UStaticMesh* UResourceManager::GetOrCreateDynamicCapsuleMesh(float CylinderHalfH
 
     UStaticMesh* Mesh = NewObject<UStaticMesh>();
     Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
-    // 캐싱하지 않음 - 매번 새로 생성 (에디터용)
+
+    // 캐시에 저장
+    Add<UStaticMesh>(CacheKey, Mesh);
 
     delete MeshData;
     return Mesh;

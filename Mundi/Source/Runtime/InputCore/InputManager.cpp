@@ -316,6 +316,11 @@ void UInputManager::ProcessMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
             }
         }
         break;
+
+    case WM_KILLFOCUS:
+        // 포커스를 잃으면 모든 키 상태 리셋 (Alt 키 등이 눌린 상태로 남는 문제 방지)
+        ResetAllKeyStates();
+        break;
     }
 
 }
@@ -368,6 +373,15 @@ bool UInputManager::IsKeyReleased(int KeyCode) const
 {
     if (KeyCode < 0 || KeyCode >= 256) return false;
     return !KeyStates[KeyCode] && PreviousKeyStates[KeyCode];
+}
+
+void UInputManager::ResetAllKeyStates()
+{
+    // 모든 키 상태를 false로 리셋
+    for (int i = 0; i < 256; ++i)
+    {
+        KeyStates[i] = false;
+    }
 }
 
 void UInputManager::UpdateMousePosition(int X, int Y)

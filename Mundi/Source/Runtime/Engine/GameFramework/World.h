@@ -51,7 +51,8 @@ enum class EDebugPrimitiveType : uint8
     Box,
     Capsule,
     Cone,
-    Arc
+    Arc,
+    Arrow
 };
 
 // Debug Primitive 렌더링 요청 구조체
@@ -287,6 +288,19 @@ public:
         Prim.Transform = Transform;
         Prim.Angle1 = TwistAngle;
         Prim.Radius = Radius;
+        Prim.Color = Color;
+        Prim.UUID = UUID;
+        DebugPrimitiveQueue.Add(Prim);
+    }
+
+    // 화살표: Transform은 위치/회전(+X 방향), Radius=길이, HalfHeight=머리 크기
+    void AddDebugArrow(const FMatrix& Transform, float Length, float HeadSize, const FLinearColor& Color, uint32 UUID = 0)
+    {
+        FDebugPrimitive Prim;
+        Prim.Type = EDebugPrimitiveType::Arrow;
+        Prim.Transform = Transform;
+        Prim.Radius = Length;
+        Prim.HalfHeight = HeadSize;
         Prim.Color = Color;
         Prim.UUID = UUID;
         DebugPrimitiveQueue.Add(Prim);

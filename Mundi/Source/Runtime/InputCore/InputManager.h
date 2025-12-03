@@ -57,6 +57,7 @@ public:
     bool IsKeyDown(int KeyCode) const;
     bool IsKeyPressed(int KeyCode) const; // 이번 프레임에 눌림
     bool IsKeyReleased(int KeyCode) const; // 이번 프레임에 떼짐
+    void ResetAllKeyStates(); // 모든 키 상태 리셋 (포커스 잃을 때 호출)
 
     // 마우스 휠 함수들
     float GetMouseWheelDelta() const { return MouseWheelDelta; }

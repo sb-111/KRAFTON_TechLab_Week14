@@ -1150,6 +1150,9 @@
     <ClCompile Include="Generated\ATestCar.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Generated\UPhysicalMaterial.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2412,6 +2415,9 @@
       <Filter>Generated</Filter>
     </ClInclude>
     <ClInclude Include="Generated\ATestCar.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UPhysicalMaterial.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,6 +6,7 @@
 #include "FViewportClient.h"
 #include "Source/Runtime/Engine/Physics/PhysicsAsset.h"
 #include "Source/Runtime/Engine/Physics/BodySetup.h"
+#include "Source/Runtime/Engine/Physics/PhysicalMaterial.h"
 #include "Source/Runtime/Engine/Physics/ConstraintInstance.h"
 #include "Source/Runtime/Engine/GameFramework/SkeletalMeshActor.h"
 #include "Source/Runtime/Engine/GameFramework/StaticMeshActor.h"
@@ -305,8 +306,11 @@ static JSON SerializeBodySetup(UBodySetup* Body)
 	Obj["MassInKg"] = Body->MassInKg;
 	Obj["LinearDamping"] = Body->LinearDamping;
 	Obj["AngularDamping"] = Body->AngularDamping;
-	Obj["Friction"] = Body->Friction;
-	Obj["Restitution"] = Body->Restitution;
+
+	// PhysMaterial 경로 저장 (에셋 참조용)
+	Obj["PhysMaterialPath"] = Body->PhysMaterialPath;
+
+	// 에셋 경로가 있을 때만 에셋 참조, 없으면 None (런타임에 기본값 0 사용)
 	Obj["AggGeom"] = SerializeAggGeom(Body->AggGeom);
 	return Obj;
 }
@@ -497,8 +501,19 @@ static UBodySetup* DeserializeBodySetup(const JSON& Data)
 	FJsonSerializer::ReadFloat(Data, "MassInKg", Body->MassInKg, 1.0f, false);
 	FJsonSerializer::ReadFloat(Data, "LinearDamping", Body->LinearDamping, 0.01f, false);
 	FJsonSerializer::ReadFloat(Data, "AngularDamping", Body->AngularDamping, 0.05f, false);
-	FJsonSerializer::ReadFloat(Data, "Friction", Body->Friction, 0.5f, false);
-	FJsonSerializer::ReadFloat(Data, "Restitution", Body->Restitution, 0.1f, false);
+
+	// PhysMaterial 경로 로드
+	FJsonSerializer::ReadString(Data, "PhysMaterialPath", Body->PhysMaterialPath, "", false);
+
+	// PhysMaterial 로드: 경로가 있으면 에셋에서 로드, 없으면 nullptr (런타임에 기본값 사용)
+	if (!Body->PhysMaterialPath.empty())
+	{
+		Body->PhysMaterial = PhysicsAssetEditorBootstrap::LoadPhysicalMaterial(Body->PhysMaterialPath);
+	}
+	else
+	{
+		Body->PhysMaterial = nullptr;
+	}
 
 	// AggGeom 역직렬화
 	JSON AggGeomData;
@@ -744,6 +759,118 @@ void PhysicsAssetEditorBootstrap::GetCompatiblePhysicsAssetPaths(const FString& 
 		{
 			OutPaths.Add(AllPaths[i]);
 			OutDisplayNames.Add(AllNames[i] + " (other)");
+		}
+	}
+}
+
+// ============================================================================
+// Physical Material 에셋 관리 함수들
+// ============================================================================
+
+bool PhysicsAssetEditorBootstrap::SavePhysicalMaterial(UPhysicalMaterial* Material, const FString& FilePath)
+{
+	if (!Material)
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] SavePhysicalMaterial: Material이 nullptr입니다");
+		return false;
+	}
+
+	if (FilePath.empty())
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] SavePhysicalMaterial: FilePath가 비어있습니다");
+		return false;
+	}
+
+	// Root JSON Object
+	JSON JsonHandle = JSON::Make(JSON::Class::Object);
+
+	JsonHandle["Friction"] = Material->Friction;
+	JsonHandle["Restitution"] = Material->Restitution;
+
+	// 파일로 저장
+	FWideString WidePath = UTF8ToWide(FilePath);
+	if (!FJsonSerializer::SaveJsonToFile(JsonHandle, WidePath))
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] SavePhysicalMaterial: 파일 저장 실패: %s", FilePath.c_str());
+		return false;
+	}
+
+	UE_LOG("[PhysicsAssetEditorBootstrap] SavePhysicalMaterial: 저장 성공: %s", FilePath.c_str());
+	return true;
+}
+
+UPhysicalMaterial* PhysicsAssetEditorBootstrap::LoadPhysicalMaterial(const FString& FilePath)
+{
+	if (FilePath.empty())
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicalMaterial: FilePath가 비어있습니다");
+		return nullptr;
+	}
+
+	// 경로 정규화
+	FString NormalizedFilePath = ResolveAssetRelativePath(NormalizePath(FilePath), "");
+
+	// 파일에서 JSON 로드
+	FWideString WidePath = UTF8ToWide(NormalizedFilePath);
+	JSON JsonHandle;
+	if (!FJsonSerializer::LoadJsonFromFile(JsonHandle, WidePath))
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicalMaterial: 파일 로드 실패: %s", NormalizedFilePath.c_str());
+		return nullptr;
+	}
+
+	// 새 PhysicalMaterial 객체 생성
+	UPhysicalMaterial* LoadedMaterial = NewObject<UPhysicalMaterial>();
+	if (!LoadedMaterial)
+	{
+		UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicalMaterial: PhysicalMaterial 객체 생성 실패");
+		return nullptr;
+	}
+
+	FJsonSerializer::ReadFloat(JsonHandle, "Friction", LoadedMaterial->Friction, 0.5f, false);
+	FJsonSerializer::ReadFloat(JsonHandle, "Restitution", LoadedMaterial->Restitution, 0.3f, false);
+
+	UE_LOG("[PhysicsAssetEditorBootstrap] LoadPhysicalMaterial: 로드 성공: %s", NormalizedFilePath.c_str());
+	return LoadedMaterial;
+}
+
+void PhysicsAssetEditorBootstrap::GetAllPhysicalMaterialPaths(TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames)
+{
+	OutPaths.Empty();
+	OutDisplayNames.Empty();
+
+	// "없음" 옵션 추가
+	OutPaths.Add("");
+	OutDisplayNames.Add("None");
+
+	// Data/Physics/Materials 폴더 스캔
+	FString MaterialsDir = GDataDir + "/Physics/Materials";
+	std::filesystem::path SearchPath(UTF8ToWide(MaterialsDir));
+
+	if (!std::filesystem::exists(SearchPath))
+	{
+		// 폴더가 없으면 생성
+		std::filesystem::create_directories(SearchPath);
+		return;
+	}
+
+	for (const auto& Entry : std::filesystem::recursive_directory_iterator(SearchPath))
+	{
+		if (Entry.is_regular_file())
+		{
+			std::filesystem::path FilePath = Entry.path();
+			if (FilePath.extension() == ".physmat")
+			{
+				// 한글 경로 지원: wstring -> UTF-8 변환
+				FString FullPath = WideToUTF8(FilePath.wstring());
+				FString FileName = WideToUTF8(FilePath.stem().wstring());  // 확장자 제외한 이름
+
+				// 경로 정규화
+				FullPath = NormalizePath(FullPath);
+
+				OutPaths.Add(FullPath);
+				OutDisplayNames.Add(FileName);
+			}
 		}
 	}
 }

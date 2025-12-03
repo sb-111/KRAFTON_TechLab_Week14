@@ -398,11 +398,20 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 	FPhysicsSystem& PhysicsSystem = FPhysicsSystem::GetInstance();
 	if (!PhysicsSystem.GetPhysics()) return;
 
-	// UBodySetup의 물리 재질로 PxMaterial 생성
+	// UBodySetup의 PhysMaterial에서 값 추출 (없으면 0 사용)
+	float Friction = 0.0f;
+	float Restitution = 0.0f;
+	if (Setup->PhysMaterial)
+	{
+		Friction = Setup->PhysMaterial->Friction;
+		Restitution = Setup->PhysMaterial->Restitution;
+	}
+
+	// PxMaterial 생성
 	PxMaterial* Material = PhysicsSystem.GetPhysics()->createMaterial(
-		Setup->Friction,
-		Setup->Friction,
-		Setup->Restitution
+		Friction,
+		Friction,
+		Restitution
 	);
 	if (!Material) return;
 

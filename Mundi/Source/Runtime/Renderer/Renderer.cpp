@@ -615,6 +615,49 @@ void URenderer::DrawDebugArc(const FMatrix& Transform, float TwistAngle, float R
 	}
 }
 
+void URenderer::DrawDebugArrow(const FMatrix& Transform, float Length, float HeadSize, const FLinearColor& Color, uint32 UUID)
+{
+	if (!bDebugPrimitiveBatchActive)
+		return;
+
+	// 화살표: +X 방향으로 그림
+	// - 축(Shaft): 길이의 70%, 얇은 Box
+	// - 머리(Head): 길이의 30%, Cone
+
+	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
+	FQuat Rotation(Transform);
+
+	UStaticMesh* BoxMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Box");
+	UStaticMesh* ConeMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Cone");
+	if (!BoxMesh || !ConeMesh)
+		return;
+
+	FVector ArrowDir = Rotation.RotateVector(FVector(1, 0, 0));
+
+	// 1. 축 (Shaft): 길이의 70%, 얇은 Box
+	float ShaftLength = Length * 0.7f;
+	float ShaftThickness = HeadSize * 0.15f;  // 얇은 막대
+	{
+		// Box는 중심 기준이므로 ShaftLength/2 위치로 이동
+		FVector ShaftCenter = Position + ArrowDir * (ShaftLength * 0.5f);
+		FMatrix ShaftTransform = FMatrix::FromTRS(ShaftCenter, Rotation, FVector(ShaftLength * 0.5f, ShaftThickness, ShaftThickness));
+		DrawPrimitiveMesh(BoxMesh, ShaftTransform, Color, UUID);
+	}
+
+	// 2. 머리 (Head): 길이의 30%, Cone
+	// Cone 메시: 꼭지점이 원점, 밑면이 +X → 180도 회전 필요 (꼭지점이 +X를 향하도록)
+	float HeadLength = Length * 0.3f;
+	{
+		// 머리 끝이 화살표 끝에 오도록 위치 조정
+		FVector HeadPosition = Position + ArrowDir * (ShaftLength + HeadLength);
+		// Y축 기준 180도 회전하여 Cone 꼭지점이 +X 방향을 향하게
+		FQuat FlipRot = FQuat::FromAxisAngle(FVector(0, 1, 0), PI);
+		FQuat HeadRot = Rotation * FlipRot;
+		FMatrix HeadTransform = FMatrix::FromTRS(HeadPosition, HeadRot, FVector(HeadLength, HeadSize, HeadSize));
+		DrawPrimitiveMesh(ConeMesh, HeadTransform, Color, UUID);
+	}
+}
+
 void URenderer::EndDebugPrimitiveBatch()
 {
 	if (!bDebugPrimitiveBatchActive)
