@@ -2531,7 +2531,14 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
                     NewMat->Restitution = NewRestitution;
 
                     // 에셋으로 저장
-                    FString SavePath = GDataDir + "/Physics/Materials/" + NewPhysMatNameBuffer + ".physmat";
+                    FString MaterialsDir = GDataDir + "/Physics/Materials";
+                    // 폴더가 없으면 생성
+                    std::filesystem::path DirPath(UTF8ToWide(MaterialsDir));
+                    if (!std::filesystem::exists(DirPath))
+                    {
+                        std::filesystem::create_directories(DirPath);
+                    }
+                    FString SavePath = NormalizePath(MaterialsDir + "/" + NewPhysMatNameBuffer + ".physmat");
                     if (PhysicsAssetEditorBootstrap::SavePhysicalMaterial(NewMat, SavePath))
                     {
                         // Body에 적용
