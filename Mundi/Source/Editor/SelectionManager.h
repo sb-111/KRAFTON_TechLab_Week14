@@ -40,6 +40,10 @@ public:
     /** === 삭제된 액터 정리 === */
     void CleanupInvalidActors(); // null이나 삭제된 액터 제거
 
+    /** === 콜리전 시각화 === */
+    bool IsCollisionVisualizationEnabled() const { return bShowCollisionVisualization; }
+    void SetCollisionVisualizationEnabled(bool bEnabled) { bShowCollisionVisualization = bEnabled; }
+
 public:
     USelectionManager();
     ~USelectionManager() override;
@@ -55,4 +59,7 @@ protected:
 
     //엑터만 선택된(루트 컴포넌트 선택이지만 UI에는 엑터 정보만 띄우는) 모드
     bool bIsActorMode = false;
+
+    // StaticMesh 콜리전 시각화 플래그
+    bool bShowCollisionVisualization = false;
 };

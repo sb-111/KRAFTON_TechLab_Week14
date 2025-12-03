@@ -64,6 +64,10 @@
 #include "Modules/ParticleModuleTypeDataMesh.h"
 #include "Modules/ParticleModuleTypeDataBeam.h"
 #include "Modules/ParticleModuleTypeDataRibbon.h"
+#include "StaticMesh.h"
+#include "BodySetup.h"
+#include "CollisionShapes.h"
+#include "PhysxConverter.h"
 
 // Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
 
@@ -1617,6 +1621,66 @@ void FSceneRenderer::RenderRagdollDebugPass()
 				FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
 				FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
 			);
+		}
+	}
+
+	// StaticMesh 콜리전 시각화 (선택된 컴포넌트에 대해)
+	USelectionManager* SelectionMgr = World->GetSelectionManager();
+	if (SelectionMgr && SelectionMgr->IsCollisionVisualizationEnabled())
+	{
+		USceneComponent* SelectedComp = SelectionMgr->GetSelectedComponent();
+		if (UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(SelectedComp))
+		{
+			UStaticMesh* StaticMesh = StaticMeshComp->GetStaticMesh();
+			if (StaticMesh)
+			{
+				UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+				if (BodySetup)
+				{
+					FTransform CompWorldTransform = StaticMeshComp->GetWorldTransform();
+					PxTransform WorldPxTransform = PhysxConverter::ToPxTransform(CompWorldTransform);
+					FVector4 ShapeColor(0.0f, 1.0f, 0.0f, 1.0f);  // 녹색
+
+					TArray<FVector> StartPoints;
+					TArray<FVector> EndPoints;
+					TArray<FVector4> Colors;
+
+					// AggGeom 렌더링 (Sphere, Box, Capsule)
+					FRagdollDebugRenderer::RenderAggGeom(OwnerRenderer, BodySetup->AggGeom, WorldPxTransform, ShapeColor,
+						StartPoints, EndPoints, Colors);
+
+					// Convex 시각화 (와이어프레임 선으로)
+					for (const FKConvexElem& Convex : BodySetup->AggGeom.ConvexElems)
+					{
+						for (int32 i = 0; i + 2 < Convex.IndexData.Num(); i += 3)
+						{
+							int32 i0 = Convex.IndexData[i];
+							int32 i1 = Convex.IndexData[i + 1];
+							int32 i2 = Convex.IndexData[i + 2];
+
+							if (i0 < Convex.VertexData.Num() && i1 < Convex.VertexData.Num() && i2 < Convex.VertexData.Num())
+							{
+								PxVec3 LocalV0 = PhysxConverter::ToPxVec3(Convex.VertexData[i0]);
+								PxVec3 LocalV1 = PhysxConverter::ToPxVec3(Convex.VertexData[i1]);
+								PxVec3 LocalV2 = PhysxConverter::ToPxVec3(Convex.VertexData[i2]);
+
+								FVector V0 = PhysxConverter::ToFVector(WorldPxTransform.transform(LocalV0));
+								FVector V1 = PhysxConverter::ToFVector(WorldPxTransform.transform(LocalV1));
+								FVector V2 = PhysxConverter::ToFVector(WorldPxTransform.transform(LocalV2));
+
+								StartPoints.Add(V0); EndPoints.Add(V1); Colors.Add(ShapeColor);
+								StartPoints.Add(V1); EndPoints.Add(V2); Colors.Add(ShapeColor);
+								StartPoints.Add(V2); EndPoints.Add(V0); Colors.Add(ShapeColor);
+							}
+						}
+					}
+
+					if (StartPoints.Num() > 0)
+					{
+						OwnerRenderer->AddLines(StartPoints, EndPoints, Colors);
+					}
+				}
+			}
 		}
 	}
 

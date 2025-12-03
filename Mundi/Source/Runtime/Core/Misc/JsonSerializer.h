@@ -324,6 +324,19 @@ public:
 		return VectorArray;
 	}
 
+	static FVector JsonToVector(const JSON& InJson)
+	{
+		if (InJson.JSONType() == JSON::Class::Array && InJson.size() >= 3)
+		{
+			return FVector(
+				static_cast<float>(InJson.at(0).ToFloat()),
+				static_cast<float>(InJson.at(1).ToFloat()),
+				static_cast<float>(InJson.at(2).ToFloat())
+			);
+		}
+		return FVector::Zero();
+	}
+
 	static JSON Vector4ToJson(const FVector4& InVector)
 	{
 		JSON VectorArray = JSON::Make(JSON::Class::Array);

@@ -19,6 +19,15 @@
 #include "FakeSpotLightActor.h"
 
 #include "StaticMeshComponent.h"
+#include "StaticMesh.h"
+#include "BodySetup.h"
+#include "CollisionShapes.h"
+#include "PhysicsSystem.h"
+#include "VertexData.h"
+#include "RagdollDebugRenderer.h"
+#include "PhysxConverter.h"
+#include "Renderer.h"
+#include "RenderManager.h"
 #include "TextRenderComponent.h"
 #include "CameraComponent.h"
 #include "BillboardComponent.h"
@@ -519,6 +528,12 @@ void UTargetActorTransformWidget::RenderSelectedComponentDetails(UActorComponent
 	{
 		UPropertyRenderer::RenderAllPropertiesWithInheritance(SelectedComponent);
 	}
+
+	// StaticMeshComponent인 경우 Collision Shape 편집 UI 추가
+	if (UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(SelectedComponent))
+	{
+		RenderStaticMeshCollisionUI(StaticMeshComp);
+	}
 }
 
 void UTargetActorTransformWidget::UpdateTransformFromComponent(USceneComponent* SelectedComponent)
@@ -538,4 +553,490 @@ void UTargetActorTransformWidget::ResetChangeFlags()
 	bPositionChanged = false;
 	bRotationChanged = false;
 	bScaleChanged = false;
+}
+
+// StaticMeshComponent용 Collision Shape 편집 UI
+void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshComponent* StaticMeshComp)
+{
+	if (!StaticMeshComp)
+		return;
+
+	UStaticMesh* StaticMesh = StaticMeshComp->GetStaticMesh();
+	if (!StaticMesh)
+		return;
+
+	ImGui::Spacing();
+	ImGui::Separator();
+
+	// 콜리전 섹션 헤더
+	if (!ImGui::CollapsingHeader("콜리전", ImGuiTreeNodeFlags_DefaultOpen))
+		return;
+
+	// BodySetup이 없으면 생성 버튼 표시
+	UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+	if (!BodySetup)
+	{
+		ImGui::TextDisabled("콜리전 데이터가 없습니다.");
+		if (ImGui::Button("BodySetup 생성", ImVec2(-1, 0)))
+		{
+			BodySetup = NewObject<UBodySetup>();
+			StaticMesh->SetBodySetup(BodySetup);
+		}
+		return;
+	}
+
+	// 시각화 토글 - SelectionManager의 플래그를 사용하여 SceneRenderer에서 렌더링
+	USelectionManager* SelectionMgr = GWorld->GetSelectionManager();
+	bool bShowViz = SelectionMgr ? SelectionMgr->IsCollisionVisualizationEnabled() : false;
+	if (ImGui::Checkbox("시각화", &bShowViz))
+	{
+		if (SelectionMgr)
+		{
+			SelectionMgr->SetCollisionVisualizationEnabled(bShowViz);
+		}
+	}
+
+	ImGui::Separator();
+
+	// Shape 추가 버튼
+	ImGui::Text("프리미티브");
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - 80);
+	if (ImGui::Button("+ 추가##Shape"))
+	{
+		ImGui::OpenPopup("AddShapePopup");
+	}
+
+	if (ImGui::BeginPopup("AddShapePopup"))
+	{
+		if (ImGui::MenuItem("스피어"))
+		{
+			FKSphereElem NewSphere;
+			NewSphere.Name = FName("Sphere");
+			NewSphere.Center = FVector::Zero();
+			NewSphere.Radius = 50.0f;
+			BodySetup->AggGeom.SphereElems.Add(NewSphere);
+		}
+		if (ImGui::MenuItem("박스"))
+		{
+			FKBoxElem NewBox;
+			NewBox.Name = FName("Box");
+			NewBox.Center = FVector::Zero();
+			NewBox.X = 50.0f;
+			NewBox.Y = 50.0f;
+			NewBox.Z = 50.0f;
+			BodySetup->AggGeom.BoxElems.Add(NewBox);
+		}
+		if (ImGui::MenuItem("캡슐"))
+		{
+			FKSphylElem NewCapsule;
+			NewCapsule.Name = FName("Capsule");
+			NewCapsule.Center = FVector::Zero();
+			NewCapsule.Radius = 25.0f;
+			NewCapsule.Length = 100.0f;
+			BodySetup->AggGeom.SphylElems.Add(NewCapsule);
+		}
+		ImGui::Separator();
+		if (ImGui::MenuItem("컨벡스 (메시로부터)"))
+		{
+			// PhysX Quickhull을 사용하여 컨벡스 헐 생성
+			FStaticMesh* MeshAsset = StaticMesh->GetStaticMeshAsset();
+			if (MeshAsset && MeshAsset->Vertices.Num() > 0)
+			{
+				// 버텍스 데이터 추출
+				TArray<physx::PxVec3> Points;
+				Points.reserve(MeshAsset->Vertices.Num());
+				for (const FNormalVertex& V : MeshAsset->Vertices)
+				{
+					Points.Add(physx::PxVec3(V.pos.X, V.pos.Y, V.pos.Z));
+				}
+
+				// PhysX Convex Mesh Description
+				physx::PxConvexMeshDesc ConvexDesc;
+				ConvexDesc.points.count = Points.Num();
+				ConvexDesc.points.data = Points.GetData();
+				ConvexDesc.points.stride = sizeof(physx::PxVec3);
+				ConvexDesc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX;
+
+				// Cook convex mesh
+				physx::PxCooking* Cooking = FPhysicsSystem::GetInstance().GetCooking();
+				if (Cooking)
+				{
+					physx::PxDefaultMemoryOutputStream WriteBuffer;
+					physx::PxConvexMeshCookingResult::Enum Result;
+					bool bSuccess = Cooking->cookConvexMesh(ConvexDesc, WriteBuffer, &Result);
+
+					if (bSuccess)
+					{
+						// 쿠킹된 메시에서 버텍스/인덱스 추출
+						physx::PxDefaultMemoryInputData ReadBuffer(WriteBuffer.getData(), WriteBuffer.getSize());
+						physx::PxConvexMesh* ConvexMesh = FPhysicsSystem::GetInstance().GetPhysics()->createConvexMesh(ReadBuffer);
+
+						if (ConvexMesh)
+						{
+							FKConvexElem NewConvex;
+							NewConvex.Name = FName("ConvexHull");
+
+							// 버텍스 복사
+							uint32 NumVerts = ConvexMesh->getNbVertices();
+							const physx::PxVec3* Verts = ConvexMesh->getVertices();
+							for (uint32 i = 0; i < NumVerts; ++i)
+							{
+								NewConvex.VertexData.Add(FVector(Verts[i].x, Verts[i].y, Verts[i].z));
+							}
+
+							// 인덱스 복사 (폴리곤에서 삼각형으로 변환)
+							uint32 NumPolygons = ConvexMesh->getNbPolygons();
+							for (uint32 p = 0; p < NumPolygons; ++p)
+							{
+								physx::PxHullPolygon Polygon;
+								ConvexMesh->getPolygonData(p, Polygon);
+								const physx::PxU8* Indices = ConvexMesh->getIndexBuffer() + Polygon.mIndexBase;
+
+								// 폴리곤을 삼각형 팬으로 변환
+								for (uint32 t = 1; t + 1 < Polygon.mNbVerts; ++t)
+								{
+									NewConvex.IndexData.Add(Indices[0]);
+									NewConvex.IndexData.Add(Indices[t]);
+									NewConvex.IndexData.Add(Indices[t + 1]);
+								}
+							}
+
+							BodySetup->AggGeom.ConvexElems.Add(NewConvex);
+							ConvexMesh->release();
+						}
+					}
+				}
+			}
+		}
+		ImGui::EndPopup();
+	}
+
+	// CollisionEnabled 옵션 배열
+	const char* collisionModes[] = { "No Collision", "Query Only", "Physics Only", "Collision Enabled" };
+
+	// 삭제 대기 인덱스
+	int32 SphereToRemove = -1;
+	int32 BoxToRemove = -1;
+	int32 CapsuleToRemove = -1;
+
+	// ===== Sphere 섹션 =====
+	int32 sphereCount = BodySetup->AggGeom.SphereElems.Num();
+	ImGui::PushID("Spheres");
+	if (ImGui::TreeNode("스피어"))
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", sphereCount);
+
+		for (int32 i = 0; i < sphereCount; ++i)
+		{
+			FKSphereElem& Sphere = BodySetup->AggGeom.SphereElems[i];
+			ImGui::PushID(i);
+			if (ImGui::TreeNode("##SphereElem", "인덱스 [%d]", i))
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Sphere.Name.ToString().c_str());
+
+				// Center
+				float center[3] = { Sphere.Center.X, Sphere.Center.Y, Sphere.Center.Z };
+				ImGui::Text("Center");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Center", center, 0.1f))
+				{
+					Sphere.Center = FVector(center[0], center[1], center[2]);
+				}
+
+				// Radius
+				ImGui::Text("Radius");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##Radius", &Sphere.Radius, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				// Name
+				char nameBuffer[256];
+				strcpy_s(nameBuffer, Sphere.Name.ToString().c_str());
+				ImGui::Text("Name");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+				{
+					Sphere.Name = FName(nameBuffer);
+				}
+
+				// CollisionEnabled
+				int collisionMode = static_cast<int>(Sphere.CollisionEnabled);
+				ImGui::Text("Collision Enabled");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+				{
+					Sphere.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+				}
+
+				// 삭제 버튼
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.2f, 0.2f, 1.0f));
+				if (ImGui::Button("삭제##Sphere"))
+				{
+					SphereToRemove = i;
+				}
+				ImGui::PopStyleColor();
+
+				ImGui::TreePop();
+			}
+			else
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Sphere.Name.ToString().c_str());
+			}
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+	else
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", sphereCount);
+	}
+	ImGui::PopID();
+
+	// ===== Box 섹션 =====
+	int32 boxCount = BodySetup->AggGeom.BoxElems.Num();
+	ImGui::PushID("Boxes");
+	if (ImGui::TreeNode("박스"))
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", boxCount);
+
+		for (int32 i = 0; i < boxCount; ++i)
+		{
+			FKBoxElem& Box = BodySetup->AggGeom.BoxElems[i];
+			ImGui::PushID(i);
+			if (ImGui::TreeNode("##BoxElem", "인덱스 [%d]", i))
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Box.Name.ToString().c_str());
+
+				// Center
+				float center[3] = { Box.Center.X, Box.Center.Y, Box.Center.Z };
+				ImGui::Text("Center");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Center", center, 0.1f))
+				{
+					Box.Center = FVector(center[0], center[1], center[2]);
+				}
+
+				// Rotation
+				float rotation[3] = { Box.Rotation.X, Box.Rotation.Y, Box.Rotation.Z };
+				ImGui::Text("Rotation");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
+				{
+					Box.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
+				}
+
+				// Size
+				ImGui::Text("X (Half Extent)");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##X", &Box.X, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				ImGui::Text("Y (Half Extent)");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##Y", &Box.Y, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				ImGui::Text("Z (Half Extent)");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##Z", &Box.Z, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				// Name
+				char nameBuffer[256];
+				strcpy_s(nameBuffer, Box.Name.ToString().c_str());
+				ImGui::Text("Name");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+				{
+					Box.Name = FName(nameBuffer);
+				}
+
+				// CollisionEnabled
+				int collisionMode = static_cast<int>(Box.CollisionEnabled);
+				ImGui::Text("Collision Enabled");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+				{
+					Box.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+				}
+
+				// 삭제 버튼
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.2f, 0.2f, 1.0f));
+				if (ImGui::Button("삭제##Box"))
+				{
+					BoxToRemove = i;
+				}
+				ImGui::PopStyleColor();
+
+				ImGui::TreePop();
+			}
+			else
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Box.Name.ToString().c_str());
+			}
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+	else
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", boxCount);
+	}
+	ImGui::PopID();
+
+	// ===== Capsule 섹션 =====
+	int32 capsuleCount = BodySetup->AggGeom.SphylElems.Num();
+	ImGui::PushID("Capsules");
+	if (ImGui::TreeNode("캡슐"))
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", capsuleCount);
+
+		for (int32 i = 0; i < capsuleCount; ++i)
+		{
+			FKSphylElem& Capsule = BodySetup->AggGeom.SphylElems[i];
+			ImGui::PushID(i);
+			if (ImGui::TreeNode("##CapsuleElem", "인덱스 [%d]", i))
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Capsule.Name.ToString().c_str());
+
+				// Center
+				float center[3] = { Capsule.Center.X, Capsule.Center.Y, Capsule.Center.Z };
+				ImGui::Text("Center");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Center", center, 0.1f))
+				{
+					Capsule.Center = FVector(center[0], center[1], center[2]);
+				}
+
+				// Rotation
+				float rotation[3] = { Capsule.Rotation.X, Capsule.Rotation.Y, Capsule.Rotation.Z };
+				ImGui::Text("Rotation");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Rotation", rotation, 0.5f, -180.0f, 180.0f, "%.1f"))
+				{
+					Capsule.Rotation = FVector(rotation[0], rotation[1], rotation[2]);
+				}
+
+				// Radius
+				ImGui::Text("Radius");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##Radius", &Capsule.Radius, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				// Length
+				ImGui::Text("Length");
+				ImGui::SetNextItemWidth(-1);
+				ImGui::DragFloat("##Length", &Capsule.Length, 0.1f, 0.1f, 10000.0f, "%.2f");
+
+				// Name
+				char nameBuffer[256];
+				strcpy_s(nameBuffer, Capsule.Name.ToString().c_str());
+				ImGui::Text("Name");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+				{
+					Capsule.Name = FName(nameBuffer);
+				}
+
+				// CollisionEnabled
+				int collisionMode = static_cast<int>(Capsule.CollisionEnabled);
+				ImGui::Text("Collision Enabled");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+				{
+					Capsule.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
+				}
+
+				// 삭제 버튼
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.2f, 0.2f, 1.0f));
+				if (ImGui::Button("삭제##Capsule"))
+				{
+					CapsuleToRemove = i;
+				}
+				ImGui::PopStyleColor();
+
+				ImGui::TreePop();
+			}
+			else
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Capsule.Name.ToString().c_str());
+			}
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+	else
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", capsuleCount);
+	}
+	ImGui::PopID();
+
+	// ===== Convex 섹션 (읽기 전용) =====
+	int32 convexCount = BodySetup->AggGeom.ConvexElems.Num();
+	ImGui::PushID("Convex");
+	if (ImGui::TreeNode("컨벡스"))
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", convexCount);
+
+		for (int32 i = 0; i < convexCount; ++i)
+		{
+			FKConvexElem& Convex = BodySetup->AggGeom.ConvexElems[i];
+			ImGui::PushID(i);
+			if (ImGui::TreeNode("##ConvexElem", "인덱스 [%d]", i))
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Convex.Name.ToString().c_str());
+
+				ImGui::Text("Vertices: %d", (int32)Convex.VertexData.Num());
+				ImGui::Text("Indices: %d", (int32)Convex.IndexData.Num());
+
+				// Name
+				char nameBuffer[256];
+				strcpy_s(nameBuffer, Convex.Name.ToString().c_str());
+				ImGui::Text("Name");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
+				{
+					Convex.Name = FName(nameBuffer);
+				}
+
+				ImGui::TreePop();
+			}
+			else
+			{
+				ImGui::SameLine(200);
+				ImGui::TextDisabled("%s", Convex.Name.ToString().c_str());
+			}
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+	else
+	{
+		ImGui::SameLine(200);
+		ImGui::TextDisabled("Elements: %d", convexCount);
+	}
+	ImGui::PopID();
+
+	// 삭제 실행
+	if (SphereToRemove >= 0 && SphereToRemove < BodySetup->AggGeom.SphereElems.Num())
+	{
+		BodySetup->AggGeom.SphereElems.RemoveAt(SphereToRemove);
+	}
+	if (BoxToRemove >= 0 && BoxToRemove < BodySetup->AggGeom.BoxElems.Num())
+	{
+		BodySetup->AggGeom.BoxElems.RemoveAt(BoxToRemove);
+	}
+	if (CapsuleToRemove >= 0 && CapsuleToRemove < BodySetup->AggGeom.SphylElems.Num())
+	{
+		BodySetup->AggGeom.SphylElems.RemoveAt(CapsuleToRemove);
+	}
 }
