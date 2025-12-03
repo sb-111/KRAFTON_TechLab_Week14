@@ -122,7 +122,7 @@ public:
 
     // ========== 기본 물리 파라미터 ==========
     UPROPERTY(EditAnywhere, Category="Cloth|Basic Physics", ToolTip="중력 가속도 (cm/s²)\nZ-up 좌표계에서 Z가 음수면 아래로 떨어짐\n기본값: (0, 0, -0.98) = 지구 중력의 1/100")
-    FVector Gravity = FVector(0, 0, -980.0f);
+    FVector Gravity = FVector(0, 0, -9.8f);
 
     UPROPERTY(EditAnywhere, Category="Cloth|Basic Physics", ToolTip="속도 감쇠 계수 (0~1)\n높을수록 천의 진동이 빠르게 멈춤\n너무 높으면 부자연스러움\n권장: 0.3~0.6")
     float Damping = 0.6f;  // 0.5 → 0.6 (안정성 향상)

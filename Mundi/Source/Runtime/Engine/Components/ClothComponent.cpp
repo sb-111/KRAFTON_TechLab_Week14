@@ -700,26 +700,30 @@ void UClothComponent::UpdateSimulationResult()
         return;
     }
 
-    // ===== Cloth::getCurrentParticles() 호출 =====
-    // @brief 시뮬레이션된 정점 위치를 가져옵니다 (읽기 전용)
-    // @return MappedRange<const PxVec4>: 정점 배열 (x, y, z, inverseMass)
-    // @note const 버전이므로 수정 불가, 읽기만 가능합니다
-    //       정점을 직접 수정하려면 setParticles()를 사용해야 합니다
+    // ===== Cloth::getCurrentParticles() 호출 (쓰기 가능 버전) =====
+    ClothInstance->lockParticles();
     auto particles = ClothInstance->getCurrentParticles();
 
     // ===== CPU 측 정점 위치 업데이트 (NaN/Inf/거리 제한 방어) =====
     // MaxDistance를 QuadSize에 비례하게 설정 (QuadSize * 3.0)
-    const float MaxDistanceFromInitial = ClothQuadSize * 3.0f;
+    const float MaxDistanceFromInitial = ClothQuadSize * std::max(MeshGridSizeX, MeshGridSizeY) * 2;
+    bool bInstabilityDetected = false;
 
     for (size_t i = 0; i < ClothVertices.size(); i++)
     {
-        const physx::PxVec4& p = particles[i];
+        physx::PxVec4& p = particles[i];
 
         // NaN/Inf 체크
         if (isnan(p.x) || isnan(p.y) || isnan(p.z) ||
             isinf(p.x) || isinf(p.y) || isinf(p.z))
         {
-            ClothVertices[i] = InitialLocalPositions[i];
+            // 초기 위치로 복구 (시뮬레이션에도 반영)
+            FVector initialPos = InitialLocalPositions[i];
+            p.x = initialPos.X;
+            p.y = initialPos.Y;
+            p.z = initialPos.Z;
+            ClothVertices[i] = initialPos;
+            bInstabilityDetected = true;
             continue;
         }
 
@@ -732,10 +736,23 @@ void UClothComponent::UpdateSimulationResult()
 
         if (distance > MaxDistanceFromInitial)
         {
+            // 클램핑된 위치로 수정 (시뮬레이션에도 반영)
             newPos = initialPos + delta * (MaxDistanceFromInitial / distance);
+            p.x = newPos.X;
+            p.y = newPos.Y;
+            p.z = newPos.Z;
+            bInstabilityDetected = true;
         }
 
         ClothVertices[i] = newPos;
+    }
+
+    ClothInstance->unlockParticles();
+
+    // ===== 불안정 감지 시 관성 제거 (속도/가속도 초기화) =====
+    if (bInstabilityDetected)
+    {
+        ClothInstance->clearInertia();
     }
 }
 
