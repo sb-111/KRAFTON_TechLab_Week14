@@ -3408,7 +3408,7 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
             FQuat TwistRot90 = FQuat::FromAxisAngle(FVector(1, 0, 0), PI_CONST * 0.5f);
             FQuat ConeRot = JointWorldRot * YtoXRot * TwistRot90;
             FMatrix ConeTransform = FMatrix::FromTRS(JointPos, ConeRot, FVector::One());
-            World->AddDebugCone(ConeTransform, Swing2Rad, Swing1Rad, ConeHeight, ConeColor);
+            World->AddDebugCone(ConeTransform, Swing1Rad, Swing2Rad, ConeHeight, ConeColor);
         }
 
         // 3. Twist 부채꼴 (YZ 평면, 녹색)
