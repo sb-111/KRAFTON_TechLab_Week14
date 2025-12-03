@@ -3200,7 +3200,7 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
             // 에디터 값과 직접 매핑
             FQuat ConeRot = JointWorldRot;
             FMatrix ConeTransform = FMatrix::FromTRS(JointPos, ConeRot, FVector::One());
-            World->AddDebugCone(ConeTransform, Swing1Rad, Swing2Rad, ConeHeight, ConeColor);
+            World->AddDebugCone(ConeTransform, Swing2Rad, Swing1Rad, ConeHeight, ConeColor);
         }
 
         // 3. Twist 부채꼴 (YZ 평면, 녹색)

@@ -970,9 +970,17 @@ UStaticMesh* UResourceManager::GetOrCreateEllipticalConeMesh(float Swing1Angle, 
     // 새 타원형 원뿔 메시 생성
     FMeshData* MeshData = new FMeshData();
 
-    // 양자화된 각도를 라디안으로 변환
+    // 0도(Locked)여도 시각적으로 보일 수 있게 최소값(Epsilon)을 적용
+    // 0.1도 정도의 두께를 주면 "종이짝 같은 부채꼴"이 예쁘게 나옴
+    const float MinVisualRad = 0.1f * PRIM_PI / 180.0f;  // 0.1도
+
     float Swing1Rad = (float)QuantizedAngle1 * PRIM_PI / 180.0f;
     float Swing2Rad = (float)QuantizedAngle2 * PRIM_PI / 180.0f;
+
+    // 타원 계산용으로는 최소 두께가 보장된 값을 사용
+    float EffectiveSwing1 = FMath::Max(Swing1Rad, MinVisualRad);
+    float EffectiveSwing2 = FMath::Max(Swing2Rad, MinVisualRad);
+
     const float Height = 1.0f;  // 단위 높이 (스케일로 조절)
 
     // 중심점 (원뿔의 꼭짓점, 인덱스 0)
@@ -992,30 +1000,12 @@ UStaticMesh* UResourceManager::GetOrCreateEllipticalConeMesh(float Swing1Angle, 
 
         // 타원 방정식을 이용해 현재 방향에서의 최대 각도(Reach) 계산
         // 공식: 1 / sqrt( (cos/Limit1)^2 + (sin/Limit2)^2 )
-        float Term1 = 0.0f;
-        float Term2 = 0.0f;
+        // EffectiveSwing 변수 덕분에 0으로 나누기 방지됨
+        float Term1 = (DirY / EffectiveSwing1);
+        Term1 *= Term1;
 
-        // Swing1 (Z축 회전 -> Y방향 벌어짐)
-        if (Swing1Rad > 1e-4f)
-        {
-            Term1 = (DirY / Swing1Rad);
-            Term1 *= Term1;
-        }
-        else if (fabsf(DirY) > 1e-4f)
-        {
-            Term1 = 1e8f;  // Limit이 0인데 해당 방향으로 가려 하면 막음
-        }
-
-        // Swing2 (Y축 회전 -> Z방향 벌어짐)
-        if (Swing2Rad > 1e-4f)
-        {
-            Term2 = (DirZ / Swing2Rad);
-            Term2 *= Term2;
-        }
-        else if (fabsf(DirZ) > 1e-4f)
-        {
-            Term2 = 1e8f;
-        }
+        float Term2 = (DirZ / EffectiveSwing2);
+        Term2 *= Term2;
 
         float MaxAngle = 0.0f;
         float Denominator = Term1 + Term2;
@@ -1028,34 +1018,32 @@ UStaticMesh* UResourceManager::GetOrCreateEllipticalConeMesh(float Swing1Angle, 
         // 180도(PI)를 넘지 않도록 클램핑
         if (MaxAngle > PRIM_PI) MaxAngle = PRIM_PI;
 
-        FVector WorldPos;
-        FVector Normal;
+        // 각도가 아무리 작아도 그 방향으로 버텍스를 찍어야 "얇은 판"이 그려짐
+        // Threshold 체크 삭제 - 원점으로 강제 이동시키면 부채꼴이 사라짐
 
-        // MaxAngle이 매우 작으면 (약 1도 미만) 점을 중심에 위치시킴
-        // 이렇게 해야 0도일 때 부채꼴 형태가 됨 (별 모양 방지)
-        if (MaxAngle < 0.02f)
+        // 회전 축 계산: 현재 스캔 방향(DirY, DirZ)에 수직인 벡터
+        FVector RotationAxis(0.0f, -DirZ, DirY);
+        float AxisLenSq = RotationAxis.Y * RotationAxis.Y + RotationAxis.Z * RotationAxis.Z;
+
+        // 축이 너무 짧으면(X축 방향) Y축을 임의의 축으로 설정
+        if (AxisLenSq < 1e-6f)
         {
-            WorldPos = FVector(0.0f, 0.0f, 0.0f);
-            Normal = FVector(-1.0f, 0.0f, 0.0f);
+            RotationAxis = FVector(0.0f, 1.0f, 0.0f);
         }
         else
         {
-            // X축(1,0,0)을 MaxAngle만큼 벌림
-            // 회전 축: 현재 스캔 방향(DirY, DirZ)에 수직인 벡터 (0, -DirZ, DirY)
-            FVector RotationAxis(0.0f, -DirZ, DirY);
-            float AxisLen = sqrtf(RotationAxis.Y * RotationAxis.Y + RotationAxis.Z * RotationAxis.Z);
-            if (AxisLen > 1e-6f)
-            {
-                RotationAxis.Y /= AxisLen;
-                RotationAxis.Z /= AxisLen;
-            }
-
-            // Angle-Axis로 쿼터니언 생성 후 X축 벡터 회전
-            FQuat Q = FQuat::FromAxisAngle(RotationAxis, MaxAngle);
-            FVector LocalDir = Q.RotateVector(FVector(1.0f, 0.0f, 0.0f));
-            WorldPos = LocalDir * Height;
-            Normal = FVector(-LocalDir.X, -LocalDir.Y, -LocalDir.Z);
+            // Normalize
+            float InvLen = 1.0f / sqrtf(AxisLenSq);
+            RotationAxis.Y *= InvLen;
+            RotationAxis.Z *= InvLen;
         }
+
+        // Angle-Axis로 쿼터니언 생성 후 X축 벡터 회전
+        FQuat Q = FQuat::FromAxisAngle(RotationAxis, MaxAngle);
+        FVector LocalDir = Q.RotateVector(FVector(1.0f, 0.0f, 0.0f));
+
+        FVector WorldPos = LocalDir * Height;
+        FVector Normal = FVector(-LocalDir.X, -LocalDir.Y, -LocalDir.Z);
 
         MeshData->Vertices.Add(WorldPos);
         MeshData->Normal.Add(Normal);
