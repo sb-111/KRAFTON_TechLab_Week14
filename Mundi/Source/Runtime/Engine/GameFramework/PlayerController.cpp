@@ -1,4 +1,4 @@
-// ────────────────────────────────────────────────────────────────────────────
+﻿// ────────────────────────────────────────────────────────────────────────────
 // PlayerController.cpp
 // 플레이어 입력 처리 Controller 구현
 // ────────────────────────────────────────────────────────────────────────────
@@ -40,6 +40,16 @@ void APlayerController::BeginPlay()
 	if (PlayerCameraManager)
 	{
 		PlayerCameraManager->BeginPlay();
+	}
+
+	// 기존 게임모드, 컨트롤러, 인풋 컴포넌트, 폰 구조를 이해하기 어려워서 급한대로 하드코딩함(수정 필요)
+	for (AActor* Actor : World->GetActors())
+	{
+		if (APawn* Pawn = Cast<APawn>(Actor))
+		{
+			Possess(Pawn);
+			break;
+		}
 	}
 }
 
@@ -107,6 +117,27 @@ void APlayerController::ProcessPlayerInput()
 		return;
 	}
 
+	float ThrottleInput = 0.0f;
+	float SteerInput = 0.0f;
+	// 무슨 구조인지 모르겠는데 시간 없어서 일단 Controller에서 인풋처리해서 Pawn 콜백함수 바로 불러주도록 함
+	if (InputManager->IsKeyDown('W'))
+	{
+		ThrottleInput += 1.0f;
+	}
+	if (InputManager->IsKeyDown('D'))
+	{
+		SteerInput += 1.0f;
+	}
+	if (InputManager->IsKeyDown('A'))
+	{
+		SteerInput -= 1.0f;
+	}
+	if (InputManager->IsKeyDown('S'))
+	{
+		ThrottleInput -= 1.0f;
+	}
+
+	PossessedPawn->ThrottleSteerInput(ThrottleInput, SteerInput);
 	// Pawn의 InputComponent에 입력 전달
 	UInputComponent* InputComp = PossessedPawn->GetInputComponent();
 	if (InputComp)

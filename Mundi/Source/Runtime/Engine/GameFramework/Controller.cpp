@@ -75,7 +75,7 @@ void AController::UnPossess()
 	OnUnPossess();
 
 	// Pawn에게 빙의 해제 알림
-	PossessedPawn->UnPossessed();
+	//PossessedPawn->UnPossessed();
 	PossessedPawn = nullptr;
 }
 

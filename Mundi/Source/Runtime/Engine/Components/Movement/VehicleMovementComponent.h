@@ -21,6 +21,8 @@ public:
 
 	void InitializeComponent() override;
 
+	physx::PxReal GetForwardSpeed();
+
 	void SetThrottle(float Value);
 
 	void SetBrake(float Value);

@@ -15,6 +15,8 @@ public:
 
 	AWheeledVehiclePawn();
 
+	void ThrottleSteerInput(float Throttle, float Steer) override;
+
 	void SetThrottle(float Value);
 
 	void SetBrake(float Value);

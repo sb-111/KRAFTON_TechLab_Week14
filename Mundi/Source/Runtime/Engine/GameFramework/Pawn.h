@@ -72,6 +72,9 @@ public:
 	 */
 	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue = 1.0f);
 
+	// 자동차용
+	virtual void ThrottleSteerInput(float Throttle, float Steer) {};
+
 	/**
 	 * 이번 프레임에 누적된 이동 입력을 반환합니다.
 	 * 자동으로 정규화되어 있습니다.

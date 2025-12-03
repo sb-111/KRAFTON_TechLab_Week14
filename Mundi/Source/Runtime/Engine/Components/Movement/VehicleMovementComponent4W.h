@@ -13,9 +13,6 @@ class UVehicleMovementComponent4W : public UVehicleMovementComponent
 public:
 
 	UPROPERTY(EditAnywhere, Category = "Wheel")
-	float VisualHegihtOffset = 0.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Wheel")
 	FVector WheelOffset0{};
 
 	UPROPERTY(EditAnywhere, Category = "Wheel")

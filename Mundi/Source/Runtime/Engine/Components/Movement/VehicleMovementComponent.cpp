@@ -13,6 +13,11 @@ void UVehicleMovementComponent::InitializeComponent()
 	GWorld->GetPhysicsScene()->RegisterPrePhysics(this);
 }
 
+physx::PxReal UVehicleMovementComponent::GetForwardSpeed()
+{
+    return VehicleInstance->computeForwardSpeed();
+}
+
 // 0.0 ~ 1.0
 void UVehicleMovementComponent::SetThrottle(float Value)
 {

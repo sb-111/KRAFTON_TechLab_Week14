@@ -117,12 +117,11 @@ void UVehicleMovementComponent4W::TickComponent(float DeltaTime)
             if (Index == 1 || Index == 0)
             {
                 float SteerInput = Car->mDriveDynData.getAnalogInput(PxVehicleDrive4WControl::eANALOG_INPUT_STEER_RIGHT);
-                NewRotation.Z += RadiansToDegrees(SteerInput * (PxPi / 4.0f));
+                NewRotation.Z -= RadiansToDegrees(SteerInput * (PxPi / 4.0f));
             }
 
             FTransform LocalTransform = Mesh->GetBoneLocalTransform(BoneIndex);
             LocalTransform.Rotation = FQuat::MakeFromEulerZYX(NewRotation);
-            NewPosition.Z += VisualHegihtOffset;
             LocalTransform.Translation = NewPosition;
             Mesh->SetBoneLocalTransform(BoneIndex, LocalTransform);
         }
@@ -163,12 +162,18 @@ void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
 
     for (int Index = 0; Index < 4; Index++)
     {
+        if (Index == 0 || Index == 1)
+        {
+            WheelData.mMaxSteer = PxPi * 0.25f;
+        }
         WheelsSimData->setSuspTravelDirection(Index, PhysxConverter::ToPxVec3(FVector(0.0f, 0.0f, -1.0f)));
         SuspensionData.mSprungMass = SprungMasses[Index];
         WheelsSimData->setWheelData(Index, WheelData);
         WheelsSimData->setTireData(Index, TireData);
         WheelsSimData->setSuspensionData(Index, SuspensionData);
         WheelsSimData->setSceneQueryFilterData(Index, RayFilter);
+
+        
 
         WheelsSimData->setSuspForceAppPointOffset(Index, WheelOffsets[Index]);
         WheelsSimData->setWheelCentreOffset(Index, WheelOffsets[Index]);

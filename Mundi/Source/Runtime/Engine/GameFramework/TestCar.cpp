@@ -41,5 +41,4 @@ void ATestCar::DuplicateSubObjects()
 void ATestCar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	VehicleMovement->SetThrottle(1.0f);
 }
