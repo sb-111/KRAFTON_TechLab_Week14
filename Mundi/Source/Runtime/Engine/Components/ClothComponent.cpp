@@ -110,6 +110,7 @@ void UClothComponent::TickComponent(float DeltaTime)
     if (ClothInstance)
     {
         // ===== 바람 효과 업데이트 =====
+        ApplySimulationParameters();
         UpdateWind(DeltaTime);
 
         // ===== 시뮬레이션 결과 업데이트 및 렌더링 =====
@@ -709,43 +710,7 @@ void UClothComponent::UpdateSimulationResult()
     {
         const physx::PxVec4& p = particles[i];
         ClothVertices[i] = FVector(p.x, p.y, p.z);
-        
-        // // ===== NaN/Inf 체크 =====
-        // // NaN이나 Inf가 들어오면 정점이 이상한 곳으로 날아가므로 방어
-        // if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z) ||
-        //     std::isinf(p.x) || std::isinf(p.y) || std::isinf(p.z))
-        // {
-        //     // NaN/Inf 발견 시 초기 위치로 복원
-        //     ClothVertices[i] = InitialLocalPositions[i];
-        //     bHasInvalidValues = true;
-        // }
-        // else
-        // {
-        //     ClothVertices[i] = FVector(p.x, p.y, p.z);
-        // }
-        // inverseMass(p.w)는 변하지 않으므로 무시
     }
-
-    // // ===== NaN/Inf 발견 시 시뮬레이션 리셋 =====
-    // if (bHasInvalidValues)
-    // {
-    //     UE_LOG("[ClothComponent] WARNING: NaN/Inf detected in simulation! Resetting to initial positions.");
-    //
-    //     // 모든 정점을 초기 위치로 리셋
-    //     TArray<physx::PxVec4> resetParticles;
-    //     for (size_t i = 0; i < ClothVertices.size(); i++)
-    //     {
-    //         const FVector& v = InitialLocalPositions[i];
-    //         float invMass = InverseMasses[i];
-    //         resetParticles.push_back(physx::PxVec4(v.X, v.Y, v.Z, invMass));
-    //     }
-    //
-    //     // Cloth에 초기 위치 재설정
-    //     nv::cloth::Range<physx::PxVec4> particleRange(resetParticles.data(), resetParticles.data() + resetParticles.size());
-    //     ClothInstance->setParticles(particleRange, particleRange);  // 현재 위치와 이전 위치 모두 리셋
-    //     // ClothVertices도 초기 위치로
-    //     ClothVertices = InitialLocalPositions;
-    // }
 }
 
 // @brief 시뮬레이션 파라미터(중력, 댐핑, 공기저항 등)를 Cloth에 적용합니다
@@ -865,15 +830,13 @@ void UClothComponent::UpdateWind(float DeltaTime)
     //   - Lift impulse: ilift = clift · cos(θ) · sin(θ) · ldir · |d| · Δt⁻¹
     //   - Drag impulse: idrag = cdrag · |cos(θ)| · d · |d| · Δt⁻¹
     //   - 합성: i = (ilift + idrag) · ρ · area
-    ClothInstance->setWindVelocity(physx::PxVec3(windVelocity.X, windVelocity.Y, windVelocity.Z));
 
-    // 디버그 로그 (2초마다)
-    static int logCount = 0;
-    if (logCount++ % 120 == 0)
-    {
-        UE_LOG("[UpdateWind] Wind: (%.1f, %.1f, %.1f), Intensity: %.2f, Strength: %.1f",
-            windVelocity.X, windVelocity.Y, windVelocity.Z, windIntensity, finalStrength);
-    }
+    float finalVelocityX = isnan(windVelocity.X) || isinf(windVelocity.X) ? 0.0f : windVelocity.X;
+    float finalVelocityY = isnan(windVelocity.Y) || isinf(windVelocity.Y) ? 0.0f : windVelocity.Y;
+    float finalVelocityZ = isnan(windVelocity.Z) || isinf(windVelocity.Z) ? 0.0f : windVelocity.Z;
+    
+    ClothInstance->setWindVelocity(physx::PxVec3(finalVelocityX, finalVelocityY, finalVelocityZ));
+    // ClothInstance->setWindVelocity(physx::PxVec3(WindDirection.X, WindDirection.Y, WindDirection.Z));
 }
 
 void UClothComponent::UpdateDynamicMesh()

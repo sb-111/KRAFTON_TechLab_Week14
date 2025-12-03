@@ -145,7 +145,7 @@ public:
 
     // ========== Phase Config 설정 ==========
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Phase Config", ToolTip="제약 조건 강성도 배율 (0~2)\n1.0보다 높으면 더 강하게, 낮으면 더 약하게\n권장: 0.8~1.2")
-    float PhaseStiffnessMultiplier = 0.2f;  // 1.0 → 0.9 (더 부드럽게)
+    float PhaseStiffnessMultiplier = 0.3f;  // 1.0 → 0.9 (더 부드럽게)
 
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Phase Config", ToolTip="압축 제한 (0~1)\n1.0 = 압축 없음, 0.9 = 10%까지 압축 허용\n천은 보통 압축되지 않으므로 1.0 권장")
     float CompressionLimit = 1.0f;
@@ -172,7 +172,7 @@ public:
     bool bEnableWind = true;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Wind", ToolTip="바람 세기 (cm/s)\n높을수록 강한 바람\n너무 높으면 정점이 날아갈 수 있음\n권장: 10~30")
-    float WindStrength = 15.0f;
+    float WindStrength = 3.0f;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Wind", ToolTip="바람 방향 벡터\n정규화되어 사용됨\n예: (1,0,0) = X축 방향")
     FVector WindDirection = FVector(1.0f, 0.0f, 0.0f);
@@ -181,7 +181,7 @@ public:
     float WindTurbulence = 0.5f;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Wind", ToolTip="바람 주파수 (Hz)\n바람이 변화하는 속도\n높을수록 빠르게 변함\n권장: 0.5~2.0")
-    float WindFrequency = 1.0f;
+    float WindFrequency = 0.2f;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Wind", ToolTip="공기 저항 계수 (0~1)\nDrag Force: Fd = ½ρv²cdragA\n높을수록 바람의 영향을 많이 받음\n권장: 0.1~0.4")
     float DragCoefficient = 0.2f;
