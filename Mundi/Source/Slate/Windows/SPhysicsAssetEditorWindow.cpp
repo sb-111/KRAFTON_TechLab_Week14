@@ -3193,26 +3193,19 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
 
             FLinearColor ConeColor = bIsSelected ? SwingConeSelectedColor : SwingConeColor;
 
-            // 양방향 원뿔 (메시 자체가 양방향)
-            // JointWorldRot의 Y축이 Twist 방향이므로, Cone(X축 기준)을 위해 Y→X 회전 적용
-            // +90도 Z축 회전: X → Y (즉, 원래 Y 방향이 X가 됨)
-            FQuat YtoXRot = FQuat::FromAxisAngle(FVector(0, 0, 1), PI_CONST * 0.5f);
-            // PhysX 좌표계와 일치시키기 위해 Twist 축(로컬 X축) 기준 +90도 추가 회전
-            FQuat TwistRot90 = FQuat::FromAxisAngle(FVector(1, 0, 0), PI_CONST * 0.5f);
-            FQuat ConeRot = JointWorldRot * YtoXRot * TwistRot90;
+            // 언리얼 스타일: X축이 Twist 방향(원뿔이 뻗어나가는 방향)
+            // GetOrCreateEllipticalConeMesh 파라미터:
+            //   Swing1Angle = Y방향 벌어짐 (Z축 회전)
+            //   Swing2Angle = Z방향 벌어짐 (Y축 회전)
+            // 에디터 값과 직접 매핑
+            FQuat ConeRot = JointWorldRot;
             FMatrix ConeTransform = FMatrix::FromTRS(JointPos, ConeRot, FVector::One());
-            // PhysX 좌표계와 일치시키기 위해 Swing1/Swing2 스왑
-            // Engine Z = PhysX Y (Swing1), Engine -X = PhysX Z (Swing2)
-            World->AddDebugCone(ConeTransform, Swing2Rad, Swing1Rad, ConeHeight, ConeColor);
+            World->AddDebugCone(ConeTransform, Swing1Rad, Swing2Rad, ConeHeight, ConeColor);
         }
 
         // 3. Twist 부채꼴 (YZ 평면, 녹색)
-        // 반지름은 고정, TwistAngle에 따라 부채꼴 각도만 변함
-        // JointWorldRot의 Y축이 Twist 방향이므로, Arc(X축 기준)을 위해 Y→X 회전 적용
-        FQuat YtoXRotArc = FQuat::FromAxisAngle(FVector(0, 0, 1), PI_CONST * 0.5f);
-        // PhysX 좌표계와 일치시키기 위해 Twist 축(로컬 X축) 기준 +90도 추가 회전
-        FQuat TwistRot90Arc = FQuat::FromAxisAngle(FVector(1, 0, 0), PI_CONST * 0.5f);
-        FQuat ArcRot = JointWorldRot * YtoXRotArc * TwistRot90Arc;
+        // X축이 Twist 축이므로, 부채꼴은 YZ 평면에 위치
+        FQuat ArcRot = JointWorldRot;
 
         if (Constraint.TwistMotion == EAngularConstraintMotion::Limited)
         {

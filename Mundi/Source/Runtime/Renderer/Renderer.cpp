@@ -573,42 +573,20 @@ void URenderer::DrawDebugCone(const FMatrix& Transform, float Swing1Angle, float
 	if (!bDebugPrimitiveBatchActive)
 		return;
 
-	// Unit Cone: +X 방향, 높이 1.0, 밑면 반지름 1.0
-	// Swing 원뿔 시각화 (언리얼 스타일):
-	// - 0~90도: 일반 원뿔 (sin으로 반지름 계산, cos로 높이)
-	// - 90도: 밑면이 원점에 위치 (반지름 = Height)
-	// - 90~180도: 콘이 뒤집혀서 바깥으로 확장
-	//
-	// 핵심: sin/cos를 사용하여 단위 구면 위의 점을 계산
-	// 각도 θ에서: radius = Height * sin(θ), depth = Height * cos(θ)
+	// 타원 방정식 기반 Swing 원뿔 시각화 (언리얼 스타일)
+	// - 타원 공식: 1 / sqrt( (cos/Limit1)^2 + (sin/Limit2)^2 )
+	// - 360도를 돌면서 각 방향의 최대 도달 각도를 정확히 계산
+	// - Swing1: Y방향 벌어짐 (Z축 회전), Swing2: Z방향 벌어짐 (Y축 회전)
 
 	FVector Position(Transform.M[3][0], Transform.M[3][1], Transform.M[3][2]);
 	FQuat Rotation(Transform);
 
-	UStaticMesh* ConeMesh = UResourceManager::GetInstance().GetOrCreatePrimitiveMesh("Cone");
+	// 타원형 원뿔 메시 가져오기 (Swing1/Swing2 각도에 맞는 동적 메시)
+	UStaticMesh* ConeMesh = UResourceManager::GetInstance().GetOrCreateEllipticalConeMesh(Swing1Angle, Swing2Angle);
 	if (ConeMesh)
 	{
-		const float PI = 3.14159265f;
-
-		// sin/cos로 계산 (0~180도 전 범위에서 자연스럽게 작동)
-		// Swing1 (Y축 반지름)
-		float SinY = sinf(Swing1Angle);
-		float CosY = cosf(Swing1Angle);
-		float RadiusY = Height * SinY;
-
-		// Swing2 (Z축 반지름)
-		float SinZ = sinf(Swing2Angle);
-		float CosZ = cosf(Swing2Angle);
-		float RadiusZ = Height * SinZ;
-
-		// 콘의 깊이는 두 각도 중 더 큰 각도 기준으로 결정
-		// 90도 이상이면 cos가 음수가 되어 콘이 뒤집힘
-		float MaxAngle = FMath::Max(Swing1Angle, Swing2Angle);
-		float ConeDepth = Height * cosf(MaxAngle);
-
-		// ConeDepth가 음수이면 콘이 뒤집힌 상태
-		// 이 경우 콘의 꼭지점이 앞쪽으로 이동하고 밑면이 뒤쪽으로 확장
-		FMatrix ConeTransform = FMatrix::FromTRS(Position, Rotation, FVector(ConeDepth, RadiusY, RadiusZ));
+		// 메시는 단위 크기(높이 1.0)로 생성되므로 Height로 균등 스케일
+		FMatrix ConeTransform = FMatrix::FromTRS(Position, Rotation, FVector(Height, Height, Height));
 		DrawPrimitiveMesh(ConeMesh, ConeTransform, Color, UUID);
 	}
 }
