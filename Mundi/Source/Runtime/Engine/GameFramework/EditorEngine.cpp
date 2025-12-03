@@ -8,6 +8,7 @@
 #include "PhysicsSystem.h"
 #include "PhysicsScene.h"
 #include "SkeletalMeshComponent.h"
+#include "ClothSystem.h"
 #include <ObjManager.h>
 
 float UEditorEngine::ClientWidth = 1024.0f;
@@ -205,6 +206,7 @@ bool UEditorEngine::Startup(HINSTANCE hInstance)
     GWorld = WorldContexts[0].World;
     WorldContexts[0].World->Initialize();
     FPhysicsSystem::GetInstance();
+    FClothSystem::GetInstance().Initialize();
     ///////////////////////////////////
 
     // 슬레이트 매니저 (singleton)
@@ -381,10 +383,10 @@ void UEditorEngine::Shutdown()
 
     // AudioDevice 종료
     FAudioDevice::Shutdown();
-     
+
     FPhysicsSystem::Destroy();
-    // IMPORTANT: Explicitly release Renderer before RHIDevice destructor runs
-    // Renderer may hold references to D3D resources
+    FClothSystem::Destroy();
+
     Renderer.reset();
 
     // Explicitly release D3D11RHI resources before global destruction

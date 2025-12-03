@@ -10,7 +10,8 @@ ACurtainActor::ACurtainActor()
     ClothComp = CreateDefaultSubobject<UClothComponent>("ClothComponent");
     SetRootComponent(ClothComp);
 
-    bCanEverTick = false;  // ClothComponent가 Tick 처리
+    bCanEverTick = true;  // Component Tick을 위해 Actor도 Tick 활성화
+    // bTickInEditor = false;
 }
 
 ACurtainActor::~ACurtainActor()
@@ -23,10 +24,7 @@ void ACurtainActor::BeginPlay()
 
     if (!ClothComp)
     {
+        UE_LOG("CurtainActor::BeginPlay - ERROR: ClothComp is null!");
         return;
     }
-
-    // Cloth 메시 생성 및 초기화
-    ClothComp->CreateClothFromPlane(GridSizeX, GridSizeY, QuadSize);
-    ClothComp->InitializeCloth();
 }

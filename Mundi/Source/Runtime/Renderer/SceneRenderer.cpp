@@ -1279,8 +1279,14 @@ void FSceneRenderer::RenderClothPass()
 	if (Proxies.ClothComponents.empty())
 		return;
 
-	// 렌더 상태 설정
-	RHIDevice->RSSetState(ERasterizerMode::Solid);
+	UE_LOG("[RenderClothPass] Called with %d ClothComponents", Proxies.ClothComponents.Num());
+
+	// ===== 렌더 타겟 명시적 설정 =====
+	// 다른 Pass들과 동일하게 SceneColor 타겟으로 렌더링
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithId);
+
+	// 렌더 상태 설정 (양면 렌더링)
+	RHIDevice->RSSetState(ERasterizerMode::Solid_NoCull);  // 컬링 끄기
 	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
 	RHIDevice->OMSetBlendState(false);
 
@@ -1294,11 +1300,16 @@ void FSceneRenderer::RenderClothPass()
 		}
 	}
 
+	UE_LOG("[RenderClothPass] Collected %d batches", MeshBatchElements.Num());
+
 	// --- 2. 정렬 (Sort) ---
 	MeshBatchElements.Sort();
 
 	// --- 3. 그리기 (Draw) ---
 	DrawMeshBatches(MeshBatchElements, true);
+
+	// 상태 복구
+	RHIDevice->RSSetState(ERasterizerMode::Solid);
 }
 
 void FSceneRenderer::RenderPostProcessingPasses()

@@ -96,9 +96,6 @@ UWorld::~UWorld()
 
 	GridActor = nullptr;
 	GizmoActor = nullptr;
-
-	// ClothSystem 정리 (싱글톤이므로 마지막 World가 정리)
-	FClothSystem::Destroy();
 }
 
 void UWorld::Initialize()
@@ -120,10 +117,6 @@ void UWorld::Initialize()
 
 	PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
 
-	// ClothSystem 초기화
-	FClothSystem::GetInstance().Initialize();
-
-	// 에디터 전용 액터들을 초기화합니다.
 	InitializeGrid();
 	InitializeGizmo();
 }
