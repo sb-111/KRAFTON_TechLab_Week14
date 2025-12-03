@@ -5,6 +5,27 @@
 #include <NvCloth/Callbacks.h>
 #include <iostream>
 
+// CUDA 지원 설정
+// CUDA_PATH 환경 변수가 설정되어 있으면 CUDA 사용 시도
+#if defined(__has_include)
+    #if __has_include(<cuda.h>)
+        #define USE_CUDA 1
+    #else
+        #define USE_CUDA 0
+    #endif
+#else
+    // __has_include을 지원하지 않는 컴파일러의 경우 기본값
+    #define USE_CUDA 0
+#endif
+
+#if USE_CUDA
+    // CUDA 라이브러리 자동 링크
+    #pragma comment(lib, "cuda.lib")
+
+    // CUDA 헤더 include
+    #include <cuda.h>
+#endif
+
 // ========== Allocator 구현 ==========
 // @brief NvCloth가 메모리를 할당할 때 사용하는 커스텀 Allocator입니다
 // @note NvCloth는 SIMD 연산을 위해 16바이트 정렬된 메모리를 요구합니다
@@ -92,14 +113,75 @@ void FClothSystem::Initialize()
 
     // ===== 2. Factory 생성 =====
     // Factory: Cloth, Fabric, Solver 객체를 생성하는 팩토리 클래스
-    //   - CPU Factory: CPU에서 시뮬레이션 (NvClothCreateFactoryCPU)
-    //   - GPU Factory: GPU(CUDA)에서 시뮬레이션 (NvClothCreateFactoryCUDA)
+    //   - GPU Factory: GPU(CUDA)에서 시뮬레이션 (NvClothCreateFactoryCUDA) - 고성능
+    //   - CPU Factory: CPU에서 시뮬레이션 (NvClothCreateFactoryCPU) - Fallback
     // @return Factory 포인터 (실패 시 nullptr)
-    Factory = NvClothCreateFactoryCPU();
+
+    // CUDA Factory 시도 (GPU 가속)
+#if USE_CUDA
+    std::cout << "[ClothSystem] CUDA support detected. Attempting to create CUDA Factory (GPU)..." << std::endl;
+
+    // CUDA 초기화 및 컨텍스트 생성
+    CUresult cuResult = cuInit(0);
+    if (cuResult == CUDA_SUCCESS)
+    {
+        CUdevice cuDevice;
+        cuResult = cuDeviceGet(&cuDevice, 0);  // 첫 번째 CUDA 디바이스
+
+        if (cuResult == CUDA_SUCCESS)
+        {
+            CUcontext cudaContext;
+            cuResult = cuCtxCreate(&cudaContext, 0, cuDevice);
+
+            if (cuResult == CUDA_SUCCESS)
+            {
+                CudaContext = cudaContext;
+                Factory = NvClothCreateFactoryCUDA(cudaContext);
+
+                if (Factory)
+                {
+                    bUsingCUDA = true;
+                    std::cout << "[ClothSystem] CUDA Factory created successfully! Using GPU acceleration." << std::endl;
+                }
+                else
+                {
+                    std::cout << "[ClothSystem] NvClothCreateFactoryCUDA failed despite valid context." << std::endl;
+                    cuCtxDestroy(cudaContext);
+                    CudaContext = nullptr;
+                }
+            }
+            else
+            {
+                std::cout << "[ClothSystem] Failed to create CUDA context. Error: " << cuResult << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "[ClothSystem] Failed to get CUDA device. Error: " << cuResult << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "[ClothSystem] CUDA initialization failed. Error: " << cuResult << std::endl;
+    }
+#else
+    std::cout << "[ClothSystem] CUDA not available (cuda.h not found). Using CPU Factory." << std::endl;
+#endif
+
+    // CUDA 실패 시 또는 CUDA 미지원 시 CPU Factory로 Fallback
     if (!Factory)
     {
-        std::cout << "[ClothSystem] Failed to create CPU Factory!" << std::endl;
-        return;
+        std::cout << "[ClothSystem] Creating CPU Factory..." << std::endl;
+        Factory = NvClothCreateFactoryCPU();
+
+        if (!Factory)
+        {
+            std::cout << "[ClothSystem] ERROR: Failed to create CPU Factory!" << std::endl;
+            return;
+        }
+
+        bUsingCUDA = false;
+        std::cout << "[ClothSystem] CPU Factory created successfully." << std::endl;
     }
 
     // ===== 3. Solver 생성 =====
@@ -114,7 +196,7 @@ void FClothSystem::Initialize()
         return;
     }
 
-    std::cout << "[ClothSystem] Initialized successfully (CPU Factory)" << std::endl;
+    std::cout << "[ClothSystem] Initialized successfully!" << std::endl;
 }
 
 // @brief 매 프레임 Cloth 시뮬레이션을 업데이트합니다
@@ -127,23 +209,7 @@ void FClothSystem::Initialize()
 // 3. endSimulation(): 시뮬레이션 종료 및 결과 적용
 void FClothSystem::Update(float DeltaTime)
 {
-    if (!Solver)
-    {
-        static bool loggedOnce = false;
-        if (!loggedOnce)
-        {
-            UE_LOG("[ClothSystem::Update] Solver is null!");
-            loggedOnce = true;
-        }
-        return;
-    }
-
-    static int frameCount = 0;
-    if (frameCount++ % 120 == 0)
-    {
-        UE_LOG("[ClothSystem::Update] Frame %d: DeltaTime = %.4f, ClothCount = %d",
-            frameCount, DeltaTime, Solver->getNumCloths());
-    }
+    if (!Solver) return;
 
     // ===== Solver::beginSimulation() 호출 =====
     // @brief 시뮬레이션을 시작하고 내부 상태를 준비합니다
@@ -186,6 +252,17 @@ void FClothSystem::Shutdown()
         NvClothDestroyFactory(Factory);
         Factory = nullptr;
     }
+
+    // CUDA 컨텍스트 정리
+#if USE_CUDA
+    if (CudaContext && bUsingCUDA)
+    {
+        cuCtxDestroy((CUcontext)CudaContext);
+        CudaContext = nullptr;
+        bUsingCUDA = false;
+        std::cout << "[ClothSystem] CUDA context destroyed." << std::endl;
+    }
+#endif
 }
 
 void FClothSystem::Destroy()

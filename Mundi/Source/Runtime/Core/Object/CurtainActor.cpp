@@ -11,7 +11,7 @@ ACurtainActor::ACurtainActor()
     SetRootComponent(ClothComp);
 
     bCanEverTick = true;  // Component Tick을 위해 Actor도 Tick 활성화
-    // bTickInEditor = false;
+    bTickInEditor = false;
 }
 
 ACurtainActor::~ACurtainActor()

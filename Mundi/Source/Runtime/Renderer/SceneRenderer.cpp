@@ -1278,9 +1278,7 @@ void FSceneRenderer::RenderClothPass()
 {
 	if (Proxies.ClothComponents.empty())
 		return;
-
-	UE_LOG("[RenderClothPass] Called with %d ClothComponents", Proxies.ClothComponents.Num());
-
+	
 	// ===== 렌더 타겟 명시적 설정 =====
 	// 다른 Pass들과 동일하게 SceneColor 타겟으로 렌더링
 	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithId);
@@ -1299,8 +1297,6 @@ void FSceneRenderer::RenderClothPass()
 			ClothComp->CollectMeshBatches(MeshBatchElements, View);
 		}
 	}
-
-	UE_LOG("[RenderClothPass] Collected %d batches", MeshBatchElements.Num());
 
 	// --- 2. 정렬 (Sort) ---
 	MeshBatchElements.Sort();

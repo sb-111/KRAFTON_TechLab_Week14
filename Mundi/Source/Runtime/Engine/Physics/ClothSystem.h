@@ -60,5 +60,9 @@ private:
     nv::cloth::Factory* Factory = nullptr;
     nv::cloth::Solver* Solver = nullptr;
 
+    // CUDA 관련
+    void* CudaContext = nullptr;  // CUcontext (CUDA 드라이버 API)
+    bool bUsingCUDA = false;
+
     static FClothSystem* Instance;
 };

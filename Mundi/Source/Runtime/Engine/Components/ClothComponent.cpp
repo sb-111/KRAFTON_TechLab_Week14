@@ -32,7 +32,53 @@ UClothComponent::UClothComponent()
     DynamicMesh = NewObject<UDynamicMesh>();
     MeshData = new FMeshData();
 
-    CreateClothFromPlane(15, 20, 1);
+    // ===== 흰색 텍스처 생성 (1x1 픽셀) - 한 번만 생성 =====
+    // Vertex Color를 유지하기 위해 흰색 텍스처 사용
+    // 셰이더: finalColor = VertexColor × TextureColor = VertexColor × (1,1,1) = VertexColor
+    if (GEngine.GetRenderer())
+    {
+        ID3D11Device* device = GEngine.GetRenderer()->GetRHIDevice()->GetDevice();
+
+        // 1x1 흰색 텍스처 데이터 (RGBA)
+        uint32_t whitePixel = 0xFFFFFFFF;  // (255, 255, 255, 255)
+
+        // 텍스처 생성
+        D3D11_TEXTURE2D_DESC texDesc = {};
+        texDesc.Width = 1;
+        texDesc.Height = 1;
+        texDesc.MipLevels = 1;
+        texDesc.ArraySize = 1;
+        texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texDesc.SampleDesc.Count = 1;
+        texDesc.Usage = D3D11_USAGE_IMMUTABLE;
+        texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+        D3D11_SUBRESOURCE_DATA initData = {};
+        initData.pSysMem = &whitePixel;
+        initData.SysMemPitch = 4;  // 4 bytes per pixel
+
+        ID3D11Texture2D* whiteTexture = nullptr;
+        HRESULT hr = device->CreateTexture2D(&texDesc, &initData, &whiteTexture);
+
+        if (SUCCEEDED(hr) && whiteTexture)
+        {
+            // Shader Resource View 생성
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+            srvDesc.Format = texDesc.Format;
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Texture2D.MipLevels = 1;
+
+            hr = device->CreateShaderResourceView(whiteTexture, &srvDesc, &WhiteTextureSRV);
+            whiteTexture->Release();  // SRV가 참조를 가지므로 Release
+
+            if (SUCCEEDED(hr))
+            {
+                UE_LOG("[ClothComponent] White texture created once in constructor");
+            }
+        }
+    }
+
+    CreateClothFromPlane(200, 200, 0.1f);
     InitializeCloth();
 }
 
@@ -54,41 +100,27 @@ void UClothComponent::InitializeComponent()
 
 void UClothComponent::BeginPlay()
 {
-    UE_LOG("[ClothComponent::BeginPlay] Called");
     Super::BeginPlay();
-    UE_LOG("[ClothComponent::BeginPlay] Complete");
 }
 
 void UClothComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    static int tickCount = 0;
-    if (tickCount++ % 120 == 0)
-    {
-        UE_LOG("[ClothComponent::TickComponent] Tick %d: ClothInstance=%p", tickCount, ClothInstance);
-    }
-
     if (ClothInstance)
     {
+        // ===== 바람 효과 업데이트 =====
+        UpdateWind(DeltaTime);
+
+        // ===== 시뮬레이션 결과 업데이트 및 렌더링 =====
         UpdateSimulationResult();
         UpdateDynamicMesh();
-    }
-    else
-    {
-        static int logCount = 0;
-        if (logCount++ < 3)
-        {
-            UE_LOG("[ClothComponent::TickComponent] ClothInstance is null! (DeltaTime: %.4f)", DeltaTime);
-        }
     }
 }
 
 void UClothComponent::EndPlay()
 {
-    UE_LOG("[ClothComponent::EndPlay] Called");
     Super::EndPlay();
-    UE_LOG("[ClothComponent::EndPlay] Complete");
 }
 
 void UClothComponent::OnRegister(UWorld* InWorld)
@@ -98,17 +130,12 @@ void UClothComponent::OnRegister(UWorld* InWorld)
 
 void UClothComponent::OnUnregister()
 {
-    UE_LOG("[ClothComponent::OnUnregister] Called");
     Super::OnUnregister();
     ReleaseCloth();
-    UE_LOG("[ClothComponent::OnUnregister] Complete");
 }
 
 void UClothComponent::DuplicateSubObjects()
 {
-    UE_LOG("[DuplicateSubObjects] START - ClothInstance=%p, ClothFabric=%p, GridSize=(%d,%d), QuadSize=%.1f",
-        ClothInstance, ClothFabric, ClothGridSizeX, ClothGridSizeY, ClothQuadSize);
-
     Super::DuplicateSubObjects();
 
     // ===== MeshData 복제 =====
@@ -116,6 +143,9 @@ void UClothComponent::DuplicateSubObjects()
 
     // ===== DynamicMesh 복제 =====
     DynamicMesh = NewObject<UDynamicMesh>();
+
+    // ===== 흰색 텍스처는 재생성하지 않음 (Constructor에서 한 번만 생성) =====
+    // WhiteTextureSRV는 그대로 유지
 
     // ===== Cloth 시뮬레이션 리소스 재생성 =====
     ClothInstance = nullptr;
@@ -126,13 +156,8 @@ void UClothComponent::DuplicateSubObjects()
     int gridY = (ClothGridSizeY > 0) ? ClothGridSizeY : 1;
     float quadSize = (ClothQuadSize > 0.0f) ? ClothQuadSize : 10.0f;
 
-    UE_LOG("[DuplicateSubObjects] Creating cloth with GridSize=(%d,%d), QuadSize=%.1f", gridX, gridY, quadSize);
     CreateClothFromPlane(gridX, gridY, quadSize);
-
-    UE_LOG("[DuplicateSubObjects] Calling InitializeCloth...");
     InitializeCloth();
-
-    UE_LOG("[DuplicateSubObjects] END - ClothInstance=%p, ClothFabric=%p", ClothInstance, ClothFabric);
 }
 
 // ===== Cloth 메시 생성 =====
@@ -143,9 +168,8 @@ void UClothComponent::DuplicateSubObjects()
 // @note 이 함수는 단순히 CPU 측 데이터만 생성하며, InitializeCloth()를 호출해야 실제 시뮬레이션이 시작됩니다
 void UClothComponent::CreateClothFromPlane(int GridSizeX, int GridSizeY, float QuadSize)
 {
-    UE_LOG("[CreateClothFromPlane] START - GridSize=(%d,%d), QuadSize=%.1f", GridSizeX, GridSizeY, QuadSize);
-
     ClothVertices.clear();
+    InitialLocalPositions.clear();
     InverseMasses.clear();
     ClothIndices.clear();
 
@@ -163,14 +187,15 @@ void UClothComponent::CreateClothFromPlane(int GridSizeX, int GridSizeY, float Q
         {
             // Z-up 왼손 좌표계: X-앞, Y-오른쪽, Z-위
             // 커튼은 YZ 평면에 위치 (X=0), 위에서 아래로 늘어뜨림
-            FVector pos(0.0f, x * QuadSize, -y * QuadSize);
-            ClothVertices.push_back(pos);
+            FVector localPos(0.0f, x * QuadSize, -y * QuadSize);
+            ClothVertices.push_back(localPos);
+            InitialLocalPositions.push_back(localPos);  // 로컬 위치 저장 (Transform 추적용)
 
             // ===== InverseMass (질량의 역수) 설정 =====
             // inverseMass = 0 -> 무한대 질량 = 고정된 정점 (Fixed/Pinned)
             // inverseMass = 1 -> 질량 1.0 = 시뮬레이션되는 정점 (Dynamic)
-            // 최상단 행(y==0)만 고정하여 커튼처럼 위쪽이 고정되도록 설정
-            // Tether 제약이 작동하려면 고정 앵커가 필요함
+            // 최상단 행은 고정하되, Motion Constraints로 위치를 제어
+            // 고정된 정점도 Motion Constraints로 이동 가능
             float invMass = (y == 0) ? 0.0f : 1.0f;
             InverseMasses.push_back(invMass);
         }
@@ -200,8 +225,6 @@ void UClothComponent::CreateClothFromPlane(int GridSizeX, int GridSizeY, float Q
             ClothIndices.push_back(i1);
         }
     }
-
-    UE_LOG("[CreateClothFromPlane] END - Vertices:%d, Indices:%d", ClothVertices.size(), ClothIndices.size());
 }
 
 // @brief NvCloth를 초기화하고 시뮬레이션을 시작합니다
@@ -215,33 +238,18 @@ void UClothComponent::CreateClothFromPlane(int GridSizeX, int GridSizeY, float Q
 // 5. 렌더링 리소스 초기화: DynamicMesh, MeshData 설정
 void UClothComponent::InitializeCloth()
 {
-    UE_LOG("[InitializeCloth] ENTER - Vertices:%d, Indices:%d, ClothInstance=%p, ClothFabric=%p",
-        ClothVertices.size(), ClothIndices.size(), ClothInstance, ClothFabric);
-
     if (ClothVertices.empty() || ClothIndices.empty())
     {
-        UE_LOG("[InitializeCloth] EARLY RETURN - No vertices or indices!");
         return;  // CreateClothFromPlane()을 먼저 호출해야 함
     }
-
-    UE_LOG("[InitializeCloth] Starting (V:%d, I:%d)", ClothVertices.size(), ClothIndices.size());
-
+    
     ReleaseCloth();  // 기존 Cloth 정리
-
-    UE_LOG("[InitializeCloth] After ReleaseCloth, getting Factory...");
 
     // ===== NvCloth Factory 가져오기 =====
     // Factory: NvCloth 객체(Fabric, Cloth, Solver)를 생성하는 팩토리 클래스
     // CPU 또는 GPU 기반 Factory가 있으며, 현재는 CPU Factory 사용
     nv::cloth::Factory* factory = FClothSystem::GetInstance().GetFactory();
-    UE_LOG("[InitializeCloth] Factory=%p", factory);
-    if (!factory)
-    {
-        UE_LOG("[InitializeCloth] ERROR: Factory is null! RETURN!");
-        return;
-    }
-
-    UE_LOG("[InitializeCloth] Factory OK, creating Fabric...");
+    if (!factory) return;
 
     // ===== 1. Fabric 생성 (천의 구조적 특성 정의) =====
     // Fabric: 천의 "청사진"으로, 정점 간 제약 조건(Constraints)을 정의합니다
@@ -265,7 +273,7 @@ void UClothComponent::InitializeCloth()
     uint32_t constraintCount = 0;
 
     // ===== Distance Constraints 생성 =====
-    // 수평/수직 인접 정점 간 거리 제약을 생성하여 천의 구조를 유지합니다
+    // 수평/수직/대각선 인접 정점 간 거리 제약을 생성하여 천의 구조를 유지합니다
     int numVerticesX = ClothGridSizeX + 1;  // 정점 개수 = 그리드 크기 + 1
     int numVerticesY = ClothGridSizeY + 1;
 
@@ -300,15 +308,38 @@ void UClothComponent::InitializeCloth()
                 stiffnessValues.push_back(Stiffness);
                 constraintCount++;
             }
+
+            // 대각선 제약 추가 (오른쪽 아래)
+            if (x < numVerticesX - 1 && y < numVerticesY - 1)
+            {
+                int neighbor = i + numVerticesX + 1;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * 0.95f);  // 대각선은 약간 유연하게
+                constraintCount++;
+            }
+
+            // 대각선 제약 추가 (왼쪽 아래)
+            if (x > 0 && y < numVerticesY - 1)
+            {
+                int neighbor = i + numVerticesX - 1;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * 0.95f);  // 대각선은 약간 유연하게
+                constraintCount++;
+            }
         }
     }
 
     phaseIndices.push_back(constraintCount);
 
     sets.push_back(1);
-
-    UE_LOG("[InitializeCloth] Constraint Summary: Total=%d, PhaseIndices=[0,%d], NumSets=1",
-        constraintCount, constraintCount);
 
     // ===== Tether Constraints 생성 =====
     // Tether: 각 정점이 고정된 앵커로부터 너무 멀리 떨어지지 못하게 제한
@@ -326,11 +357,11 @@ void UClothComponent::InitializeCloth()
             int anchorIdx = x;  // 최상단 행 (y=0)의 같은 x 위치
             tetherAnchors.push_back((uint32_t)anchorIdx);
 
-            // 최대 이동 거리: 초기 위치에서 앵커까지의 거리 * 1.5
+            // 최대 이동 거리: 초기 위치에서 앵커까지의 거리 * 1.1
             FVector pos = ClothVertices[i];
             FVector anchorPos = ClothVertices[anchorIdx];
             float initialDist = (pos - anchorPos).Size();
-            float maxDist = initialDist * 1.5f;  // 초기 거리의 1.5배까지 허용
+            float maxDist = initialDist * 1.1f;  // 초기 거리의 1.1배까지 허용 (10% 늘어남)
             tetherLengths.push_back(maxDist);
         }
     }
@@ -345,6 +376,11 @@ void UClothComponent::InitializeCloth()
     nv::cloth::Range<const uint32_t> tetherAnchorsRange(tetherAnchors.data(), tetherAnchors.data() + tetherAnchors.size());
     nv::cloth::Range<const float> tetherLengthsRange(tetherLengths.data(), tetherLengths.data() + tetherLengths.size());
 
+    // ===== 삼각형 인덱스 준비 (바람 효과에 필수!) =====
+    // NvCloth는 삼각형 정보를 사용하여 천의 표면 법선을 계산하고,
+    // 이를 통해 바람이 천에 가하는 힘의 방향과 크기를 결정합니다
+    nv::cloth::Range<const uint32_t> trianglesRange(ClothIndices.data(), ClothIndices.data() + ClothIndices.size());
+
     // ===== Factory::createFabric() 호출 =====
     // @brief Fabric 객체를 생성합니다 (천의 구조적 특성 정의)
     // @param numParticles: 정점(파티클) 개수
@@ -355,7 +391,7 @@ void UClothComponent::InitializeCloth()
     // @param indicesRange: 제약 대상 정점 쌍 배열 (i0, i1, i0, i1, ...)
     // @param anchors: Tether 앵커 인덱스 배열
     // @param tetherLengths: Tether 제약 길이 (각 정점의 최대 이동 거리)
-    // @param triangles: 삼각형 인덱스 (충돌/셀프 콜리전용, 현재 미사용)
+    // @param triangles: 삼각형 인덱스 (바람 효과와 충돌 계산에 필요)
     ClothFabric = factory->createFabric(
         (uint32_t)ClothVertices.size(),
         phaseRange,
@@ -365,14 +401,10 @@ void UClothComponent::InitializeCloth()
         indicesRange,
         tetherAnchorsRange,    // Tether 앵커 인덱스
         tetherLengthsRange,    // Tether 최대 거리
-        nv::cloth::Range<const uint32_t>()   // triangles (미사용)
+        trianglesRange         // 삼각형 인덱스 (바람 효과에 필수!)
     );
 
-    if (!ClothFabric)
-    {
-        UE_LOG("ClothComponent::InitializeCloth - Failed to create Fabric");
-        return;
-    }
+    if (!ClothFabric) return;
 
     // ===== 2. Cloth 인스턴스 생성 =====
     // Cloth: 실제 시뮬레이션 대상 객체로, Fabric의 "인스턴스"입니다
@@ -400,11 +432,9 @@ void UClothComponent::InitializeCloth()
     // @param fabric: 이 Cloth가 사용할 Fabric (구조 정의)
     // @return Cloth 객체 포인터 (실패 시 nullptr)
     ClothInstance = factory->createCloth(particleRange, *ClothFabric);
-    UE_LOG("[InitializeCloth] createCloth returned: %p", ClothInstance);
 
     if (!ClothInstance)
     {
-        UE_LOG("[InitializeCloth] ERROR: Failed to create Cloth! RETURN!");
         ClothFabric->decRefCount();  // Fabric 참조 카운트 감소
         ClothFabric = nullptr;
         return;
@@ -415,7 +445,6 @@ void UClothComponent::InitializeCloth()
     //   - 매 프레임 Solver::simulate()를 호출하면 등록된 모든 Cloth가 시뮬레이션됨
     //   - 병렬 처리, 충돌 감지 등을 담당
     nv::cloth::Solver* solver = FClothSystem::GetInstance().GetSolver();
-    UE_LOG("[InitializeCloth] Solver=%p", solver);
     if (solver)
     {
         // ===== Solver::addCloth() 호출 =====
@@ -423,11 +452,6 @@ void UClothComponent::InitializeCloth()
         // @param cloth: 등록할 Cloth 객체
         // @note 등록 후 Solver::simulate()가 호출될 때마다 이 Cloth가 업데이트됩니다
         solver->addCloth(ClothInstance);
-        UE_LOG("[InitializeCloth] Cloth added to Solver");
-    }
-    else
-    {
-        UE_LOG("[InitializeCloth] WARNING: Solver is null! Cloth not added to solver!");
     }
 
     // ===== 4. 시뮬레이션 파라미터 적용 =====
@@ -439,27 +463,44 @@ void UClothComponent::InitializeCloth()
     phaseConfig.mStiffness = Stiffness;
     phaseConfig.mStiffnessMultiplier = 1.0f;
     phaseConfig.mCompressionLimit = 1.0f;  // 압축 제한 (1.0 = 제한 없음)
-    phaseConfig.mStretchLimit = 1.01f;     // 늘어남 제한 (1.01 = 1%까지만 늘어남 허용)
+    phaseConfig.mStretchLimit = 1.03f;     // 늘어남 제한 (1.03 = 3%까지만 늘어남 허용)
     ClothInstance->setPhaseConfig(nv::cloth::Range<nv::cloth::PhaseConfig>(&phaseConfig, &phaseConfig + 1));
 
-    ClothInstance->setSolverFrequency(60.0f);
+    ClothInstance->setSolverFrequency(120.0f);  // 시뮬레이션 주파수 증가 (더 안정적)
 
     // Tether Constraints: 정점이 초기 위치에서 너무 멀리 떨어지지 못하게 제한
     ClothInstance->setTetherConstraintScale(1.0f);      // Tether 제약의 스케일
-    ClothInstance->setTetherConstraintStiffness(0.5f);  // Tether 제약의 강성도
+    ClothInstance->setTetherConstraintStiffness(1.0f);  // Tether 제약의 강성도 (1.0 = 강하게 제한)
 
-    // ===== 5. DynamicMesh 초기화 =====
+    // ===== 5. Cloth 전용 Material 생성 =====
+    // Vertex Color를 제대로 표현하기 위해 DiffuseColor를 (1,1,1)로 설정
+    UMaterial* DefaultMaterial = UResourceManager::GetInstance().GetDefaultMaterial();
+    if (DefaultMaterial)
+    {
+        ClothMaterial = NewObject<UMaterial>();
+        // 기본 Material 설정 복사
+        ClothMaterial->SetShader(DefaultMaterial->GetShader());
+        // ShaderMacros는 비워둠 -> View의 조명 설정(ViewShaderMacros)이 적용되도록
+        ClothMaterial->SetShaderMacros(TArray<FShaderMacro>());
+
+        // Material Info 복사 후 DiffuseColor를 흰색으로 설정
+        FMaterialInfo MatInfo = DefaultMaterial->GetMaterialInfo();
+        MatInfo.DiffuseColor = FVector(1.0f, 1.0f, 1.0f);  // Vertex Color가 그대로 표현되도록
+        MatInfo.AmbientColor = FVector(1.0f, 1.0f, 1.0f);  // Ambient도 흰색으로
+        ClothMaterial->SetMaterialInfo(MatInfo);
+
+        UE_LOG("[ClothComponent] ClothMaterial created with white DiffuseColor and empty ShaderMacros for lighting");
+    }
+
+    // ===== 6. DynamicMesh 초기화 =====
     int numVertices = (int)ClothVertices.size();
     int numIndices = (int)ClothIndices.size();
 
     URenderer* renderer = GEngine.GetRenderer();
 
-    UE_LOG("[ClothComponent::InitializeCloth] Renderer: %p, DynamicMesh: %p", renderer, DynamicMesh);
-
     if (renderer && DynamicMesh)
     {
         ID3D11Device* device = renderer->GetRHIDevice()->GetDevice();
-        UE_LOG("[ClothComponent::InitializeCloth] D3D11Device: %p", device);
 
         DynamicMesh->Initialize(
             numVertices,
@@ -467,12 +508,6 @@ void UClothComponent::InitializeCloth()
             device,
             EVertexLayoutType::PositionColorTexturNormal
         );
-
-        UE_LOG("[ClothComponent::InitializeCloth] DynamicMesh initialized successfully (V:%d, I:%d)", numVertices, numIndices);
-    }
-    else
-    {
-        UE_LOG("[ClothComponent::InitializeCloth] ERROR: Cannot initialize DynamicMesh - Renderer:%p, DynamicMesh:%p", renderer, DynamicMesh);
     }
 
     // ===== 6. 초기 MeshData 설정 =====
@@ -485,11 +520,11 @@ void UClothComponent::InitializeCloth()
             MeshData->Indices.push_back(idx);
         }
 
-        // 기본 색상 (흰색)
+        // 천 색상 설정 (알파는 1.0 고정)
         MeshData->Color.clear();
         for (size_t i = 0; i < ClothVertices.size(); i++)
         {
-            MeshData->Color.push_back(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+            MeshData->Color.push_back(FVector4(ClothColor.X, ClothColor.Y, ClothColor.Z, 1.0f));
         }
 
         // 기본 UV (단순 매핑)
@@ -514,22 +549,16 @@ void UClothComponent::InitializeCloth()
 
         // ===== 7. 초기 데이터를 GPU에 업로드 =====
         UpdateDynamicMesh();
-        UE_LOG("[InitializeCloth] Complete - SUCCESS!");
-    }
-    else
-    {
-        UE_LOG("[InitializeCloth] ERROR: MeshData is null");
     }
 
-    UE_LOG("[InitializeCloth] EXIT - ClothInstance=%p, ClothFabric=%p", ClothInstance, ClothFabric);
+    // ===== 8. Transform 추적 초기화 =====
+    PreviousWorldTransform = GetWorldTransform();
 }
 
 // @brief Cloth 리소스를 해제하고 Solver에서 제거합니다
 // @note 컴포넌트 파괴 시 또는 재초기화 시 호출됩니다
 void UClothComponent::ReleaseCloth()
 {
-    UE_LOG("[ClothComponent::ReleaseCloth] Called - ClothInstance:%p, ClothFabric:%p", ClothInstance, ClothFabric);
-
     if (ClothInstance)
     {
         // ===== Solver::removeCloth() 호출 =====
@@ -537,22 +566,15 @@ void UClothComponent::ReleaseCloth()
         // @param cloth: 제거할 Cloth 객체
         // @note 제거 후에는 Solver::simulate()에서 이 Cloth가 업데이트되지 않습니다
         nv::cloth::Solver* solver = FClothSystem::GetInstance().GetSolver();
-        UE_LOG("[ClothComponent::ReleaseCloth] Solver: %p", solver);
 
         if (solver)
         {
             solver->removeCloth(ClothInstance);
-            UE_LOG("[ClothComponent::ReleaseCloth] Cloth removed from Solver");
-        }
-        else
-        {
-            UE_LOG("[ClothComponent::ReleaseCloth] WARNING: Solver is null!");
         }
 
         // Cloth 인스턴스 삭제
         delete ClothInstance;
         ClothInstance = nullptr;
-        UE_LOG("[ClothComponent::ReleaseCloth] Cloth instance deleted");
     }
 
     if (ClothFabric)
@@ -563,10 +585,14 @@ void UClothComponent::ReleaseCloth()
         //       여러 Cloth가 같은 Fabric을 공유할 수 있으므로 참조 카운트로 관리
         ClothFabric->decRefCount();
         ClothFabric = nullptr;
-        UE_LOG("[ClothComponent::ReleaseCloth] Fabric reference released");
     }
 
-    UE_LOG("[ClothComponent::ReleaseCloth] Complete");
+    // 흰색 텍스처 정리
+    if (WhiteTextureSRV)
+    {
+        WhiteTextureSRV->Release();
+        WhiteTextureSRV = nullptr;
+    }
 }
 
 // @brief 시뮬레이션 결과(정점 위치)를 Cloth에서 가져와 CPU 측 데이터를 업데이트합니다
@@ -593,24 +619,11 @@ void UClothComponent::UpdateSimulationResult()
 
     // ===== CPU 측 정점 위치 업데이트 =====
     // 시뮬레이션 결과를 ClothVertices에 복사하여 렌더링에 사용
-    static int updateCount = 0;
-    static FVector lastPos;
-
     for (size_t i = 0; i < ClothVertices.size(); i++)
     {
         const physx::PxVec4& p = particles[i];
         ClothVertices[i] = FVector(p.x, p.y, p.z);
         // inverseMass(p.w)는 변하지 않으므로 무시
-    }
-
-    // 첫 번째 정점 위치 변화 확인 (60프레임마다 로그)
-    if (updateCount++ % 60 == 0 && ClothVertices.size() > 0)
-    {
-        FVector currentPos = ClothVertices[0];
-        float distance = (currentPos - lastPos).Size();
-        UE_LOG("[UpdateSimulationResult] Frame %d: Vertex[0] = (%.2f, %.2f, %.2f), Moved: %.4fcm",
-            updateCount, currentPos.X, currentPos.Y, currentPos.Z, distance);
-        lastPos = currentPos;
     }
 }
 
@@ -640,13 +653,72 @@ void UClothComponent::ApplySimulationParameters()
     // @brief 공기 저항 계수를 설정합니다
     // @param drag: 공기 저항 계수 (0~1, 0=저항 없음)
     // @note 천이 공기 중에서 움직일 때 받는 저항을 시뮬레이션
-    ClothInstance->setDragCoefficient(0.05f);
+    //       바람 효과가 작동하려면 이 값이 충분히 커야 함 (권장: 0.5~1.0)
+    ClothInstance->setDragCoefficient(DragCoefficient);
 
     // ===== Cloth::setLiftCoefficient() 호출 =====
     // @brief 양력 계수를 설정합니다
     // @param lift: 양력 계수 (0~1)
     // @note 천이 바람에 의해 들어올려지는 효과를 시뮬레이션
-    ClothInstance->setLiftCoefficient(0.05f);
+    //       값이 클수록 바람에 의해 더 많이 들려 올라감 (권장: 0.6~1.0)
+    ClothInstance->setLiftCoefficient(LiftCoefficient);
+} 
+
+// @brief 바람 효과를 업데이트합니다
+// @note 시간에 따라 변하는 바람으로 천이 자연스럽게 흔들립니다
+void UClothComponent::UpdateWind(float DeltaTime)
+{
+    if (!ClothInstance || !bEnableWind)
+    {
+        // 바람 비활성화 시 바람 속도 0으로
+        if (ClothInstance)
+        {
+            ClothInstance->setWindVelocity(physx::PxVec3(0.0f, 0.0f, 0.0f));
+        }
+        return;
+    }
+
+    // 시간 누적
+    WindTime += DeltaTime;
+
+    // ===== 시간에 따라 변하는 바람 방향 및 세기 =====
+    // 기본 방향에 sin/cos으로 변화 추가
+    FVector baseDirection = WindDirection;
+    baseDirection.Normalize();
+
+    // 주 바람 (천천히 변화) - 0.0 ~ 1.0 사이로 정규화
+    // abs(sin)을 사용하여 주기적으로 0이 되도록 함 (천이 내려올 수 있게)
+    float mainWave = abs(sin(WindTime * WindFrequency));
+
+    // 돌풍 (빠르게 변화) - 작은 변동 추가
+    float gustWave = sin(WindTime * WindFrequency * 3.7f) * 0.2f;  // -0.2 ~ 0.2
+
+    // 최종 바람 세기: 0.0 ~ 1.2 사이에서 변동 (주기적으로 0이 됨)
+    float windIntensity = mainWave + gustWave * WindTurbulence;
+    windIntensity = (windIntensity < 0.0f) ? 0.0f : windIntensity;  // 음수 방지
+
+    float finalStrength = WindStrength * windIntensity;
+
+    // 바람 방향도 약간 변화 (변동 폭을 줄임)
+    float dirVariationX = cos(WindTime * WindFrequency * 0.7f) * WindTurbulence * 0.1f;
+    float dirVariationY = sin(WindTime * WindFrequency * 0.9f) * WindTurbulence * 0.1f;
+    float dirVariationZ = cos(WindTime * WindFrequency * 1.1f) * WindTurbulence * 0.05f;
+
+    FVector finalDirection = baseDirection + FVector(dirVariationX, dirVariationY, dirVariationZ);
+    finalDirection.Normalize();
+
+    // 최종 바람 속도
+    FVector windVelocity = finalDirection * finalStrength;
+
+    // NvCloth에 바람 설정
+    ClothInstance->setWindVelocity(physx::PxVec3(windVelocity.X, windVelocity.Y, windVelocity.Z));
+
+    static int logCount = 0;
+    if (logCount++ % 120 == 0)
+    {
+        UE_LOG("[UpdateWind] Wind: (%.1f, %.1f, %.1f), Strength: %.1f",
+            windVelocity.X, windVelocity.Y, windVelocity.Z, finalStrength);
+    }
 }
 
 void UClothComponent::UpdateDynamicMesh()
@@ -663,6 +735,20 @@ void UClothComponent::UpdateDynamicMesh()
 
     // MeshData 정점 위치 업데이트
     MeshData->Vertices = ClothVertices;
+
+    // 색상 업데이트 (에디터에서 변경 가능, 알파는 1.0 고정)
+    MeshData->Color.clear();
+    for (size_t i = 0; i < ClothVertices.size(); i++)
+    {
+        MeshData->Color.push_back(FVector4(ClothColor.X, ClothColor.Y, ClothColor.Z, 1.0f));
+    }
+
+    // 디버그: 색상 값 확인
+    static int colorLogCount = 0;
+    if (colorLogCount++ % 120 == 0)
+    {
+        UE_LOG("[ClothComponent] Color: (%.2f, %.2f, %.2f)", ClothColor.X, ClothColor.Y, ClothColor.Z);
+    }
 
     // 노말 벡터 계산
     MeshData->Normal.clear();
@@ -683,8 +769,8 @@ void UClothComponent::UpdateDynamicMesh()
         FVector edge1 = v1 - v0;
         FVector edge2 = v2 - v0;
 
-        // 면 노말 (외적)
-        FVector faceNormal = FVector::Cross(edge1, edge2);
+        // 면 노말 (외적) - 반전시켜서 카메라를 향하도록
+        FVector faceNormal = -FVector::Cross(edge1, edge2);
 
         // 각 정점에 면 노말 누적
         MeshData->Normal[idx0] = MeshData->Normal[idx0] + faceNormal;
@@ -720,12 +806,26 @@ void UClothComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMeshBatch
         return;
     }
 
-    // Get default material
-    UMaterial* Material = UResourceManager::GetInstance().GetDefaultMaterial();
+    // Cloth 전용 Material 사용 및 DiffuseColor를 ClothColor로 업데이트
+    UMaterial* Material = ClothMaterial;
     if (!Material)
     {
-        UE_LOG("[ClothComponent::CollectMeshBatches] FAILED - Material is null");
-        return;
+        // Fallback: ClothMaterial이 없으면 기본 Material 사용
+        Material = UResourceManager::GetInstance().GetDefaultMaterial();
+        if (!Material)
+        {
+            UE_LOG("[ClothComponent::CollectMeshBatches] FAILED - Material is null");
+            return;
+        }
+    }
+
+    // Material의 DiffuseColor를 ClothColor로 동적 업데이트 (매 프레임)
+    if (ClothMaterial)
+    {
+        FMaterialInfo MatInfo = ClothMaterial->GetMaterialInfo();
+        MatInfo.DiffuseColor = ClothColor;  // ClothColor를 DiffuseColor로 설정
+        MatInfo.AmbientColor = ClothColor;  // Ambient도 동일하게
+        ClothMaterial->SetMaterialInfo(MatInfo);
     }
 
     UShader* Shader = Material->GetShader();
@@ -749,15 +849,14 @@ void UClothComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMeshBatch
         UE_LOG("[ClothComponent::CollectMeshBatches] FAILED - ShaderVariant is null");
         return;
     }
-
-    UE_LOG("[ClothComponent::CollectMeshBatches] SUCCESS - Adding batch");
-
+    
     // Create batch element
     FMeshBatchElement BatchElement;
     BatchElement.VertexShader = ShaderVariant->VertexShader;
     BatchElement.PixelShader = ShaderVariant->PixelShader;
     BatchElement.InputLayout = ShaderVariant->InputLayout;
-    BatchElement.Material = Material;
+    BatchElement.Material = Material;  // ClothMaterial (DiffuseColor=흰색, Vertex Color 곱셈)
+    BatchElement.InstanceShaderResourceView = nullptr;  // 텍스처 없음 (Material.DiffuseColor 사용)
     BatchElement.VertexBuffer = DynamicMesh->GetVertexBuffer();
     BatchElement.IndexBuffer = DynamicMesh->GetIndexBuffer();
     BatchElement.VertexStride = sizeof(FVertexDynamic);  // PositionColorTexturNormal format
