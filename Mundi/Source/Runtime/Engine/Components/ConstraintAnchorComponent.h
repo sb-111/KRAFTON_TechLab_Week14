@@ -5,6 +5,18 @@
 struct FConstraintInstance;
 class USkeletalMeshComponent;
 
+// Constraint 기즈모 조작 모드
+// - Both: 일반 회전 - Rotation1, Rotation2 둘 다 변경 (축 방향 전체 변경)
+// - ParentOnly: ALT + 회전 - Rotation2만 변경 (부채꼴 방향 변경)
+// - ChildOnly: SHIFT+ALT + 회전 - Rotation1만 변경 (화살표 위치 조정 → 시작 각도 조정)
+// 화살표를 부채꼴 끝으로 옮기면 = 이미 limit에 가까움 = 한 방향으로만 움직임
+enum class EConstraintManipulationMode : uint8
+{
+    Both,        // Rotation1, Rotation2 둘 다 변경
+    ParentOnly,  // Rotation2만 변경 (ALT)
+    ChildOnly    // Rotation1만 변경 (SHIFT+ALT)
+};
+
 // Constraint 기즈모용 앵커 컴포넌트
 // 기즈모 조작 시 Constraint 데이터(Position1/2, Rotation1/2)를 업데이트
 // 언리얼과 동일하게 스케일 조작은 지원하지 않음
@@ -36,7 +48,16 @@ public:
     // 기즈모 조작 중 플래그 (true일 때 UpdateAnchorFromConstraint() 무시)
     bool bIsBeingManipulated = false;
 
+    // 조작 모드 (ALT/SHIFT 키에 따라 외부에서 설정)
+    EConstraintManipulationMode ManipulationMode = EConstraintManipulationMode::Both;
+
+    // 드래그 시작 시 호출 - 시작 Rotation 저장
+    void BeginManipulation();
+
 private:
+    // 드래그 시작 시의 Rotation 백업 (모드별 분리 조작용)
+    FVector StartRotation1;
+    FVector StartRotation2;
     // UpdateAnchorFromConstraint() 실행 중 플래그 (OnTransformUpdated에서 Constraint 수정 방지)
     bool bUpdatingFromConstraint = false;
 

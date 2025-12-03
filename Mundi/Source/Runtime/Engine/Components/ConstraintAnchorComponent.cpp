@@ -39,6 +39,15 @@ void UConstraintAnchorComponent::ClearTarget()
     bIsBeingManipulated = false;
 }
 
+void UConstraintAnchorComponent::BeginManipulation()
+{
+    if (!TargetConstraint) return;
+
+    // 드래그 시작 시 현재 Rotation 저장 (모드별 분리 조작용)
+    StartRotation1 = TargetConstraint->Rotation1;
+    StartRotation2 = TargetConstraint->Rotation2;
+}
+
 void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
 {
     if (!TargetConstraint || !MeshComp || ParentBoneIndex < 0)
@@ -55,12 +64,34 @@ void UConstraintAnchorComponent::UpdateAnchorFromConstraint()
     if (ChildBoneIndex >= 0)
         CachedChildBoneWorldTransform = MeshComp->GetBoneWorldTransform(ChildBoneIndex);
 
-    // Position2, Rotation2 (Parent 기준)를 월드 좌표로 변환
-    // Position1/Rotation1은 항상 (0,0,0)이므로 Parent 기준으로 기즈모 위치 계산
-    FQuat JointRot = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation2);
-    FVector JointWorldPos = CachedParentBoneWorldTransform.Translation +
+    FVector JointWorldPos;
+    FQuat JointWorldRot;
+
+    // ManipulationMode에 따라 기즈모 위치/회전 결정
+    switch (ManipulationMode)
+    {
+    case EConstraintManipulationMode::ChildOnly:
+        {
+            // Child frame 기준 (Position1, Rotation1)
+            FQuat JointRot1 = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation1);
+            JointWorldPos = CachedChildBoneWorldTransform.Translation +
+                            CachedChildBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position1);
+            JointWorldRot = CachedChildBoneWorldTransform.Rotation * JointRot1;
+        }
+        break;
+
+    case EConstraintManipulationMode::Both:
+    case EConstraintManipulationMode::ParentOnly:
+    default:
+        {
+            // Parent frame 기준 (Position2, Rotation2)
+            FQuat JointRot2 = FQuat::MakeFromEulerZYX(TargetConstraint->Rotation2);
+            JointWorldPos = CachedParentBoneWorldTransform.Translation +
                             CachedParentBoneWorldTransform.Rotation.RotateVector(TargetConstraint->Position2);
-    FQuat JointWorldRot = CachedParentBoneWorldTransform.Rotation * JointRot;
+            JointWorldRot = CachedParentBoneWorldTransform.Rotation * JointRot2;
+        }
+        break;
+    }
 
     SetWorldLocation(JointWorldPos);
     SetWorldRotation(JointWorldRot);
@@ -111,39 +142,122 @@ void UConstraintAnchorComponent::OnTransformUpdated()
     LastAnchorLocation = AnchorWorldPos;
     LastAnchorRotation = AnchorWorldRot;
 
-    // ===== Child (Position1/Rotation1)은 항상 (0,0,0)으로 고정 (언리얼 규칙) =====
-    TargetConstraint->Position1 = FVector::Zero();
-    TargetConstraint->Rotation1 = FVector::Zero();
-
-    // ===== Parent 본 (Bone2) 기준으로 Position2, Rotation2 계산 =====
+    // ===== 본 월드 트랜스폼 가져오기 =====
     FTransform ParentBoneWorld = MeshComp->GetBoneWorldTransform(ParentBoneIndex);
-    FQuat ParentBoneWorldRotInv = ParentBoneWorld.Rotation.Inverse();
+    FTransform ChildBoneWorld = (ChildBoneIndex >= 0) ?
+        MeshComp->GetBoneWorldTransform(ChildBoneIndex) : ParentBoneWorld;
 
-    // 위치가 변경된 경우에만 Position 업데이트
+    FQuat ParentBoneWorldRotInv = ParentBoneWorld.Rotation.Inverse();
+    FQuat ChildBoneWorldRotInv = ChildBoneWorld.Rotation.Inverse();
+
+    // ===== 위치 업데이트 (ManipulationMode에 따라 분기) =====
     if (bLocationChanged)
     {
+        FVector LocalPosition1 = ChildBoneWorldRotInv.RotateVector(AnchorWorldPos - ChildBoneWorld.Translation);
         FVector LocalPosition2 = ParentBoneWorldRotInv.RotateVector(AnchorWorldPos - ParentBoneWorld.Translation);
-        TargetConstraint->Position2 = LocalPosition2;
+
+        switch (ManipulationMode)
+        {
+        case EConstraintManipulationMode::Both:
+            TargetConstraint->Position1 = LocalPosition1;
+            TargetConstraint->Position2 = LocalPosition2;
+            break;
+        case EConstraintManipulationMode::ParentOnly:
+            TargetConstraint->Position2 = LocalPosition2;
+            break;
+        case EConstraintManipulationMode::ChildOnly:
+            TargetConstraint->Position1 = LocalPosition1;
+            break;
+        }
     }
 
-    // 회전이 변경된 경우에만 Rotation 업데이트
+    // ===== 회전 업데이트 (ManipulationMode에 따라 분기) =====
     if (bRotationChanged)
     {
-        FQuat LocalRotation2 = ParentBoneWorldRotInv * AnchorWorldRot;
-        FVector NewEuler2 = LocalRotation2.ToEulerZYXDeg();
-        FVector OldEuler2 = TargetConstraint->Rotation2;
-
-        // Euler 각도 연속성 보장: 180° 이상 차이나면 ±360° 조정
-        for (int i = 0; i < 3; ++i)
+        // Child frame (Rotation1) 계산
+        auto CalculateRotation1 = [&]() -> FVector
         {
-            float Diff = NewEuler2[i] - OldEuler2[i];
-            if (Diff > 180.0f)
-                NewEuler2[i] -= 360.0f;
-            else if (Diff < -180.0f)
-                NewEuler2[i] += 360.0f;
-        }
+            FQuat LocalRotation1 = ChildBoneWorldRotInv * AnchorWorldRot;
+            FVector NewEuler1 = LocalRotation1.ToEulerZYXDeg();
+            FVector OldEuler1 = TargetConstraint->Rotation1;
+            for (int i = 0; i < 3; ++i)
+            {
+                float Diff = NewEuler1[i] - OldEuler1[i];
+                if (Diff > 180.0f) NewEuler1[i] -= 360.0f;
+                else if (Diff < -180.0f) NewEuler1[i] += 360.0f;
+            }
+            return NewEuler1;
+        };
 
-        TargetConstraint->Rotation2 = NewEuler2;
+        // Parent frame (Rotation2) 계산
+        auto CalculateRotation2 = [&]() -> FVector
+        {
+            FQuat LocalRotation2 = ParentBoneWorldRotInv * AnchorWorldRot;
+            FVector NewEuler2 = LocalRotation2.ToEulerZYXDeg();
+            FVector OldEuler2 = TargetConstraint->Rotation2;
+            for (int i = 0; i < 3; ++i)
+            {
+                float Diff = NewEuler2[i] - OldEuler2[i];
+                if (Diff > 180.0f) NewEuler2[i] -= 360.0f;
+                else if (Diff < -180.0f) NewEuler2[i] += 360.0f;
+            }
+            return NewEuler2;
+        };
+
+        switch (ManipulationMode)
+        {
+        case EConstraintManipulationMode::Both:
+            {
+                // 일반 회전: 월드 스페이스에서 같은 delta를 Rotation1, Rotation2에 적용
+                // 두 본이 다른 방향을 가지므로, 월드 스페이스 delta를 각각의 로컬 스페이스로 변환해야 함
+
+                // 1. Parent frame 시작/현재 월드 회전
+                FQuat StartRot2Quat = FQuat::MakeFromEulerZYX(StartRotation2);
+                FQuat StartWorld2 = ParentBoneWorld.Rotation * StartRot2Quat;
+                FQuat CurrentWorld2 = AnchorWorldRot;  // 현재 앵커의 월드 회전
+
+                // 2. 월드 스페이스 delta 계산 (왼쪽 곱셈 형태 = 월드 축 기준 회전)
+                FQuat WorldDelta = CurrentWorld2 * StartWorld2.Inverse();
+
+                // 3. Rotation2 업데이트 (Parent bone 기준)
+                FQuat LocalRotation2 = ParentBoneWorldRotInv * AnchorWorldRot;
+                FVector NewEuler2 = LocalRotation2.ToEulerZYXDeg();
+                FVector OldEuler2 = TargetConstraint->Rotation2;
+                for (int i = 0; i < 3; ++i)
+                {
+                    float Diff = NewEuler2[i] - OldEuler2[i];
+                    if (Diff > 180.0f) NewEuler2[i] -= 360.0f;
+                    else if (Diff < -180.0f) NewEuler2[i] += 360.0f;
+                }
+                TargetConstraint->Rotation2 = NewEuler2;
+
+                // 4. Rotation1 업데이트 (Child bone 기준으로 같은 월드 delta 적용)
+                FQuat StartRot1Quat = FQuat::MakeFromEulerZYX(StartRotation1);
+                FQuat StartWorld1 = ChildBoneWorld.Rotation * StartRot1Quat;
+                FQuat NewWorld1 = WorldDelta * StartWorld1;  // 월드 delta 적용
+                FQuat NewLocalRot1 = ChildBoneWorldRotInv * NewWorld1;  // Child bone 로컬로 변환
+                FVector NewEuler1 = NewLocalRot1.ToEulerZYXDeg();
+                FVector OldEuler1 = TargetConstraint->Rotation1;
+                for (int i = 0; i < 3; ++i)
+                {
+                    float Diff = NewEuler1[i] - OldEuler1[i];
+                    if (Diff > 180.0f) NewEuler1[i] -= 360.0f;
+                    else if (Diff < -180.0f) NewEuler1[i] += 360.0f;
+                }
+                TargetConstraint->Rotation1 = NewEuler1;
+            }
+            break;
+
+        case EConstraintManipulationMode::ParentOnly:
+            // ALT: Rotation2만 업데이트 (부채꼴 방향 변경)
+            TargetConstraint->Rotation2 = CalculateRotation2();
+            break;
+
+        case EConstraintManipulationMode::ChildOnly:
+            // SHIFT+ALT: Rotation1만 업데이트 (화살표 위치 조정)
+            TargetConstraint->Rotation1 = CalculateRotation1();
+            break;
+        }
     }
 
     bConstraintModified = true;

@@ -90,40 +90,22 @@ void FConstraintInstance::InitConstraint(FBodyInstance* Body1, FBodyInstance* Bo
     PxTransform ChildGlobalPose = Child->getGlobalPose();
     PxTransform ParentGlobalPose = Parent->getGlobalPose();
 
-    if (bHasPosition2 && bHasRotation2)
+    // Position1/Rotation1과 Position2/Rotation2가 모두 설정된 경우 (또는 둘 중 하나라도 Rotation이 있으면)
+    // 양쪽 LocalFrame을 직접 설정
+    if (bHasRotation1 || bHasRotation2)
     {
-        // Position2/Rotation2가 설정됨 (언리얼 방식: Parent 기준으로 Joint Frame 설정)
-        // Joint 위치 = Child 본 원점 (Position1 = 0,0,0)
-        // Rotation2 = Parent에서 봤을 때 Joint가 향하는 방향
-
-        // Parent 로컬에서의 Joint 트랜스폼
-        FQuat Rot2 = FQuat::MakeFromEulerZYX(Rotation2);
-        PxVec3 LocalPos2 = PhysxConverter::ToPxVec3(Position2);
-        PxQuat LocalRot2 = PhysxConverter::ToPxQuat(Rot2);
-
-        // Parent 로컬 → 월드 변환
-        PxTransform JointLocalInParent(LocalPos2, LocalRot2);
-        PxTransform JointWorld = ParentGlobalPose * JointLocalInParent;
-
-        // 각 Body 로컬로 변환
-        LocalFrame1 = ChildGlobalPose.getInverse() * JointWorld;
-        LocalFrame2 = JointLocalInParent;  // 이미 Parent 로컬
-    }
-    else if (bHasPosition1 && bHasRotation1)
-    {
-        // Position1/Rotation1 기준으로 Joint 월드 좌표 계산 후 각 Body 로컬로 변환
-        // (언리얼 규칙: Position1/Rotation1 = Child 로컬)
+        // Position1/Rotation1 → LocalFrame1 (Child 로컬)
+        // Rotation1 = (0,0,0)이면 Child 본의 로컬 좌표계 = Joint 좌표계 (언리얼 규칙)
         FQuat Rot1 = FQuat::MakeFromEulerZYX(Rotation1);
         PxVec3 LocalPos1 = PhysxConverter::ToPxVec3(Position1);
         PxQuat LocalRot1 = PhysxConverter::ToPxQuat(Rot1);
+        LocalFrame1 = PxTransform(LocalPos1, LocalRot1);
 
-        // Child Body 로컬 → 월드 변환
-        PxTransform JointLocalInChild(LocalPos1, LocalRot1);
-        PxTransform JointWorld = ChildGlobalPose * JointLocalInChild;
-
-        // 각 Body 로컬로 변환
-        LocalFrame1 = JointLocalInChild;  // 이미 Child 로컬
-        LocalFrame2 = ParentGlobalPose.getInverse() * JointWorld;
+        // Position2/Rotation2 → LocalFrame2 (Parent 로컬)
+        FQuat Rot2 = FQuat::MakeFromEulerZYX(Rotation2);
+        PxVec3 LocalPos2 = PhysxConverter::ToPxVec3(Position2);
+        PxQuat LocalRot2 = PhysxConverter::ToPxQuat(Rot2);
+        LocalFrame2 = PxTransform(LocalPos2, LocalRot2);
     }
     else if (bHasPosition1 || bHasPosition2)
     {
