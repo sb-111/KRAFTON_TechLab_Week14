@@ -512,6 +512,12 @@ void UTargetActorTransformWidget::RenderSelectedActorDetails(AActor* SelectedAct
 	if (RootComponent)
 	{
 		UPropertyRenderer::RenderAllPropertiesWithInheritance(RootComponent);
+
+		// StaticMeshComponent인 경우 콜리전 섹션 추가
+		if (UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(RootComponent))
+		{
+			RenderStaticMeshCollisionUI(StaticMeshComp);
+		}
 	}
 
 	ImGui::Spacing();
@@ -585,22 +591,24 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 		return;
 	}
 
-	// 시각화 토글 - SelectionManager의 플래그를 사용하여 SceneRenderer에서 렌더링
-	USelectionManager* SelectionMgr = GWorld->GetSelectionManager();
-	bool bShowViz = SelectionMgr ? SelectionMgr->IsCollisionVisualizationEnabled() : false;
-	if (ImGui::Checkbox("시각화", &bShowViz))
-	{
-		if (SelectionMgr)
-		{
-			SelectionMgr->SetCollisionVisualizationEnabled(bShowViz);
-		}
-	}
+	// 시각화는 래그돌 쇼플래그(SF_Ragdoll)로 제어됨
+	ImGui::TextDisabled("시각화: 래그돌 쇼플래그로 제어");
 
 	ImGui::Separator();
 
-	// Shape 추가 버튼
+	// Shape 관리 버튼
 	ImGui::Text("프리미티브");
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - 80);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - 160);
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.2f, 0.2f, 1.0f));
+	if (ImGui::Button("모두 지우기"))
+	{
+		BodySetup->AggGeom.SphereElems.Empty();
+		BodySetup->AggGeom.BoxElems.Empty();
+		BodySetup->AggGeom.SphylElems.Empty();
+		BodySetup->AggGeom.ConvexElems.Empty();
+	}
+	ImGui::PopStyleColor();
+	ImGui::SameLine();
 	if (ImGui::Button("+ 추가##Shape"))
 	{
 		ImGui::OpenPopup("AddShapePopup");
@@ -978,8 +986,9 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 	}
 	ImGui::PopID();
 
-	// ===== Convex 섹션 (읽기 전용) =====
+	// ===== Convex 섹션 =====
 	int32 convexCount = BodySetup->AggGeom.ConvexElems.Num();
+	int32 ConvexToRemove = -1;
 	ImGui::PushID("Convex");
 	if (ImGui::TreeNode("컨벡스"))
 	{
@@ -1007,6 +1016,14 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 				{
 					Convex.Name = FName(nameBuffer);
 				}
+
+				// 삭제 버튼
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.2f, 0.2f, 1.0f));
+				if (ImGui::Button("삭제##Convex"))
+				{
+					ConvexToRemove = i;
+				}
+				ImGui::PopStyleColor();
 
 				ImGui::TreePop();
 			}
@@ -1038,5 +1055,9 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 	if (CapsuleToRemove >= 0 && CapsuleToRemove < BodySetup->AggGeom.SphylElems.Num())
 	{
 		BodySetup->AggGeom.SphylElems.RemoveAt(CapsuleToRemove);
+	}
+	if (ConvexToRemove >= 0 && ConvexToRemove < BodySetup->AggGeom.ConvexElems.Num())
+	{
+		BodySetup->AggGeom.ConvexElems.RemoveAt(ConvexToRemove);
 	}
 }

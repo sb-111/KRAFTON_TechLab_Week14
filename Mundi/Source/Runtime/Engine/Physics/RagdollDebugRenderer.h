@@ -12,6 +12,7 @@ struct FKAggregateGeom;
 struct FKSphereElem;
 struct FKBoxElem;
 struct FKSphylElem;
+struct FKConvexElem;
 
 class UPhysicsAsset;
 
@@ -73,6 +74,16 @@ public:
     // Capsule 렌더링 (원기둥 + 반구)
     static void RenderCapsule(
         const FKSphylElem& Capsule,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+    // Convex 렌더링 (와이어프레임 삼각형)
+    static void RenderConvex(
+        const FKConvexElem& Convex,
         const PxTransform& WorldTransform,
         const FVector4& Color,
         TArray<FVector>& OutStartPoints,

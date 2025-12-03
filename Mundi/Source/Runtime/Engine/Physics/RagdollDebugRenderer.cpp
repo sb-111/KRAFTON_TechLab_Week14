@@ -127,6 +127,13 @@ void FRagdollDebugRenderer::RenderAggGeom(
         RenderCapsule(AggGeom.SphylElems[i], WorldTransform, Color,
                       OutStartPoints, OutEndPoints, OutColors);
     }
+
+    // Convex Shape들
+    for (int32 i = 0; i < AggGeom.ConvexElems.Num(); ++i)
+    {
+        RenderConvex(AggGeom.ConvexElems[i], WorldTransform, Color,
+                     OutStartPoints, OutEndPoints, OutColors);
+    }
 }
 
 void FRagdollDebugRenderer::RenderSphere(
@@ -434,5 +441,37 @@ void FRagdollDebugRenderer::RenderPhysicsAssetPreview(
     if (StartPoints.Num() > 0)
     {
         Renderer->AddLines(StartPoints, EndPoints, Colors);
+    }
+}
+
+void FRagdollDebugRenderer::RenderConvex(
+    const FKConvexElem& Convex,
+    const PxTransform& WorldTransform,
+    const FVector4& Color,
+    TArray<FVector>& OutStartPoints,
+    TArray<FVector>& OutEndPoints,
+    TArray<FVector4>& OutColors)
+{
+    // 삼각형 와이어프레임으로 Convex 렌더링
+    for (int32 i = 0; i + 2 < Convex.IndexData.Num(); i += 3)
+    {
+        int32 i0 = Convex.IndexData[i];
+        int32 i1 = Convex.IndexData[i + 1];
+        int32 i2 = Convex.IndexData[i + 2];
+
+        if (i0 < Convex.VertexData.Num() && i1 < Convex.VertexData.Num() && i2 < Convex.VertexData.Num())
+        {
+            PxVec3 LocalV0 = PhysxConverter::ToPxVec3(Convex.VertexData[i0]);
+            PxVec3 LocalV1 = PhysxConverter::ToPxVec3(Convex.VertexData[i1]);
+            PxVec3 LocalV2 = PhysxConverter::ToPxVec3(Convex.VertexData[i2]);
+
+            FVector V0 = PhysxConverter::ToFVector(WorldTransform.transform(LocalV0));
+            FVector V1 = PhysxConverter::ToFVector(WorldTransform.transform(LocalV1));
+            FVector V2 = PhysxConverter::ToFVector(WorldTransform.transform(LocalV2));
+
+            OutStartPoints.Add(V0); OutEndPoints.Add(V1); OutColors.Add(Color);
+            OutStartPoints.Add(V1); OutEndPoints.Add(V2); OutColors.Add(Color);
+            OutStartPoints.Add(V2); OutEndPoints.Add(V0); OutColors.Add(Color);
+        }
     }
 }
