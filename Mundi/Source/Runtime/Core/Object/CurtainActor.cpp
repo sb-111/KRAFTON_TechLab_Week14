@@ -10,7 +10,6 @@ ACurtainActor::ACurtainActor()
     ClothComp = CreateDefaultSubobject<UClothComponent>("ClothComponent");
     SetRootComponent(ClothComp);
 
-    bCanEverTick = true;  // Component Tick을 위해 Actor도 Tick 활성화
     bTickInEditor = false;
 }
 

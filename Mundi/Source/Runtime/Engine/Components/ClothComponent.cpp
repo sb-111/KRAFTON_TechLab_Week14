@@ -78,7 +78,7 @@ UClothComponent::UClothComponent()
         }
     }
 
-    CreateClothFromPlane(200, 200, 0.1f);
+    CreateClothFromPlane(MeshGridSizeX, MeshGridSizeY, MeshQuadSize);
     InitializeCloth();
 }
 
@@ -309,7 +309,13 @@ void UClothComponent::InitializeCloth()
                 constraintCount++;
             }
 
-            // 대각선 제약 추가 (오른쪽 아래)
+            // ===== 대각선 제약 추가 (Shear Resistance) =====
+            // 대각선 제약은 천의 전단(shear) 변형을 방지합니다
+            // - 수평/수직 제약만으로는 천이 마름모꼴로 찌그러질 수 있음
+            // - 대각선 제약을 추가하면 천이 사각형 형태를 유지
+            // - Stiffness는 수평/수직보다 약간 낮게 설정 (자연스러운 주름 형성)
+
+            // 대각선 제약 (오른쪽 아래)
             if (x < numVerticesX - 1 && y < numVerticesY - 1)
             {
                 int neighbor = i + numVerticesX + 1;
@@ -318,11 +324,11 @@ void UClothComponent::InitializeCloth()
 
                 float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
                 restvalues.push_back(dist);
-                stiffnessValues.push_back(Stiffness * 0.95f);  // 대각선은 약간 유연하게
+                stiffnessValues.push_back(Stiffness * DiagonalStiffnessMultiplier);
                 constraintCount++;
             }
 
-            // 대각선 제약 추가 (왼쪽 아래)
+            // 대각선 제약 (왼쪽 아래)
             if (x > 0 && y < numVerticesY - 1)
             {
                 int neighbor = i + numVerticesX - 1;
@@ -331,7 +337,68 @@ void UClothComponent::InitializeCloth()
 
                 float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
                 restvalues.push_back(dist);
-                stiffnessValues.push_back(Stiffness * 0.95f);  // 대각선은 약간 유연하게
+                stiffnessValues.push_back(Stiffness * DiagonalStiffnessMultiplier);
+                constraintCount++;
+            }
+
+            // ===== Bending Constraints 추가 (부드러운 굽힘) =====
+            // 2-hop 거리의 정점들을 연결하여 천이 뾰족하게 접히는 것을 방지
+            // - 1-hop: 인접 정점 (Distance Constraints)
+            // - 2-hop: 2칸 떨어진 정점 (Bending Constraints)
+            // - 매우 낮은 Stiffness로 설정하여 부드러운 곡선 형성
+
+            // 수평 Bending (2칸 오른쪽)
+            if (x < numVerticesX - 2)
+            {
+                int neighbor = i + 2;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * Bending2HopMultiplier);
+                constraintCount++;
+            }
+
+            // 수직 Bending (2칸 아래)
+            if (y < numVerticesY - 2)
+            {
+                int neighbor = i + numVerticesX * 2;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * Bending2HopMultiplier);
+                constraintCount++;
+            }
+
+            // ===== 3-hop Bending Constraints (추가 부드러움) =====
+            // 3칸 떨어진 정점을 연결하여 더욱 부드러운 곡선 생성
+
+            // 수평 3-hop Bending
+            if (x < numVerticesX - 3)
+            {
+                int neighbor = i + 3;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * Bending3HopMultiplier);
+                constraintCount++;
+            }
+
+            // 수직 3-hop Bending
+            if (y < numVerticesY - 3)
+            {
+                int neighbor = i + numVerticesX * 3;
+                indices.push_back((uint32_t)i);
+                indices.push_back((uint32_t)neighbor);
+
+                float dist = (ClothVertices[i] - ClothVertices[neighbor]).Size();
+                restvalues.push_back(dist);
+                stiffnessValues.push_back(Stiffness * Bending3HopMultiplier);
                 constraintCount++;
             }
         }
@@ -343,7 +410,9 @@ void UClothComponent::InitializeCloth()
 
     // ===== Tether Constraints 생성 =====
     // Tether: 각 정점이 고정된 앵커로부터 너무 멀리 떨어지지 못하게 제한
-    // 각 정점에서 가장 가까운 고정 앵커(최상단 행)까지의 최대 거리를 설정
+    // - 천이 무한정 늘어나는 것을 방지하는 핵심 제약
+    // - 각 정점에서 가장 가까운 고정 앵커(최상단 행)까지의 최대 거리를 설정
+    // - NvCloth는 이 거리를 초과하면 정점을 앵커 방향으로 당김
     TArray<uint32_t> tetherAnchors;  // 각 정점의 가장 가까운 앵커 인덱스
     TArray<float> tetherLengths;      // 각 정점의 최대 이동 거리
 
@@ -357,11 +426,13 @@ void UClothComponent::InitializeCloth()
             int anchorIdx = x;  // 최상단 행 (y=0)의 같은 x 위치
             tetherAnchors.push_back((uint32_t)anchorIdx);
 
-            // 최대 이동 거리: 초기 위치에서 앵커까지의 거리 * 1.1
+            // ===== Tether 최대 거리 계산 =====
+            // - 초기 거리: 정점과 앵커 사이의 초기 거리
+            // - 허용 배율: 바람으로 날아가는 것을 방지하기 위해 엄격하게 제한
             FVector pos = ClothVertices[i];
             FVector anchorPos = ClothVertices[anchorIdx];
             float initialDist = (pos - anchorPos).Size();
-            float maxDist = initialDist * 1.1f;  // 초기 거리의 1.1배까지 허용 (10% 늘어남)
+            float maxDist = initialDist * TetherMaxDistanceMultiplier;
             tetherLengths.push_back(maxDist);
         }
     }
@@ -458,19 +529,33 @@ void UClothComponent::InitializeCloth()
     ApplySimulationParameters();
 
     // ===== PhaseConfig 설정 (제약 조건 해결 설정) =====
+    // PhaseConfig: Distance Constraints의 해결(Solve) 방식을 제어
+    // - Stiffness: 제약의 강성도
+    // - StretchLimit: 늘어남 제한
+    // - CompressionLimit: 압축 제한
     nv::cloth::PhaseConfig phaseConfig;
     phaseConfig.mPhaseIndex = 0;
     phaseConfig.mStiffness = Stiffness;
-    phaseConfig.mStiffnessMultiplier = 1.0f;
-    phaseConfig.mCompressionLimit = 1.0f;  // 압축 제한 (1.0 = 제한 없음)
-    phaseConfig.mStretchLimit = 1.03f;     // 늘어남 제한 (1.03 = 3%까지만 늘어남 허용)
+    phaseConfig.mStiffnessMultiplier = PhaseStiffnessMultiplier;
+    phaseConfig.mCompressionLimit = CompressionLimit;
+    phaseConfig.mStretchLimit = StretchLimit;
     ClothInstance->setPhaseConfig(nv::cloth::Range<nv::cloth::PhaseConfig>(&phaseConfig, &phaseConfig + 1));
 
-    ClothInstance->setSolverFrequency(120.0f);  // 시뮬레이션 주파수 증가 (더 안정적)
+    // ===== Solver Frequency 설정 =====
+    // Solver Frequency: 한 프레임 동안 제약 조건을 몇 번 해결할지 결정
+    // - 낮추면 부드럽게 접히지만, Tether로 안정성 보장
+    ClothInstance->setSolverFrequency(SolverFrequency);
 
-    // Tether Constraints: 정점이 초기 위치에서 너무 멀리 떨어지지 못하게 제한
-    ClothInstance->setTetherConstraintScale(1.0f);      // Tether 제약의 스케일
-    ClothInstance->setTetherConstraintStiffness(1.0f);  // Tether 제약의 강성도 (1.0 = 강하게 제한)
+    // ===== Tether Constraints 설정 =====
+    // Tether: 각 정점이 고정된 앵커로부터 너무 멀리 떨어지지 못하게 제한
+    // - TetherConstraintScale: Fabric에 정의된 Tether 길이의 배율
+    // - TetherConstraintStiffness: 강성도 (바람으로 날아가는 것 방지)
+    ClothInstance->setTetherConstraintScale(TetherConstraintScale);
+    ClothInstance->setTetherConstraintStiffness(TetherConstraintStiffness);
+
+    // ===== Friction 설정 =====
+    // 마찰 계수 설정 (천이 접힐 때 부드럽게)
+    ClothInstance->setFriction(Friction);
 
     // ===== 5. Cloth 전용 Material 생성 =====
     // Vertex Color를 제대로 표현하기 위해 DiffuseColor를 (1,1,1)로 설정
@@ -617,14 +702,50 @@ void UClothComponent::UpdateSimulationResult()
     //       정점을 직접 수정하려면 setParticles()를 사용해야 합니다
     auto particles = ClothInstance->getCurrentParticles();
 
-    // ===== CPU 측 정점 위치 업데이트 =====
+    // ===== CPU 측 정점 위치 업데이트 (NaN/Inf 방어 포함) =====
     // 시뮬레이션 결과를 ClothVertices에 복사하여 렌더링에 사용
+    // bool bHasInvalidValues = false;
     for (size_t i = 0; i < ClothVertices.size(); i++)
     {
         const physx::PxVec4& p = particles[i];
         ClothVertices[i] = FVector(p.x, p.y, p.z);
+        
+        // // ===== NaN/Inf 체크 =====
+        // // NaN이나 Inf가 들어오면 정점이 이상한 곳으로 날아가므로 방어
+        // if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z) ||
+        //     std::isinf(p.x) || std::isinf(p.y) || std::isinf(p.z))
+        // {
+        //     // NaN/Inf 발견 시 초기 위치로 복원
+        //     ClothVertices[i] = InitialLocalPositions[i];
+        //     bHasInvalidValues = true;
+        // }
+        // else
+        // {
+        //     ClothVertices[i] = FVector(p.x, p.y, p.z);
+        // }
         // inverseMass(p.w)는 변하지 않으므로 무시
     }
+
+    // // ===== NaN/Inf 발견 시 시뮬레이션 리셋 =====
+    // if (bHasInvalidValues)
+    // {
+    //     UE_LOG("[ClothComponent] WARNING: NaN/Inf detected in simulation! Resetting to initial positions.");
+    //
+    //     // 모든 정점을 초기 위치로 리셋
+    //     TArray<physx::PxVec4> resetParticles;
+    //     for (size_t i = 0; i < ClothVertices.size(); i++)
+    //     {
+    //         const FVector& v = InitialLocalPositions[i];
+    //         float invMass = InverseMasses[i];
+    //         resetParticles.push_back(physx::PxVec4(v.X, v.Y, v.Z, invMass));
+    //     }
+    //
+    //     // Cloth에 초기 위치 재설정
+    //     nv::cloth::Range<physx::PxVec4> particleRange(resetParticles.data(), resetParticles.data() + resetParticles.size());
+    //     ClothInstance->setParticles(particleRange, particleRange);  // 현재 위치와 이전 위치 모두 리셋
+    //     // ClothVertices도 초기 위치로
+    //     ClothVertices = InitialLocalPositions;
+    // }
 }
 
 // @brief 시뮬레이션 파라미터(중력, 댐핑, 공기저항 등)를 Cloth에 적용합니다
@@ -650,22 +771,32 @@ void UClothComponent::ApplySimulationParameters()
     ClothInstance->setDamping(physx::PxVec3(Damping, Damping, Damping));
 
     // ===== Cloth::setDragCoefficient() 호출 =====
-    // @brief 공기 저항 계수를 설정합니다
-    // @param drag: 공기 저항 계수 (0~1, 0=저항 없음)
+    // @brief 공기 저항 계수를 설정합니다 (Drag Force: Fd = ½ρv²cdragA)
+    // @param drag: cdrag 계수 (0~1, 0=저항 없음)
     // @note 천이 공기 중에서 움직일 때 받는 저항을 시뮬레이션
     //       바람 효과가 작동하려면 이 값이 충분히 커야 함 (권장: 0.5~1.0)
     ClothInstance->setDragCoefficient(DragCoefficient);
 
     // ===== Cloth::setLiftCoefficient() 호출 =====
-    // @brief 양력 계수를 설정합니다
-    // @param lift: 양력 계수 (0~1)
+    // @brief 양력 계수를 설정합니다 (Lift Force: Fl = clift½ρv²A)
+    // @param lift: clift 계수 (0~1)
     // @note 천이 바람에 의해 들어올려지는 효과를 시뮬레이션
     //       값이 클수록 바람에 의해 더 많이 들려 올라감 (권장: 0.6~1.0)
     ClothInstance->setLiftCoefficient(LiftCoefficient);
+
+    // ===== Cloth::setFluidDensity() 호출 =====
+    // @brief 유체 밀도를 설정합니다 (ρ, Drag/Lift Force 계산에 사용)
+    // @param density: 유체 밀도 (기본값 1.0)
+    // @note 바람의 힘은 ρ에 비례하므로, 이 값을 조절하여 전체적인 바람 효과 강도 조절 가능
+    ClothInstance->setFluidDensity(FluidDensity);
 } 
 
 // @brief 바람 효과를 업데이트합니다
-// @note 시간에 따라 변하는 바람으로 천이 자연스럽게 흔들립니다
+// @note NvCloth Wind Simulation 수식:
+//       - Drag Force: Fd = ½ρv²cdragA
+//       - Lift Force: Fl = clift½ρv²A
+//       - 각 삼각형에 대해 위치 차이 d = ct - pt + wind 계산 후 힘 적용
+//       - |d|² > epsilon일 때만 힘 적용 (수치 안정성)
 void UClothComponent::UpdateWind(float DeltaTime)
 {
     if (!ClothInstance || !bEnableWind)
@@ -681,43 +812,67 @@ void UClothComponent::UpdateWind(float DeltaTime)
     // 시간 누적
     WindTime += DeltaTime;
 
-    // ===== 시간에 따라 변하는 바람 방향 및 세기 =====
-    // 기본 방향에 sin/cos으로 변화 추가
+    // ===== 자연스러운 바람 시뮬레이션 (Perlin-like 패턴) =====
+    // 기본 방향 정규화
     FVector baseDirection = WindDirection;
     baseDirection.Normalize();
 
-    // 주 바람 (천천히 변화) - 0.0 ~ 1.0 사이로 정규화
-    // abs(sin)을 사용하여 주기적으로 0이 되도록 함 (천이 내려올 수 있게)
-    float mainWave = abs(sin(WindTime * WindFrequency));
+    // 주 바람 파동 (저주파) - 천천히 변화하는 기본 강도
+    // 0.0 ~ 1.0 범위 (주기적으로 0이 되어 천이 자연스럽게 내려옴)
+    float mainWave = 0.5f + 0.5f * sin(WindTime * WindFrequency * 0.5f);  // 0~1
 
-    // 돌풍 (빠르게 변화) - 작은 변동 추가
-    float gustWave = sin(WindTime * WindFrequency * 3.7f) * 0.2f;  // -0.2 ~ 0.2
+    // 중간 바람 파동 (중주파) - 일반적인 바람 변화
+    float midWave = sin(WindTime * WindFrequency * 1.0f);  // -1~1
 
-    // 최종 바람 세기: 0.0 ~ 1.2 사이에서 변동 (주기적으로 0이 됨)
-    float windIntensity = mainWave + gustWave * WindTurbulence;
-    windIntensity = (windIntensity < 0.0f) ? 0.0f : windIntensity;  // 음수 방지
+    // 돌풍 (고주파) - 빠른 난류 효과
+    float gustWave = sin(WindTime * WindFrequency * 3.7f);  // -1~1
+    float gustWave2 = cos(WindTime * WindFrequency * 5.3f);  // -1~1 (다른 주파수)
+
+    // ===== 최종 바람 강도 계산 =====
+    // mainWave: 기본 세기 (0~1)
+    // midWave: 중간 변동 추가 (±Turbulence * 0.3)
+    // gustWave: 돌풍 효과 (±Turbulence * 0.2)
+    float windIntensity = mainWave
+                        + midWave * WindTurbulence * 0.3f
+                        + gustWave * WindTurbulence * 0.2f
+                        + gustWave2 * WindTurbulence * 0.1f;
+
+    // 0 이상으로 클램핑 (음수 바람 방지)
+    windIntensity = (windIntensity < 0.0f) ? 0.0f : windIntensity;
+    // 1.5 이하로 클램핑 (너무 강한 바람 방지)
+    windIntensity = (windIntensity > 1.5f) ? 1.5f : windIntensity;
 
     float finalStrength = WindStrength * windIntensity;
 
-    // 바람 방향도 약간 변화 (변동 폭을 줄임)
-    float dirVariationX = cos(WindTime * WindFrequency * 0.7f) * WindTurbulence * 0.1f;
-    float dirVariationY = sin(WindTime * WindFrequency * 0.9f) * WindTurbulence * 0.1f;
-    float dirVariationZ = cos(WindTime * WindFrequency * 1.1f) * WindTurbulence * 0.05f;
+    // ===== 바람 방향 변화 (난류 효과) =====
+    // 방향 변화는 Turbulence에 비례하되, 너무 크지 않게 제한
+    float dirVariationX = sin(WindTime * WindFrequency * 0.7f) * WindTurbulence * 0.15f;
+    float dirVariationY = cos(WindTime * WindFrequency * 0.9f) * WindTurbulence * 0.15f;
+    float dirVariationZ = sin(WindTime * WindFrequency * 1.3f) * WindTurbulence * 0.08f;
 
     FVector finalDirection = baseDirection + FVector(dirVariationX, dirVariationY, dirVariationZ);
     finalDirection.Normalize();
 
-    // 최종 바람 속도
+    // ===== 최종 바람 속도 벡터 (v) =====
+    // NvCloth는 이 속도를 사용하여 각 삼각형에 대해 Drag/Lift Force 계산
     FVector windVelocity = finalDirection * finalStrength;
 
-    // NvCloth에 바람 설정
+    // ===== NvCloth에 바람 속도 설정 =====
+    // setWindVelocity()는 내부적으로 다음을 수행:
+    // - 각 삼각형의 중심 위치 계산 (ct, pt)
+    // - 위치 차이: d = ct - pt + wind
+    // - |d|² > epsilon일 때만:
+    //   - Lift impulse: ilift = clift · cos(θ) · sin(θ) · ldir · |d| · Δt⁻¹
+    //   - Drag impulse: idrag = cdrag · |cos(θ)| · d · |d| · Δt⁻¹
+    //   - 합성: i = (ilift + idrag) · ρ · area
     ClothInstance->setWindVelocity(physx::PxVec3(windVelocity.X, windVelocity.Y, windVelocity.Z));
 
+    // 디버그 로그 (2초마다)
     static int logCount = 0;
     if (logCount++ % 120 == 0)
     {
-        UE_LOG("[UpdateWind] Wind: (%.1f, %.1f, %.1f), Strength: %.1f",
-            windVelocity.X, windVelocity.Y, windVelocity.Z, finalStrength);
+        UE_LOG("[UpdateWind] Wind: (%.1f, %.1f, %.1f), Intensity: %.2f, Strength: %.1f",
+            windVelocity.X, windVelocity.Y, windVelocity.Z, windIntensity, finalStrength);
     }
 }
 

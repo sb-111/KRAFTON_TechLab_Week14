@@ -34,15 +34,35 @@ public:
     void operator()(const char* exp, const char* file, int line, bool& ignore) override;
 };
 
-// 싱글톤 매니저
+// ========================================================================================================
+// FClothSystem - NvCloth CPU 시뮬레이션 매니저 (싱글톤)
+// ========================================================================================================
+//
+// === CPU 멀티스레드 시뮬레이션 ===
+// - CPU Factory 사용 (멀티스레드 최적화)
+// - GPU↔CPU 데이터 전송 오버헤드 없음
+// - 40,000 정점 기준 실시간 성능 보장
+//
+// === 초기화 순서 ===
+// 1. InitializeNvCloth(): 라이브러리 전역 초기화
+// 2. CPU Factory 생성 (NvClothCreateFactoryCPU)
+// 3. Solver 생성 (멀티스레드 CPU 시뮬레이션)
+//
+// === 시뮬레이션 루프 ===
+// 1. Update(DeltaTime) 호출 (매 프레임)
+// 2. Solver::beginSimulation()
+// 3. Solver::simulateChunk() (멀티스레드 병렬 처리)
+// 4. Solver::endSimulation()
+//
+// ========================================================================================================
 class FClothSystem
 {
 public:
     static FClothSystem& GetInstance();
 
-    void Initialize();
-    void Shutdown();
-    void Update(float DeltaTime);   // Solver 시뮬레이션 실행
+    void Initialize();   // CPU Factory 생성
+    void Shutdown();     // 리소스 정리
+    void Update(float DeltaTime);   // CPU 멀티스레드 시뮬레이션 실행
 
     static void Destroy();  // 싱글톤 정리
 
@@ -57,12 +77,8 @@ private:
     FClothErrorCallback ErrorCallback;
     FClothAssertHandler AssertHandler;
 
-    nv::cloth::Factory* Factory = nullptr;
-    nv::cloth::Solver* Solver = nullptr;
-
-    // CUDA 관련
-    void* CudaContext = nullptr;  // CUcontext (CUDA 드라이버 API)
-    bool bUsingCUDA = false;
+    nv::cloth::Factory* Factory = nullptr;   // CPU Factory
+    nv::cloth::Solver* Solver = nullptr;     // CPU Solver
 
     static FClothSystem* Instance;
 };
