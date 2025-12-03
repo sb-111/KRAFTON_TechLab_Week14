@@ -2214,11 +2214,11 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         ImVec2 labelSize = ImGui::CalcTextSize(constraintLabel);
         DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6 * PhysState->GraphZoom), TextColor, constraintLabel);
 
-        // Child : Parent 표시 (언리얼 규칙: ConstraintBone1=Child, ConstraintBone2=Parent)
+        // Child : Parent 표시 (언리얼 규칙: ConstraintBone1=Parent, ConstraintBone2=Child)
         // prefix 제거 후 표시
-        FString shortBone1 = StripBonePrefix(bone1);  // Child
-        FString shortBone2 = StripBonePrefix(bone2);  // Parent
-        FString connectionText = shortBone1 + " : " + shortBone2;
+        FString shortBone1 = StripBonePrefix(bone1);  // Parent
+        FString shortBone2 = StripBonePrefix(bone2);  // Child
+        FString connectionText = shortBone2 + " : " + shortBone1;
         ImVec2 connSize = ImGui::CalcTextSize(connectionText.c_str());
         DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18 * PhysState->GraphZoom), TextColor, connectionText.c_str());
 
