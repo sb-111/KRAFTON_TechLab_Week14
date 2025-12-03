@@ -1,4 +1,5 @@
 ﻿#include "pch.h"
+#include <unordered_map>
 #include "SlateManager.h"
 #include "SPhysicsAssetEditorWindow.h"
 #include "Source/Slate/Widgets/PropertyRenderer.h"
@@ -2320,26 +2321,192 @@ void SPhysicsAssetEditorWindow::RenderBodyDetails(UBodySetup* Body)
             if (PhysState) PhysState->bIsDirty = true;
         }
 
+        ImGui::Unindent();
+    }
+
+    // Physical Material 섹션
+    if (ImGui::CollapsingHeader("Physical Material", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Indent();
+
+        // Physical Material 에셋 드롭다운
+        ImGui::Text("Physical Material Asset");
+
+        // 에셋 목록 가져오기
+        TArray<FString> PhysMatPaths, PhysMatNames;
+        PhysicsAssetEditorBootstrap::GetAllPhysicalMaterialPaths(PhysMatPaths, PhysMatNames);
+
+        // 드롭다운 표시용 문자열 배열
+        std::vector<const char*> PhysMatItems;
+        for (const FString& Name : PhysMatNames)
+        {
+            PhysMatItems.push_back(Name.c_str());
+        }
+
+        // 현재 Body의 PhysMaterial 경로와 매칭되는 인덱스 찾기
+        int CurrentPhysMatIndex = 0;  // 기본값: None
+        if (Body->PhysMaterial && !Body->PhysMaterialPath.empty())
+        {
+            for (int32 i = 0; i < PhysMatPaths.Num(); ++i)
+            {
+                if (PhysMatPaths[i] == Body->PhysMaterialPath)
+                {
+                    CurrentPhysMatIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Body별 고유 ID를 위해 PushID 사용
+        ImGui::PushID(Body);
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::Combo("##PhysMatAsset", &CurrentPhysMatIndex, PhysMatItems.data(), (int)PhysMatItems.size()))
+        {
+            if (CurrentPhysMatIndex > 0 && CurrentPhysMatIndex < PhysMatPaths.Num())
+            {
+                // 에셋 로드하여 적용
+                UPhysicalMaterial* LoadedMat = PhysicsAssetEditorBootstrap::LoadPhysicalMaterial(PhysMatPaths[CurrentPhysMatIndex]);
+                if (LoadedMat)
+                {
+                    Body->PhysMaterial = LoadedMat;
+                    Body->PhysMaterialPath = PhysMatPaths[CurrentPhysMatIndex];  // 경로 저장
+                    if (PhysState) PhysState->bIsDirty = true;
+                }
+            }
+            else
+            {
+                // None 선택 시 PhysMaterial을 nullptr로 설정
+                Body->PhysMaterial = nullptr;
+                Body->PhysMaterialPath = "";
+                if (PhysState) PhysState->bIsDirty = true;
+            }
+        }
+        ImGui::PopID();
+
         ImGui::Separator();
 
+        // None 선택 시 Friction/Restitution을 0으로 표시 (읽기 전용)
+        // 에셋 선택 시 해당 값 표시 (Edit 모드에 따라 활성/비활성)
+        bool bHasPhysMaterial = (Body->PhysMaterial != nullptr);
+        float friction = bHasPhysMaterial ? Body->PhysMaterial->Friction : 0.0f;
+        float restitution = bHasPhysMaterial ? Body->PhysMaterial->Restitution : 0.0f;
+
+        // Edit 모드 상태 관리 (Body 포인터를 키로 사용)
+        static std::unordered_map<void*, bool> EditModeMap;
+        bool& bEditMode = EditModeMap[Body];
+
         // Friction (마찰 계수)
-        float friction = Body->Friction;
         ImGui::Text("Friction");
         ImGui::SetNextItemWidth(-1);
-        if (ImGui::DragFloat("##Friction", &friction, 0.01f, 0.0f, 1.0f, "%.2f"))
+        if (!bHasPhysMaterial)
         {
-            Body->Friction = friction;
-            if (PhysState) PhysState->bIsDirty = true;
+            ImGui::BeginDisabled();
+            ImGui::DragFloat("##Friction", &friction, 0.01f, 0.0f, 1.0f, "%.2f");
+            ImGui::EndDisabled();
+        }
+        else
+        {
+            // Edit 모드가 아니면 비활성화
+            if (!bEditMode) ImGui::BeginDisabled();
+            if (ImGui::DragFloat("##Friction", &friction, 0.01f, 0.0f, 1.0f, "%.2f"))
+            {
+                Body->PhysMaterial->Friction = friction;
+            }
+            if (!bEditMode) ImGui::EndDisabled();
         }
 
         // Restitution (반발 계수)
-        float restitution = Body->Restitution;
         ImGui::Text("Restitution");
         ImGui::SetNextItemWidth(-1);
-        if (ImGui::DragFloat("##Restitution", &restitution, 0.01f, 0.0f, 1.0f, "%.2f"))
+        if (!bHasPhysMaterial)
         {
-            Body->Restitution = restitution;
-            if (PhysState) PhysState->bIsDirty = true;
+            ImGui::BeginDisabled();
+            ImGui::DragFloat("##Restitution", &restitution, 0.01f, 0.0f, 1.0f, "%.2f");
+            ImGui::EndDisabled();
+        }
+        else
+        {
+            // Edit 모드가 아니면 비활성화
+            if (!bEditMode) ImGui::BeginDisabled();
+            if (ImGui::DragFloat("##Restitution", &restitution, 0.01f, 0.0f, 1.0f, "%.2f"))
+            {
+                Body->PhysMaterial->Restitution = restitution;
+            }
+            if (!bEditMode) ImGui::EndDisabled();
+        }
+
+        // Edit/Save 토글 버튼 (에셋이 선택된 경우만)
+        if (bHasPhysMaterial)
+        {
+            const char* ButtonLabel = bEditMode ? "Save" : "Edit";
+            if (ImGui::Button(ButtonLabel, ImVec2(-1, 0)))
+            {
+                if (bEditMode)
+                {
+                    // Save 버튼 클릭: 에셋 파일에 저장
+                    if (!Body->PhysMaterialPath.empty())
+                    {
+                        if (PhysicsAssetEditorBootstrap::SavePhysicalMaterial(Body->PhysMaterial, Body->PhysMaterialPath))
+                        {
+                            UE_LOG("[PhysicsAssetEditor] Physical Material 저장: %s", Body->PhysMaterialPath.c_str());
+                        }
+                    }
+                    bEditMode = false;
+                }
+                else
+                {
+                    // Edit 버튼 클릭: 편집 모드 활성화
+                    bEditMode = true;
+                }
+            }
+        }
+
+        if (!bHasPhysMaterial)
+        {
+            ImGui::TextDisabled("Select a Physical Material asset");
+
+            ImGui::Separator();
+
+            // 새 Physical Material 에셋 생성 UI
+            ImGui::Text("Create New Asset");
+
+            static char NewPhysMatNameBuffer[256] = "NewPhysicalMaterial";
+            static float NewFriction = 0.5f;
+            static float NewRestitution = 0.3f;
+
+            ImGui::Text("Name");
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##NewPhysMatName", NewPhysMatNameBuffer, sizeof(NewPhysMatNameBuffer));
+
+            ImGui::Text("Friction");
+            ImGui::SetNextItemWidth(-1);
+            ImGui::DragFloat("##NewFriction", &NewFriction, 0.01f, 0.0f, 1.0f, "%.2f");
+
+            ImGui::Text("Restitution");
+            ImGui::SetNextItemWidth(-1);
+            ImGui::DragFloat("##NewRestitution", &NewRestitution, 0.01f, 0.0f, 1.0f, "%.2f");
+
+            if (ImGui::Button("Create & Apply", ImVec2(-1, 0)))
+            {
+                // 새 PhysMaterial 생성
+                UPhysicalMaterial* NewMat = NewObject<UPhysicalMaterial>();
+                if (NewMat)
+                {
+                    NewMat->Friction = NewFriction;
+                    NewMat->Restitution = NewRestitution;
+
+                    // 에셋으로 저장
+                    FString SavePath = GDataDir + "/Physics/Materials/" + NewPhysMatNameBuffer + ".physmat";
+                    if (PhysicsAssetEditorBootstrap::SavePhysicalMaterial(NewMat, SavePath))
+                    {
+                        // Body에 적용
+                        Body->PhysMaterial = NewMat;
+                        Body->PhysMaterialPath = SavePath;
+                        if (PhysState) PhysState->bIsDirty = true;
+                        UE_LOG("[PhysicsAssetEditor] Physical Material 생성 및 적용: %s", SavePath.c_str());
+                    }
+                }
+            }
         }
 
         ImGui::Unindent();
@@ -4821,8 +4988,9 @@ void SPhysicsAssetEditorWindow::DoGenerateAllBodies()
 
         // 기본 물리 속성 (MassInKg는 부피 기반으로 계산)
         UpdateBodyMassFromVolume(BodySetup);
-        BodySetup->Friction = 0.5f;
-        BodySetup->Restitution = 0.3f;
+        // PhysMaterial은 None (nullptr) - 필요 시 에셋 선택
+        BodySetup->PhysMaterial = nullptr;
+        BodySetup->PhysMaterialPath = "";
         BodySetup->LinearDamping = 0.1f;
         BodySetup->AngularDamping = 0.1f;
 

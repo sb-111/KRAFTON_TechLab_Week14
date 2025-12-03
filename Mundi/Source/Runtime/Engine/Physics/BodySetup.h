@@ -2,6 +2,7 @@
 
 #include "BodySetupCore.h"
 #include "AggregateGeometry.h"
+#include "PhysicalMaterial.h"
 #include "UBodySetup.generated.h"
 
 // ===== Body Setup =====
@@ -28,13 +29,12 @@ public:
     UPROPERTY(EditAnywhere, Category="Physics")
     float AngularDamping = 0.05f;
 
-    // Friction (0.0 = ice, 1.0 = rubber)
-    UPROPERTY(EditAnywhere, Category="Physics Material")
-    float Friction = 0.5f;
+    // Physical Material (Friction, Restitution)
+    UPROPERTY(EditAnywhere, Category="Physical Material")
+    UPhysicalMaterial* PhysMaterial = nullptr;
 
-    // Restitution / Bounciness (0.0 = clay, 1.0 = bouncy ball)
-    UPROPERTY(EditAnywhere, Category="Physics Material")
-    float Restitution = 0.1f;
+    // Physical Material 에셋 경로 (드롭다운 선택 시 저장)
+    FString PhysMaterialPath;
 
     UBodySetup() = default;
     virtual ~UBodySetup() = default;

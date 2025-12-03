@@ -70,6 +70,7 @@
     <FxCompile Include="Shaders\Particle\ParticleRibbon.hlsl">
       <Filter>Shaders\Particle</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Debug\DebugPrimitive.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Generated\UParticleModuleSizeScaleBySpeed.generated.cpp">
@@ -1135,6 +1136,13 @@
     </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsScene.cpp" />
     <ClCompile Include="Generated\FConstraintInstance.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
+    <ClCompile Include="Generated\UPhysicalMaterial.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2388,6 +2396,13 @@
     <ClInclude Include="Source\Runtime\Engine\Physics\PrePhysics.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsScene.h" />
     <ClInclude Include="Generated\FConstraintInstance.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\PhysicalMaterial.h" />
+    <ClInclude Include="Generated\UPhysicalMaterial.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>

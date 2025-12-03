@@ -5,6 +5,7 @@ class UWorld;
 struct ID3D11Device;
 class UEditorAssetPreviewContext;
 class UPhysicsAsset;
+class UPhysicalMaterial;
 
 class PhysicsAssetEditorBootstrap
 {
@@ -30,4 +31,15 @@ public:
 	// 특정 FBX와 매칭되는 Physics Asset 파일들만 반환
 	// FbxPath: 매칭할 FBX 파일 경로
 	static void GetCompatiblePhysicsAssetPaths(const FString& FbxPath, TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames);
+
+	// ===== Physical Material 에셋 관리 =====
+
+	// Physical Material을 JSON 파일로 저장
+	static bool SavePhysicalMaterial(UPhysicalMaterial* Material, const FString& FilePath);
+
+	// JSON 파일에서 Physical Material 로드
+	static UPhysicalMaterial* LoadPhysicalMaterial(const FString& FilePath);
+
+	// Physical Material 에셋 파일 목록 스캔 (Data/Physics/Materials 폴더)
+	static void GetAllPhysicalMaterialPaths(TArray<FString>& OutPaths, TArray<FString>& OutDisplayNames);
 };
