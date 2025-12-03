@@ -20,6 +20,8 @@ public:
 
     PxMaterial* GetDefaultMaterial();
 
+    PxCooking* GetCooking() { return Cooking; }
+
     static void Destroy();
 
 	void Shutdown();

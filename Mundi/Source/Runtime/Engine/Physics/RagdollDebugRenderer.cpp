@@ -127,6 +127,13 @@ void FRagdollDebugRenderer::RenderAggGeom(
         RenderCapsule(AggGeom.SphylElems[i], WorldTransform, Color,
                       OutStartPoints, OutEndPoints, OutColors);
     }
+
+    // Convex Shape들
+    for (int32 i = 0; i < AggGeom.ConvexElems.Num(); ++i)
+    {
+        RenderConvex(AggGeom.ConvexElems[i], WorldTransform, Color,
+                     OutStartPoints, OutEndPoints, OutColors);
+    }
 }
 
 void FRagdollDebugRenderer::RenderSphere(
@@ -434,5 +441,52 @@ void FRagdollDebugRenderer::RenderPhysicsAssetPreview(
     if (StartPoints.Num() > 0)
     {
         Renderer->AddLines(StartPoints, EndPoints, Colors);
+    }
+}
+
+void FRagdollDebugRenderer::RenderConvex(
+    const FKConvexElem& Convex,
+    const PxTransform& WorldTransform,
+    const FVector4& Color,
+    TArray<FVector>& OutStartPoints,
+    TArray<FVector>& OutEndPoints,
+    TArray<FVector4>& OutColors)
+{
+    // Convex의 로컬 변환 (Translation, Rotation, Scale)
+    const FTransform& ConvexTransform = Convex.GetTransform();
+    PxTransform LocalTransform = PhysxConverter::ToPxTransform(ConvexTransform);
+
+    // 최종 월드 변환
+    PxTransform FinalTransform = WorldTransform * LocalTransform;
+
+    // 스케일 가져오기
+    const FVector& Scale = ConvexTransform.Scale3D;
+
+    // 삼각형 와이어프레임으로 Convex 렌더링
+    for (int32 i = 0; i + 2 < Convex.IndexData.Num(); i += 3)
+    {
+        int32 i0 = Convex.IndexData[i];
+        int32 i1 = Convex.IndexData[i + 1];
+        int32 i2 = Convex.IndexData[i + 2];
+
+        if (i0 < Convex.VertexData.Num() && i1 < Convex.VertexData.Num() && i2 < Convex.VertexData.Num())
+        {
+            // 스케일 적용 후 변환
+            FVector ScaledV0 = Convex.VertexData[i0] * Scale;
+            FVector ScaledV1 = Convex.VertexData[i1] * Scale;
+            FVector ScaledV2 = Convex.VertexData[i2] * Scale;
+
+            PxVec3 LocalV0 = PhysxConverter::ToPxVec3(ScaledV0);
+            PxVec3 LocalV1 = PhysxConverter::ToPxVec3(ScaledV1);
+            PxVec3 LocalV2 = PhysxConverter::ToPxVec3(ScaledV2);
+
+            FVector V0 = PhysxConverter::ToFVector(FinalTransform.transform(LocalV0));
+            FVector V1 = PhysxConverter::ToFVector(FinalTransform.transform(LocalV1));
+            FVector V2 = PhysxConverter::ToFVector(FinalTransform.transform(LocalV2));
+
+            OutStartPoints.Add(V0); OutEndPoints.Add(V1); OutColors.Add(Color);
+            OutStartPoints.Add(V1); OutEndPoints.Add(V2); OutColors.Add(Color);
+            OutStartPoints.Add(V2); OutEndPoints.Add(V0); OutColors.Add(Color);
+        }
     }
 }
