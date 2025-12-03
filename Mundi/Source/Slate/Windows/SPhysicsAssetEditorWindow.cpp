@@ -3060,22 +3060,32 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
         ImGui::Indent();
 
         // Position1 (Child 본 공간에서의 조인트 위치)
-        // 기즈모로부터 자동 계산됨 - 읽기 전용
         ImGui::Text("Position 1 (Child Frame)");
-        ImGui::BeginDisabled();
         float pos1[3] = { Constraint->Position1.X, Constraint->Position1.Y, Constraint->Position1.Z };
         ImGui::SetNextItemWidth(-1);
-        ImGui::InputFloat3("##Position1", pos1, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::EndDisabled();
+        if (ImGui::InputFloat3("##Position1", pos1, "%.3f"))
+        {
+            Constraint->Position1 = FVector(pos1[0], pos1[1], pos1[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
 
         // Rotation1 (Child 본 공간에서의 조인트 회전)
-        // 기즈모로부터 자동 계산됨 - 읽기 전용
         ImGui::Text("Rotation 1 (Euler)");
-        ImGui::BeginDisabled();
         float rot1[3] = { Constraint->Rotation1.X, Constraint->Rotation1.Y, Constraint->Rotation1.Z };
         ImGui::SetNextItemWidth(-1);
-        ImGui::InputFloat3("##Rotation1", rot1, "%.1f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::EndDisabled();
+        if (ImGui::InputFloat3("##Rotation1", rot1, "%.1f"))
+        {
+            Constraint->Rotation1 = FVector(rot1[0], rot1[1], rot1[2]);
+            if (PhysState)
+            {
+                PhysState->bIsDirty = true;
+                PhysState->bConstraintsDirty = true;
+            }
+        }
 
         ImGui::Separator();
 
