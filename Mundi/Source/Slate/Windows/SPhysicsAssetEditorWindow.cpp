@@ -3448,9 +3448,9 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
         FQuat JointRot1 = FQuat::MakeFromEulerZYX(Constraint.Rotation1);
         FQuat ChildFrameWorldRot = Bone1World.Rotation * JointRot1;
 
-        // 화살표 크기 설정
-        const float ArrowLength = bIsSelected ? 0.12f : 0.08f;
-        const float ArrowHeadSize = ArrowLength * 0.3f;
+        // 화살표 크기 설정 (얇고 길게)
+        const float ArrowLength = bIsSelected ? 0.08f : 0.05f;
+        const float ArrowHeadSize = ArrowLength * 0.15f;
 
         // 초록색 화살표: Child frame -Z축 (Swing 중심 방향)
         const FLinearColor SwingCenterArrowColor(0.2f, 1.0f, 0.2f, 1.0f);  // 진한 초록색
