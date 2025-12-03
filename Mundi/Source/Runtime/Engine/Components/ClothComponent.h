@@ -112,13 +112,13 @@ public:
 
     // ========== 메시 생성 파라미터 ==========
     UPROPERTY(EditAnywhere, Category="Cloth|Mesh Generation", ToolTip="천의 가로 방향 쿼드 개수 (정점 개수는 +1)\n높을수록 부드럽지만 성능 저하\n권장: 100~300")
-    int MeshGridSizeX = 20;
+    int MeshGridSizeX = 10;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Mesh Generation", ToolTip="천의 세로 방향 쿼드 개수 (정점 개수는 +1)\n높을수록 부드럽지만 성능 저하\n권장: 100~300")
-    int MeshGridSizeY = 20;
+    int MeshGridSizeY = 10;
 
     UPROPERTY(EditAnywhere, Category="Cloth|Mesh Generation", ToolTip="각 쿼드의 크기 (cm 단위)\n작을수록 정밀하지만 정점 수 동일\n권장: 0.1~1.0")
-    float MeshQuadSize = 1.f;
+    float MeshQuadSize = 2.f;
 
     // ========== 기본 물리 파라미터 ==========
     UPROPERTY(EditAnywhere, Category="Cloth|Basic Physics", ToolTip="중력 가속도 (cm/s²)\nZ-up 좌표계에서 Z가 음수면 아래로 떨어짐\n기본값: (0, 0, -0.98) = 지구 중력의 1/100")
@@ -135,7 +135,7 @@ public:
     float Stiffness = 0.5f;  // 0.6 → 0.5 (더 부드럽게)
 
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Stiffness", ToolTip="대각선 제약의 강성도 배율 (0~1)\n기본 Stiffness에 곱해짐\n낮을수록 더 유연한 대각선 변형\n권장: 0.8~0.95")
-    float DiagonalStiffnessMultiplier = 0.85f;  // 0.9 → 0.85 (더 유연하게)
+    float DiagonalStiffnessMultiplier = 0.05f;  // 0.9 → 0.85 (더 유연하게)
 
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Stiffness", ToolTip="2칸 떨어진 정점의 굽힘 제약 배율 (0~1)\n낮을수록 부드럽게 구부러짐\n권장: 0.1~0.3")
     float Bending2HopMultiplier = 0.15f;  // 0.2 → 0.15 (더 부드럽게 굽힘)
@@ -145,7 +145,7 @@ public:
 
     // ========== Phase Config 설정 ==========
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Phase Config", ToolTip="제약 조건 강성도 배율 (0~2)\n1.0보다 높으면 더 강하게, 낮으면 더 약하게\n권장: 0.8~1.2")
-    float PhaseStiffnessMultiplier = 0.9f;  // 1.0 → 0.9 (더 부드럽게)
+    float PhaseStiffnessMultiplier = 0.2f;  // 1.0 → 0.9 (더 부드럽게)
 
     UPROPERTY(EditAnywhere, Category="Cloth|Constraints|Phase Config", ToolTip="압축 제한 (0~1)\n1.0 = 압축 없음, 0.9 = 10%까지 압축 허용\n천은 보통 압축되지 않으므로 1.0 권장")
     float CompressionLimit = 1.0f;
