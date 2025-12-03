@@ -59,6 +59,7 @@ public:
 	void DrawDebugCapsule(const FMatrix& Transform, float Radius, float HalfHeight, const FLinearColor& Color, uint32 UUID = 0);
 	void DrawDebugCone(const FMatrix& Transform, float Swing1Angle, float Swing2Angle, float Height, const FLinearColor& Color, uint32 UUID = 0);
 	void DrawDebugArc(const FMatrix& Transform, float TwistAngle, float Radius, const FLinearColor& Color, uint32 UUID = 0);
+	void DrawDebugArrow(const FMatrix& Transform, float Length, float HeadSize, const FLinearColor& Color, uint32 UUID = 0);
 	void EndDebugPrimitiveBatch();
 
 	// Deferred buffer release system (GPU-safe resource management)
