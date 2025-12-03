@@ -621,7 +621,7 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 			FKSphereElem NewSphere;
 			NewSphere.Name = FName("Sphere");
 			NewSphere.Center = FVector::Zero();
-			NewSphere.Radius = 50.0f;
+			NewSphere.Radius = 1.0f;
 			BodySetup->AggGeom.SphereElems.Add(NewSphere);
 		}
 		if (ImGui::MenuItem("박스"))
@@ -629,9 +629,9 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 			FKBoxElem NewBox;
 			NewBox.Name = FName("Box");
 			NewBox.Center = FVector::Zero();
-			NewBox.X = 50.0f;
-			NewBox.Y = 50.0f;
-			NewBox.Z = 50.0f;
+			NewBox.X = 1.0f;
+			NewBox.Y = 1.0f;
+			NewBox.Z = 1.0f;
 			BodySetup->AggGeom.BoxElems.Add(NewBox);
 		}
 		if (ImGui::MenuItem("캡슐"))
@@ -639,8 +639,8 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 			FKSphylElem NewCapsule;
 			NewCapsule.Name = FName("Capsule");
 			NewCapsule.Center = FVector::Zero();
-			NewCapsule.Radius = 25.0f;
-			NewCapsule.Length = 100.0f;
+			NewCapsule.Radius = 0.5f;
+			NewCapsule.Length = 2.0f;
 			BodySetup->AggGeom.SphylElems.Add(NewCapsule);
 		}
 		ImGui::Separator();
@@ -1007,6 +1007,34 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 				ImGui::Text("Vertices: %d", (int32)Convex.VertexData.Num());
 				ImGui::Text("Indices: %d", (int32)Convex.IndexData.Num());
 
+				// Translation
+				ImGui::Text("Translation");
+				float translation[3] = { Convex.Transform.Translation.X, Convex.Transform.Translation.Y, Convex.Transform.Translation.Z };
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Translation", translation, 0.1f))
+				{
+					Convex.Transform.Translation = FVector(translation[0], translation[1], translation[2]);
+				}
+
+				// Rotation (Euler angles로 편집)
+				ImGui::Text("Rotation");
+				FVector eulerAngles = Convex.Transform.Rotation.ToEulerZYXDeg();
+				float rotation[3] = { eulerAngles.X, eulerAngles.Y, eulerAngles.Z };
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Rotation", rotation, 1.0f))
+				{
+					Convex.Transform.Rotation = FQuat::MakeFromEulerZYX(FVector(rotation[0], rotation[1], rotation[2]));
+				}
+
+				// Scale
+				ImGui::Text("Scale");
+				float scale[3] = { Convex.Transform.Scale3D.X, Convex.Transform.Scale3D.Y, Convex.Transform.Scale3D.Z };
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::DragFloat3("##Scale", scale, 0.01f, 0.01f, 100.0f))
+				{
+					Convex.Transform.Scale3D = FVector(scale[0], scale[1], scale[2]);
+				}
+
 				// Name
 				char nameBuffer[256];
 				strcpy_s(nameBuffer, Convex.Name.ToString().c_str());
@@ -1015,6 +1043,15 @@ void UTargetActorTransformWidget::RenderStaticMeshCollisionUI(UStaticMeshCompone
 				if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
 				{
 					Convex.Name = FName(nameBuffer);
+				}
+
+				// CollisionEnabled
+				int collisionMode = static_cast<int>(Convex.CollisionEnabled);
+				ImGui::Text("Collision Enabled");
+				ImGui::SetNextItemWidth(-1);
+				if (ImGui::Combo("##Collision", &collisionMode, collisionModes, 4))
+				{
+					Convex.CollisionEnabled = static_cast<ECollisionEnabled>(collisionMode);
 				}
 
 				// 삭제 버튼

@@ -296,6 +296,24 @@ void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 						FKConvexElem Convex;
 						Convex.Name = FName(ConvexJson["Name"].ToString());
 
+						// Transform 로드
+						if (ConvexJson.hasKey("Transform"))
+						{
+							JSON& TransformJson = ConvexJson["Transform"];
+							if (TransformJson.hasKey("Translation"))
+							{
+								Convex.Transform.Translation = FJsonSerializer::JsonToVector(TransformJson["Translation"]);
+							}
+							if (TransformJson.hasKey("Rotation"))
+							{
+								Convex.Transform.Rotation = FJsonSerializer::JsonToQuat(TransformJson["Rotation"]);
+							}
+							if (TransformJson.hasKey("Scale3D"))
+							{
+								Convex.Transform.Scale3D = FJsonSerializer::JsonToVector(TransformJson["Scale3D"]);
+							}
+						}
+
 						// Vertices
 						if (ConvexJson.hasKey("VertexData"))
 						{
@@ -312,6 +330,12 @@ void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 							{
 								Convex.IndexData.Add(IdxJson.ToInt());
 							}
+						}
+
+						// CollisionEnabled
+						if (ConvexJson.hasKey("CollisionEnabled"))
+						{
+							Convex.CollisionEnabled = static_cast<ECollisionEnabled>(ConvexJson["CollisionEnabled"].ToInt());
 						}
 
 						BodySetup->AggGeom.ConvexElems.Add(Convex);
@@ -382,6 +406,13 @@ void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 					JSON ConvexJson = JSON::Make(JSON::Class::Object);
 					ConvexJson["Name"] = Convex.Name.ToString();
 
+					// Transform 저장
+					JSON TransformJson = JSON::Make(JSON::Class::Object);
+					TransformJson["Translation"] = FJsonSerializer::VectorToJson(Convex.Transform.Translation);
+					TransformJson["Rotation"] = FJsonSerializer::QuatToJson(Convex.Transform.Rotation);
+					TransformJson["Scale3D"] = FJsonSerializer::VectorToJson(Convex.Transform.Scale3D);
+					ConvexJson["Transform"] = TransformJson;
+
 					// Vertices
 					JSON VertexArray = JSON::Make(JSON::Class::Array);
 					for (const FVector& V : Convex.VertexData)
@@ -397,6 +428,9 @@ void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 						IndexArray.append(Idx);
 					}
 					ConvexJson["IndexData"] = IndexArray;
+
+					// CollisionEnabled
+					ConvexJson["CollisionEnabled"] = static_cast<int32>(Convex.CollisionEnabled);
 
 					ConvexArray.append(ConvexJson);
 				}
