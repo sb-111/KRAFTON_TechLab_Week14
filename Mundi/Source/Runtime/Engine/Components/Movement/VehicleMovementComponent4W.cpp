@@ -34,8 +34,10 @@ physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
     {
         return nullptr;
     }
-    PxPhysics* Physics = FPhysicsSystem::GetInstance().GetPhysics();
 
+    PxVec3 Inertia = RigidDynamic->getMassSpaceInertiaTensor();
+    Inertia.y *= 3;
+    RigidDynamic->setMassSpaceInertiaTensor(Inertia);
     const PxU32 NumShapes = RigidDynamic->getNbShapes();
     TArray<PxShape*> Shapes(NumShapes);
     RigidDynamic->getShapes(Shapes.data(), NumShapes);
@@ -142,8 +144,6 @@ void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
     WheelData.mMaxBrakeTorque = MaxBrakeTorque;
 
     PxVehicleTireData TireData;
-    // 타이어가 지나갈 표면(눈, 비, 진흙.. ) 일단 기본값 0
-    TireData.mType = 0;
 
     PxVehicleSuspensionData SuspensionData;
     SuspensionData.mMaxCompression = MaxCompression;
@@ -165,6 +165,12 @@ void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
         if (Index == 0 || Index == 1)
         {
             WheelData.mMaxSteer = PxPi * 0.25f;
+            // 타이어가 지나갈 표면(눈, 비, 진흙.. ), 앞바퀴랑 뒷바퀴 마찰 다르게 주려고 앞바퀴는 0 할당.
+            TireData.mType = 0;
+        }
+        else
+        {
+            TireData.mType = 1;
         }
         WheelsSimData->setSuspTravelDirection(Index, PhysxConverter::ToPxVec3(FVector(0.0f, 0.0f, -1.0f)));
         SuspensionData.mSprungMass = SprungMasses[Index];

@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "PhysicsSystem.h"
 #include "PhysicsScene.h"
+#include "FKConvexElem.h"
 
 // ===== 기본 필터 셰이더 =====
 // PhysX Joint가 연결된 바디 간 충돌을 자동으로 비활성화함
@@ -141,6 +142,37 @@ std::unique_ptr<FPhysicsScene> FPhysicsSystem::CreateScene()
 	}
 
 	return std::make_unique<FPhysicsScene>(NewScene);
+}
+
+PxConvexMesh* FPhysicsSystem::CreateConvexMesh(FKConvexElem* ConvexElement)
+{
+	TArray<physx::PxVec3> Points;
+	Points.reserve(ConvexElement->VertexData.Num());
+	for (const FVector& Vertex : ConvexElement->VertexData)
+	{
+		Points.Add(PhysxConverter::ToPxVec3(Vertex));
+	}
+	physx::PxConvexMeshDesc ConvexDesc;
+	ConvexDesc.points.count = Points.Num();
+	ConvexDesc.points.data = Points.GetData();
+	ConvexDesc.points.stride = sizeof(physx::PxVec3);
+	ConvexDesc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX;
+
+	if (Cooking)
+	{
+		physx::PxDefaultMemoryOutputStream WriteBuffer;
+		physx::PxConvexMeshCookingResult::Enum Result;
+		bool bSuccess = Cooking->cookConvexMesh(ConvexDesc, WriteBuffer, &Result);
+
+		if (bSuccess)
+		{
+			// 쿠킹된 메시에서 버텍스/인덱스 추출
+			physx::PxDefaultMemoryInputData ReadBuffer(WriteBuffer.getData(), WriteBuffer.getSize());
+			physx::PxConvexMesh* ConvexMesh = Physics->createConvexMesh(ReadBuffer);
+			return ConvexMesh;
+		}
+	}
+	return nullptr;
 }
 
 void FPhysicsSystem::Destroy()

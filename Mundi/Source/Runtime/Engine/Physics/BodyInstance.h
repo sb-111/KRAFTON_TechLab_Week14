@@ -67,4 +67,5 @@ struct FBodyInstance
 private:
 	// UBodySetup의 AggGeom에서 Shape들 생성 (래그돌용)
 	void CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* Body, UPrimitiveComponent* OwnerComponent);
+	static void CreateShapeFromConvexElement(struct FKConvexElem* Elem, PxRigidActor* Actor);
 };

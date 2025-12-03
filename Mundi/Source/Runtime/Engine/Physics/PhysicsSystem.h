@@ -18,6 +18,8 @@ public:
 
     std::unique_ptr<FPhysicsScene> CreateScene();
 
+    PxConvexMesh* CreateConvexMesh(struct FKConvexElem* ConvexElement);
+
     PxMaterial* GetDefaultMaterial();
 
     PxCooking* GetCooking() { return Cooking; }

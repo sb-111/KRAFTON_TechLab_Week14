@@ -13,7 +13,7 @@
         "SphereElems" : [],
         "SphylElems" : []
       },
-      "AngularDamping" : 0.000000,
+      "AngularDamping" : 3.000000,
       "BoneName" : "Chassis",
       "Friction" : 0.500000,
       "LinearDamping" : 0.010000,

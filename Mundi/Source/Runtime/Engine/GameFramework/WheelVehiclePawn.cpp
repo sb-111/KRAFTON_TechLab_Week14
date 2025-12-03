@@ -17,9 +17,19 @@ void AWheeledVehiclePawn::ThrottleSteerInput(float Throttle, float Steer)
 {
 	if (Throttle > 0.1f)
 	{
-		VehicleMovement->SetThrottle(1.0f);
-		VehicleMovement->SetBrake(0.0f);
+		PxReal ForwardSpeed = VehicleMovement->GetForwardSpeed();
+		if (ForwardSpeed < 0.0f)
+		{
+			VehicleMovement->SetThrottle(0.0f);
+			VehicleMovement->SetBrake(1.0f);
+		}
+		else
+		{
+			VehicleMovement->SetThrottle(1.0f);
+			VehicleMovement->SetBrake(0.0f);
+		}
 		VehicleMovement->SetGear(PxVehicleGearsData::eFIRST);
+
 	}
 	else if (Throttle < -0.1f)
 	{
@@ -32,14 +42,14 @@ void AWheeledVehiclePawn::ThrottleSteerInput(float Throttle, float Steer)
 		else
 		{
 			VehicleMovement->SetBrake(0.0f);
-			VehicleMovement->SetThrottle(0.5f);
+			VehicleMovement->SetThrottle(0.8f);
 			VehicleMovement->SetGear(PxVehicleGearsData::eREVERSE);
 		}
 	}
 	else
 	{
 		VehicleMovement->SetThrottle(0.0f);
-		VehicleMovement->SetBrake(0.0f);
+		VehicleMovement->SetBrake(0.7f);
 	}
 
 	if (Steer > 0.1f)

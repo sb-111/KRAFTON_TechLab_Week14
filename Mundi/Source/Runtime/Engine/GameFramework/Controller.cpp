@@ -168,3 +168,4 @@ void AController::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 
 	// TODO: 필요한 멤버 변수 직렬화 추가
 }
+ 

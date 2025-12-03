@@ -8,6 +8,7 @@
 #include "BodySetup.h"
 #include "AggregateGeometry.h"
 #include "PhysxConverter.h"
+#include "FKConvexElem.h"
 
 using namespace physx;
 
@@ -202,6 +203,14 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 		if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PrimitiveComponent))
 		{
 			// TODO: 에셋화한 지오매트리 필요, 일단 구현 패스
+			if (StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems.Num() > 0)
+			{
+				FKConvexElem* Convex = &StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems[0];
+				CreateShapeFromConvexElement(Convex, PhysicsActor);
+			}
+			
+			
+			
 		}
 		else
 		{
@@ -476,6 +485,42 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 	}
 	// Material release (Shape들이 참조하고 있으므로 refcount만 감소)
 	Material->release();
+}
+
+void FBodyInstance::CreateShapeFromConvexElement(FKConvexElem* ConvexElement, PxRigidActor* Actor)
+{
+	if (ConvexElement->VertexData.Num() < 3)
+	{
+		return;
+	}
+	PxConvexMesh* ConvexMesh = FPhysicsSystem::GetInstance().CreateConvexMesh(ConvexElement);
+
+	if (!ConvexMesh)
+	{
+		return;
+	}
+	PxVec3 Scale = PhysxConverter::ToPxVec3(ConvexElement->Transform.Scale3D);
+	Scale.x = std::abs(Scale.x);	Scale.y = std::abs(Scale.y); Scale.z = std::abs(Scale.z);
+	PxMeshScale MeshScale(Scale, PxQuat(PxIdentity));
+
+	PxConvexMeshGeometry ConvexGeometry(ConvexMesh, MeshScale);
+
+	PxMaterial* Material = FPhysicsSystem::GetInstance().GetDefaultMaterial();
+
+	PxShape* NewShape = PxRigidActorExt::createExclusiveShape(*Actor, ConvexGeometry, *Material);
+
+	if (NewShape)
+	{
+		FTransform TransformUnitScale = ConvexElement->Transform;
+		TransformUnitScale.Scale3D = FVector(1.0f);
+
+		bool bSimulate = (ConvexElement->CollisionEnabled == ECollisionEnabled::PhysicsAndQuery || ConvexElement->CollisionEnabled == ECollisionEnabled::PhysicsOnly);
+		bool bQuery = (ConvexElement->CollisionEnabled == ECollisionEnabled::PhysicsAndQuery || ConvexElement->CollisionEnabled == ECollisionEnabled::QueryOnly);
+
+		NewShape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, bSimulate);
+		NewShape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, bQuery);
+	}
+	ConvexMesh->release();
 }
 
 FTransform FBodyInstance::GetWorldTransform() const

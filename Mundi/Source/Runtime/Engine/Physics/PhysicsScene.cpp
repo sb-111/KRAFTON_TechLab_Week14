@@ -205,12 +205,14 @@ void FPhysicsScene::InitVehicleSDK()
 	const PxMaterial* Materials[] = { FPhysicsSystem::GetInstance().GetDefaultMaterial() };
 
 	// 타이어 1개, 표면 재질 1개만 매핑
-	FrictionPairs = PxVehicleDrivableSurfaceToTireFrictionPairs::allocate(1, 1);
+	FrictionPairs = PxVehicleDrivableSurfaceToTireFrictionPairs::allocate(2, 1);
 	// 표면과 표면 타입 매핑
-	FrictionPairs->setup(1, 1, Materials, SurfaceType);
+	FrictionPairs->setup(2, 1, Materials, SurfaceType);
 
-	// 0번 표면 타입에서 0번 타이어 마찰력은 1.0f
+	// 0번 표면 타입에서(앞바퀴) 0번 타이어 마찰력은 1.0f
 	FrictionPairs->setTypePairFriction(0, 0, 1.0f);
+	// 뒷바퀴 2배
+	FrictionPairs->setTypePairFriction(0, 1, 2.0f);
 
 	VehicleSDKInitialized = true;
 }
