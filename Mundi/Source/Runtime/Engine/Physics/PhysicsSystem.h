@@ -3,6 +3,7 @@
 using namespace physx;
 class FPhysicsScene;
 
+#define VEHICLE_FILTER 0x00000001
 
 class FPhysicsSystem
 {

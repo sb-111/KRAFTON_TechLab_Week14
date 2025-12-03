@@ -14,10 +14,6 @@ UPrimitiveComponent::UPrimitiveComponent() : bGenerateOverlapEvents(true)
 
 void UPrimitiveComponent::ApplyPhysicsResult()
 {
-    // 물리 업데이트 시: SetWorldTransform에서 bJustTeleported 설정하지만 if문 벗어나자마자 false로 바꿈.
-    // 프로퍼티 변경 시: ApplyPhysicsResult 호출 전에 bJustTeleported가 설정됨.
-    // 이후 ApplyPhysicsResult는 무시되고 ProcessCommandQueue가 실행되면서 Physx Actor 위치 업데이트함
-    // 결론적으로 시뮬레이션 지장 없이 프로퍼티창에서 transform 변경 가능.
     if (BodyInstance.RigidActor)
     {
         physx::PxTransform PhysicsTransform = BodyInstance.RigidActor->getGlobalPose();

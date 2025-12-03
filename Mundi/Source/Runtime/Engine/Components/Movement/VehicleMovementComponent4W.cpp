@@ -3,6 +3,12 @@
 #include "PrimitiveComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "PhysicsSystem.h"
+#include "PhysicsScene.h"
+
+UVehicleMovementComponent4W::UVehicleMovementComponent4W()
+{
+    bCanEverTick = true;
+}
 
 physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
 {
@@ -13,6 +19,10 @@ physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
         if (SkeletalMeshComponent->GetBodies().Num() > 0)
         {
             RigidDynamic = SkeletalMeshComponent->GetBodies()[0]->GetPxRigidDynamic();
+            WheelBoneIndex.Add(*SkeletalMeshComponent->GetSkeletalMesh()->GetSkeleton()->BoneNameToIndex.Find("FL"));
+            WheelBoneIndex.Add(*SkeletalMeshComponent->GetSkeletalMesh()->GetSkeleton()->BoneNameToIndex.Find("FR"));
+            WheelBoneIndex.Add(*SkeletalMeshComponent->GetSkeletalMesh()->GetSkeleton()->BoneNameToIndex.Find("RL"));
+            WheelBoneIndex.Add(*SkeletalMeshComponent->GetSkeletalMesh()->GetSkeleton()->BoneNameToIndex.Find("RR"));
         }
     }
     else if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(UpdatedComponent))
@@ -54,6 +64,71 @@ physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
     return Car;
 }
 
+void UVehicleMovementComponent4W::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
+    if (!VehicleInstance)
+    {
+        return;
+    }
+
+    PxVehicleDrive4W* Car = (PxVehicleDrive4W*)VehicleInstance;
+    USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(UpdatedComponent);
+    
+
+    FVector* WheelOffsets[4] = { &WheelOffset0, &WheelOffset1 , &WheelOffset2 , &WheelOffset3 };
+    if (WheelBoneIndex.Num() == 4 && Mesh)
+    {
+        PxRaycastQueryResult* Results = GWorld->GetPhysicsScene()->GetRaycastQueryResult();
+        for (int Index = 0; Index < 4; Index++)
+        {
+            int32 BoneIndex = WheelBoneIndex[Index];
+
+            float WheelRadius = Car->mWheelsSimData.getWheelData(Index).mRadius;
+            FVector WheelOffset = *WheelOffsets[Index];
+
+            PxRaycastQueryResult& QueryResult = Results[Index];
+            FVector NewPosition = WheelOffset;
+
+            float MaxDroop = Car->mWheelsSimData.getSuspensionData(Index).mMaxDroop;
+            if (QueryResult.hasBlock)
+            {
+                PxRaycastHit& Hit = QueryResult.block;
+                FVector HitPosition = PhysxConverter::ToFVector(Hit.position);
+
+                FVector LocalHitPosition = Mesh->GetWorldTransform().GetRelativeTransform(FTransform(HitPosition, FQuat(), FVector(1,1,1))).Translation;
+
+                NewPosition.Z = LocalHitPosition.Z + WheelRadius;
+                float MaxCompression = Car->mWheelsSimData.getSuspensionData(Index).mMaxCompression;
+                NewPosition.Z = FMath::Clamp(NewPosition.Z, WheelOffset.Z - MaxDroop, WheelOffset.Z + MaxCompression);
+            }
+            else
+            {
+                NewPosition.Z = NewPosition.Z - MaxDroop;
+            }
+            float AngleDeg = RadiansToDegrees(Car->mWheelsDynData.getWheelRotationAngle(Index));
+
+            FVector NewRotation{};
+
+            // 모델의 바퀴 뼈 회전이 왼쪽 오른쪽 반전되어있어서 분기해줬음. 뼈 제대로 잡힌 모델이면 이렇게 안 해도 됨.
+            int32 Odd = Index % 2 ? -1 : 1;
+            NewRotation.Z = RadiansToDegrees(PxPi * 0.5f * Odd);
+            NewRotation.X = AngleDeg * Odd;
+            if (Index == 1 || Index == 0)
+            {
+                float SteerInput = Car->mDriveDynData.getAnalogInput(PxVehicleDrive4WControl::eANALOG_INPUT_STEER_RIGHT);
+                NewRotation.Z += RadiansToDegrees(SteerInput * (PxPi / 4.0f));
+            }
+
+            FTransform LocalTransform = Mesh->GetBoneLocalTransform(BoneIndex);
+            LocalTransform.Rotation = FQuat::MakeFromEulerZYX(NewRotation);
+            NewPosition.Z += VisualHegihtOffset;
+            LocalTransform.Translation = NewPosition;
+            Mesh->SetBoneLocalTransform(BoneIndex, LocalTransform);
+        }
+    }
+}
+
 void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
 {
     WheelsSimData = PxVehicleWheelsSimData::allocate(4);
@@ -81,7 +156,7 @@ void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
         PhysxConverter::ToPxVec3(WheelOffset2), PhysxConverter::ToPxVec3(WheelOffset3) };
 
     PxF32 SprungMasses[4];
-    PxVehicleComputeSprungMasses(4, WheelOffsets, PxVec3(0, 0, 0), RigidDynamic->getMass(), 1, SprungMasses);
+    PxVehicleComputeSprungMasses(4, WheelOffsets, PxVec3(-0.2f, 0, 0.277f), RigidDynamic->getMass(), 1, SprungMasses);
 
     PxFilterData RayFilter;
     RayFilter.word3 = VehicleID;

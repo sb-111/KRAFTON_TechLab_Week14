@@ -324,11 +324,21 @@ void USkeletalMeshComponent::SetRagdollState(bool InState)
 
 void USkeletalMeshComponent::ApplyPhysicsResult()
 {
-    Super::ApplyPhysicsResult();
+    Super::ApplyPhysicsResult(); 
     if (bIsRagdoll && bSimulatePhysics)
     {
         SyncBodiesToBones();
     }
+
+    physx::PxTransform PhysicsTransform = Bodies[0]->RigidActor->getGlobalPose();
+
+    FTransform Transform = PhysxConverter::ToFTransform(PhysicsTransform);
+
+    Transform.Scale3D = GetWorldScale();
+
+    bIsSyncingPhysics = true;
+    SetWorldTransform(Transform);
+    bIsSyncingPhysics = false;
 }
 
 float USkeletalMeshComponent::GetAnimationPosition()

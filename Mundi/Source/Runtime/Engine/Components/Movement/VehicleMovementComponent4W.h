@@ -13,6 +13,9 @@ class UVehicleMovementComponent4W : public UVehicleMovementComponent
 public:
 
 	UPROPERTY(EditAnywhere, Category = "Wheel")
+	float VisualHegihtOffset = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Wheel")
 	FVector WheelOffset0{};
 
 	UPROPERTY(EditAnywhere, Category = "Wheel")
@@ -69,9 +72,11 @@ public:
 	PxVehicleDriveSimData4W DriveSimData;
 	PxVehicleWheelsSimData* WheelsSimData = nullptr;
 
-	UVehicleMovementComponent4W() = default;
+	UVehicleMovementComponent4W();
 
 	physx::PxVehicleWheels* CreatePhysicsVehicle() override;
+
+	void TickComponent(float DeltaTime) override;
 
 	void InitWheelSimData(PxRigidDynamic* RigidDynamic);
 

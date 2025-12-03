@@ -2,13 +2,13 @@
   "Bodies" : [{
       "AggGeom" : {
         "BoxElems" : [{
-            "Center" : [-0.100872, -0.000000, 0.277399],
+            "Center" : [0.000000, 0.000000, 0.000000],
             "CollisionEnabled" : 3,
             "Name" : "Chassis_box",
             "Rotation" : [0.000000, -0.000000, 0.000000],
-            "X" : 2.971605,
-            "Y" : 1.284813,
-            "Z" : 0.515662
+            "X" : 2.893620,
+            "Y" : 1.259678,
+            "Z" : 0.450890
           }],
         "SphereElems" : [],
         "SphylElems" : []
@@ -21,5 +21,5 @@
       "Restitution" : 0.100000
     }],
   "Constraints" : [],
-  "SourceFbxPath" : "Data/NewCar.fbx"
+  "SourceFbxPath" : "Data/NewCarT.fbx"
 }

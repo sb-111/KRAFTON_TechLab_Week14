@@ -59,7 +59,7 @@ void UVehicleMovementComponent::SetGear(int32 TargetGear)
 
 void UVehicleMovementComponent::PrePhysicsUpdate(float DeltaTime)
 {
-	if (VehicleInstance)
+	if (VehicleInstance && !bFirstFrame)
 	{
         FPhysicsScene* Scene = GWorld->GetPhysicsScene();
 
@@ -79,5 +79,8 @@ void UVehicleMovementComponent::PrePhysicsUpdate(float DeltaTime)
             *Scene->GetFrictionPairs(),
             1, &VehicleInstance,
             nullptr);
+
+        bFirstFrame = false;
 	}
+    bFirstFrame = false;
 }
