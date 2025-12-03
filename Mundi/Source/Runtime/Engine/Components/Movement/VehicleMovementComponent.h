@@ -4,6 +4,8 @@
 #include "UVehicleMovementComponent.generated.h"
 #include "pch.h"
 
+#define VEHICLE_FILTER 0x00000001
+
 UCLASS(Abstract)
 class UVehicleMovementComponent : public UMovementComponent, public IPrePhysics
 {
@@ -11,6 +13,8 @@ class UVehicleMovementComponent : public UMovementComponent, public IPrePhysics
 
 protected:
 	physx::PxVehicleWheels* VehicleInstance = nullptr;
+
+	static uint32 VehicleID;
 
 public:
 	UVehicleMovementComponent() = default;

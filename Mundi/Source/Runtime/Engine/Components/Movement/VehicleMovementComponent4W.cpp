@@ -1,12 +1,21 @@
 ﻿#include "pch.h"
 #include "VehicleMovementComponent4W.h"
 #include "PrimitiveComponent.h"
+#include "SkeletalMeshComponent.h"
 #include "PhysicsSystem.h"
 
 physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
 {
     PxRigidDynamic* RigidDynamic = nullptr;
-    if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(UpdatedComponent))
+
+    if (USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(UpdatedComponent))
+    {
+        if (SkeletalMeshComponent->GetBodies().Num() > 0)
+        {
+            RigidDynamic = SkeletalMeshComponent->GetBodies()[0]->GetPxRigidDynamic();
+        }
+    }
+    else if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(UpdatedComponent))
     {
         RigidDynamic = PrimitiveComponent->BodyInstance.GetPxRigidDynamic();
         //RigidDynamic->setCMassLocalPose()
@@ -16,8 +25,21 @@ physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
         return nullptr;
     }
     PxPhysics* Physics = FPhysicsSystem::GetInstance().GetPhysics();
+
+    const PxU32 NumShapes = RigidDynamic->getNbShapes();
+    TArray<PxShape*> Shapes(NumShapes);
+    RigidDynamic->getShapes(Shapes.data(), NumShapes);
+
+    PxFilterData FilterData;
+    FilterData.word2 = VEHICLE_FILTER;
+    FilterData.word3 = VehicleID;
+
+    for (PxShape* Shape : Shapes)
+    {
+        Shape->setQueryFilterData(FilterData);
+    }
     
-    InitWheelSimData();
+    InitWheelSimData(RigidDynamic);
 
     InitDriveSimData();
     
@@ -28,10 +50,11 @@ physx::PxVehicleWheels* UVehicleMovementComponent4W::CreatePhysicsVehicle()
 
     WheelsSimData->free();
     VehicleInstance = Car;
+    VehicleID++;
     return Car;
 }
 
-void UVehicleMovementComponent4W::InitWheelSimData()
+void UVehicleMovementComponent4W::InitWheelSimData(PxRigidDynamic* RigidDynamic)
 {
     WheelsSimData = PxVehicleWheelsSimData::allocate(4);
 
@@ -58,15 +81,19 @@ void UVehicleMovementComponent4W::InitWheelSimData()
         PhysxConverter::ToPxVec3(WheelOffset2), PhysxConverter::ToPxVec3(WheelOffset3) };
 
     PxF32 SprungMasses[4];
-    PxVehicleComputeSprungMasses(4, WheelOffsets, PxVec3(0, 0, 0), 1500.0f, 1, SprungMasses);
+    PxVehicleComputeSprungMasses(4, WheelOffsets, PxVec3(0, 0, 0), RigidDynamic->getMass(), 1, SprungMasses);
+
+    PxFilterData RayFilter;
+    RayFilter.word3 = VehicleID;
 
     for (int Index = 0; Index < 4; Index++)
     {
+        WheelsSimData->setSuspTravelDirection(Index, PhysxConverter::ToPxVec3(FVector(0.0f, 0.0f, -1.0f)));
         SuspensionData.mSprungMass = SprungMasses[Index];
         WheelsSimData->setWheelData(Index, WheelData);
         WheelsSimData->setTireData(Index, TireData);
         WheelsSimData->setSuspensionData(Index, SuspensionData);
-        WheelsSimData->setSuspTravelDirection(Index, PhysxConverter::ToPxVec3(FVector(0.0f, 0.0f, -1.0f)));
+        WheelsSimData->setSceneQueryFilterData(Index, RayFilter);
 
         WheelsSimData->setSuspForceAppPointOffset(Index, WheelOffsets[Index]);
         WheelsSimData->setWheelCentreOffset(Index, WheelOffsets[Index]);

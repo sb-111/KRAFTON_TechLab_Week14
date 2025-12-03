@@ -9,7 +9,7 @@ class AWheeledVehiclePawn : public APawn
 protected:
 
 	class UVehicleMovementComponent* VehicleMovement = nullptr;
-	class UBoxComponent* MeshComponent = nullptr;
+	class USkeletalMeshComponent* MeshComponent = nullptr;
 
 public:
 

@@ -73,7 +73,7 @@ public:
 
 	physx::PxVehicleWheels* CreatePhysicsVehicle() override;
 
-	void InitWheelSimData();
+	void InitWheelSimData(PxRigidDynamic* RigidDynamic);
 
 	void InitDriveSimData();
 

@@ -1,0 +1,25 @@
+{
+  "Bodies" : [{
+      "AggGeom" : {
+        "BoxElems" : [{
+            "Center" : [-0.100872, -0.000000, 0.277399],
+            "CollisionEnabled" : 3,
+            "Name" : "Chassis_box",
+            "Rotation" : [0.000000, -0.000000, 0.000000],
+            "X" : 2.971605,
+            "Y" : 1.284813,
+            "Z" : 0.515662
+          }],
+        "SphereElems" : [],
+        "SphylElems" : []
+      },
+      "AngularDamping" : 0.000000,
+      "BoneName" : "Chassis",
+      "Friction" : 0.500000,
+      "LinearDamping" : 0.010000,
+      "MassInKg" : 1500.000000,
+      "Restitution" : 0.100000
+    }],
+  "Constraints" : [],
+  "SourceFbxPath" : "Data/NewCar.fbx"
+}

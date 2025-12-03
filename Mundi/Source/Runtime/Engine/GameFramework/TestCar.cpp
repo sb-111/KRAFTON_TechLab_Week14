@@ -1,13 +1,12 @@
 ﻿#include "pch.h"
 #include "TestCar.h"
 #include "VehicleMovementComponent4W.h"
-#include "BoxComponent.h"
-#include "StaticMeshComponent.h"
+#include "SkeletalMeshComponent.h"
 
 ATestCar::ATestCar()
 {
 	VehicleMovement = CreateDefaultSubobject<UVehicleMovementComponent4W>("VehicleMovement");
-	
+	bTickInEditor = false;
 }
 
 void ATestCar::BeginPlay()
@@ -32,7 +31,7 @@ void ATestCar::DuplicateSubObjects()
 		{
 			VehicleMovement = Movement;
 		}
-		else if (UBoxComponent* SkeletalMesh = Cast<UBoxComponent>(Component))
+		else if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(Component))
 		{
 			MeshComponent = SkeletalMesh;
 		}

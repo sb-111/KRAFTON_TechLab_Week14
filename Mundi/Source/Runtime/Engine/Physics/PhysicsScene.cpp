@@ -159,18 +159,22 @@ void FPhysicsScene::PendingDestroyInDeathNote()
 	ActorDeathNote.clear();
 }
 
-
+// FilterData0: Ray
+// FilterData1: Shape
 static PxQueryHitType::Enum WheelRaycasyPreFilter(
-	PxFilterData filterData0, PxFilterData filterData1,
+	PxFilterData FilterData0, PxFilterData FilterData1,
 	const void* constantBlock, PxU32 constantBlockSize,
 	PxHitFlags& queryFlags
 )
 {
 	
 	// 캐스터와 Shape이 ID가 같으면 무시(word3: 안 쓰는 비트에 차량 ID 넣어줌)
-	if (filterData0.word3 == filterData1.word3 && filterData1.word3 != 0)
+	if (FilterData1.word2 == 1)
 	{
-		return PxQueryHitType::eNONE; 
+		if (FilterData0.word3 == FilterData1.word3)
+		{
+			return PxQueryHitType::eNONE;
+		}
 	}
 
 	

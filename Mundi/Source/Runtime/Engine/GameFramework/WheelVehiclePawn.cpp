@@ -1,16 +1,15 @@
 ﻿#include "pch.h"
 #include "WheelVehiclePawn.h"
 #include "SkeletalMeshComponent.h"
-#include "BoxComponent.h"
 #include "VehicleMovementComponent.h"
 
 
 AWheeledVehiclePawn::AWheeledVehiclePawn()
 {
-	MeshComponent = CreateDefaultSubobject<UBoxComponent>("VehicleMesh");
+	MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("VehicleMesh");
 	RootComponent = MeshComponent;
 
-	MeshComponent->bSimulatePhysics = true;
+	MeshComponent->SetSimulatePhysics(true);
 }
 
 void AWheeledVehiclePawn::SetThrottle(float Value)

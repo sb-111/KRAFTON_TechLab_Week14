@@ -2,6 +2,8 @@
 #include "VehicleMovementComponent.h"
 #include "PhysicsScene.h"
 
+uint32 UVehicleMovementComponent::VehicleID = 0;
+
 void UVehicleMovementComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -21,6 +23,7 @@ void UVehicleMovementComponent::SetThrottle(float Value)
 
     PxVehicleDrive4W* Car = (PxVehicleDrive4W*)VehicleInstance;
 
+    // 그냥 내부 변수 바꾸는거고 physxActor 업데이트 하는게 아니라서 틱 도중에 해도 됨.
     Car->mDriveDynData.setAnalogInput(PxVehicleDrive4WControl::eANALOG_INPUT_ACCEL, Value);
 }
 
@@ -61,6 +64,7 @@ void UVehicleMovementComponent::PrePhysicsUpdate(float DeltaTime)
         FPhysicsScene* Scene = GWorld->GetPhysicsScene();
 
         // 바퀴에서 땅으로 레이캐스팅, 결과(서스펜션, 땅과 바퀴 FrictionPair 등등) Instance에 저장
+        // 업데이트 전에 해야 업데이트 반영이 되고 틱 도중에 하면 락걸려서 비효율적임
         PxVehicleSuspensionRaycasts(
             Scene->GetBatchQuery(),
             1, &VehicleInstance,

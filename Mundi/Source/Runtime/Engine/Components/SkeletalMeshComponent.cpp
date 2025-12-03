@@ -535,7 +535,7 @@ void USkeletalMeshComponent::InitArticulated(UPhysicsAsset* PhysAsset)
         {
             UBodySetup* Setup = PhysAsset->Bodies[i];
             if (!Setup) continue;
-
+             
             // BodySetup의 BoneName으로 스켈레톤에서 본 인덱스 찾기
             const auto* BoneIndexPtr = Skeleton->BoneNameToIndex.Find(Setup->BoneName.ToString());
             if (BoneIndexPtr)
