@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <FxCompile Include="Shaders\Materials\Fireball.hlsl">
@@ -1135,6 +1135,12 @@
     </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\Physics\PhysicsScene.cpp" />
     <ClCompile Include="Generated\FConstraintInstance.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\UClothComponent.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\ACurtainActor.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2388,6 +2394,12 @@
     <ClInclude Include="Source\Runtime\Engine\Physics\PrePhysics.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\PhysicsScene.h" />
     <ClInclude Include="Generated\FConstraintInstance.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UClothComponent.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\ACurtainActor.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>
