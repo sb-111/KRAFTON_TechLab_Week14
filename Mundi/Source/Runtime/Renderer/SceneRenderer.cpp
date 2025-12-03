@@ -68,6 +68,9 @@
 #include "BodySetup.h"
 #include "CollisionShapes.h"
 #include "PhysxConverter.h"
+#include "ClothComponent.h"
+#include "DynamicMesh.h"
+#include "VertexData.h"
 
 // Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
 
@@ -237,6 +240,7 @@ void FSceneRenderer::RenderLitPath()
 	RenderRagdollDebugPass();
 
 	RenderDecalPass();
+	RenderClothPass();
 	RenderParticleSystemPass();
 }
 
@@ -819,6 +823,10 @@ void FSceneRenderer::GatherVisibleProxies()
 					{
 						Proxies.Decals.Add(DecalComponent);
 					}
+					else if (UClothComponent* ClothComponent = Cast<UClothComponent>(PrimitiveComponent))
+					{
+						Proxies.ClothComponents.Add(ClothComponent);
+					}
 					else if (UParticleSystemComponent* ParticleSystemComponent = Cast<UParticleSystemComponent>(PrimitiveComponent))
 					{
 						Proxies.ParticleSystems.Add(ParticleSystemComponent);
@@ -1268,6 +1276,40 @@ void FSceneRenderer::RenderParticleSystemPass()
 	RHIDevice->RSSetState(ERasterizerMode::Solid);
 	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
 	RHIDevice->OMSetBlendState(false);
+}
+
+void FSceneRenderer::RenderClothPass()
+{
+	if (Proxies.ClothComponents.empty())
+		return;
+	
+	// ===== 렌더 타겟 명시적 설정 =====
+	// 다른 Pass들과 동일하게 SceneColor 타겟으로 렌더링
+	RHIDevice->OMSetRenderTargets(ERTVMode::SceneColorTargetWithId);
+
+	// 렌더 상태 설정 (양면 렌더링)
+	RHIDevice->RSSetState(ERasterizerMode::Solid_NoCull);  // 컬링 끄기
+	RHIDevice->OMSetDepthStencilState(EComparisonFunc::LessEqual);
+	RHIDevice->OMSetBlendState(false);
+
+	// --- 1. 수집 (Collect) ---
+	MeshBatchElements.Empty();
+	for (UClothComponent* ClothComp : Proxies.ClothComponents)
+	{
+		if (ClothComp && ClothComp->IsVisible())
+		{
+			ClothComp->CollectMeshBatches(MeshBatchElements, View);
+		}
+	}
+
+	// --- 2. 정렬 (Sort) ---
+	MeshBatchElements.Sort();
+
+	// --- 3. 그리기 (Draw) ---
+	DrawMeshBatches(MeshBatchElements, true);
+
+	// 상태 복구
+	RHIDevice->RSSetState(ERasterizerMode::Solid);
 }
 
 void FSceneRenderer::RenderPostProcessingPasses()

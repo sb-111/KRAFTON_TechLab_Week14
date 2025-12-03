@@ -103,6 +103,18 @@ bool UDynamicMesh::UpdateData(FMeshData* InData, ID3D11DeviceContext* InContext)
             vertices[i].Color = InData->Color[i];
         }
     }
+    else if (VertexType == EVertexLayoutType::PositionColorTexturNormal)
+    {
+        FVertexDynamic* vertices = static_cast<FVertexDynamic*>(mappedVertex.pData);
+        for (uint32 i = 0; i < vertexCount; ++i)
+        {
+            vertices[i].Position = InData->Vertices[i];
+            vertices[i].Normal = InData->Normal[i];
+            vertices[i].UV = InData->UV[i];
+            vertices[i].Tangent = FVector4(1.0f, 0.0f, 0.0f, 1.0f); // Default tangent
+            vertices[i].Color = InData->Color[i];
+        }
+    }
     // Add other vertex types as needed
 
     InContext->Unmap(VertexBuffer, 0);
@@ -151,6 +163,8 @@ size_t UDynamicMesh::GetVertexSize(EVertexLayoutType InVertexType)
     {
         case EVertexLayoutType::PositionColor:
             return sizeof(FVertexSimple);
+        case EVertexLayoutType::PositionColorTexturNormal:
+            return sizeof(FVertexDynamic);
         case EVertexLayoutType::PositionBillBoard:
             return sizeof(FBillboardVertexInfo);
         // Add other vertex types as needed

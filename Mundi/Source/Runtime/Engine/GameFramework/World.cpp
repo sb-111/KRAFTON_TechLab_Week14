@@ -35,6 +35,7 @@
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
 #include "PhysicsScene.h"
+#include "ClothSystem.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMesh.h"
 #include "PhysicsAsset.h"
@@ -116,7 +117,6 @@ void UWorld::Initialize()
 
 	PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
 
-	// 에디터 전용 액터들을 초기화합니다.
 	InitializeGrid();
 	InitializeGizmo();
 }
@@ -309,6 +309,9 @@ void UWorld::Tick(float DeltaSeconds)
 		PhysicsScene->FetchAndUpdate();
 		PhysicsScene->ProcessCommandQueue();
 	}
+
+	// Cloth 시뮬레이션 업데이트 (PIE와 에디터 모두에서 실행)
+	FClothSystem::GetInstance().Update(GetDeltaTime(EDeltaTime::Game));
 
 	// 지연 삭제 처리
 	ProcessPendingKillActors();

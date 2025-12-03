@@ -1153,6 +1153,19 @@
     <ClCompile Include="Generated\UPhysicalMaterial.generated.cpp">
       <Filter>Generated</Filter>
     </ClCompile>
+    <ClCompile Include="Generated\UClothComponent.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\ACurtainActor.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Runtime\Core\Object\CurtainActor.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ClothComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ClothSystem.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2420,6 +2433,18 @@
     <ClInclude Include="Generated\UPhysicalMaterial.generated.h">
       <Filter>Generated</Filter>
     </ClInclude>
+    <ClInclude Include="Generated\UClothComponent.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\ACurtainActor.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Runtime\Core\Object\CurtainActor.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ClothComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ShapeAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\ClothSystem.h" />
+    <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py">
