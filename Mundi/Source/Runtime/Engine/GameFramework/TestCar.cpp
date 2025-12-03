@@ -18,6 +18,7 @@ void ATestCar::BeginPlay()
 		VehicleMovement->CreatePhysicsVehicle();
 		VehicleMovement->SetGear(PxVehicleGearsData::eFIRST);
 	}
+	MeshComponent->bIsCar = true;
 
 }
 

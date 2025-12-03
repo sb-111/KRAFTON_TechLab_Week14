@@ -63,7 +63,9 @@ public:
 
     UFUNCTION(LuaBind, DisplayName="GetOrCreateBlendSpace2D")
     UAnimBlendSpaceInstance* GetOrCreateBlendSpace2D();
-
+    
+    UPROPERTY()
+    bool bIsCar = false;
 // Editor Section
 public:
     /**

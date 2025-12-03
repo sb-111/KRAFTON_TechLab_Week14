@@ -217,7 +217,8 @@ void UObject::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 			{
 				if (*Value)
 				{
-					InOutHandle[Prop.Name] = (*Value)->GetPathFileName().c_str();
+					FString PathToSave = (*Value)->GetPathFileName();
+					InOutHandle[Prop.Name] = PathToSave.c_str();
 				}
 				else
 				{

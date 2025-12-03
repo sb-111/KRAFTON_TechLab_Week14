@@ -69,9 +69,15 @@ void USkinnedMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle
 {
    Super::Serialize(bInIsLoading, InOutHandle);
 
-   if (bInIsLoading)
+   if (bInIsLoading && SkeletalMesh)
    {
-      SetSkeletalMesh(SkeletalMesh->GetPathFileName());
+      // Super::Serialize가 SkeletalMesh 포인터를 설정했지만 버퍼/머티리얼 초기화는 안 됨
+      // SetSkeletalMesh에서 NewMesh == SkeletalMesh 체크를 우회하기 위해
+      // 포인터를 임시로 nullptr로 설정 후 다시 SetSkeletalMesh 호출
+      USkeletalMesh* LoadedMesh = SkeletalMesh;
+      FString PathToLoad = LoadedMesh->GetPathFileName();
+      SkeletalMesh = nullptr;  // 전체 초기화가 실행되도록 nullptr로 리셋
+      SetSkeletalMesh(PathToLoad);
    }
    // @TODO - UStaticMeshComponent처럼 프로퍼티 기반 직렬화 로직 추가
 }

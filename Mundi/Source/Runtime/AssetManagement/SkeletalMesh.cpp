@@ -35,6 +35,9 @@ void USkeletalMesh::Load(const FString& InFilePath, ID3D11Device* InDevice)
         return;
     }
 
+    // 파일 경로 저장 (직렬화 시 사용)
+    Data->PathFileName = InFilePath;
+
     // GPU 버퍼 생성
     CreateIndexBuffer(Data, InDevice);
     VertexCount = static_cast<uint32>(Data->Vertices.size());
