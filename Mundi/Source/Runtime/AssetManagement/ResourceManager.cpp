@@ -949,6 +949,129 @@ UStaticMesh* UResourceManager::GetOrCreateDynamicArcMesh(float TwistAngle, int32
     return Mesh;
 }
 
+UStaticMesh* UResourceManager::GetOrCreateEllipticalConeMesh(float Swing1Angle, float Swing2Angle, int32 Segments)
+{
+    // 각도를 1도 단위로 양자화하여 캐시 키 생성 (부드러운 변화)
+    float Angle1Degrees = Swing1Angle * 180.0f / PRIM_PI;
+    float Angle2Degrees = Swing2Angle * 180.0f / PRIM_PI;
+    int32 QuantizedAngle1 = FMath::Clamp((int32)Angle1Degrees, 0, 180);
+    int32 QuantizedAngle2 = FMath::Clamp((int32)Angle2Degrees, 0, 180);
+
+    // 캐시 키 생성
+    char KeyBuffer[64];
+    sprintf_s(KeyBuffer, "__EllipticalCone_%d_%d", QuantizedAngle1, QuantizedAngle2);
+    FString CacheKey(KeyBuffer);
+
+    // 이미 생성된 메시가 있으면 반환
+    UStaticMesh* Existing = Get<UStaticMesh>(CacheKey);
+    if (Existing)
+        return Existing;
+
+    // 새 타원형 원뿔 메시 생성
+    FMeshData* MeshData = new FMeshData();
+
+    // 0도(Locked)여도 시각적으로 보일 수 있게 최소값(Epsilon)을 적용
+    // 0.1도 정도의 두께를 주면 "종이짝 같은 부채꼴"이 예쁘게 나옴
+    const float MinVisualRad = 0.1f * PRIM_PI / 180.0f;  // 0.1도
+
+    float Swing1Rad = (float)QuantizedAngle1 * PRIM_PI / 180.0f;
+    float Swing2Rad = (float)QuantizedAngle2 * PRIM_PI / 180.0f;
+
+    // 타원 계산용으로는 최소 두께가 보장된 값을 사용
+    float EffectiveSwing1 = FMath::Max(Swing1Rad, MinVisualRad);
+    float EffectiveSwing2 = FMath::Max(Swing2Rad, MinVisualRad);
+
+    const float Height = 1.0f;  // 단위 높이 (스케일로 조절)
+
+    // 중심점 (원뿔의 꼭짓점, 인덱스 0)
+    MeshData->Vertices.Add(FVector(0.0f, 0.0f, 0.0f));
+    MeshData->Normal.Add(FVector(-1.0f, 0.0f, 0.0f));
+    MeshData->UV.Add(FVector2D(0.5f, 0.5f));
+    MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    // 0도 ~ 360도를 돌면서 타원형 한계선을 추적
+    for (int32 i = 0; i <= Segments; ++i)
+    {
+        float Theta = (float)i / (float)Segments * (2.0f * PRIM_PI);
+
+        // 현재 검사하려는 방향 (YZ 평면 상의 단위 원)
+        float DirY = cosf(Theta);
+        float DirZ = sinf(Theta);
+
+        // 타원 방정식을 이용해 현재 방향에서의 최대 각도(Reach) 계산
+        // 공식: 1 / sqrt( (cos/Limit1)^2 + (sin/Limit2)^2 )
+        // EffectiveSwing 변수 덕분에 0으로 나누기 방지됨
+        float Term1 = (DirY / EffectiveSwing1);
+        Term1 *= Term1;
+
+        float Term2 = (DirZ / EffectiveSwing2);
+        Term2 *= Term2;
+
+        float MaxAngle = 0.0f;
+        float Denominator = Term1 + Term2;
+
+        if (Denominator > 1e-6f)
+        {
+            MaxAngle = 1.0f / sqrtf(Denominator);
+        }
+
+        // 180도(PI)를 넘지 않도록 클램핑
+        if (MaxAngle > PRIM_PI) MaxAngle = PRIM_PI;
+
+        // 각도가 아무리 작아도 그 방향으로 버텍스를 찍어야 "얇은 판"이 그려짐
+        // Threshold 체크 삭제 - 원점으로 강제 이동시키면 부채꼴이 사라짐
+
+        // 회전 축 계산: 현재 스캔 방향(DirY, DirZ)에 수직인 벡터
+        FVector RotationAxis(0.0f, -DirZ, DirY);
+        float AxisLenSq = RotationAxis.Y * RotationAxis.Y + RotationAxis.Z * RotationAxis.Z;
+
+        // 축이 너무 짧으면(X축 방향) Y축을 임의의 축으로 설정
+        if (AxisLenSq < 1e-6f)
+        {
+            RotationAxis = FVector(0.0f, 1.0f, 0.0f);
+        }
+        else
+        {
+            // Normalize
+            float InvLen = 1.0f / sqrtf(AxisLenSq);
+            RotationAxis.Y *= InvLen;
+            RotationAxis.Z *= InvLen;
+        }
+
+        // Angle-Axis로 쿼터니언 생성 후 X축 벡터 회전
+        FQuat Q = FQuat::FromAxisAngle(RotationAxis, MaxAngle);
+        FVector LocalDir = Q.RotateVector(FVector(1.0f, 0.0f, 0.0f));
+
+        FVector WorldPos = LocalDir * Height;
+        FVector Normal = FVector(-LocalDir.X, -LocalDir.Y, -LocalDir.Z);
+
+        MeshData->Vertices.Add(WorldPos);
+        MeshData->Normal.Add(Normal);
+        MeshData->UV.Add(FVector2D((float)i / Segments, 1.0f));
+        MeshData->Color.Add(FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+
+    // 삼각형 인덱스 (Triangle Fan, 양면)
+    for (int32 i = 0; i < Segments; ++i)
+    {
+        // 앞면
+        MeshData->Indices.Add(0);
+        MeshData->Indices.Add(i + 1);
+        MeshData->Indices.Add(i + 2);
+        // 뒷면
+        MeshData->Indices.Add(0);
+        MeshData->Indices.Add(i + 2);
+        MeshData->Indices.Add(i + 1);
+    }
+
+    UStaticMesh* Mesh = NewObject<UStaticMesh>();
+    Mesh->Load(MeshData, Device, EVertexLayoutType::PositionColorTexturNormal);
+    Add<UStaticMesh>(CacheKey, Mesh);
+
+    delete MeshData;
+    return Mesh;
+}
+
 void UResourceManager::CreateDefaultShader()
 {
     // 템플릿 Load 멤버함수 호출해서 Resources[UShader의 typeIndex][shader 파일 이름]에 UShader 포인터 할당

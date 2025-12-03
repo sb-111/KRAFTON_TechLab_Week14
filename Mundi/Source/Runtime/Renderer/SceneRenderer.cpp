@@ -64,6 +64,10 @@
 #include "Modules/ParticleModuleTypeDataMesh.h"
 #include "Modules/ParticleModuleTypeDataBeam.h"
 #include "Modules/ParticleModuleTypeDataRibbon.h"
+#include "StaticMesh.h"
+#include "BodySetup.h"
+#include "CollisionShapes.h"
+#include "PhysxConverter.h"
 
 // Compute Shader는 이제 UShader/ResourceManager 프레임워크로 통합되었습니다.
 
@@ -1620,6 +1624,37 @@ void FSceneRenderer::RenderRagdollDebugPass()
 				FVector4(0.0f, 1.0f, 0.0f, 1.0f),  // 녹색 - Body
 				FVector4(1.0f, 1.0f, 0.0f, 1.0f)   // 노란색 - Joint
 			);
+		}
+	}
+
+	// StaticMesh 콜리전 시각화 (SF_Ragdoll 쇼플래그로 제어됨 - 함수 상단에서 체크)
+	// 모든 StaticMeshComponent에 대해 BodySetup이 있으면 렌더링
+	for (UMeshComponent* MeshComp : Proxies.Meshes)
+	{
+		if (UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(MeshComp))
+		{
+			UStaticMesh* StaticMesh = StaticMeshComp->GetStaticMesh();
+			if (!StaticMesh) continue;
+
+			UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+			if (!BodySetup || BodySetup->AggGeom.GetElementCount() == 0) continue;
+
+			FTransform CompWorldTransform = StaticMeshComp->GetWorldTransform();
+			PxTransform WorldPxTransform = PhysxConverter::ToPxTransform(CompWorldTransform);
+			FVector4 ShapeColor(0.0f, 1.0f, 0.0f, 1.0f);  // 녹색
+
+			TArray<FVector> StartPoints;
+			TArray<FVector> EndPoints;
+			TArray<FVector4> Colors;
+
+			// AggGeom 렌더링 (Sphere, Box, Capsule, Convex 모두 포함)
+			FRagdollDebugRenderer::RenderAggGeom(OwnerRenderer, BodySetup->AggGeom, WorldPxTransform, ShapeColor,
+				StartPoints, EndPoints, Colors);
+
+			if (StartPoints.Num() > 0)
+			{
+				OwnerRenderer->AddLines(StartPoints, EndPoints, Colors);
+			}
 		}
 	}
 

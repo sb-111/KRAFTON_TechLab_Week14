@@ -10,6 +10,8 @@
 #include "Material.h"
 #include "SceneView.h"
 #include "LuaBindHelpers.h"
+#include "BodySetup.h"
+#include "CollisionShapes.h"
 // IMPLEMENT_CLASS is now auto-generated in .generated.cpp
 UStaticMeshComponent::UStaticMeshComponent()
 {
@@ -215,4 +217,228 @@ void UStaticMeshComponent::DuplicateSubObjects()
 void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 {
 	Super::Serialize(bInIsLoading, InOutHandle);
+
+	if (bInIsLoading)
+	{
+		// BodySetup 로드
+		if (InOutHandle.hasKey("BodySetup") && StaticMesh)
+		{
+			UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+			if (!BodySetup)
+			{
+				BodySetup = NewObject<UBodySetup>();
+				StaticMesh->SetBodySetup(BodySetup);
+			}
+
+			JSON& BodyJson = InOutHandle["BodySetup"];
+
+			// AggGeom 로드
+			if (BodyJson.hasKey("AggGeom"))
+			{
+				JSON& AggGeomJson = BodyJson["AggGeom"];
+
+				// Sphere Elements
+				if (AggGeomJson.hasKey("SphereElems"))
+				{
+					BodySetup->AggGeom.SphereElems.Empty();
+					for (auto& SphereJson : AggGeomJson["SphereElems"].ArrayRange())
+					{
+						FKSphereElem Sphere;
+						Sphere.Name = FName(SphereJson["Name"].ToString());
+						Sphere.Center = FJsonSerializer::JsonToVector(SphereJson["Center"]);
+						Sphere.Radius = SphereJson["Radius"].ToFloat();
+						Sphere.CollisionEnabled = static_cast<ECollisionEnabled>(SphereJson["CollisionEnabled"].ToInt());
+						BodySetup->AggGeom.SphereElems.Add(Sphere);
+					}
+				}
+
+				// Box Elements
+				if (AggGeomJson.hasKey("BoxElems"))
+				{
+					BodySetup->AggGeom.BoxElems.Empty();
+					for (auto& BoxJson : AggGeomJson["BoxElems"].ArrayRange())
+					{
+						FKBoxElem Box;
+						Box.Name = FName(BoxJson["Name"].ToString());
+						Box.Center = FJsonSerializer::JsonToVector(BoxJson["Center"]);
+						Box.Rotation = FJsonSerializer::JsonToVector(BoxJson["Rotation"]);
+						Box.X = BoxJson["X"].ToFloat();
+						Box.Y = BoxJson["Y"].ToFloat();
+						Box.Z = BoxJson["Z"].ToFloat();
+						Box.CollisionEnabled = static_cast<ECollisionEnabled>(BoxJson["CollisionEnabled"].ToInt());
+						BodySetup->AggGeom.BoxElems.Add(Box);
+					}
+				}
+
+				// Capsule (Sphyl) Elements
+				if (AggGeomJson.hasKey("SphylElems"))
+				{
+					BodySetup->AggGeom.SphylElems.Empty();
+					for (auto& CapsuleJson : AggGeomJson["SphylElems"].ArrayRange())
+					{
+						FKSphylElem Capsule;
+						Capsule.Name = FName(CapsuleJson["Name"].ToString());
+						Capsule.Center = FJsonSerializer::JsonToVector(CapsuleJson["Center"]);
+						Capsule.Rotation = FJsonSerializer::JsonToVector(CapsuleJson["Rotation"]);
+						Capsule.Radius = CapsuleJson["Radius"].ToFloat();
+						Capsule.Length = CapsuleJson["Length"].ToFloat();
+						Capsule.CollisionEnabled = static_cast<ECollisionEnabled>(CapsuleJson["CollisionEnabled"].ToInt());
+						BodySetup->AggGeom.SphylElems.Add(Capsule);
+					}
+				}
+
+				// Convex Elements
+				if (AggGeomJson.hasKey("ConvexElems"))
+				{
+					BodySetup->AggGeom.ConvexElems.Empty();
+					for (auto& ConvexJson : AggGeomJson["ConvexElems"].ArrayRange())
+					{
+						FKConvexElem Convex;
+						Convex.Name = FName(ConvexJson["Name"].ToString());
+
+						// Transform 로드
+						if (ConvexJson.hasKey("Transform"))
+						{
+							JSON& TransformJson = ConvexJson["Transform"];
+							if (TransformJson.hasKey("Translation"))
+							{
+								Convex.Transform.Translation = FJsonSerializer::JsonToVector(TransformJson["Translation"]);
+							}
+							if (TransformJson.hasKey("Rotation"))
+							{
+								Convex.Transform.Rotation = FJsonSerializer::JsonToQuat(TransformJson["Rotation"]);
+							}
+							if (TransformJson.hasKey("Scale3D"))
+							{
+								Convex.Transform.Scale3D = FJsonSerializer::JsonToVector(TransformJson["Scale3D"]);
+							}
+						}
+
+						// Vertices
+						if (ConvexJson.hasKey("VertexData"))
+						{
+							for (auto& VertJson : ConvexJson["VertexData"].ArrayRange())
+							{
+								Convex.VertexData.Add(FJsonSerializer::JsonToVector(VertJson));
+							}
+						}
+
+						// Indices
+						if (ConvexJson.hasKey("IndexData"))
+						{
+							for (auto& IdxJson : ConvexJson["IndexData"].ArrayRange())
+							{
+								Convex.IndexData.Add(IdxJson.ToInt());
+							}
+						}
+
+						// CollisionEnabled
+						if (ConvexJson.hasKey("CollisionEnabled"))
+						{
+							Convex.CollisionEnabled = static_cast<ECollisionEnabled>(ConvexJson["CollisionEnabled"].ToInt());
+						}
+
+						BodySetup->AggGeom.ConvexElems.Add(Convex);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		// BodySetup 저장
+		if (StaticMesh)
+		{
+			UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+			if (BodySetup && BodySetup->AggGeom.GetElementCount() > 0)
+			{
+				JSON BodyJson = JSON::Make(JSON::Class::Object);
+				JSON AggGeomJson = JSON::Make(JSON::Class::Object);
+
+				// Sphere Elements
+				JSON SphereArray = JSON::Make(JSON::Class::Array);
+				for (const FKSphereElem& Sphere : BodySetup->AggGeom.SphereElems)
+				{
+					JSON SphereJson = JSON::Make(JSON::Class::Object);
+					SphereJson["Name"] = Sphere.Name.ToString();
+					SphereJson["Center"] = FJsonSerializer::VectorToJson(Sphere.Center);
+					SphereJson["Radius"] = Sphere.Radius;
+					SphereJson["CollisionEnabled"] = static_cast<int32>(Sphere.CollisionEnabled);
+					SphereArray.append(SphereJson);
+				}
+				AggGeomJson["SphereElems"] = SphereArray;
+
+				// Box Elements
+				JSON BoxArray = JSON::Make(JSON::Class::Array);
+				for (const FKBoxElem& Box : BodySetup->AggGeom.BoxElems)
+				{
+					JSON BoxJson = JSON::Make(JSON::Class::Object);
+					BoxJson["Name"] = Box.Name.ToString();
+					BoxJson["Center"] = FJsonSerializer::VectorToJson(Box.Center);
+					BoxJson["Rotation"] = FJsonSerializer::VectorToJson(Box.Rotation);
+					BoxJson["X"] = Box.X;
+					BoxJson["Y"] = Box.Y;
+					BoxJson["Z"] = Box.Z;
+					BoxJson["CollisionEnabled"] = static_cast<int32>(Box.CollisionEnabled);
+					BoxArray.append(BoxJson);
+				}
+				AggGeomJson["BoxElems"] = BoxArray;
+
+				// Capsule (Sphyl) Elements
+				JSON SphylArray = JSON::Make(JSON::Class::Array);
+				for (const FKSphylElem& Capsule : BodySetup->AggGeom.SphylElems)
+				{
+					JSON CapsuleJson = JSON::Make(JSON::Class::Object);
+					CapsuleJson["Name"] = Capsule.Name.ToString();
+					CapsuleJson["Center"] = FJsonSerializer::VectorToJson(Capsule.Center);
+					CapsuleJson["Rotation"] = FJsonSerializer::VectorToJson(Capsule.Rotation);
+					CapsuleJson["Radius"] = Capsule.Radius;
+					CapsuleJson["Length"] = Capsule.Length;
+					CapsuleJson["CollisionEnabled"] = static_cast<int32>(Capsule.CollisionEnabled);
+					SphylArray.append(CapsuleJson);
+				}
+				AggGeomJson["SphylElems"] = SphylArray;
+
+				// Convex Elements
+				JSON ConvexArray = JSON::Make(JSON::Class::Array);
+				for (const FKConvexElem& Convex : BodySetup->AggGeom.ConvexElems)
+				{
+					JSON ConvexJson = JSON::Make(JSON::Class::Object);
+					ConvexJson["Name"] = Convex.Name.ToString();
+
+					// Transform 저장
+					JSON TransformJson = JSON::Make(JSON::Class::Object);
+					TransformJson["Translation"] = FJsonSerializer::VectorToJson(Convex.Transform.Translation);
+					TransformJson["Rotation"] = FJsonSerializer::QuatToJson(Convex.Transform.Rotation);
+					TransformJson["Scale3D"] = FJsonSerializer::VectorToJson(Convex.Transform.Scale3D);
+					ConvexJson["Transform"] = TransformJson;
+
+					// Vertices
+					JSON VertexArray = JSON::Make(JSON::Class::Array);
+					for (const FVector& V : Convex.VertexData)
+					{
+						VertexArray.append(FJsonSerializer::VectorToJson(V));
+					}
+					ConvexJson["VertexData"] = VertexArray;
+
+					// Indices
+					JSON IndexArray = JSON::Make(JSON::Class::Array);
+					for (int32 Idx : Convex.IndexData)
+					{
+						IndexArray.append(Idx);
+					}
+					ConvexJson["IndexData"] = IndexArray;
+
+					// CollisionEnabled
+					ConvexJson["CollisionEnabled"] = static_cast<int32>(Convex.CollisionEnabled);
+
+					ConvexArray.append(ConvexJson);
+				}
+				AggGeomJson["ConvexElems"] = ConvexArray;
+
+				BodyJson["AggGeom"] = AggGeomJson;
+				InOutHandle["BodySetup"] = BodyJson;
+			}
+		}
+	}
 }

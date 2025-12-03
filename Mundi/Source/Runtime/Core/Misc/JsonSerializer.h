@@ -324,11 +324,45 @@ public:
 		return VectorArray;
 	}
 
+	static FVector JsonToVector(const JSON& InJson)
+	{
+		if (InJson.JSONType() == JSON::Class::Array && InJson.size() >= 3)
+		{
+			return FVector(
+				static_cast<float>(InJson.at(0).ToFloat()),
+				static_cast<float>(InJson.at(1).ToFloat()),
+				static_cast<float>(InJson.at(2).ToFloat())
+			);
+		}
+		return FVector::Zero();
+	}
+
 	static JSON Vector4ToJson(const FVector4& InVector)
 	{
 		JSON VectorArray = JSON::Make(JSON::Class::Array);
 		VectorArray.append(InVector.X, InVector.Y, InVector.Z, InVector.W);
 		return VectorArray;
+	}
+
+	static JSON QuatToJson(const FQuat& InQuat)
+	{
+		JSON QuatArray = JSON::Make(JSON::Class::Array);
+		QuatArray.append(InQuat.X, InQuat.Y, InQuat.Z, InQuat.W);
+		return QuatArray;
+	}
+
+	static FQuat JsonToQuat(const JSON& InJson)
+	{
+		if (InJson.JSONType() == JSON::Class::Array && InJson.size() >= 4)
+		{
+			return FQuat(
+				static_cast<float>(InJson.at(0).ToFloat()),
+				static_cast<float>(InJson.at(1).ToFloat()),
+				static_cast<float>(InJson.at(2).ToFloat()),
+				static_cast<float>(InJson.at(3).ToFloat())
+			);
+		}
+		return FQuat(0, 0, 0, 1);  // Identity quaternion
 	}
 
 	static JSON FloatToArrayJson(const float& InFloat)

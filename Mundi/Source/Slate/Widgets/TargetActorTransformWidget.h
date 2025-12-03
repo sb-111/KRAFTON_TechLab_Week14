@@ -46,6 +46,9 @@ public:
 	void RenderSelectedActorDetails(AActor* SelectedActor);
 	void RenderSelectedComponentDetails(UActorComponent* SelectedComponent);
 
+	// StaticMeshComponent용 Collision Shape 편집 UI
+	void RenderStaticMeshCollisionUI(UStaticMeshComponent* StaticMeshComp);
+
 private:
 	UUIManager* UIManager = nullptr;
 	FString CachedActorName; // 액터 이름 캐시 (안전한 출력을 위해)

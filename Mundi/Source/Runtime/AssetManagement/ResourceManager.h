@@ -97,6 +97,11 @@ public:
 	// TwistAngle: 라디안 단위, ±범위이므로 총 2*TwistAngle 범위의 부채꼴 생성
 	UStaticMesh* GetOrCreateDynamicArcMesh(float TwistAngle, int32 Segments = 32);
 
+	// 타원형 원뿔 메시 생성 (Swing1/Swing2 각도별, 캐싱됨)
+	// 타원 방정식을 활용하여 언리얼 스타일의 정확한 Swing Limit 시각화
+	// Swing1Angle: Y방향 벌어짐 (Z축 회전), Swing2Angle: Z방향 벌어짐 (Y축 회전)
+	UStaticMesh* GetOrCreateEllipticalConeMesh(float Swing1Angle, float Swing2Angle, int32 Segments = 36);
+
 	// 동적 캡슐 메시 생성 (실린더 반높이/반지름 비율별, 캐싱됨)
 	// CylinderHalfHeight: 실린더 부분의 반높이
 	// Radius: 반구 반지름

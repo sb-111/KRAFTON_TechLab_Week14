@@ -12,6 +12,7 @@ struct FKAggregateGeom;
 struct FKSphereElem;
 struct FKBoxElem;
 struct FKSphylElem;
+struct FKConvexElem;
 
 class UPhysicsAsset;
 
@@ -39,7 +40,6 @@ public:
         const FVector4& JointColor = FVector4(1.0f, 1.0f, 0.0f, 1.0f)
     );
 
-private:
     // FKAggregateGeom 기반 Shape 렌더링
     static void RenderAggGeom(
         URenderer* Renderer,
@@ -81,6 +81,17 @@ private:
         TArray<FVector4>& OutColors
     );
 
+    // Convex 렌더링 (와이어프레임 삼각형)
+    static void RenderConvex(
+        const FKConvexElem& Convex,
+        const PxTransform& WorldTransform,
+        const FVector4& Color,
+        TArray<FVector>& OutStartPoints,
+        TArray<FVector>& OutEndPoints,
+        TArray<FVector4>& OutColors
+    );
+
+private:
     // 헬퍼: 원 렌더링 (세그먼트 수 지정)
     static void AddCircle(
         const FVector& Center,
