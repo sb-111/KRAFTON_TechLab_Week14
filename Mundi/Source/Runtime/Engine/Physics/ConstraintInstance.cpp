@@ -95,6 +95,7 @@ void FConstraintInstance::InitConstraint(FBodyInstance* Body1, FBodyInstance* Bo
     if (bHasRotation1 || bHasRotation2)
     {
         // Position1/Rotation1 → LocalFrame1 (Child 로컬)
+        // Rotation1 = (0,0,0)이면 Child 본의 로컬 좌표계 = Joint 좌표계 (언리얼 규칙)
         FQuat Rot1 = FQuat::MakeFromEulerZYX(Rotation1);
         PxVec3 LocalPos1 = PhysxConverter::ToPxVec3(Position1);
         PxQuat LocalRot1 = PhysxConverter::ToPxQuat(Rot1);

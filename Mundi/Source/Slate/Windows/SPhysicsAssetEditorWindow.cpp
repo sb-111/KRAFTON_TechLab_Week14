@@ -3267,7 +3267,7 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
         }
 
         // 4. Child Frame 방향 화살표
-        // Child frame = Bone1World * Rotation1
+        // 언리얼 규칙: Rotation1 = (0,0,0) → Child 본의 로컬 좌표계 = Joint 좌표계
         FQuat JointRot1 = FQuat::MakeFromEulerZYX(Constraint.Rotation1);
         FQuat ChildFrameWorldRot = Bone1World.Rotation * JointRot1;
 
@@ -3275,8 +3275,8 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
         const float ArrowLength = bIsSelected ? 0.12f : 0.08f;
         const float ArrowHeadSize = ArrowLength * 0.3f;
 
-        // 빨간색 화살표: Child frame -Z축 (Swing 중심 방향, Rotation1 반영, 180도 플립)
-        const FLinearColor SwingCenterArrowColor(1.0f, 0.2f, 0.2f, 1.0f);  // 진한 빨간색
+        // 초록색 화살표: Child frame -Z축 (Swing 중심 방향)
+        const FLinearColor SwingCenterArrowColor(0.2f, 1.0f, 0.2f, 1.0f);  // 진한 초록색
         {
             // DrawDebugArrow는 +X 방향으로 그리므로, X→-Z 회전 필요 (Y축 기준 -90도)
             FQuat XtoNegZRot = FQuat::FromAxisAngle(FVector(0, 1, 0), -PI_CONST * 0.5f);
@@ -3285,14 +3285,14 @@ void SPhysicsAssetEditorWindow::RenderConstraintVisuals()
             World->AddDebugArrow(ArrowTransform, ArrowLength, ArrowHeadSize, SwingCenterArrowColor);
         }
 
-        // 초록색 화살표: Child frame Y축 (Twist 0도 방향, Rotation1 반영)
-        const FLinearColor TwistZeroArrowColor(0.2f, 1.0f, 0.2f, 1.0f);  // 진한 초록색
+        // 빨간색 화살표: Child frame -Y축 (Twist 방향, 180도 뒤집음)
+        const FLinearColor TwistArrowColor(1.0f, 0.2f, 0.2f, 1.0f);  // 진한 빨간색
         {
-            // DrawDebugArrow는 +X 방향으로 그리므로, X→Y 회전 필요
-            FQuat XtoYRot = FQuat::FromAxisAngle(FVector(0, 0, 1), -PI_CONST * 0.5f);  // X→Y
-            FQuat ArrowRot = ChildFrameWorldRot * XtoYRot;
+            // DrawDebugArrow는 +X 방향으로 그리므로, X→-Y 회전 필요 (Z축 기준 +90도)
+            FQuat XtoNegYRot = FQuat::FromAxisAngle(FVector(0, 0, 1), PI_CONST * 0.5f);  // X→-Y
+            FQuat ArrowRot = ChildFrameWorldRot * XtoNegYRot;
             FMatrix ArrowTransform = FMatrix::FromTRS(JointPos, ArrowRot, FVector::One());
-            World->AddDebugArrow(ArrowTransform, ArrowLength, ArrowHeadSize, TwistZeroArrowColor);
+            World->AddDebugArrow(ArrowTransform, ArrowLength, ArrowHeadSize, TwistArrowColor);
         }
     }
 }
@@ -4036,7 +4036,12 @@ void SPhysicsAssetEditorWindow::AddConstraintBetweenBodies(int32 BodyIndex1, int
                         JointWorldRot = FQuat::FromAxisAngle(Axis, Angle);
                     }
 
-                    // Parent 본 로컬 좌표계로 변환해서 Rotation2에 저장
+                    // === Rotation1: Child 본 로컬에서 Joint 프레임 회전 ===
+                    FQuat ChildWorldRotInv = ChildWorld.Rotation.Inverse();
+                    FQuat LocalRot1 = ChildWorldRotInv * JointWorldRot;
+                    NewConstraint.Rotation1 = LocalRot1.ToEulerZYXDeg();
+
+                    // === Rotation2: Parent 본 로컬에서 Joint 프레임 회전 ===
                     FQuat ParentWorldRotInv = ParentWorld.Rotation.Inverse();
                     FQuat LocalRot2 = ParentWorldRotInv * JointWorldRot;
                     NewConstraint.Rotation2 = LocalRot2.ToEulerZYXDeg();
@@ -4044,6 +4049,9 @@ void SPhysicsAssetEditorWindow::AddConstraintBetweenBodies(int32 BodyIndex1, int
                     // Position2도 계산 (Parent 로컬에서 Joint 위치)
                     FVector LocalPos2 = ParentWorldRotInv.RotateVector(ChildWorld.Translation - ParentWorld.Translation);
                     NewConstraint.Position2 = LocalPos2;
+
+                    // Position1은 Child 본 원점 기준 (0,0,0)
+                    NewConstraint.Position1 = FVector::Zero();
                 }
             }
         }
@@ -4642,14 +4650,43 @@ void SPhysicsAssetEditorWindow::GenerateConstraintsForBodies()
             ChildBoneDirection = -ChildBoneDirection;
         }
 
-        // Position1: Child 본 로컬에서 Joint 위치 = 원점
+        // Position1: Child 본 로컬에서 Joint 위치 = 원점 (언리얼 규칙)
         CI.Position1 = FVector::Zero();
 
-        // Rotation1: 언리얼 규칙 - (0,0,0)으로 고정 (Joint = Child 본 로컬 좌표계)
-        CI.Rotation1 = FVector::Zero();
-
-        // Twist 축의 기본 방향 (Y축) - Rotation2 계산에 사용
+        // === Joint 월드 회전 계산 (본 방향 → Y축) ===
+        // Twist 축(Y축)이 본 방향을 따라가도록 하는 월드 회전
         FVector DefaultAxis(0, 1, 0);
+        FQuat JointWorldRot;
+
+        float DotBoneDir = FVector::Dot(DefaultAxis, ChildBoneDirection);
+        if (DotBoneDir > 0.9999f)
+        {
+            JointWorldRot = FQuat::Identity();
+        }
+        else if (DotBoneDir < -0.9999f)
+        {
+            JointWorldRot = FQuat::FromAxisAngle(FVector(0, 0, 1), PI);
+        }
+        else
+        {
+            FVector Axis = FVector::Cross(DefaultAxis, ChildBoneDirection).GetNormalized();
+            float Angle = acos(FMath::Clamp(DotBoneDir, -1.0f, 1.0f));
+            JointWorldRot = FQuat::FromAxisAngle(Axis, Angle);
+        }
+
+        // === 본 월드 회전 추출 ===
+        FQuat ChildBoneWorldRot = FQuat(ChildBone.BindPose).GetNormalized();
+        FQuat ParentBoneWorldRot = FQuat(ParentBone.BindPose).GetNormalized();
+
+        // === Rotation1: Child 본 로컬에서 Joint 프레임 회전 ===
+        // Rotation1 = ChildBoneWorldRot.Inverse() * JointWorldRot
+        FQuat Rot1 = ChildBoneWorldRot.Inverse() * JointWorldRot;
+        CI.Rotation1 = Rot1.ToEulerZYXDeg();
+
+        // === Rotation2: Parent 본 로컬에서 Joint 프레임 회전 ===
+        // Rotation2 = ParentBoneWorldRot.Inverse() * JointWorldRot
+        FQuat Rot2 = ParentBoneWorldRot.Inverse() * JointWorldRot;
+        CI.Rotation2 = Rot2.ToEulerZYXDeg();
 
         if (DistanceToChild > KINDA_SMALL_NUMBER)
         {
@@ -4658,32 +4695,10 @@ void SPhysicsAssetEditorWindow::GenerateConstraintsForBodies()
             FVector DirLocal = BoneUtils::TransformDirection(ParentBone.InverseBindPose, DirNormalized);
             DirLocal = DirLocal.GetNormalized();
             CI.Position2 = DirLocal * DistanceToChild;
-
-            // Rotation2: Parent 로컬에서 자식 본 방향을 Twist(Y축)로 맞추는 회전
-            FVector ChildBoneDirInParentLocal = BoneUtils::TransformDirection(ParentBone.InverseBindPose, ChildBoneDirection);
-            ChildBoneDirInParentLocal = ChildBoneDirInParentLocal.GetNormalized();
-
-            float Dot2 = FVector::Dot(DefaultAxis, ChildBoneDirInParentLocal);
-            if (Dot2 > 0.9999f)
-            {
-                CI.Rotation2 = FVector::Zero();
-            }
-            else if (Dot2 < -0.9999f)
-            {
-                CI.Rotation2 = FVector(0, 0, 180.0f);
-            }
-            else
-            {
-                FVector Axis2 = FVector::Cross(DefaultAxis, ChildBoneDirInParentLocal).GetNormalized();
-                float Angle2 = acos(FMath::Clamp(Dot2, -1.0f, 1.0f));
-                FQuat Rot2 = FQuat::FromAxisAngle(Axis2, Angle2);
-                CI.Rotation2 = Rot2.ToEulerZYXDeg();
-            }
         }
         else
         {
             CI.Position2 = FVector::Zero();
-            CI.Rotation2 = CI.Rotation1;
         }
 
         Asset->Constraints.Add(CI);
