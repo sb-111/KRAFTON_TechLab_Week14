@@ -213,4 +213,7 @@ private:
     // 래그돌 상태 (bSimulatePhysics는 부모 UPrimitiveComponent에서 상속)
     UPhysicsAsset* PhysicsAsset = nullptr;
     bool bIsRagdoll = false;
+
+    // PIE 중 bSimulatePhysics 프로퍼티 변경 감지용
+    bool bPrevSimulatePhysics = false;
 };

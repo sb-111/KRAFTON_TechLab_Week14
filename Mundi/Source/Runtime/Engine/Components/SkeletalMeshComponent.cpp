@@ -57,25 +57,23 @@ void USkeletalMeshComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // PIE 모드에서 PhysicsAsset이 있으면 래그돌 자동 활성화
+    // PIE 모드에서 PhysicsAsset이 있으면 래그돌 준비
     UWorld* World = GetWorld();
     if (World && World->bPie)
     {
         UPhysicsAsset* Asset = GetEffectivePhysicsAsset();
         if (Asset)
         {
-            // 중요: InitArticulated 전에 bSimulatePhysics를 true로 설정
-            // FBodyInstance::InitBody에서 이 값을 참조하여 키네마틱 여부 결정
-            bSimulatePhysics = true;
-
-            // Bodies가 비어있으면 초기화
+            // Bodies 초기화 (PIE 중 bSimulatePhysics 변경 시에도 사용 가능하도록)
+            // bSimulatePhysics 값에 따라 kinematic/dynamic으로 생성됨
             if (Bodies.IsEmpty())
             {
                 InitArticulated(Asset);
             }
 
-            // Bodies가 있으면 시뮬레이션 시작
-            if (!Bodies.IsEmpty())
+            // bSimulatePhysics가 이미 true인 경우에만 래그돌 시작
+            // (false면 Bodies는 kinematic으로 대기, 나중에 SetSimulatePhysics(true)로 활성화 가능)
+            if (bSimulatePhysics && !Bodies.IsEmpty())
             {
                 SetSimulatePhysics(true);
                 SetRagdollState(true);
@@ -90,11 +88,21 @@ void USkeletalMeshComponent::BeginPlay()
     {
         GWorld->GetPhysicsScene()->RegisterPrePhysics(this);
     }
+
+    // PIE 중 프로퍼티 변경 감지를 위해 현재 값 저장
+    bPrevSimulatePhysics = bSimulatePhysics;
 }
 
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
+
+    // PIE 중 bSimulatePhysics 프로퍼티 변경 감지
+    if (bSimulatePhysics != bPrevSimulatePhysics)
+    {
+        SetSimulatePhysics(bSimulatePhysics);
+        bPrevSimulatePhysics = bSimulatePhysics;
+    }
 
     UpdateAnimation(DeltaTime);
 }
@@ -318,7 +326,7 @@ void USkeletalMeshComponent::UpdateAnimation(float DeltaTime)
 
 void USkeletalMeshComponent::SetRagdollState(bool InState)
 {
-    bSimulatePhysics = true;
+    // bSimulatePhysics는 별도로 관리 - 여기서 강제로 true로 설정하지 않음
     bIsRagdoll = InState;
 }
 
@@ -608,13 +616,29 @@ void USkeletalMeshComponent::DestroyPhysicsState()
 
 void USkeletalMeshComponent::SetSimulatePhysics(bool bEnable)
 {
+    // Bodies가 없으면 PhysicsAsset으로 초기화 시도
     if (bEnable && Bodies.IsEmpty())
     {
-        UE_LOG("[Ragdoll] Warning: SetSimulatePhysics(true) called but no bodies exist. Call InitArticulated first.");
-        return;
+        UPhysicsAsset* Asset = GetEffectivePhysicsAsset();
+        if (Asset)
+        {
+            InitArticulated(Asset);
+        }
+
+        if (Bodies.IsEmpty())
+        {
+            UE_LOG("[Ragdoll] Warning: SetSimulatePhysics(true) called but no bodies exist and no PhysicsAsset available.");
+            return;
+        }
     }
 
     bSimulatePhysics = bEnable;
+
+    // 래그돌 상태도 함께 설정 (ApplyPhysicsResult에서 bIsRagdoll && bSimulatePhysics 체크)
+    if (bEnable)
+    {
+        bIsRagdoll = true;
+    }
 
     // Bodies 깨우기/재우기
     for (FBodyInstance* Body : Bodies)
