@@ -1603,6 +1603,38 @@ void SPhysicsAssetEditorWindow::RenderDisplayOptions(float PanelWidth)
     ImGui::PopStyleVar();
     ImGui::EndGroup();
 
+    // 두 번째 줄: 바디, 컨스트레인트
+    ImGui::BeginGroup();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.5f, 1.5f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.23f, 0.25f, 0.27f, 0.80f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.28f, 0.30f, 0.33f, 0.90f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.20f, 0.22f, 0.25f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.75f, 0.80f, 0.90f, 1.00f));
+
+    // 바디 체크박스
+    if (PhysState)
+    {
+        if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"바디"), &PhysState->bShowBodies))
+        {
+            // 체크 상태 변경 시 추가 처리 필요 없음 (RenderPhysicsBodies에서 체크)
+        }
+    }
+
+    ImGui::SameLine(0.0f, 12.0f);
+
+    // 컨스트레인트 체크박스
+    if (PhysState)
+    {
+        if (ImGui::Checkbox(reinterpret_cast<const char*>(u8"컨스트레인트"), &PhysState->bShowConstraints))
+        {
+            // 체크 상태 변경 시 추가 처리 필요 없음 (RenderConstraintVisuals에서 체크)
+        }
+    }
+
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar();
+    ImGui::EndGroup();
+
     ImGui::Dummy(ImVec2(0, 4));
     ImGui::Separator();
     ImGui::Dummy(ImVec2(0, 4));
@@ -3193,6 +3225,7 @@ void SPhysicsAssetEditorWindow::RenderPhysicsBodies()
     PhysicsAssetEditorState* PhysState = GetPhysicsState();
     if (!PhysState || !PhysState->World) return;
     if (!PhysState->EditingAsset) return;
+    if (!PhysState->bShowBodies) return;
     if (!ActiveState || !ActiveState->CurrentMesh) return;
 
     const FSkeleton* Skeleton = ActiveState->CurrentMesh->GetSkeleton();
