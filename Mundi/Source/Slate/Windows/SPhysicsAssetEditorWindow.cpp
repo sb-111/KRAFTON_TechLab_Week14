@@ -2246,11 +2246,11 @@ void SPhysicsAssetEditorWindow::RenderGraphViewPanel(float Width, float Height)
         ImVec2 labelSize = ImGui::CalcTextSize(constraintLabel);
         DrawList->AddText(ImVec2(pos.x - labelSize.x * 0.5f, nodeMin.y + 6 * PhysState->GraphZoom), TextColor, constraintLabel);
 
-        // Child : Parent 표시 (언리얼 규칙: ConstraintBone1=Parent, ConstraintBone2=Child)
+        // Child : Parent 표시 (언리얼 규칙: ConstraintBone1=Child, ConstraintBone2=Parent)
         // prefix 제거 후 표시
-        FString shortBone1 = StripBonePrefix(bone1);  // Parent
-        FString shortBone2 = StripBonePrefix(bone2);  // Child
-        FString connectionText = shortBone2 + " : " + shortBone1;
+        FString shortBone1 = StripBonePrefix(bone1);  // Child (ConstraintBone1)
+        FString shortBone2 = StripBonePrefix(bone2);  // Parent (ConstraintBone2)
+        FString connectionText = shortBone1 + " : " + shortBone2;  // Child : Parent
         ImVec2 connSize = ImGui::CalcTextSize(connectionText.c_str());
         DrawList->AddText(ImVec2(pos.x - connSize.x * 0.5f, nodeMax.y - 18 * PhysState->GraphZoom), TextColor, connectionText.c_str());
 
@@ -2951,9 +2951,9 @@ void SPhysicsAssetEditorWindow::RenderConstraintDetails(FConstraintInstance* Con
     if (ImGui::CollapsingHeader("Constraint", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Indent();
-        ImGui::Text("Bone 1 (Parent)");
+        ImGui::Text("Bone 1 (Child)");
         ImGui::TextDisabled("%s", Constraint->ConstraintBone1.ToString().c_str());
-        ImGui::Text("Bone 2 (Child)");
+        ImGui::Text("Bone 2 (Parent)");
         ImGui::TextDisabled("%s", Constraint->ConstraintBone2.ToString().c_str());
         ImGui::Unindent();
     }
@@ -4167,40 +4167,14 @@ void SPhysicsAssetEditorWindow::AddConstraintBetweenBodies(int32 BodyIndex1, int
         }
     }
 
-    // 본 깊이 계산 헬퍼 (더 깊은 본이 Child)
-    auto GetBoneDepth = [&Skeleton](const FName& BoneName) -> int32 {
-        int32 Depth = 0;
-        for (int32 i = 0; i < (int32)Skeleton->Bones.size(); ++i)
-        {
-            if (Skeleton->Bones[i].Name == BoneName.ToString())
-            {
-                int32 ParentIdx = Skeleton->Bones[i].ParentIndex;
-                while (ParentIdx >= 0)
-                {
-                    ++Depth;
-                    ParentIdx = Skeleton->Bones[ParentIdx].ParentIndex;
-                }
-                break;
-            }
-        }
-        return Depth;
-    };
+    // 사용자 선택 순서 기준으로 Parent/Child 결정
+    // - BodyIndex1 (Start Constraint) → Parent
+    // - BodyIndex2 (Complete Constraint) → Child
+    FName ParentBoneName = Body1->BoneName;
+    FName ChildBoneName = Body2->BoneName;
 
-    // 본 깊이 비교로 Child/Parent 자동 판단 (더 깊은 본이 Child)
-    int32 Depth1 = GetBoneDepth(Body1->BoneName);
-    int32 Depth2 = GetBoneDepth(Body2->BoneName);
-
-    FName ChildBoneName, ParentBoneName;
-    if (Depth1 > Depth2)
-    {
-        ChildBoneName = Body1->BoneName;
-        ParentBoneName = Body2->BoneName;
-    }
-    else
-    {
-        ChildBoneName = Body2->BoneName;
-        ParentBoneName = Body1->BoneName;
-    }
+    UE_LOG("[PhysicsAssetEditor] Creating constraint: Parent=%s (Start), Child=%s (Complete)",
+           ParentBoneName.ToString().c_str(), ChildBoneName.ToString().c_str());
 
     // Constraint 생성 (언리얼 규칙: Bone1=Child, Bone2=Parent)
     FConstraintInstance NewConstraint = CreateDefaultConstraint(ChildBoneName, ParentBoneName);
@@ -4367,8 +4341,9 @@ void SPhysicsAssetEditorWindow::RenderConstraintTreeNode(int32 ConstraintIndex, 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth;
     if (bSelected) flags |= ImGuiTreeNodeFlags_Selected;
 
-    FString label = FString("[ ") + Constraint.ConstraintBone1.ToString() +
-                    " -> " + Constraint.ConstraintBone2.ToString() + " ] Constraint";
+    // 트리 라벨: [ Parent -> Child ] 형식 (ConstraintBone2=Parent, ConstraintBone1=Child)
+    FString label = FString("[ ") + Constraint.ConstraintBone2.ToString() +
+                    " -> " + Constraint.ConstraintBone1.ToString() + " ]";
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f)); // 주황색
     if (ImGui::TreeNodeEx((void*)(intptr_t)(30000 + ConstraintIndex), flags, "%s", label.c_str()))
