@@ -35,6 +35,7 @@
 #include "SceneView.h"
 #include "SkinningStats.h"
 #include "PlatformTime.h"
+#include "RagdollStats.h"
 
 #include <Windows.h>
 #include "DirectionalLightComponent.h"
@@ -75,6 +76,7 @@ void URenderer::BeginFrame()
 	ProcessDeferredReleases();
 
 	// 프레임별 통계 초기화 (데칼, 스키닝)
+	// 래그돌 통계는 World::Tick()에서 PhysicsScene 시뮬레이션 전에 초기화
 	FDecalStatManager::GetInstance().ResetFrameStats();
 
 	// 이전 프레임의 GPU draw 시간 가져오기 (비동기, N-7 프레임 결과)

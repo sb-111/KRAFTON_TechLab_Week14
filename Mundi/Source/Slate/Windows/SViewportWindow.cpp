@@ -1415,6 +1415,7 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 				UStatsOverlayD2D::Get().SetShowShadow(false);
 				UStatsOverlayD2D::Get().SetShowSkinning(false);
 				UStatsOverlayD2D::Get().SetShowParticles(false);
+				UStatsOverlayD2D::Get().SetShowRagdoll(false);
 			}
 
 			if (ImGui::IsItemHovered())
@@ -1522,6 +1523,16 @@ void SViewportWindow::RenderShowFlagDropdownMenu()
 			if (ImGui::IsItemHovered())
 			{
 				ImGui::SetTooltip("파티클 시스템 통계를 표시합니다. (시스템 수, 이미터 수, 파티클 수, 메모리 사용량)");
+			}
+
+			bool bRagdollStats = UStatsOverlayD2D::Get().IsRagdollVisible();
+			if (ImGui::Checkbox(" RAGDOLL", &bRagdollStats))
+			{
+				UStatsOverlayD2D::Get().ToggleRagdoll();
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("래그돌 통계를 표시합니다. (활성 래그돌 수, 바디 수, 컨스트레인트 수, 동기화 시간)");
 			}
 
 			ImGui::EndMenu();

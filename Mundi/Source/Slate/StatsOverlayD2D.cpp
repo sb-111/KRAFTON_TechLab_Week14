@@ -16,6 +16,7 @@
 #include "SkinningStats.h"
 #include "SkinnedMeshComponent.h"
 #include "ParticleStats.h"
+#include "RagdollStats.h"
 
 #pragma comment(lib, "d2d1")
 #pragma comment(lib, "dwrite")
@@ -166,7 +167,7 @@ static void DrawTextBlock(
 
 void UStatsOverlayD2D::Draw()
 {
-	if (!bInitialized || (!bShowFPS && !bShowMemory && !bShowPicking && !bShowDecal && !bShowTileCulling && !bShowLights && !bShowShadow && !bShowSkinning && !bShowParticles) || !SwapChain)
+	if (!bInitialized || (!bShowFPS && !bShowMemory && !bShowPicking && !bShowDecal && !bShowTileCulling && !bShowLights && !bShowShadow && !bShowSkinning && !bShowParticles && !bShowRagdoll) || !SwapChain)
 		return;
 
 	// D2D 리소스 초기화 (최초 1회만 실행)
@@ -540,6 +541,56 @@ void UStatsOverlayD2D::Draw()
 		NextY += particlePanelHeight + Space;
 	}
 
+	if (bShowRagdoll)
+	{
+		const FRagdollStats& Stats = FRagdollStatManager::GetInstance().GetStats();
+
+		// 메모리 표시 문자열
+		wchar_t MemoryStr[64];
+		double MemoryKB = Stats.GetTotalMemoryKB();
+		if (MemoryKB >= 1024.0)
+		{
+			swprintf_s(MemoryStr, L"%.2f MB", MemoryKB / 1024.0);
+		}
+		else
+		{
+			swprintf_s(MemoryStr, L"%.2f KB", MemoryKB);
+		}
+
+		wchar_t RagdollBuf[512];
+		swprintf_s(RagdollBuf,
+			L"[Ragdoll Statistics]\n"
+			L"Active Ragdolls:   %d\n"
+			L"Total Bodies:      %d\n"
+			L"Total Constraints: %d\n"
+			L"Total Shapes:      %d (S:%d B:%d C:%d)\n"
+			L"\n"
+			L"Sync Time:         %.3f ms\n"
+			L"Total Time:        %.3f ms\n"
+			L"\n"
+			L"Memory:            %s",
+			Stats.ActiveRagdollCount,
+			Stats.TotalBodyCount,
+			Stats.TotalConstraintCount,
+			Stats.GetTotalShapeCount(),
+			Stats.SphereShapeCount,
+			Stats.BoxShapeCount,
+			Stats.CapsuleShapeCount,
+			Stats.SyncBodiesToBonesTimeMS,
+			Stats.TotalRagdollTimeMS,
+			MemoryStr);
+
+		const float ragdollPanelHeight = 260.0f;
+		D2D1_RECT_F ragdollRc = D2D1::RectF(Margin, NextY, Margin + PanelWidth, NextY + ragdollPanelHeight);
+
+		DrawTextBlock(
+			D2dCtx, CachedBrush, TextFormat, RagdollBuf, ragdollRc,
+			D2D1::ColorF(0, 0, 0, 0.6f),
+			D2D1::ColorF(D2D1::ColorF::Coral));
+
+		NextY += ragdollPanelHeight + Space;
+	}
+
 	D2dCtx->EndDraw();
 	D2dCtx->SetTarget(nullptr);
 
@@ -638,4 +689,14 @@ void UStatsOverlayD2D::SetShowParticles(bool b)
 void UStatsOverlayD2D::ToggleParticles()
 {
 	bShowParticles = !bShowParticles;
+}
+
+void UStatsOverlayD2D::SetShowRagdoll(bool b)
+{
+	bShowRagdoll = b;
+}
+
+void UStatsOverlayD2D::ToggleRagdoll()
+{
+	bShowRagdoll = !bShowRagdoll;
 }

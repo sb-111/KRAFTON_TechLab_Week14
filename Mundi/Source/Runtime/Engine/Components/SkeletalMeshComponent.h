@@ -186,8 +186,9 @@ public:
     void SetSimulatePhysics(bool bEnable);
     bool IsSimulatingPhysics() const { return bIsRagdoll; }
 
-    // Bodies 접근자 (디버그 렌더링용, 에디터 모드에서 lazy 초기화)
+    // Bodies/Constraints 접근자 (디버그 렌더링용, 에디터 모드에서 lazy 초기화)
     const TArray<FBodyInstance*>& GetBodies();
+    const TArray<FConstraintInstance*>& GetConstraints() const { return Constraints; }
     const TArray<int32>& GetBodyParentIndices() const { return BodyParentIndices; }
     const TArray<int32>& GetBodyBoneIndices() const { return BodyBoneIndices; }
 

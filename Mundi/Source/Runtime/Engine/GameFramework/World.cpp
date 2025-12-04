@@ -35,6 +35,7 @@
 #include "ParticleEventManager.h"
 #include "PhysicsSystem.h"
 #include "PhysicsScene.h"
+#include "RagdollStats.h"
 #include "ClothSystem.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMesh.h"
@@ -230,6 +231,8 @@ void UWorld::Tick(float DeltaSeconds)
 
 	if (bPie)
 	{
+		// 래그돌 통계 초기화 (시뮬레이션 전에 리셋)
+		FRagdollStatManager::GetInstance().ResetFrameStats();
 		PhysicsScene->Simulate(GetDeltaTime(EDeltaTime::Game));
 	}
 

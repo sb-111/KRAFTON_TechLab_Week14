@@ -16,6 +16,7 @@
 #include "PhysicsSystem.h"
 #include "PhysxConverter.h"
 #include "PhysicsScene.h"
+#include "RagdollStats.h"
 #include "Source/Runtime/Engine/Viewer/PhysicsAssetEditorBootstrap.h"
 
 using namespace physx;
@@ -351,7 +352,6 @@ void USkeletalMeshComponent::ApplyPhysicsResult()
     {
         SyncBodiesToBones();
     }
-   
 }
 
 float USkeletalMeshComponent::GetAnimationPosition()
@@ -818,6 +818,8 @@ void USkeletalMeshComponent::CreateConstraints(UPhysicsAsset* PhysAsset)
 
 void USkeletalMeshComponent::SyncBodiesToBones()
 {
+    uint64 StartCycles = FWindowsPlatformTime::Cycles64();
+
     if (Bodies.Num() != BodyBoneIndices.Num()) return;  // 안전 검사
     if (!SkeletalMesh || !SkeletalMesh->GetSkeleton()) return;
 
@@ -890,6 +892,10 @@ void USkeletalMeshComponent::SyncBodiesToBones()
 
     // 최종 스키닝 매트릭스 업데이트
     UpdateFinalSkinningMatrices();
+
+    // 래그돌 통계: 동기화 시간 측정
+    double ElapsedMS = FWindowsPlatformTime::ToMilliseconds(FWindowsPlatformTime::Cycles64() - StartCycles);
+    FRagdollStatManager::GetInstance().AddSyncTime(ElapsedMS);
 }
 
 int32 USkeletalMeshComponent::FindBodyIndex(const FName& BoneName) const

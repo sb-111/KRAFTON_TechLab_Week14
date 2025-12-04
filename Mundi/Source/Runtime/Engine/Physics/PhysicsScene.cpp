@@ -1,8 +1,11 @@
 ﻿#include "pch.h"
 #include "PhysicsScene.h"
 #include "BodyInstance.h"
+#include "ConstraintInstance.h"
 #include "PrimitiveComponent.h"
 #include "PhysicsSystem.h"
+#include "SkeletalMeshComponent.h"
+#include "RagdollStats.h"
 
 FPhysicsScene::FPhysicsScene(PxScene* InScene)
 	:Scene(InScene),
@@ -116,6 +119,10 @@ void FPhysicsScene::FetchAndUpdate()
 
 	PxU32 NumActiveActors = 0;
 	PxActor** ActiveActors = Scene->getActiveActors(NumActiveActors);
+
+	// 래그돌 통계 수집을 위한 처리된 컴포넌트 추적
+	TSet<USkeletalMeshComponent*> ProcessedRagdolls;
+
 	for (PxU32 Index = 0; Index < NumActiveActors; Index++)
 	{
 		PxActor* Actor = ActiveActors[Index];
@@ -127,6 +134,52 @@ void FPhysicsScene::FetchAndUpdate()
 			if (Instance->OwnerComponent)
 			{
 				Instance->OwnerComponent->ApplyPhysicsResult();
+
+				// 래그돌 통계 수집 (SkeletalMeshComponent인 경우)
+				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Instance->OwnerComponent);
+				if (SkelComp && !ProcessedRagdolls.Contains(SkelComp))
+				{
+					ProcessedRagdolls.Add(SkelComp);
+
+					FRagdollStatManager& StatMgr = FRagdollStatManager::GetInstance();
+					const TArray<FBodyInstance*>& Bodies = SkelComp->GetBodies();
+					const TArray<FConstraintInstance*>& Constraints = SkelComp->GetConstraints();
+
+					StatMgr.AddRagdoll(Bodies.Num(), Constraints.Num());
+
+					// Shape 타입별 카운트 및 메모리 계산
+					int32 SphereCount = 0, BoxCount = 0, CapsuleCount = 0;
+					uint64 BodiesMemory = 0;
+					for (const FBodyInstance* Body : Bodies)
+					{
+						if (Body)
+						{
+							BodiesMemory += sizeof(FBodyInstance);
+							if (Body->RigidActor)
+							{
+								PxU32 ShapeCount = Body->RigidActor->getNbShapes();
+								TArray<PxShape*> Shapes;
+								Shapes.SetNum(ShapeCount);
+								Body->RigidActor->getShapes(Shapes.GetData(), ShapeCount);
+								for (PxU32 i = 0; i < ShapeCount; ++i)
+								{
+									PxGeometryType::Enum GeomType = Shapes[i]->getGeometryType();
+									switch (GeomType)
+									{
+									case PxGeometryType::eSPHERE: SphereCount++; break;
+									case PxGeometryType::eBOX: BoxCount++; break;
+									case PxGeometryType::eCAPSULE: CapsuleCount++; break;
+									default: break;
+									}
+								}
+							}
+						}
+					}
+
+					uint64 ConstraintsMemory = Constraints.Num() * sizeof(FConstraintInstance);
+					StatMgr.AddShapeCounts(SphereCount, BoxCount, CapsuleCount);
+					StatMgr.AddMemory(BodiesMemory, ConstraintsMemory);
+				}
 			}
 		}
 	}
