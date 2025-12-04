@@ -3,6 +3,7 @@
 #include "PhysicsScene.h"
 #include "FKConvexElem.h"
 
+#define MAX_PHYSX_THREADS 8
 // ===== 기본 필터 셰이더 =====
 // PhysX Joint가 연결된 바디 간 충돌을 자동으로 비활성화함
 // 따라서 커스텀 래그돌 필터 불필요 - 표준 방식 사용
@@ -81,7 +82,13 @@ void FPhysicsSystem::Initialize()
 	// Params: Scale, TargetPlatform(기본값: 현재 플랫폼. 플랫폼마다 최적화 방식이 다름) 등 
 	Cooking = PxCreateCooking(PX_PHYSICS_VERSION, *Foundation, PxCookingParams(PxTolerancesScale()));
 
-	Dispatcher = PxDefaultCpuDispatcherCreate(3);
+	int LogicCores = std::thread::hardware_concurrency();
+
+	int TargetThread = LogicCores - 2;
+
+	int PhysxThreadCount = std::clamp(TargetThread, 1, MAX_PHYSX_THREADS);
+	
+	Dispatcher = PxDefaultCpuDispatcherCreate(PhysxThreadCount);
 
 	// 정지마찰, 운동마찰, 반발 계수(디폴트, 원하면 새로 생성해서 사용)
 	Material = Physics->createMaterial(0.5f, 0.5f, 0.6f);
