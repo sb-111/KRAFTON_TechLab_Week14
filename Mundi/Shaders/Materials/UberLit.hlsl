@@ -330,6 +330,12 @@ PS_OUTPUT mainPS(PS_INPUT Input)
     // 텍스처 샘플링 (머트리얼 색상은 Gouraud는 VS에서 적용됨)
     float4 texColor = g_DiffuseTexColor.Sample(g_Sample, uv);
 
+    // Alpha Test: 텍스처가 있고 알파가 임계값 미만이면 픽셀 버림 (vegetation 등)
+    if (bHasTexture && texColor.a < 0.5f)
+    {
+        discard;
+    }
+
     // 머트리얼의 SpecularExponent 사용, 머트리얼이 없으면 기본값 사용
     float specPower = bHasMaterial ? Material.SpecularExponent : 32.0f;
 
