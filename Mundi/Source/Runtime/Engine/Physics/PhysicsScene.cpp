@@ -82,20 +82,37 @@ void FPhysicsScene::AddActor(PxActor& NewActor)
  
 void FPhysicsScene::Simulate(float DeltaTime)
 {
-	for (IPrePhysics* PrePhysics : PreUpdateList)
+	LeftoverTime += DeltaTime;
+	// 고정 시간 시뮬레이션
+	while (FixedDeltaTime <= LeftoverTime)
 	{
-		PrePhysics->PrePhysicsUpdate(DeltaTime);
+		LeftoverTime -= FixedDeltaTime;
+		Scene->simulate(FixedDeltaTime);
+
+		//std::cout << DeltaTime << '\n';
+		for (IPrePhysics* PrePhysics : PreUpdateList)
+		{
+			PrePhysics->PrePhysicsUpdate(FixedDeltaTime);
+		}
+
+		bIsSimulated = true;
+
+		if (FixedDeltaTime <= LeftoverTime)
+		{
+			FetchAndUpdate();
+		}
 	}
-	//for (IPrePhysics* PrePhysics : PreUpdateListTemporal)
-	//{
-	//	PrePhysics->PrePhysicsUpdate(DeltaTime);
-	//}
-	//PreUpdateListTemporal.clear();
-	Scene->simulate(DeltaTime);
 }
 
 void FPhysicsScene::FetchAndUpdate()
 {
+	if (!bIsSimulated)
+	{
+		return;
+	}
+
+    bIsSimulated = false;
+	
 	Scene->fetchResults(true);
 
 	{

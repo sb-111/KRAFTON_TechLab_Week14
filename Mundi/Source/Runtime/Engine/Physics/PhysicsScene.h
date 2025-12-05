@@ -103,6 +103,10 @@ private:
 
 	PxScene* Scene = nullptr;
 
+	const float FixedDeltaTime = 1.0f / 60.0f;
+	float LeftoverTime = 0.0f;
+	bool bIsSimulated = false;  // 이번 Tick에 Simulate 을 수행했는지
+
 	std::unique_ptr<FPhysicsSimulationEventCallback> EventCallback = nullptr;
 
 	

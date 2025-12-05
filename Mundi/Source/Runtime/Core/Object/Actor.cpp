@@ -29,14 +29,23 @@ AActor::AActor()
 AActor::~AActor()
 {
 	DestroyAllComponents();
+	
+	if (LuaGameObject)
+	{
+		delete LuaGameObject;
+		LuaGameObject = nullptr;
+	}
 }
 
 void AActor::BeginPlay()
 {
-	// Lua Game Object 초기화
-	LuaGameObject = new FGameObject();
-	LuaGameObject ->SetOwner(this); /*순서 보장 필수!*/
-	LuaGameObject->UUID = this->UUID;
+	if (!LuaGameObject)
+	{
+		// Lua Game Object 초기화
+		LuaGameObject = new FGameObject();
+		LuaGameObject ->SetOwner(this); /*순서 보장 필수!*/
+		LuaGameObject->UUID = this->UUID;
+	}
 	
 	// NOTE: 아직 InitializeComponent/BeginPlay 순서가 완벽히 보장되지 않음 (PIE 시작 순간에는 지연 생성 처리 필요)
 	// 컴포넌트들 Initialize/BeginPlay 순회
@@ -688,6 +697,8 @@ void AActor::DuplicateSubObjects()
 			}
 		}
 	}
+
+	LuaGameObject = nullptr;
 }
 
 void AActor::Serialize(const bool bInIsLoading, JSON& InOutHandle)
