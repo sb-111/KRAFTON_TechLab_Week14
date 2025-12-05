@@ -323,6 +323,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Tile.lua" />
     <Content Include="Data\Scripts\TileMap.lua" />
     <Content Include="Data\Scripts\UIManager.lua" />
+    <Content Include="Data\Scripts\w14_ObjectPool.lua" />
     <Content Include="Data\Scripts\w14_Queue.lua" />
     <Content Include="Shaders\PostProcess\DepthOfField_Gaussian_Blur_CS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_CoCVisualize_PS.hlsl" />
