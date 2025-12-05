@@ -6,26 +6,27 @@ local Queue = require("w14_Queue")
 --- @field despawned Queue
 --- @field pool_size number
 --- @field pool_standby_location userdata
+--- @field spawn_condition_checker function
 --- @field despawn_condition_checker function
+--- @field spawn_location_getter function
 local Pool = {}
 Pool.__index = Pool
-Pool.__newindex = function(_, key, value)
-    print(string.format("[error] Attempt to modify constant [%s] with value [%s]", key, tostring(value)))
-end
 
---- Make new Pool instance
+--- Pool 인스턴스를 생성합니다.
 --- @return Pool
 function Pool:new()
-    local obj = setmetatable({}, self)
-
-    --- 아래의 멤버들은 initialize에서 초기화
-    obj.spawned = Queue:new()
-    obj.despawned = Queue:new()
-    obj.pool_size = nil
-    obj.pool_standby_location = nil
-    obj.despawn_condition_checker = nil
-    
-    return obj
+    -- 인스턴스 생성 (필드 수정 제약 없음)
+    local instance = {
+        spawned = Queue:new(),
+        despawned = Queue:new(),
+        pool_size = nil,
+        pool_standby_location = nil,
+        spawn_condition_checker = nil,
+        despawn_condition_checker = nil,
+        spawn_location_getter = nil
+    }
+    setmetatable(instance, {__index = Pool})
+    return instance
 end
 
 --- Initialize pool
@@ -36,8 +37,7 @@ end
 function Pool:initialize(
         prefab_path,
         pool_size,
-        pool_standby_location,
-        despawn_condition_checker
+        pool_standby_location
 )
     self.pool_size = pool_size
     self.pool_standby_location = pool_standby_location
@@ -52,11 +52,25 @@ function Pool:initialize(
     end
 end
 
+--- spawn_condition_checker를 설정
+--- @param condition function despawned의 head가 spawned가 되는 조건. 반드시 bool을 반환하고 하나의 obj를 param으로 받는 function을 저장해야 한다.
+--- @return void
+function Pool:set_spawn_condition_checker(condition)
+    self.spawn_condition_checker = condition
+end
+
 --- despawn_condition_checker를 설정
 --- @param condition function spawned의 head가 despawned가 되는 조건. 반드시 bool을 반환하고 하나의 obj를 param으로 받는 function을 저장해야 한다.
 --- @return void
 function Pool:set_despawn_condition_checker(condition)
     self.despawn_condition_checker = condition
+end
+
+--- spawn_location_getter 설정
+--- @param getter function 다음 스폰 위치를 반환하는 함수. 반드시 Vector를 반환하는 함수를 저장해야 한다.
+--- @return void
+function Pool:set_spawn_location_getter(getter)
+    self.spawn_location_getter = getter
 end
 
 --- despawned에서 object를 하나 꺼내 활성으로 전환 후 spawned에 넣는다.
@@ -67,7 +81,8 @@ function Pool:spawn()
         return
     else
         local spawned = self.despawned:pop()
-        spawned.bIsActive = true;
+        spawned.bIsActive = true
+        spawned.Location = self.spawn_location_getter()
         self.spawned:push(spawned)
     end
 end
@@ -80,17 +95,51 @@ function Pool:despawn()
         return
     else
         local despawned = self.spawned:pop()
-        despawned.bIsActive = false;
+        despawned.bIsActive = false
+        despawned.Location = self.pool_standby_location
         self.despawned:push(despawned)
     end
 end
 
---- spawned의 head에 대해 비활성 조건을 확인한 후 조건을 충족하면 비활성한다.
+--- spawned의 head에 대해 despawn 조건을 확인한 후 조건을 충족하면 despawn한다.
 --- @return void
 function Pool:check_despawn_condition_and_retrieve()
-    while self:despawn_condition_checker(self.spawned:head()) do
-        self:despawn();
+    if not self.despawn_condition_checker then
+        return
     end
+    while self.despawn_condition_checker(self.spawned:head()) do
+        self:despawn()
+    end
+end
+
+--- despawned의 head에 대해 spawn 조건을 확인한 후 조건을 충족하면 spawn한다.
+--- @return void
+function Pool:check_spawn_condition_and_release()
+    if not self.spawn_condition_checker then
+        return
+    end
+    while self.spawn_condition_checker(self.despawned:head()) do
+        self:spawn()
+    end
+end
+
+--- 매 프레임 호출되어 spawn/despawn 조건을 확인하고 처리한다.
+--- @return void
+function Pool:Tick()
+    self:check_despawn_condition_and_retrieve()
+    self:check_spawn_condition_and_release()
+end
+
+-- 모든 메서드 정의 후 클래스 프로토타입 보호
+-- (__newindex는 클래스 수정만 방지, 인스턴스는 자유롭게 수정 가능)
+do
+    local Pool_mt = {
+        __index = Pool,
+        __newindex = function(_, key, value)
+            print("[error] Attempt to modify Pool class [%s] with value [%s]", key, tostring(value))
+        end
+    }
+    setmetatable(Pool, Pool_mt)
 end
 
 return Pool

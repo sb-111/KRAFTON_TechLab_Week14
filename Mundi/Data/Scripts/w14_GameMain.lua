@@ -4,6 +4,8 @@
 
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
+local ControlManager = require("w14_ControlManager")
+local MapPool = require("w14_MapPool")
 
 function BeginPlay()
     print("=== Game Main Start ===")
@@ -13,6 +15,17 @@ function BeginPlay()
 
     -- 시작 화면 표시
     GameState.ShowStartScreen()
+
+    -- ControlManager에 플레이어 등록
+    ControlManager:set_player_to_trace(Obj)
+    -- MapPool에 플레이어 등록
+    MapPool:set_player_to_trace(Obj)
+    -- MapPool 초기화
+    MapPool:initialize(
+            "Data/Prefabs/test_map_chunk.prefab",
+            50,
+            Vector(-1000, 0, 0)
+    )
 end
 
 function Tick(dt)
@@ -21,6 +34,12 @@ function Tick(dt)
 
     -- 입력 처리
     HandleInput()
+    
+    -- 플레이어 조작
+    ControlManager:Control(dt)
+    
+    -- 맵 업데이트
+    MapPool:Tick()
 end
 
 function HandleInput()
