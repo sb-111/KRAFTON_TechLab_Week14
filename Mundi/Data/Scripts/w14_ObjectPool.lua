@@ -32,7 +32,6 @@ end
 --- @param prefab_path userdata c++의 actor 객체 타입. pool에서 관리할 object의 prefab path
 --- @param pool_size number pool에서 관리할 object의 수
 --- @param pool_standby_location userdata c++의 FVector 타입 pool에서 관리하는 오브젝트가 비활성 상태에서 대기중일 때의 위치
---- @param despawn_condition_checker function spawned의 head가 despawned가 되는 조건. 반드시 bool을 반환하는 function을 저장해야 한다.
 --- @return void
 function Pool:initialize(
         prefab_path,
@@ -42,7 +41,6 @@ function Pool:initialize(
 )
     self.pool_size = pool_size
     self.pool_standby_location = pool_standby_location
-    self.despawn_condition_checker = despawn_condition_checker
 
     for i=1, self.pool_size do
         local new_obj = SpawnPrefab(prefab_path)
@@ -52,6 +50,13 @@ function Pool:initialize(
             self.despawned:push(new_obj)
         end
     end
+end
+
+--- despawn_condition_checker를 설정
+--- @param condition function spawned의 head가 despawned가 되는 조건. 반드시 bool을 반환하고 하나의 obj를 param으로 받는 function을 저장해야 한다.
+--- @return void
+function Pool:set_despawn_condition_checker(condition)
+    self.despawn_condition_checker = condition
 end
 
 --- despawned에서 object를 하나 꺼내 활성으로 전환 후 spawned에 넣는다.
@@ -87,3 +92,5 @@ function Pool:check_despawn_condition_and_retrieve()
         self:despawn();
     end
 end
+
+return Pool
