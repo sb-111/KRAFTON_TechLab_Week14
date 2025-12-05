@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 #include "WheelVehiclePawn.h"
 #include "SkeletalMeshComponent.h"
-#include "VehicleMovementComponent.h"
+#include "Movement/VehicleMovementComponent.h"
 
 
 AWheeledVehiclePawn::AWheeledVehiclePawn()

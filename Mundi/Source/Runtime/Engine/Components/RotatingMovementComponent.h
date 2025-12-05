@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "MovementComponent.h"
+#include "Movement/MovementComponent.h"
 #include "Vector.h"
 #include "URotatingMovementComponent.generated.h"
 
