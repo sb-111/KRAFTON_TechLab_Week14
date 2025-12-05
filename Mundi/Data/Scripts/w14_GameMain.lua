@@ -10,6 +10,9 @@ function BeginPlay()
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
+--    GameState.OnStateChange(function()
+--      print("콜백 테스트")
+--    end)
 
     -- 시작 화면 표시
     GameState.ShowStartScreen()
