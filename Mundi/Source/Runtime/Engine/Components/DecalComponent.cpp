@@ -1,18 +1,10 @@
-﻿#include "pch.h"
-#include <cmath>
-#include "DecalComponent.h"
+#include "pch.h"
 #include "OBB.h"
+#include "DecalComponent.h"
 #include "StaticMeshComponent.h"
 #include "JsonSerializer.h"
 #include "BillboardComponent.h"
 #include "Gizmo/GizmoArrowComponent.h"
-// IMPLEMENT_CLASS is now auto-generated in .generated.cpp
-//BEGIN_PROPERTIES(UDecalComponent)
-//	MARK_AS_COMPONENT("데칼 컴포넌트", "표면에 투영되는 데칼 효과를 생성합니다.")
-//	ADD_PROPERTY_TEXTURE(UTexture*, DecalTexture, "Decal", true)
-//	ADD_PROPERTY_RANGE(float, DecalOpacity, "Decal", 0.0f, 1.0f, true, "데칼 불투명도입니다.")
-//	ADD_PROPERTY_RANGE(float, FadeSpeed, "Decal", 0.0f, 10.0f, true, "페이드 속도입니다 (초당 변화량).")
-//END_PROPERTIES()
 
 UDecalComponent::UDecalComponent()
 {
@@ -35,22 +27,36 @@ void UDecalComponent::DuplicateSubObjects()
 	SpriteComponent = nullptr;
 }
 
+void UDecalComponent::StartFadeIn(float Duration, float Delay, EDecalFadeStyle InFadeStyle)
+{
+	FadeProperty.FadeInDuration = Duration;
+	FadeProperty.FadeInStartDelay = Delay;
+	FadeProperty.StartFadeIn(InFadeStyle);
+}
+
+void UDecalComponent::StartFadeOut(float Duration, float Delay, bool bDestroyOwner, EDecalFadeStyle InFadeStyle)
+{
+	FadeProperty.FadeOutDuration = Duration;
+	FadeProperty.FadeStartDelay = Delay;
+	FadeProperty.bDestroyedAfterFade = bDestroyOwner;
+	FadeProperty.StartFadeOut(InFadeStyle);
+}
+
 void UDecalComponent::TickComponent(float DeltaTime)
 {
-	// Opacity 업데이트
-	DecalOpacity += static_cast<float>(FadeDirection) * FadeSpeed * DeltaTime;
+	// FadeProperty 업데이트
+	if (FadeProperty.Update(DeltaTime))
+	{
+		// 페이드 완료 후 삭제 처리 (World에 지연 삭제 요청)
+		if (FadeProperty.bDestroyedAfterFade && FadeProperty.bFadeCompleted)
+		{
+			if (UWorld* World = GetWorld())
+			{
+				World->AddPendingKillActor(GetOwner());
+			}
+		}
+	}
 
-	// 범위 체크 및 방향 반전
-	if (DecalOpacity <= 0.0f)
-	{
-		DecalOpacity = 0.0f;
-		FadeDirection = +1; // 다시 증가 시작
-	}
-	else if (DecalOpacity >= 1.0f)
-	{
-		DecalOpacity = 1.0f;
-		FadeDirection = -1; // 다시 감소 시작
-	}
 }
 
 void UDecalComponent::OnRegister(UWorld* InWorld)
@@ -180,20 +186,11 @@ FOBB UDecalComponent::GetWorldOBB() const
 
 FMatrix UDecalComponent::GetDecalProjectionMatrix() const
 {
-    const FOBB Obb = GetWorldOBB();
+	// 샘플 코드 방식: 데칼의 월드 역행렬 반환
+	// 이 행렬은 월드 좌표를 데칼의 로컬 공간 [-0.5, 0.5] 범위로 변환
+	// 스케일을 포함한 전체 월드 변환의 역행렬
+	const FMatrix DecalWorld = FMatrix::FromTRS(GetWorldLocation(), GetWorldRotation(), GetWorldScale());
+	const FMatrix DecalInverseWorld = DecalWorld.InverseAffine();
 
-	// yup to zup 행렬이 적용이 안되게 함: x방향 projection 행렬을 적용하기 위해.
-	const FMatrix DecalWorld = FMatrix::FromTRS(GetWorldLocation(), GetWorldRotation(), {1.0f, 1.0f, 1.0f});
-	const FMatrix DecalView = DecalWorld.InverseAffine();
-
-	const FVector Scale = GetWorldScale();
-	const FMatrix DecalProj = FMatrix::OrthoLH_XForward(Scale.Y, Scale.Z, -Obb.HalfExtent.X, Obb.HalfExtent.X);
-
-	FMatrix DecalViewProj = DecalView * DecalProj;
-
-    return DecalViewProj;
+    return DecalInverseWorld;
 }
-
-
-
-

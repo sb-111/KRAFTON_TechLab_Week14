@@ -1166,6 +1166,9 @@
     <ClCompile Include="Source\Runtime\Engine\Physics\ClothSystem.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\ConstraintInstance.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.cpp" />
+    <ClCompile Include="Generated\FDecalFadeProperty.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Generated\UParticleModuleSizeScaleBySpeed.generated.h">
@@ -2445,6 +2448,9 @@
     <ClInclude Include="Source\Runtime\Engine\Components\ConstraintAnchorComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\ClothSystem.h" />
     <ClInclude Include="Source\Runtime\Engine\Physics\RagdollDebugRenderer.h" />
+    <ClInclude Include="Generated\FDecalFadeProperty.generated.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py">

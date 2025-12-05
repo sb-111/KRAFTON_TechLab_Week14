@@ -3,6 +3,7 @@
 #include "PrimitiveComponent.h"
 #include "AABB.h"
 #include "Vector.h"
+#include "DecalFadeTypes.h"
 #include "UDecalComponent.generated.h"
 
 // Forward declarations
@@ -22,7 +23,6 @@ UCLASS(DisplayName = "데칼 컴포넌트", Description = "2D텍스쳐를 덧 �
 class UDecalComponent : public UPrimitiveComponent
 {
 public:
-
 	GENERATED_REFLECTION_BODY()
 
 	UDecalComponent();
@@ -33,16 +33,15 @@ protected:
 public:
 
     // ===== Lua-Bindable Properties (Auto-moved from protected/private) =====
+	UPROPERTY(EditAnywhere, Category = "Decal", Tooltip = "데칼 텍스처입니다")
+	UTexture* DecalTexture = nullptr;
 
-	UPROPERTY(EditAnywhere, Category="Decal", Range="0.0, 1.0", Tooltip="데칼 불투명도입니다.")
-	float DecalOpacity = 1.0f;
+	UPROPERTY(EditAnywhere, Category = "Decal", Tooltip = "데칼 페이드 설정")
+	FDecalFadeProperty FadeProperty;
 
-	UPROPERTY(EditAnywhere, Category="Decal", Range="0.0, 10.0", Tooltip="페이드 속도입니다 (초당 변화량).")
-	float FadeSpeed = 0.5f;   // 초당 변화 속도 (0.5 = 2초에 완전 페이드)
 	virtual void RenderDebugVolume(URenderer* Renderer) const override;
 
 	// Decal Resource API
-	
 	void SetDecalTexture(UTexture* InTexture);
 	void SetDecalTexture(const FString& TexturePath);
 	UTexture* GetDecalTexture() const { return DecalTexture; }
@@ -50,8 +49,16 @@ public:
 	// Decal Property API
 	void SetVisibility(bool bVisible) { bIsVisible = bVisible; }
 	bool IsVisible() const { return bIsVisible; }
-	void SetOpacity(float Opacity) { DecalOpacity = FMath::Clamp(Opacity, 0.0f, 1.0f); }
-	float GetOpacity() const { return DecalOpacity; }
+	void SetOpacity(float Opacity) { FadeProperty.FadeAlpha = FMath::Clamp(Opacity, 0.0f, 1.0f); }
+	float GetOpacity() const { return FadeProperty.FadeAlpha; }
+
+	// Fade 제어 API 
+	void StartFadeIn(float Duration, float Delay = 0.f, EDecalFadeStyle InFadeStyle = EDecalFadeStyle::Standard);
+	void StartFadeOut(float Duration, float Delay = 0.f, bool bDestroyOwner = false, 
+		EDecalFadeStyle InFadeStyle = EDecalFadeStyle::Standard);
+	float GetFadeAlpha() const { return FadeProperty.FadeAlpha; }
+	uint32_t GetFadeStyle() const { return static_cast<uint32_t>(FadeProperty.FadeStyle); }
+	bool IsFadeCompleted() const { return FadeProperty.bFadeCompleted; }
 
 	// Decal Volume & Bounds API
 	FAABB GetWorldAABB() const override;
@@ -70,17 +77,8 @@ public:
 	virtual void TickComponent(float DeltaTime) override;
 
 	void OnRegister(UWorld* InWorld) override;
-
+	
 private:
-	//UPROPERTY(EditAnywhere, Category="Decal", Tooltip="데칼 텍스처입니다")
-	UTexture* DecalTexture = nullptr;
-
 	UGizmoArrowComponent* DirectionGizmo = nullptr;
-
-	bool bIsVisible = true;
-
-
-	// for PIE Tick
-
-	int FadeDirection = -1;   // -1 = 감소 중, +1 = 증가 중
+	class UBillboardComponent* SpriteComponent = nullptr;
 };

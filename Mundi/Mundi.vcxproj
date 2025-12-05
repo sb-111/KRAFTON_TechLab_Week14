@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_StandAlone|x64">
@@ -736,6 +736,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClCompile Include="Generated\ATestCar.generated.cpp" />
     <ClCompile Include="Generated\UClothComponent.generated.cpp" />
     <ClCompile Include="Generated\ACurtainActor.generated.cpp" />
+    <ClCompile Include="Generated\FDecalFadeProperty.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -1130,6 +1131,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Source\Runtime\Engine\Collision\BoxSphereBounds.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\BillboardComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\CameraComponent.h" />
+    <ClInclude Include="Source\Runtime\Engine\Components\DecalFadeTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\DecalComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\HeightFogComponent.h" />
     <ClInclude Include="Source\Runtime\Engine\Components\LineComponent.h" />
@@ -1300,6 +1302,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
     <ClInclude Include="Generated\ATestCar.generated.h" />
     <ClInclude Include="Generated\UClothComponent.generated.h" />
     <ClInclude Include="Generated\ACurtainActor.generated.h" />
+    <ClInclude Include="Generated\FDecalFadeProperty.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />
