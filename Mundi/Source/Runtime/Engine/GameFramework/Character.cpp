@@ -4,13 +4,13 @@
 // ────────────────────────────────────────────────────────────────────────────
 #include "pch.h"
 #include "Character.h"
-#include "CharacterMovementComponent.h"
 #include "CapsuleComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "InputComponent.h"
 #include "World.h"
 #include "PlayerCameraManager.h"
 #include "CameraComponent.h"
+#include "Movement/CharacterMovementComponent.h"
 
 // ────────────────────────────────────────────────────────────────────────────
 // 생성자 / 소멸자

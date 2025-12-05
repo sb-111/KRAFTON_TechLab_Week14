@@ -17,6 +17,7 @@ public:
     void Shutdown();
 
     bool IsPlayActive() const { return bPlayActive; }
+    bool IsPIEActive() const { return true; }
 
     HWND GetHWND() const { return HWnd; }
 
