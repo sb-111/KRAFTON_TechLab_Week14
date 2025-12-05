@@ -5,7 +5,6 @@
 
 ATestCar::ATestCar()
 {
-	VehicleMovement = CreateDefaultSubobject<UVehicleMovementComponent4W>("VehicleMovement");
 	bTickInEditor = false;
 }
 
@@ -13,6 +12,10 @@ void ATestCar::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!(VehicleMovement = Cast<UVehicleMovementComponent4W>(GetComponent(UVehicleMovementComponent4W::StaticClass()))))
+	{
+		VehicleMovement = CreateDefaultSubobject<UVehicleMovementComponent4W>("VehicleMovement");
+	}
 	if (VehicleMovement)
 	{
 		VehicleMovement->CreatePhysicsVehicle();

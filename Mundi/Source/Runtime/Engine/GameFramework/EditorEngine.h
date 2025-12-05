@@ -46,6 +46,7 @@ public:
     {
         WorldContexts.push_back(InWorldContext);
     }
+    static void SaveIniFile();
 
 private:
     bool CreateMainWindow(HINSTANCE hInstance);

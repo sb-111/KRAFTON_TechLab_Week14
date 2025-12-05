@@ -8,6 +8,11 @@
 #include "FAudioDevice.h"
 #include <sol/sol.hpp>
 
+#include "ClothSystem.h"
+#include "FbxLoader.h"
+#include "PhysicsSystem.h"
+#include "SkeletalMeshComponent.h"
+
 float UGameEngine::ClientWidth = 1024.0f;
 float UGameEngine::ClientHeight = 1024.0f;
 
@@ -195,6 +200,7 @@ bool UGameEngine::Startup(HINSTANCE hInstance)
     INPUT.Initialize(HWnd);
 
     FObjManager::Preload();
+    UFbxLoader::PreLoad();
 
     // Preload audio assets
     FAudioDevice::Preload();
@@ -202,8 +208,10 @@ bool UGameEngine::Startup(HINSTANCE hInstance)
     ///////////////////////////////////
     WorldContexts.Add(FWorldContext(NewObject<UWorld>(), EWorldType::Game));
     GWorld = WorldContexts[0].World;
-    GWorld->Initialize();
     GWorld->bPie = true;
+    GWorld->Initialize();
+    FPhysicsSystem::GetInstance();
+    FClothSystem::GetInstance().Initialize();
     ///////////////////////////////////
 
     // 시작 scene(level)을 직접 로드 
@@ -347,6 +355,9 @@ void UGameEngine::Shutdown()
 
     // Shutdown audio device
     FAudioDevice::Shutdown();
+
+    FPhysicsSystem::Destroy();
+    FClothSystem::Destroy();
 
     // Explicitly release D3D11RHI resources before global destruction
     RHIDevice.Release();
