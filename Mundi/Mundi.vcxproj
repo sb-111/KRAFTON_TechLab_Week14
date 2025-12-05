@@ -124,7 +124,8 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXCooking_64.
 xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXDevice64.dll" "$(OutDir)"
 xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXFoundation_64.dll" "$(OutDir)"
 
-xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.dll" "$(OutDir)"</Command>
+xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.dll" "$(OutDir)"
+xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.pdb" "$(OutDir)"</Command>
       <Message>[PostBuild] Copying dependencies and publishing symbols...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -202,7 +203,8 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXCooking_64.
 xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXDevice64.dll" "$(OutDir)"
 xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\$(Configuration)\PhysXFoundation_64.dll" "$(OutDir)"
 
-xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.dll" "$(OutDir)"</Command>
+xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.dll" "$(OutDir)"
+xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\$(Configuration)\*.pdb" "$(OutDir)"</Command>
       <Message>[PostBuild] Copying dependencies and publishing symbols...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
