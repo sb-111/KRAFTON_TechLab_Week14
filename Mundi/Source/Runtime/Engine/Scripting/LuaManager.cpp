@@ -31,8 +31,12 @@ FLuaManager::FLuaManager()
         sol::lib::coroutine,
         sol::lib::math,
         sol::lib::table,
-        sol::lib::string
+        sol::lib::string,
+        sol::lib::package  // require 지원
     );
+
+    // package.path 설정 - Data/Scripts에서 모듈 검색
+    (*Lua)["package"]["path"] = "Data/Scripts/?.lua;Data/Scripts/?/init.lua";
 
     SharedLib = Lua->create_table();
 
@@ -166,8 +170,9 @@ FLuaManager::FLuaManager()
     ));
     
     // GlobalConfig는 전역 table
-    SharedLib["GlobalConfig"] = Lua->create_table(); 
-    // SharedLib["GlobalConfig"]["Gravity"] = 9.8;
+    SharedLib["GlobalConfig"] = Lua->create_table();
+    // require로 로드된 모듈도 GlobalConfig에 접근할 수 있도록 globals에도 노출
+    (*Lua)["GlobalConfig"] = SharedLib["GlobalConfig"];
 
     SharedLib.set_function("SpawnPrefab", sol::overload(
         [](const FString& PrefabPath) -> FGameObject*
