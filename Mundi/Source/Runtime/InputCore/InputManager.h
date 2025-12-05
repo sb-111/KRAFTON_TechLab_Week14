@@ -7,6 +7,38 @@
 #include "Vector.h"
 #include "ImGui/imgui.h"
 
+// 게임패드 버튼 매핑
+enum class EGamepadButton
+{
+    DPadUp = XINPUT_GAMEPAD_DPAD_UP,
+    DPadDown = XINPUT_GAMEPAD_DPAD_DOWN,
+    DPadLeft = XINPUT_GAMEPAD_DPAD_LEFT,
+    DPadRight = XINPUT_GAMEPAD_DPAD_RIGHT,
+    Start = XINPUT_GAMEPAD_START,
+    Back = XINPUT_GAMEPAD_BACK,
+    LeftThumb = XINPUT_GAMEPAD_LEFT_THUMB,
+    RightThumb = XINPUT_GAMEPAD_RIGHT_THUMB,
+    LeftShoulder = XINPUT_GAMEPAD_LEFT_SHOULDER,
+    RightShoulder = XINPUT_GAMEPAD_RIGHT_SHOULDER,
+    A = XINPUT_GAMEPAD_A,
+    B = XINPUT_GAMEPAD_B,
+    X = XINPUT_GAMEPAD_X,
+    Y = XINPUT_GAMEPAD_Y
+};
+
+// 게임패드 상태 구조체
+struct FGamepadState
+{
+    bool bConnected = false;
+    float LeftStickX = 0.0f;
+    float LeftStickY = 0.0f;
+    float RightStickX = 0.0f;
+    float RightStickY = 0.0f;
+    float LeftTrigger = 0.0f;
+    float RightTrigger = 0.0f;
+    WORD Buttons = 0; // 비트마스크
+};
+
 // 마우스 버튼 상수
 enum EMouseButton
 {
@@ -81,11 +113,31 @@ public:
     void CaptureMouse();
     void ReleaseMouseCapture();
 
+    // 게임패드 함수들 (ControllerIndex: 0~3)
+    bool IsGamepadConnected(int ControllerIndex = 0) const;
+    
+    // 버튼 입력 (키보드와 동일한 패턴)
+    bool IsGamepadButtonDown(EGamepadButton Button, int ControllerIndex = 0) const;
+    bool IsGamepadButtonPressed(EGamepadButton Button, int ControllerIndex = 0) const; // 이번 프레임에 눌림
+    bool IsGamepadButtonReleased(EGamepadButton Button, int ControllerIndex = 0) const; // 이번 프레임에 떼짐
+
+    // 아날로그 입력 (반환값: -1.0 ~ 1.0 또는 0.0 ~ 1.0)
+    float GetGamepadLeftStickX(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].LeftStickX : 0.0f; }
+    float GetGamepadLeftStickY(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].LeftStickY : 0.0f; }
+    float GetGamepadRightStickX(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].RightStickX : 0.0f; }
+    float GetGamepadRightStickY(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].RightStickY : 0.0f; }
+    float GetGamepadLeftTrigger(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].LeftTrigger : 0.0f; }
+    float GetGamepadRightTrigger(int ControllerIndex = 0) const { return IsGamepadConnected(ControllerIndex) ? GamepadStates[ControllerIndex].RightTrigger : 0.0f; }
+    // 진동 설정 (0.0 ~ 1.0)
+    void SetGamepadVibration(float LeftMotor, float RightMotor, int ControllerIndex = 0);
+
 private:
     // 내부 헬퍼 함수들
     void UpdateMousePosition(int X, int Y);
     void UpdateMouseButton(EMouseButton Button, bool bPressed);
     void UpdateKeyState(int KeyCode, bool bPressed);
+    void UpdateGamepadStates();
+    float ApplyDeadzone(float Value, float Deadzone);
 
     // 윈도우 핸들
     HWND WindowHandle;
@@ -114,4 +166,9 @@ private:
     // 커서 잠금 상태
     bool bIsCursorLocked = false;
     FVector2D LockedCursorPosition; // 우클릭한 위치 (기준점)
+
+    // 게임패드 상태 변수 (최대 4개 지원)
+    static const int MaxControllers = 4;
+    FGamepadState GamepadStates[MaxControllers];
+    FGamepadState PreviousGamepadStates[MaxControllers];
 };

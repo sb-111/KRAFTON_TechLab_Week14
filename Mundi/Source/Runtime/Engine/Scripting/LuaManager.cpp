@@ -103,6 +103,25 @@ FLuaManager::FLuaManager()
             return Camera->GetForward();
         }
     );
+
+    // Gamepad Button Enum 바인딩
+    Lua->new_enum("GamepadButton",
+        "DPadUp", EGamepadButton::DPadUp,
+        "DPadDown", EGamepadButton::DPadDown,
+        "DPadLeft", EGamepadButton::DPadLeft,
+        "DPadRight", EGamepadButton::DPadRight,
+        "Start", EGamepadButton::Start,
+        "Back", EGamepadButton::Back,
+        "LeftThumb", EGamepadButton::LeftThumb,
+        "RightThumb", EGamepadButton::RightThumb,
+        "LeftShoulder", EGamepadButton::LeftShoulder,
+        "RightShoulder", EGamepadButton::RightShoulder,
+        "A", EGamepadButton::A,
+        "B", EGamepadButton::B,
+        "X", EGamepadButton::X,
+        "Y", EGamepadButton::Y
+    );
+    
     Lua->new_usertype<UInputManager>("InputManager",
         "IsKeyDown", sol::overload(
             &UInputManager::IsKeyDown,
@@ -140,7 +159,27 @@ FLuaManager::FLuaManager()
                 Self->SetCursorVisible(false);
                 Self->LockCursor();
             }
-        }
+        },
+        // 연결 확인
+        "IsGamepadConnected", &UInputManager::IsGamepadConnected,
+
+        // 버튼 입력 (Enum 사용)
+        "IsGamepadButtonDown", &UInputManager::IsGamepadButtonDown,
+        "IsGamepadButtonPressed", &UInputManager::IsGamepadButtonPressed,
+        "IsGamepadButtonReleased", &UInputManager::IsGamepadButtonReleased,
+
+        // 아날로그 스틱 (-1.0 ~ 1.0)
+        "GetGamepadLeftStickX", &UInputManager::GetGamepadLeftStickX,
+        "GetGamepadLeftStickY", &UInputManager::GetGamepadLeftStickY,
+        "GetGamepadRightStickX", &UInputManager::GetGamepadRightStickX,
+        "GetGamepadRightStickY", &UInputManager::GetGamepadRightStickY,
+
+        // 트리거 (0.0 ~ 1.0)
+        "GetGamepadLeftTrigger", &UInputManager::GetGamepadLeftTrigger,
+        "GetGamepadRightTrigger", &UInputManager::GetGamepadRightTrigger,
+
+        // 진동 (Left, Right, ControllerIndex)
+        "SetGamepadVibration", &UInputManager::SetGamepadVibration
     );                
     
     sol::table MouseButton = Lua->create_table("MouseButton");
