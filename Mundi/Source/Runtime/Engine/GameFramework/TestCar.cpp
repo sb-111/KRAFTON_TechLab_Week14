@@ -31,7 +31,7 @@ void ATestCar::DuplicateSubObjects()
 
 	for (UActorComponent* Component : OwnedComponents)
 	{
-		if (UVehicleMovementComponent* Movement = Cast< UVehicleMovementComponent>(Component))
+		if (UVehicleMovementComponent* Movement = Cast<UVehicleMovementComponent>(Component))
 		{
 			VehicleMovement = Movement;
 		}

@@ -103,6 +103,25 @@ FLuaManager::FLuaManager()
             return Camera->GetForward();
         }
     );
+
+    // Gamepad Button Enum 바인딩
+    Lua->new_enum("GamepadButton",
+        "DPadUp", EGamepadButton::DPadUp,
+        "DPadDown", EGamepadButton::DPadDown,
+        "DPadLeft", EGamepadButton::DPadLeft,
+        "DPadRight", EGamepadButton::DPadRight,
+        "Start", EGamepadButton::Start,
+        "Back", EGamepadButton::Back,
+        "LeftThumb", EGamepadButton::LeftThumb,
+        "RightThumb", EGamepadButton::RightThumb,
+        "LeftShoulder", EGamepadButton::LeftShoulder,
+        "RightShoulder", EGamepadButton::RightShoulder,
+        "A", EGamepadButton::A,
+        "B", EGamepadButton::B,
+        "X", EGamepadButton::X,
+        "Y", EGamepadButton::Y
+    );
+    
     Lua->new_usertype<UInputManager>("InputManager",
         "IsKeyDown", sol::overload(
             &UInputManager::IsKeyDown,
@@ -140,7 +159,27 @@ FLuaManager::FLuaManager()
                 Self->SetCursorVisible(false);
                 Self->LockCursor();
             }
-        }
+        },
+        // 연결 확인
+        "IsGamepadConnected", &UInputManager::IsGamepadConnected,
+
+        // 버튼 입력 (Enum 사용)
+        "IsGamepadButtonDown", &UInputManager::IsGamepadButtonDown,
+        "IsGamepadButtonPressed", &UInputManager::IsGamepadButtonPressed,
+        "IsGamepadButtonReleased", &UInputManager::IsGamepadButtonReleased,
+
+        // 아날로그 스틱 (-1.0 ~ 1.0)
+        "GetGamepadLeftStickX", &UInputManager::GetGamepadLeftStickX,
+        "GetGamepadLeftStickY", &UInputManager::GetGamepadLeftStickY,
+        "GetGamepadRightStickX", &UInputManager::GetGamepadRightStickX,
+        "GetGamepadRightStickY", &UInputManager::GetGamepadRightStickY,
+
+        // 트리거 (0.0 ~ 1.0)
+        "GetGamepadLeftTrigger", &UInputManager::GetGamepadLeftTrigger,
+        "GetGamepadRightTrigger", &UInputManager::GetGamepadRightTrigger,
+
+        // 진동 (Left, Right, ControllerIndex)
+        "SetGamepadVibration", &UInputManager::SetGamepadVibration
     );                
     
     sol::table MouseButton = Lua->create_table("MouseButton");
@@ -362,6 +401,22 @@ FLuaManager::FLuaManager()
     RegisterComponentProxy(*Lua);
     ExposeGlobalFunctions();
     ExposeAllComponentsToLua();
+
+    // require로 로드된 모듈에서도 엔진 함수 사용 가능하도록 globals에 노출
+    (*Lua)["GetComponent"] = SharedLib["GetComponent"];
+    (*Lua)["AddComponent"] = SharedLib["AddComponent"];
+    (*Lua)["GetOwnerAs"] = SharedLib["GetOwnerAs"];
+    (*Lua)["SpawnPrefab"] = SharedLib["SpawnPrefab"];
+    (*Lua)["DeleteObject"] = SharedLib["DeleteObject"];
+    (*Lua)["FindObjectByName"] = SharedLib["FindObjectByName"];
+    (*Lua)["FindComponentByName"] = SharedLib["FindComponentByName"];
+    (*Lua)["GetCamera"] = SharedLib["GetCamera"];
+    (*Lua)["GetCameraManager"] = SharedLib["GetCameraManager"];
+    (*Lua)["SetPlayerForward"] = SharedLib["SetPlayerForward"];
+    (*Lua)["Vector"] = SharedLib["Vector"];
+    (*Lua)["SetSlomo"] = SharedLib["SetSlomo"];
+    (*Lua)["HitStop"] = SharedLib["HitStop"];
+    (*Lua)["TargetHitStop"] = SharedLib["TargetHitStop"];
 
     // 위 등록 마친 뒤 fall back 설정 : Shared lib의 fall back은 G
     sol::table MetaTableShared = Lua->create_table();

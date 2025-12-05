@@ -119,20 +119,36 @@ void APlayerController::ProcessPlayerInput()
 
 	float ThrottleInput = 0.0f;
 	float SteerInput = 0.0f;
-	// 무슨 구조인지 모르겠는데 시간 없어서 일단 Controller에서 인풋처리해서 Pawn 콜백함수 바로 불러주도록 함
-	if (InputManager->IsKeyDown('W'))
+	const float StickThreshold = 0.25f; 
+
+	// Forward (W): 키보드 W OR 왼쪽 스틱 위로 OR 십자키 위
+	if (InputManager->IsKeyDown('W') || 
+		InputManager->GetGamepadLeftStickY() > StickThreshold || 
+		InputManager->IsGamepadButtonDown(EGamepadButton::DPadUp))
 	{
 		ThrottleInput += 1.0f;
 	}
-	if (InputManager->IsKeyDown('D'))
+
+	// Right (D): 키보드 D OR 왼쪽 스틱 오른쪽 OR 십자키 오른쪽
+	if (InputManager->IsKeyDown('D') || 
+		InputManager->GetGamepadLeftStickX() > StickThreshold || 
+		InputManager->IsGamepadButtonDown(EGamepadButton::DPadRight))
 	{
 		SteerInput += 1.0f;
 	}
-	if (InputManager->IsKeyDown('A'))
+
+	// Left (A): 키보드 A OR 왼쪽 스틱 왼쪽 OR 십자키 왼쪽
+	if (InputManager->IsKeyDown('A') || 
+		InputManager->GetGamepadLeftStickX() < -StickThreshold || 
+		InputManager->IsGamepadButtonDown(EGamepadButton::DPadLeft))
 	{
 		SteerInput -= 1.0f;
 	}
-	if (InputManager->IsKeyDown('S'))
+
+	// Backward (S): 키보드 S OR 왼쪽 스틱 아래로 OR 십자키 아래
+	if (InputManager->IsKeyDown('S') || 
+		InputManager->GetGamepadLeftStickY() < -StickThreshold || 
+		InputManager->IsGamepadButtonDown(EGamepadButton::DPadDown))
 	{
 		ThrottleInput -= 1.0f;
 	}

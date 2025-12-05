@@ -15,6 +15,10 @@
 // DirectXTK
 #pragma comment(lib, "DirectXTK.lib")
 
+// Pad
+#pragma comment(lib, "Xinput.lib")
+#include <XInput.h>
+
 // Standard Library (MUST come before UEContainer.h)
 #include <vector>
 #include <map>
