@@ -298,6 +298,34 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\Physx\Release\PhysXFoundation_64.dll" "
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release_StandAlone|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <Content Include="Data\Scripts\Apple.lua" />
+    <Content Include="Data\Scripts\AppleManager.lua" />
+    <Content Include="Data\Scripts\BoomEffect.lua" />
+    <Content Include="Data\Scripts\CGCAttack.lua" />
+    <Content Include="Data\Scripts\CGCWeapon.lua" />
+    <Content Include="Data\Scripts\coach.lua" />
+    <Content Include="Data\Scripts\coroutineTest.lua" />
+    <Content Include="Data\Scripts\DanceSwitcher.lua" />
+    <Content Include="Data\Scripts\Fireball.lua" />
+    <Content Include="Data\Scripts\Fireball1.lua" />
+    <Content Include="Data\Scripts\FireballDestroyArea.lua" />
+    <Content Include="Data\Scripts\FireballManager.lua" />
+    <Content Include="Data\Scripts\FireballSpawnArea.lua" />
+    <Content Include="Data\Scripts\Fireballtest.lua" />
+    <Content Include="Data\Scripts\FMath.lua" />
+    <Content Include="Data\Scripts\names.lua" />
+    <Content Include="Data\Scripts\NewScript.lua" />
+    <Content Include="Data\Scripts\Player.lua" />
+    <Content Include="Data\Scripts\PlayerController.lua" />
+    <Content Include="Data\Scripts\PlayerSpawner.lua" />
+    <Content Include="Data\Scripts\PropertySystemTest.lua" />
+    <Content Include="Data\Scripts\RotatingSpawner.lua" />
+    <Content Include="Data\Scripts\SHC.lua" />
+    <Content Include="Data\Scripts\TestPropertyBinding.lua" />
+    <Content Include="Data\Scripts\Tile.lua" />
+    <Content Include="Data\Scripts\TileMap.lua" />
+    <Content Include="Data\Scripts\UIManager.lua" />
+    <Content Include="Data\Scripts\w14_Queue.lua" />
     <Content Include="Shaders\PostProcess\DepthOfField_Gaussian_Blur_CS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_CoCVisualize_PS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_Composite_PS.hlsl" />
