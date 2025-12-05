@@ -157,23 +157,7 @@ bool UWorld::TryLoadLastUsedLevel()
 	// 로드 직전: Transform 위젯/선택 초기화
 	UUIManager::GetInstance().ClearTransformWidgetSelection();
 	GWorld->GetSelectionManager()->ClearSelection();
-
-	std::unique_ptr<ULevel> NewLevel = ULevelService::CreateDefaultLevel();
-	JSON LevelJsonData;
-	if (FJsonSerializer::LoadJsonFromFile(LevelJsonData, LastUsedLevelPath))
-	{
-		//NewLevel->Serialize(true, LevelJsonData);
-	}
-	else
-	{
-		UE_LOG("[error] MainToolbar: Failed To Load Level From: %s", LastUsedLevelPath.c_str());
-		return false;
-	}
-
-	SetLevel(std::move(NewLevel));
-
-	UE_LOG("MainToolbar: Scene loaded successfully: %s", LastUsedLevelPath.c_str());
-	return true;
+	return LoadLevelFromFile(LastUsedLevelPath);
 }
 
 bool UWorld::LoadLevelFromFile(const FWideString& Path)
@@ -187,13 +171,13 @@ bool UWorld::LoadLevelFromFile(const FWideString& Path)
 	}
 	else
 	{
-		UE_LOG("[error] MainToolbar: Failed To Load Level From: %s", Path.c_str());
+		UE_LOG("[error] MainToolbar: Failed To Load Level From: %s", WideToUTF8(Path).c_str());
 		return false;
 	}
 
 	SetLevel(std::move(NewLevel));
 
-	UE_LOG("UWorld: Scene loaded successfully: %s", Path.c_str());
+	UE_LOG("UWorld: Scene loaded successfully: %s", WideToUTF8(Path).c_str());
 	return true;
 }
 
@@ -233,7 +217,7 @@ void UWorld::Tick(float DeltaSeconds)
 	{
 		// 래그돌 통계 초기화 (시뮬레이션 전에 리셋)
 		FRagdollStatManager::GetInstance().ResetFrameStats();
-		PhysicsScene->Simulate(GetDeltaTime(EDeltaTime::Game));
+		PhysicsScene->Simulate(DeltaSeconds);
 	}
 
 	// Actor 별로 Dilation의 Duration을 처리하는 부분
@@ -354,7 +338,6 @@ UWorld* UWorld::DuplicateWorldForPIE(UWorld* InEditorWorld)
 	PIEWorld->CollisionManager->SetWorld(PIEWorld);
 
 	PIEWorld->PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
-	PIEWorld->PhysicsScene->InitVehicleSDK();
 
 	// PIE 월드에 파티클 이벤트 매니저 생성
 	PIEWorld->ParticleEventManager = PIEWorld->SpawnActor<AParticleEventManager>();
@@ -577,7 +560,7 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
 			{
 				Actor->SetWorld(this);
 				Actor->RegisterAllComponents(this);
-}
+			}
         }
     }
 
@@ -724,10 +707,7 @@ AActor* UWorld::SpawnActor(UClass* Class, const FTransform& Transform)
 	// 현재 레벨에 액터 등록
 	AddActorToLevel(NewActor);
 
-	if (this->bPie)
-	{
-		NewActor->BeginPlay();
-	}
+	NewActor->BeginPlay();
 
 	return NewActor;
 }
@@ -774,11 +754,7 @@ AActor* UWorld::SpawnPrefabActor(const FWideString& PrefabPath)
 
 			// 현재 레벨에 액터 등록
 			AddActorToLevel(NewActor);
-
-			if (this->bPie)
-			{
-				NewActor->BeginPlay();
-			}
+			NewActor->BeginPlay();
 
 			return NewActor;
 		}

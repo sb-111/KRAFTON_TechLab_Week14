@@ -109,6 +109,8 @@ void UInputManager::Update()
         }
     }
 
+    UpdateGamepadStates();
+
     memcpy(PreviousMouseButtons, MouseButtons, sizeof(MouseButtons));
     memcpy(PreviousKeyStates, KeyStates, sizeof(KeyStates));
 }
@@ -384,6 +386,20 @@ void UInputManager::ResetAllKeyStates()
     }
 }
 
+void UInputManager::SetGamepadVibration(float LeftMotor, float RightMotor, int ControllerIndex)
+{
+    if (!IsGamepadConnected(ControllerIndex)) return;
+
+    XINPUT_VIBRATION Vibration;
+    ZeroMemory(&Vibration, sizeof(XINPUT_VIBRATION));
+
+    // 0.0~1.0 -> 0~65535 변환
+    Vibration.wLeftMotorSpeed = static_cast<WORD>(LeftMotor * 65535.0f);
+    Vibration.wRightMotorSpeed = static_cast<WORD>(RightMotor * 65535.0f);
+
+    XInputSetState(ControllerIndex, &Vibration);
+}
+
 void UInputManager::UpdateMousePosition(int X, int Y)
 {
     MousePosition.X = static_cast<float>(X);
@@ -404,6 +420,65 @@ void UInputManager::UpdateKeyState(int KeyCode, bool bPressed)
     {
         KeyStates[KeyCode] = bPressed;
     }
+}
+
+void UInputManager::UpdateGamepadStates()
+{
+    for (int i = 0; i < MaxControllers; i++)
+    {
+        // 이전 프레임 상태 저장 (Edge Detection용)
+        PreviousGamepadStates[i] = GamepadStates[i];
+
+        // XInput 상태 가져오기
+        XINPUT_STATE State;
+        ZeroMemory(&State, sizeof(XINPUT_STATE));
+
+        DWORD Result = XInputGetState(i, &State);
+
+        if (Result == ERROR_SUCCESS)
+        {
+            GamepadStates[i].bConnected = true;
+
+            // 버튼 상태 복사
+            GamepadStates[i].Buttons = State.Gamepad.wButtons;
+
+            // 스틱 데드존 처리 및 정규화 (-1.0 ~ 1.0)
+            // XInput 값 범위: -32768 ~ 32767
+            GamepadStates[i].LeftStickX = ApplyDeadzone(static_cast<float>(State.Gamepad.sThumbLX) / 32767.0f, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32767.0f);
+            GamepadStates[i].LeftStickY = ApplyDeadzone(static_cast<float>(State.Gamepad.sThumbLY) / 32767.0f, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32767.0f);
+            GamepadStates[i].RightStickX = ApplyDeadzone(static_cast<float>(State.Gamepad.sThumbRX) / 32767.0f, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32767.0f);
+            GamepadStates[i].RightStickY = ApplyDeadzone(static_cast<float>(State.Gamepad.sThumbRY) / 32767.0f, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32767.0f);
+
+            // 트리거 정규화 (0.0 ~ 1.0)
+            GamepadStates[i].LeftTrigger = static_cast<float>(State.Gamepad.bLeftTrigger) / 255.0f;
+            GamepadStates[i].RightTrigger = static_cast<float>(State.Gamepad.bRightTrigger) / 255.0f;
+
+            // 트리거 임계값(Threshold) 처리
+            if (GamepadStates[i].LeftTrigger < XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 255.0f) GamepadStates[i].LeftTrigger = 0.0f;
+            if (GamepadStates[i].RightTrigger < XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 255.0f) GamepadStates[i].RightTrigger = 0.0f;
+        }
+        else
+        {
+            // 연결 끊김
+            GamepadStates[i].bConnected = false;
+            GamepadStates[i].Buttons = 0;
+            GamepadStates[i].LeftStickX = GamepadStates[i].LeftStickY = 0.0f;
+            GamepadStates[i].RightStickX = GamepadStates[i].RightStickY = 0.0f;
+            GamepadStates[i].LeftTrigger = GamepadStates[i].RightTrigger = 0.0f;
+        }
+    }
+}
+
+float UInputManager::ApplyDeadzone(float Value, float Deadzone)
+{
+    if (abs(Value) < Deadzone)
+    {
+        return 0.0f;
+    }
+    
+    // 데드존 바깥 영역을 0~1로 재매핑
+    float Sign = (Value > 0) ? 1.0f : -1.0f;
+    return Sign * (std::abs(Value) - Deadzone) / (1.0f - Deadzone);
 }
 
 FVector2D UInputManager::GetScreenSize() const
@@ -495,4 +570,34 @@ void UInputManager::CaptureMouse()
 void UInputManager::ReleaseMouseCapture()
 {
     ::ReleaseCapture();
+}
+
+bool UInputManager::IsGamepadConnected(int ControllerIndex) const
+{
+    if (ControllerIndex < 0 || ControllerIndex >= MaxControllers) return false;
+    return GamepadStates[ControllerIndex].bConnected;
+}
+
+bool UInputManager::IsGamepadButtonDown(EGamepadButton Button, int ControllerIndex) const
+{
+    if (!IsGamepadConnected(ControllerIndex)) return false;
+    return (GamepadStates[ControllerIndex].Buttons & (WORD)Button) != 0;
+}
+
+bool UInputManager::IsGamepadButtonPressed(EGamepadButton Button, int ControllerIndex) const
+{
+    if (!IsGamepadConnected(ControllerIndex)) return false;
+    // 현재는 눌려있고(AND), 이전엔 안 눌려있었다(NOT)
+    bool bCurrent = (GamepadStates[ControllerIndex].Buttons & (WORD)Button) != 0;
+    bool bPrev = (PreviousGamepadStates[ControllerIndex].Buttons & (WORD)Button) != 0;
+    return bCurrent && !bPrev;
+}
+
+bool UInputManager::IsGamepadButtonReleased(EGamepadButton Button, int ControllerIndex) const
+{
+    if (!IsGamepadConnected(ControllerIndex)) return false;
+    // 현재는 안 눌려있고, 이전엔 눌려있었다
+    bool bCurrent = (GamepadStates[ControllerIndex].Buttons & (WORD)Button) != 0;
+    bool bPrev = (PreviousGamepadStates[ControllerIndex].Buttons & (WORD)Button) != 0;
+    return !bCurrent && bPrev;
 }

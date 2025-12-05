@@ -5,7 +5,6 @@
 
 ATestCar::ATestCar()
 {
-	VehicleMovement = CreateDefaultSubobject<UVehicleMovementComponent4W>("VehicleMovement");
 	bTickInEditor = false;
 }
 
@@ -13,6 +12,10 @@ void ATestCar::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!(VehicleMovement = Cast<UVehicleMovementComponent4W>(GetComponent(UVehicleMovementComponent4W::StaticClass()))))
+	{
+		VehicleMovement = CreateDefaultSubobject<UVehicleMovementComponent4W>("VehicleMovement");
+	}
 	if (VehicleMovement)
 	{
 		VehicleMovement->CreatePhysicsVehicle();
@@ -28,7 +31,7 @@ void ATestCar::DuplicateSubObjects()
 
 	for (UActorComponent* Component : OwnedComponents)
 	{
-		if (UVehicleMovementComponent* Movement = Cast< UVehicleMovementComponent>(Component))
+		if (UVehicleMovementComponent* Movement = Cast<UVehicleMovementComponent>(Component))
 		{
 			VehicleMovement = Movement;
 		}

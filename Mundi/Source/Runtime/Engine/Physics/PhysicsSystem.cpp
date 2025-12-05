@@ -148,7 +148,9 @@ std::unique_ptr<FPhysicsScene> FPhysicsSystem::CreateScene()
 		PvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
 
-	return std::make_unique<FPhysicsScene>(NewScene);
+	auto Scene = std::make_unique<FPhysicsScene>(NewScene);
+	Scene->InitVehicleSDK();
+	return Scene;
 }
 
 PxConvexMesh* FPhysicsSystem::CreateConvexMesh(FKConvexElem* ConvexElement)
