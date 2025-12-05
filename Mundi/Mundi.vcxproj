@@ -314,6 +314,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\names.lua" />
     <Content Include="Data\Scripts\NewScript.lua" />
     <Content Include="Data\Scripts\Player.lua" />
+    <Content Include="Data\Scripts\w14_ControlManager.lua" />
     <Content Include="Data\Scripts\PlayerController.lua" />
     <Content Include="Data\Scripts\PlayerSpawner.lua" />
     <Content Include="Data\Scripts\PropertySystemTest.lua" />
@@ -323,7 +324,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Tile.lua" />
     <Content Include="Data\Scripts\TileMap.lua" />
     <Content Include="Data\Scripts\UIManager.lua" />
-    <Content Include="Data\Scripts\w14_Main.lua" />
+    <Content Include="Data\Scripts\w14_GameMain.lua" />
     <Content Include="Data\Scripts\w14_MapPool.lua" />
     <Content Include="Data\Scripts\w14_ObjectPool.lua" />
     <Content Include="Data\Scripts\w14_Queue.lua" />
