@@ -30,6 +30,35 @@ class UAudioComponent : public USceneComponent
     UFUNCTION(LuaBind, DisplayName="SetSound", Tooltip="Set sound for the first slot")
     void SetSound(USound* NewSound) { if (Sounds.IsEmpty()) Sounds.Add(NewSound); else Sounds[0] = NewSound; }
 
+    // Looping 설정
+    UFUNCTION(LuaBind, DisplayName="SetLooping", Tooltip="Set looping on/off")
+    void SetLooping(bool bLoop) { bIsLooping = bLoop; }
+
+    UFUNCTION(LuaBind, DisplayName="GetLooping", Tooltip="Get looping state")
+    bool GetLooping() const { return bIsLooping; }
+
+    // AutoPlay 설정
+    UFUNCTION(LuaBind, DisplayName="SetAutoPlay", Tooltip="Set auto play on/off")
+    void SetAutoPlay(bool bAuto) { bAutoPlay = bAuto; }
+
+    // 재생 상태 확인
+    UFUNCTION(LuaBind, DisplayName="IsPlaying", Tooltip="Check if audio is playing")
+    bool IsPlaying() const { return bIsPlaying; }
+
+    // Volume 설정
+    UFUNCTION(LuaBind, DisplayName="SetVolume", Tooltip="Set volume 0.0 to 1.0")
+    void SetVolume(float InVolume) { Volume = InVolume; }
+
+    UFUNCTION(LuaBind, DisplayName="GetVolume", Tooltip="Get volume")
+    float GetVolume() const { return Volume; }
+
+    // 2D/3D 설정
+    UFUNCTION(LuaBind, DisplayName="SetIs2D", Tooltip="Set 2D mode on/off")
+    void SetIs2D(bool bMode) { bIs2D = bMode; }
+
+    UFUNCTION(LuaBind, DisplayName="GetIs2D", Tooltip="Get 2D mode state")
+    bool GetIs2D() const { return bIs2D; }
+
 public:
     // Multiple sounds accessible by index
     UPROPERTY(EditAnywhere, Category="Sound", Tooltip="Array of sound assets to play")
@@ -46,6 +75,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Audio", Tooltip="Auto play on BeginPlay")
     bool  bAutoPlay;
+
+    UPROPERTY(EditAnywhere, Category="Audio", Tooltip="Play as 2D sound without spatial positioning")
+    bool  bIs2D;
 
     // Duplication
     virtual void DuplicateSubObjects() override;

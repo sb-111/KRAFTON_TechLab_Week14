@@ -18,6 +18,7 @@ UAudioComponent::UAudioComponent()
     , Pitch(1.0f)
     , bIsLooping(false)
     , bAutoPlay(true)
+    , bIs2D(false)
     , bIsPlaying(false)
 {
 }
@@ -42,8 +43,12 @@ void UAudioComponent::TickComponent(float DeltaTime)
 
     if (bIsPlaying && SourceVoice)
     {
-        FVector CurrentLocation = GetWorldLocation();
-        FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation);
+        // 2D 사운드는 공간 업데이트 불필요
+        if (!bIs2D)
+        {
+            FVector CurrentLocation = GetWorldLocation();
+            FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation);
+        }
 
         if (!bIsLooping)
         {
@@ -98,8 +103,18 @@ void UAudioComponent::PlaySlot(uint32 SlotIndex)
     if (!Selected) return;
     //if (bIsPlaying) return;
 
-    FVector CurrentLocation = GetWorldLocation();
-    SourceVoice = FAudioDevice::PlaySound3D(Selected, CurrentLocation, Volume, bIsLooping);
+    if (bIs2D)
+    {
+        // 2D: 공간 처리 없이 양쪽 귀에 동일 볼륨
+        SourceVoice = FAudioDevice::PlaySound2D(Selected, Volume, bIsLooping);
+    }
+    else
+    {
+        // 3D: 컴포넌트 위치 기반 공간 오디오
+        FVector CurrentLocation = GetWorldLocation();
+        SourceVoice = FAudioDevice::PlaySound3D(Selected, CurrentLocation, Volume, bIsLooping);
+    }
+
     if (SourceVoice)
     {
         SourceVoice->SetFrequencyRatio(Pitch);

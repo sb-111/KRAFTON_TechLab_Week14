@@ -404,6 +404,7 @@ FLuaManager::FLuaManager()
 
     // require로 로드된 모듈에서도 엔진 함수 사용 가능하도록 globals에 노출
     (*Lua)["GetComponent"] = SharedLib["GetComponent"];
+    (*Lua)["GetComponents"] = SharedLib["GetComponents"];
     (*Lua)["AddComponent"] = SharedLib["AddComponent"];
     (*Lua)["GetOwnerAs"] = SharedLib["GetOwnerAs"];
     (*Lua)["SpawnPrefab"] = SharedLib["SpawnPrefab"];
@@ -499,6 +500,36 @@ void FLuaManager::ExposeAllComponentsToLua()
             if (!Comp) return sol::make_object(*Lua, sol::nil);
 
             return MakeCompProxy(*Lua, Comp, Class);
+        }
+    );
+
+    // 같은 타입의 모든 컴포넌트를 배열로 반환
+    SharedLib.set_function("GetComponents",
+        [this](sol::object Obj, const FString& ClassName)
+        {
+            sol::table Result = Lua->create_table();
+
+            if (!Obj.is<FGameObject&>()) {
+                UE_LOG("[Lua][error] GetComponents: Expected GameObject\n");
+                return Result;
+            }
+
+            FGameObject& GameObject = Obj.as<FGameObject&>();
+            AActor* Actor = GameObject.GetOwner();
+
+            UClass* Class = UClass::FindClass(ClassName);
+            if (!Class) return Result;
+
+            int Index = 1;
+            for (UActorComponent* Comp : Actor->GetOwnedComponents())
+            {
+                if (Comp && Comp->IsA(Class))
+                {
+                    Result[Index++] = MakeCompProxy(*Lua, Comp, Class);
+                }
+            }
+
+            return Result;
         }
     );
 
