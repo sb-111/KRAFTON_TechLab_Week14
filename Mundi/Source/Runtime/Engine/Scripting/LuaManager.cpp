@@ -363,6 +363,22 @@ FLuaManager::FLuaManager()
     ExposeGlobalFunctions();
     ExposeAllComponentsToLua();
 
+    // require로 로드된 모듈에서도 엔진 함수 사용 가능하도록 globals에 노출
+    (*Lua)["GetComponent"] = SharedLib["GetComponent"];
+    (*Lua)["AddComponent"] = SharedLib["AddComponent"];
+    (*Lua)["GetOwnerAs"] = SharedLib["GetOwnerAs"];
+    (*Lua)["SpawnPrefab"] = SharedLib["SpawnPrefab"];
+    (*Lua)["DeleteObject"] = SharedLib["DeleteObject"];
+    (*Lua)["FindObjectByName"] = SharedLib["FindObjectByName"];
+    (*Lua)["FindComponentByName"] = SharedLib["FindComponentByName"];
+    (*Lua)["GetCamera"] = SharedLib["GetCamera"];
+    (*Lua)["GetCameraManager"] = SharedLib["GetCameraManager"];
+    (*Lua)["SetPlayerForward"] = SharedLib["SetPlayerForward"];
+    (*Lua)["Vector"] = SharedLib["Vector"];
+    (*Lua)["SetSlomo"] = SharedLib["SetSlomo"];
+    (*Lua)["HitStop"] = SharedLib["HitStop"];
+    (*Lua)["TargetHitStop"] = SharedLib["TargetHitStop"];
+
     // 위 등록 마친 뒤 fall back 설정 : Shared lib의 fall back은 G
     sol::table MetaTableShared = Lua->create_table();
     MetaTableShared[sol::meta_function::index] = Lua->globals();
