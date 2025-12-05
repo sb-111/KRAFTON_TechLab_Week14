@@ -123,12 +123,12 @@ void FPhysicsScene::FetchAndUpdate()
 			{
 				Event.BodyA->OwnerComponent->OnComponentHit(Event.BodyB->OwnerComponent);
 				Event.BodyB->OwnerComponent->OnComponentHit(Event.BodyA->OwnerComponent);
-				UE_LOG("ContactPosition: (%f, %f, %f)\n ContactNormal: (%f, %f, %f)\n ImpulseMagnitude: %f \n RelativeVelocity: (%f, %f, %f)\n ShapeIndex: (%d, %d)",
-					Event.ContactPosition.X, Event.ContactPosition.Y, Event.ContactPosition.Z,
-					Event.ContactNormal.X, Event.ContactNormal.Y, Event.ContactNormal.Z,
-					Event.ImpulseMagnitude,
-					Event.RelativeVelocity.X, Event.RelativeVelocity.Y, Event.RelativeVelocity.Z,
-					Event.ShapeIndexA, Event.ShapeIndexA);
+				// UE_LOG("ContactPosition: (%f, %f, %f)\n ContactNormal: (%f, %f, %f)\n ImpulseMagnitude: %f \n RelativeVelocity: (%f, %f, %f)\n ShapeIndex: (%d, %d)",
+				// 	Event.ContactPosition.X, Event.ContactPosition.Y, Event.ContactPosition.Z,
+				// 	Event.ContactNormal.X, Event.ContactNormal.Y, Event.ContactNormal.Z,
+				// 	Event.ImpulseMagnitude,
+				// 	Event.RelativeVelocity.X, Event.RelativeVelocity.Y, Event.RelativeVelocity.Z,
+				// 	Event.ShapeIndexA, Event.ShapeIndexA);
 			}
 		}
 		EventCallback->EventQueue.clear();

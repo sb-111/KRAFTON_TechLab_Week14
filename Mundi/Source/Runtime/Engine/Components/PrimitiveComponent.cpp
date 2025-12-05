@@ -244,5 +244,5 @@ bool UPrimitiveComponent::IsOverlappingActor(const AActor* Other) const
 
 void UPrimitiveComponent::OnComponentHit(UPrimitiveComponent* OtherComponent)
 {
-    UE_LOG("CollisionEvent Callback");
+    // UE_LOG("CollisionEvent Callback");
 }

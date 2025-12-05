@@ -43,6 +43,7 @@ void USkeletalMeshComponent::DuplicateSubObjects()
 {
     Super::DuplicateSubObjects();
 
+    AnimInstance = nullptr;
     // 래그돌 관련 데이터 초기화 (원본과 공유 방지)
     // 얕은 복사된 Bodies/Constraints 포인터들은 원본의 PhysX 객체를 가리키므로
     // 복제된 컴포넌트는 자신만의 Bodies를 새로 생성해야 함
@@ -168,6 +169,25 @@ void USkeletalMeshComponent::SetSkeletalMesh(const FString& PathFileName)
         CurrentComponentSpacePose.Empty();
         TempFinalSkinningMatrices.Empty();
     }
+}
+
+FTransform USkeletalMeshComponent::GetSocketTransform(FName InSocketName) const
+{
+    // 1. 소켓 이름이 없으면 그냥 내 컴포넌트 위치 리턴
+    if (InSocketName.IsNone())
+    {
+        return Super::GetSocketTransform(""); 
+    }
+
+    // 2. 본 인덱스 찾기 (엔진 구조에 따라 다름)
+    int32 BoneIndex = FindBodyIndex(InSocketName);
+    if (BoneIndex != -1)
+    {
+        FTransform BoneTransform = const_cast<USkeletalMeshComponent*>(this)->GetBoneWorldTransform(BoneIndex);
+        return BoneTransform;
+    }
+
+    return GetWorldTransform();
 }
 
 void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InInstance)
