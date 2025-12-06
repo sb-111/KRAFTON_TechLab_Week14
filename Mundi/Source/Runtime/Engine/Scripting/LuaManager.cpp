@@ -94,12 +94,9 @@ FLuaManager::FLuaManager()
             }
             return Camera->GetWorldLocation();
         },
-        "GetActorRight", [](UCameraComponent* Camera) -> FVector
+        "GetActorForward", [](UCameraComponent* Camera) -> FVector
         {
-            if (!Camera) return FVector(0.f, 0.f, 1.f); // 기본값 (World Forward)
-
-            // C++ UCameraComponent 클래스의 실제 함수명으로 변경해야 합니다.
-            // (예: GetActorForwardVector(), GetForward() 등)
+            if (!Camera) return FVector(0.f, 0.f, 0.f);
             return Camera->GetForward();
         }
     );

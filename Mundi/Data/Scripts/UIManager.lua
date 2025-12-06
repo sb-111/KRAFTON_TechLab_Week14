@@ -17,7 +17,7 @@ function Tick(dt)
 
     -- 2. 카메라의 위치와 정면 벡터를 가져옵니다.
     local CamPosition = CameraActor:GetActorLocation()
-    local CamForward = CameraActor:GetActorRight() -- C++에서 바인딩한 새 함수
+    local CamForward = CameraActor:GetActorForward()
 
     -- 3. 최종 위치 계산: 카메라 위치 + (카메라 정면 방향 * 거리)
     Obj.Location = CamPosition + (CamForward * 2)
