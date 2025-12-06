@@ -4,19 +4,31 @@
 
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
+local Audio = require("Game/w14_AudioManager")
 local MapConfig = require("w14_MapConfig")
 local ControlManager = require("w14_ControlManager")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
+local ObstacleConfig = require("w14_ObstacleConfig")
+local PlayerSlowClass = require("Player/w14_PlayerSlow")
 
 local MapManager = nil
 local ObstacleManager = nil
 local ItemManager = nil
 local ObjectPlacer = nil
+local PlayerSlow = nil
 
 function BeginPlay()
     print("=== Game Main Start ===")
+
+    -- 디버그: GameMain에서 직접 FindObjectByName 테스트
+    local testActor = FindObjectByName("BGMActor")
+    if testActor then
+        print("[DEBUG] GameMain: BGMActor found directly!")
+    else
+        print("[DEBUG] GameMain: BGMActor NOT found directly!")
+    end
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
@@ -24,9 +36,20 @@ function BeginPlay()
 --      print("콜백 테스트")
 --    end)
 
+    -- 오디오 초기화
+    -- 씬에 필요한 Actor:
+    --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)
+    --   ShotActor (AudioComponent 여러 개 + Sounds[0]에 효과음)
+    Audio.Init()
+    Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
+    Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
+
     -- 시작 화면 표시
     GameState.ShowStartScreen()
-    
+
+    -- PlayerSlow 모듈 초기화
+    PlayerSlow = PlayerSlowClass:new(Obj)
+
     -- ControlManager에 플레이어 등록
     ControlManager:set_player_to_trace(Obj)
 
@@ -92,6 +115,11 @@ function Tick(dt)
     -- 입력 처리
     HandleInput()
 
+    -- PlayerSlow 속도 배율을 ControlManager에 동기화
+    if PlayerSlow then
+        ControlManager:SetSpeedMultiplier(PlayerSlow:GetSpeedMultiplier())
+    end
+
     -- 플레이어 조작
     ControlManager:Control(dt)
 
@@ -123,6 +151,7 @@ function HandleInput()
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
+            Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
         elseif GameState.IsEnd() then
             GameState.ShowStartScreen()
         end
@@ -132,6 +161,31 @@ function HandleInput()
     if InputManager:IsKeyPressed('Q') then
         if GameState.IsPlaying() then
             GameState.EndGame()
+            Audio.StopBGM("BGM")  -- 게임 종료 시 BGM 정지
         end
     end
+end
+
+-- 충돌 처리: 장애물과 충돌 시 속도 감소
+function OnBeginOverlap(OtherActor)
+    print("[OnBeginOverlap] test0")
+    if not OtherActor then print("[OnBeginOverlap] test") return end
+
+    -- 디버그: 충돌한 Actor 정보 출력
+    print("[OnBeginOverlap] OnBeginOverlap - Name: " .. tostring(OtherActor.Name) .. ", Tag: " .. tostring(OtherActor.Tag))
+
+    -- 장애물 충돌 처리
+    if OtherActor.Tag == "obstacle" and PlayerSlow then
+        local obstacleName = OtherActor.Name
+        local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
+
+        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
+
+        -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
+        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
+    end
+end
+
+function OnEndOverlap(OtherActor)
+    -- 필요시 추가
 end

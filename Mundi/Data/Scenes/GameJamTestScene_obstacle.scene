@@ -1,88 +1,76 @@
 {
   "Actors" : {
-    "21959" : {
-      "ObjectName" : "BGMActor",
+    "34649" : {
+      "ObjectName" : "Obstacle_Tree",
       "OwnedComponents" : [{
-          "Id" : 21960,
-          "ObjectName" : "USceneComponent_17",
-          "ParentId" : 0,
-          "RelativeLocation" : [-9.779131, 6.754601, 10.169679],
-          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
+          "ObjectName" : "ULuaScriptComponent_3",
+          "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+          "Type" : "ULuaScriptComponent",
           "bHiddenInGame" : false,
           "bIsActive" : true,
-          "bIsVisible" : true,
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }, {
-          "Id" : 21961,
-          "ObjectName" : "UAudioComponent_1",
-          "ParentId" : 21960,
-          "Pitch" : 1.000000,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "BoxExtent" : [2.000000, 1.200000, 20.000000],
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 34653,
+          "Mass" : 10.000000,
+          "MobilityType" : 0,
+          "ObjectName" : "UBoxComponent_1",
+          "ParentId" : 34652,
+          "RelativeLocation" : [0.000000, 0.000000, 19.799999],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Sounds" : ["Data/Audio/BGM.wav"],
-          "Type" : "UAudioComponent",
-          "Volume" : 1.000000,
-          "bAutoPlay" : false,
-          "bHiddenInGame" : false,
-          "bIs2D" : true,
-          "bIsActive" : true,
-          "bIsLooping" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 21960,
-      "Tag" : "",
-      "Type" : "AEmptyActor",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "21962" : {
-      "ObjectName" : "ShotSFXActor",
-      "OwnedComponents" : [{
-          "Id" : 21963,
-          "ObjectName" : "USceneComponent_18",
-          "ParentId" : 0,
-          "RelativeLocation" : [-9.779131, 6.754601, 10.169679],
-          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
+          "Type" : "UBoxComponent",
+          "bBlockComponent" : false,
+          "bGenerateOverlapEvents" : true,
           "bHiddenInGame" : false,
           "bIsActive" : true,
+          "bIsTrigger" : false,
           "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bShapeHiddenInGame" : true,
+          "bShapeIsVisible" : true,
+          "bSimulatePhysics" : false,
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }, {
-          "Id" : 21964,
-          "ObjectName" : "UAudioComponent_2",
-          "ParentId" : 21963,
-          "Pitch" : 1.000000,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 34652,
+          "Mass" : 10.000000,
+          "MaterialSlots" : [{
+              "AssetPath" : "pine_bark",
+              "Type" : "UMaterial"
+            }],
+          "MobilityType" : 0,
+          "ObjectName" : "UStaticMeshComponent_10",
+          "ParentId" : 0,
+          "RelativeLocation" : [-11.382704, 1.035262, -1.990521],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Sounds" : ["Data/Audio/Shot.wav"],
-          "Type" : "UAudioComponent",
-          "Volume" : 1.000000,
-          "bAutoPlay" : false,
+          "StaticMesh" : "Data/Model/Trees/Tree4.obj",
+          "Type" : "UStaticMeshComponent",
+          "bBlockComponent" : false,
+          "bCastShadows" : true,
+          "bGenerateOverlapEvents" : true,
           "bHiddenInGame" : false,
-          "bIs2D" : false,
           "bIsActive" : true,
-          "bIsLooping" : false,
+          "bIsTrigger" : false,
           "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bSimulatePhysics" : false,
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21963,
-      "Tag" : "",
-      "Type" : "AEmptyActor",
+      "RootComponentId" : 34652,
+      "Tag" : "obstacle",
+      "Type" : "AStaticMeshActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21965" : {
+    "9694" : {
       "ObjectName" : "ADirectionalLightActor_1",
       "OwnedComponents" : [{
           "CascadedAreaColorDebugValue" : 0.000000,
@@ -90,7 +78,7 @@
           "CascadedCount" : 4,
           "CascadedLinearBlendingValue" : 0.500000,
           "CascadedOverlapValue" : 0.200000,
-          "Id" : 21967,
+          "Id" : 9696,
           "Intensity" : 1.000000,
           "LightColor" : [1.000000, 1.000000, 1.000000, 1.000000],
           "ObjectName" : "UDirectionalLightComponent_1",
@@ -112,16 +100,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21967,
+      "RootComponentId" : 9696,
       "Tag" : "",
       "Type" : "ADirectionalLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21968" : {
+    "9697" : {
       "ObjectName" : "AAmbientLightActor_1",
       "OwnedComponents" : [{
-          "Id" : 21970,
+          "Id" : 9699,
           "Intensity" : 0.100000,
           "LightColor" : [1.000000, 1.000000, 1.000000, 1.000000],
           "ObjectName" : "UAmbientLightComponent_1",
@@ -142,19 +130,19 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21970,
+      "RootComponentId" : 9699,
       "Tag" : "",
       "Type" : "AAmbientLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21971" : {
+    "9700" : {
       "ObjectName" : "APlayerCameraManager_1",
       "OwnedComponents" : [{
           "AspectRatio" : 1.000000,
           "FarClip" : 100.000000,
           "FieldOfView" : 60.000000,
-          "Id" : 21973,
+          "Id" : 9702,
           "NearClip" : 0.100000,
           "ObjectName" : "UCameraComponent_1",
           "ParentId" : 0,
@@ -170,16 +158,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21973,
+      "RootComponentId" : 9702,
       "Tag" : "",
       "Type" : "APlayerCameraManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21974" : {
+    "9703" : {
       "ObjectName" : "AParticleEventManager_1",
       "OwnedComponents" : [{
-          "Id" : 21975,
+          "Id" : 9704,
           "ObjectName" : "USceneComponent_1",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -192,46 +180,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21975,
+      "RootComponentId" : 9704,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21976" : {
-      "ObjectName" : "GameStateManager",
-      "OwnedComponents" : [{
-          "Id" : 21978,
-          "ObjectName" : "USceneComponent_8",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }, {
-          "ObjectName" : "ULuaScriptComponent_2",
-          "ScriptFilePath" : "Data/Scripts/w14_GameMain_private_sb.lua",
-          "Type" : "ULuaScriptComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 21978,
-      "Tag" : "",
-      "Type" : "AEmptyActor",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "21979" : {
+    "9705" : {
       "ObjectName" : "AParticleEventManager_14",
       "OwnedComponents" : [{
-          "Id" : 21980,
+          "Id" : 9706,
           "ObjectName" : "USceneComponent_18",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -244,16 +202,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21980,
+      "RootComponentId" : 9706,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21981" : {
+    "9707" : {
       "ObjectName" : "AParticleEventManager_7",
       "OwnedComponents" : [{
-          "Id" : 21982,
+          "Id" : 9708,
           "ObjectName" : "USceneComponent_9",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -266,25 +224,25 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21982,
+      "RootComponentId" : 9708,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21983" : {
+    "9709" : {
       "ObjectName" : "UIActor",
       "OwnedComponents" : [{
           "CollisionType" : 0,
           "Density" : 10.000000,
-          "Id" : 21984,
+          "Id" : 9710,
           "Mass" : 10.000000,
           "MobilityType" : 0,
           "ObjectName" : "UBillboardComponent_20",
-          "ParentId" : 21985,
+          "ParentId" : 9711,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [7.000000, 1.000000, 1.000000],
+          "RelativeScale" : [5.900000, 1.000000, 1.000000],
           "Texture" : "Data/Textures/w14_gamestart.png",
           "Type" : "UBillboardComponent",
           "bBlockComponent" : false,
@@ -298,7 +256,7 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }, {
-          "Id" : 21985,
+          "Id" : 9711,
           "ObjectName" : "USceneComponent_15",
           "ParentId" : 0,
           "RelativeLocation" : [22.000000, 0.000000, 10.000000],
@@ -311,16 +269,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21985,
+      "RootComponentId" : 9711,
       "Tag" : "",
       "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21986" : {
+    "9712" : {
       "ObjectName" : "AParticleEventManager_52",
       "OwnedComponents" : [{
-          "Id" : 21987,
+          "Id" : 9713,
           "ObjectName" : "USceneComponent_61",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -333,16 +291,53 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21987,
+      "RootComponentId" : 9713,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21988" : {
+    "9714" : {
+      "ObjectName" : "스태틱 메시_1",
+      "OwnedComponents" : [{
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 9716,
+          "Mass" : 10.000000,
+          "MaterialSlots" : [{
+              "AssetPath" : "texture",
+              "Type" : "UMaterial"
+            }],
+          "MobilityType" : 0,
+          "ObjectName" : "UStaticMeshComponent_10",
+          "ParentId" : 0,
+          "RelativeLocation" : [21.700001, 0.000000, 10.700000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "StaticMesh" : "Data/cube-tex.obj",
+          "Type" : "UStaticMeshComponent",
+          "bBlockComponent" : false,
+          "bCastShadows" : true,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 9716,
+      "Tag" : "",
+      "Type" : "AStaticMeshActor",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "9717" : {
       "ObjectName" : "AParticleEventManager_90",
       "OwnedComponents" : [{
-          "Id" : 21989,
+          "Id" : 9718,
           "ObjectName" : "USceneComponent_102",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -355,16 +350,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21989,
+      "RootComponentId" : 9718,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21990" : {
+    "9719" : {
       "ObjectName" : "AParticleEventManager_7",
       "OwnedComponents" : [{
-          "Id" : 21991,
+          "Id" : 9720,
           "ObjectName" : "USceneComponent_10",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -377,13 +372,149 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21991,
+      "RootComponentId" : 9720,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21992" : {
+    "9721" : {
+      "ObjectName" : "스태틱 메시_0",
+      "OwnedComponents" : [{
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 9723,
+          "Mass" : 10.000000,
+          "MaterialSlots" : [{
+              "AssetPath" : "texture",
+              "Type" : "UMaterial"
+            }],
+          "MobilityType" : 0,
+          "ObjectName" : "UStaticMeshComponent_5",
+          "ParentId" : 0,
+          "RelativeLocation" : [0.000000, 0.000000, 2.500000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+          "RelativeScale" : [5.000000, 5.000000, 5.000000],
+          "StaticMesh" : "Data/cube-tex.obj",
+          "Type" : "UStaticMeshComponent",
+          "bBlockComponent" : false,
+          "bCastShadows" : true,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
+          "ObjectName" : "ULuaScriptComponent_2",
+          "ScriptFilePath" : "Data/Scripts/w14_GameMain.lua",
+          "Type" : "ULuaScriptComponent",
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
+          "BoxExtent" : [0.500000, 0.500000, 0.500000],
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 34654,
+          "Mass" : 10.000000,
+          "MobilityType" : 0,
+          "ObjectName" : "UBoxComponent_2",
+          "ParentId" : 9723,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "UBoxComponent",
+          "bBlockComponent" : false,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bShapeHiddenInGame" : true,
+          "bShapeIsVisible" : true,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 9723,
+      "Tag" : "",
+      "Type" : "AStaticMeshActor",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "9725" : {
+      "ObjectName" : "AParticleEventManager_34",
+      "OwnedComponents" : [{
+          "Id" : 9726,
+          "ObjectName" : "USceneComponent_41",
+          "ParentId" : 0,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "USceneComponent",
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 9726,
+      "Tag" : "",
+      "Type" : "AParticleEventManager",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "9727" : {
+      "ObjectName" : "AParticleEventManager_62",
+      "OwnedComponents" : [{
+          "Id" : 9728,
+          "ObjectName" : "USceneComponent_74",
+          "ParentId" : 0,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "USceneComponent",
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 9728,
+      "Tag" : "",
+      "Type" : "AParticleEventManager",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "9729" : {
+      "ObjectName" : "AParticleEventManager_89",
+      "OwnedComponents" : [{
+          "Id" : 9730,
+          "ObjectName" : "USceneComponent_110",
+          "ParentId" : 0,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "USceneComponent",
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 9730,
+      "Tag" : "",
+      "Type" : "AParticleEventManager",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
+    },
+    "9731" : {
       "ObjectName" : "Fog",
       "OwnedComponents" : [{
           "FogCutoffDistance" : 3000.000000,
@@ -392,7 +523,7 @@
           "FogInscatteringColor" : [0.376471, 0.368627, 0.368627, 1.000000],
           "FogMaxOpacity" : 0.994000,
           "HeightFogShader" : "Shaders/PostProcess/HeightFog_PS.hlsl",
-          "Id" : 21994,
+          "Id" : 9733,
           "ObjectName" : "UHeightFogComponent_1",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -406,60 +537,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 21994,
+      "RootComponentId" : 9733,
       "Tag" : "",
       "Type" : "AHeightFogActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "21995" : {
-      "ObjectName" : "AParticleEventManager_8",
+    "9734" : {
+      "ObjectName" : "AParticleEventManager_11",
       "OwnedComponents" : [{
-          "Id" : 21996,
-          "ObjectName" : "USceneComponent_13",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 21996,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "21997" : {
-      "ObjectName" : "AParticleEventManager_9",
-      "OwnedComponents" : [{
-          "Id" : 21998,
-          "ObjectName" : "USceneComponent_14",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 21998,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "21999" : {
-      "ObjectName" : "AParticleEventManager_10",
-      "OwnedComponents" : [{
-          "Id" : 22000,
+          "Id" : 9735,
           "ObjectName" : "USceneComponent_15",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -472,20 +559,39 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 22000,
+      "RootComponentId" : 9735,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "22001" : {
-      "ObjectName" : "AParticleEventManager_11",
+    "9736" : {
+      "ObjectName" : "BGMActor",
       "OwnedComponents" : [{
-          "Id" : 22002,
+          "Id" : 9738,
+          "ObjectName" : "UAudioComponent_3",
+          "ParentId" : 9737,
+          "Pitch" : 1.000000,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Sounds" : ["Data/Audio/BGM.wav"],
+          "Type" : "UAudioComponent",
+          "Volume" : 1.000000,
+          "bAutoPlay" : false,
+          "bHiddenInGame" : false,
+          "bIs2D" : true,
+          "bIsActive" : true,
+          "bIsLooping" : true,
+          "bIsVisible" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
+          "Id" : 9737,
           "ObjectName" : "USceneComponent_16",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
           "Type" : "USceneComponent",
           "bHiddenInGame" : false,
@@ -494,17 +600,17 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 22002,
+      "RootComponentId" : 9737,
       "Tag" : "",
-      "Type" : "AParticleEventManager",
+      "Type" : "AEmptyActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "22003" : {
-      "ObjectName" : "AParticleEventManager_12",
+    "9756" : {
+      "ObjectName" : "AParticleEventManager_44",
       "OwnedComponents" : [{
-          "Id" : 22004,
-          "ObjectName" : "USceneComponent_17",
+          "Id" : 9757,
+          "ObjectName" : "USceneComponent_58",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
@@ -516,152 +622,20 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 22004,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22005" : {
-      "ObjectName" : "AParticleEventManager_50",
-      "OwnedComponents" : [{
-          "Id" : 22006,
-          "ObjectName" : "USceneComponent_67",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22006,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22007" : {
-      "ObjectName" : "AParticleEventManager_14",
-      "OwnedComponents" : [{
-          "Id" : 22008,
-          "ObjectName" : "USceneComponent_19",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22008,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22009" : {
-      "ObjectName" : "AParticleEventManager_29",
-      "OwnedComponents" : [{
-          "Id" : 22010,
-          "ObjectName" : "USceneComponent_48",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22010,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22011" : {
-      "ObjectName" : "AParticleEventManager_16",
-      "OwnedComponents" : [{
-          "Id" : 22012,
-          "ObjectName" : "USceneComponent_21",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22012,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22013" : {
-      "ObjectName" : "AParticleEventManager_17",
-      "OwnedComponents" : [{
-          "Id" : 22014,
-          "ObjectName" : "USceneComponent_22",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22014,
-      "Tag" : "",
-      "Type" : "AParticleEventManager",
-      "bActorHiddenInGame" : false,
-      "bActorIsActive" : true
-    },
-    "22040" : {
-      "ObjectName" : "AParticleEventManager_54",
-      "OwnedComponents" : [{
-          "Id" : 22041,
-          "ObjectName" : "USceneComponent_65",
-          "ParentId" : 0,
-          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-          "RelativeScale" : [1.000000, 1.000000, 1.000000],
-          "Type" : "USceneComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bIsVisible" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }],
-      "RootComponentId" : 22041,
+      "RootComponentId" : 9757,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     }
   },
-  "NextUUID" : 22043,
+  "NextUUID" : 67217,
   "PerspectiveCamera" : {
     "FOV" : [60.000000],
     "FarClip" : [2000.000000],
-    "Location" : [-12.711795, 0.753632, 15.885334],
+    "Location" : [-2.328083, -20.509918, 21.543291],
     "NearClip" : [0.100000],
-    "Rotation" : [0.000000, 9.200037, -0.198868]
+    "Rotation" : [0.000000, 31.100540, 84.301651]
   },
   "Version" : 1
 }
