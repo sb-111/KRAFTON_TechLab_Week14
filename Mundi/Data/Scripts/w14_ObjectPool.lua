@@ -93,9 +93,10 @@ function Pool:spawn()
         print("[Pool:spawn][error] despawned is empty.")
         return
     else
+        local new_location = self.spawn_location_getter()
         local spawned = self.despawned:pop()
+        spawned.Location = new_location
         spawned.bIsActive = true
-        spawned.Location = self.spawn_location_getter()
         self.spawned:push(spawned)
     end
 end

@@ -1,11 +1,12 @@
 --- @type Pool
 local Pool = require("w14_ObjectPool")
 local Math = require("w14_Math")
+local MapConfig = require("w14_MapConfig")
 
 --- @class MapManager
 --- @field player userdata 추적할 플레이어 GameObject
 --- @field bioms table<Pool> 맵의 Pool을 저장할 바이옴
---- @field map_chunk_x_size number Map Chunk의 X축 크기
+--- @field biom_name_to_spawn_this_turn string 다음에 스폰할 biom의 이름
 --- @field next_spawn_location number 다음 spawn 위치 (X 좌표)
 local MapManager = {}
 MapManager.__index = MapManager
@@ -17,8 +18,7 @@ function MapManager:new()
         player = nil,
         bioms = {},
         biom_name_to_spawn_this_turn = nil,
-        map_chunk_x_size = 10,
-        next_spawn_location = 0
+        next_spawn_location = -MapConfig.map_chunk_x_size
     }
     setmetatable(instance, MapManager)
     return instance
@@ -44,14 +44,14 @@ function MapManager:add_biom(
     local name = "#" .. tostring(#self.bioms + 1)
     new_biom:initialize(prefab_path, name, pool_size, pool_standby_location)
 
-    -- Despawn 조건: head가 플레이어 뒤로 맵 크기의 2배 이상 떨어지면 despawn
+    -- Despawn 조건: head가 플레이어 뒤로 맵 크기만큼 떨어지면 despawn
     new_biom:set_despawn_condition_checker(
             function()
                 local head_obj = new_biom.spawned:head()
                 if not head_obj or not head_obj.Location or not self.player then
                     return false
                 end
-                return head_obj.Location.X < self.player.Location.X - self.map_chunk_x_size * 2.0
+                return head_obj.Location.X < self.player.Location.X - MapConfig.map_chunk_x_size
             end
     )
 
@@ -88,7 +88,7 @@ function MapManager:should_spawn()
         return false
     end
     return self.player.Location.X >=
-            self.next_spawn_location - self.map_chunk_x_size * 0.5
+            self.next_spawn_location - MapConfig.map_chunk_x_size * 1.5
 end
 
 function MapManager:Tick()
@@ -96,19 +96,14 @@ function MapManager:Tick()
         return
     end
 
-    if not self:should_spawn() then
-        for i=1, #self.bioms do
-            self.bioms[i]:Tick()
-        end
-        return
+    if self:should_spawn() then
+        --- 플레이어가 다음 spawn 위치의 절반 지점에 도달하면 spawn
+        self.next_spawn_location = self.next_spawn_location + MapConfig.map_chunk_x_size
+
+        --- 현재 소환할 biom을 랜덤으로 정한다.
+        local current_spawn_biom_index = Math:RandomIntInRange(1, #self.bioms)
+        self.biom_name_to_spawn_this_turn = self.bioms[current_spawn_biom_index].name
     end
-
-    --- 플레이어가 다음 spawn 위치의 절반 지점에 도달하면 spawn
-    self.next_spawn_location = self.next_spawn_location + self.map_chunk_x_size
-
-    --- 현재 소환할 biom을 랜덤으로 정한다.
-    local current_spawn_biom_index = Math:RandomIntInRange(1, #self.bioms)
-    self.biom_name_to_spawn_this_turn = self.bioms[current_spawn_biom_index].name
 
     for i=1, #self.bioms do
         self.bioms[i]:Tick()
