@@ -30,6 +30,7 @@ ULuaScriptComponent::~ULuaScriptComponent()
 
 void ULuaScriptComponent::BeginPlay()
 {
+	if (!GWorld->bPie) { return; }
 	// 델리게이트 등록
 	if (AActor* Owner = GetOwner())
 	{
