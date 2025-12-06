@@ -432,7 +432,7 @@ void FBodyInstance::CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* B
 			// Shape별 CollisionEnabled 적용 (에디터에서 설정한 값 사용)
 			SetCollisionTypeFromShapeSettings(Shape, ShapeCollisionEnabled);
 			Shape->setSimulationFilterData(RagdollFilterData);
-			Shape->userData = (void*)(uintptr_t)BoneIndex;
+			Shape->userData = static_cast<void*>(&Setup->BoneName);
 		}
 	};
 

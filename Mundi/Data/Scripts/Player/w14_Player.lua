@@ -40,16 +40,15 @@ end
 function Tick(Delta)
     if bIsStarted then
         PlayerInput:Update(Delta)
-        Rotate()
+        Rotate(Delta)
 
-        local Forward = MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
+        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
         end
 
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
-
         if PlayerInput.ShootTrigger and not IsShootCool then
             Shoot()
         end
@@ -66,19 +65,30 @@ local MouseSensitivity = 0.1 -- 감도 설정 (필요에 따라 조절)
 local CurrentYaw = 0.0       -- 좌우 회전 (Z축) 누적값
 local CurrentPitch = 0.0     -- 상하 회전 (Y축) 누적값
 
-function Rotate()
-    local Delta = PlayerInput.RotateVector
+-- 부드러운 회전
+local TargetYaw = 0.0
+local TargetPitch = 0.0
+local CurrentYaw = 0.0
+local CurrentPitch = 0.0
+
+-- 보간 속도 (높을수록 빠릿하고, 낮을수록 부드럽지만 반응이 느림)
+local RotationSmoothSpeed = 20.0 
+
+function Rotate(DeltaTime)
+    local InputDelta = PlayerInput.RotateVector
     
-    CurrentYaw = CurrentYaw + (Delta.X * MouseSensitivity)
-    CurrentPitch = CurrentPitch - (Delta.Y * MouseSensitivity)
+    TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity)
+    TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity)
     
-    if CurrentPitch > 70.0 then
-        CurrentPitch = 70.0
-    elseif CurrentPitch < -70.0 then
-        CurrentPitch = -70.0
-    end
+    if TargetPitch > 70.0 then TargetPitch = 70.0
+    elseif TargetPitch < -70.0 then TargetPitch = -70.0 end
+
+    local SmoothFactor = math.min(RotationSmoothSpeed * DeltaTime, 1.0)
+    
+    CurrentYaw = CurrentYaw + (TargetYaw - CurrentYaw) * SmoothFactor
+    CurrentPitch = CurrentPitch + (TargetPitch - CurrentPitch) * SmoothFactor
+    
     local NewRotation = Vector(0, CurrentPitch, CurrentYaw)
-    
     Obj.Rotation = NewRotation
 end
 
@@ -134,17 +144,14 @@ end
 function OnBeginOverlap(OtherActor)
     if not OtherActor then return end
 
-    -- 디버그: 충돌한 Actor 정보 출력
-    print("[OnBeginOverlap] OnBeginOverlap - Name: " .. tostring(OtherActor.Name) .. ", Tag: " .. tostring(OtherActor.Tag))
+    -- -- 장애물 충돌 처리
+    -- if OtherActor.Tag == "obstacle" and PlayerSlow then
+    --     local obstacleName = OtherActor.Name
+    --     local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
 
-    -- 장애물 충돌 처리
-    if OtherActor.Tag == "obstacle" and PlayerSlow then
-        local obstacleName = OtherActor.Name
-        local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
+    --     print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
 
-        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
-
-        -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
-        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
-    end
+    --     -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
+    --     PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
+    -- end
 end

@@ -64,8 +64,6 @@ function PlayerInput:Update(DT)
     else
         self.ShootTrigger = false
     end
-
-    
 end
 
 return PlayerInput

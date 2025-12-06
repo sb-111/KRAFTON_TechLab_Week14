@@ -264,7 +264,7 @@ void UWorld::Tick(float DeltaSeconds)
 
 		for (AActor* Actor : LevelActors)
 		{
-			if (Actor && Actor->IsActorActive() && !Actor->IsPendingDestroy())
+			if (Actor && Actor->IsActorActive() && !Actor->IsPendingDestroy() && !Actor->IsA(APlayerCameraManager::StaticClass()))
 			{
 				if (Actor->CanEverTick())
 				{
@@ -275,6 +275,7 @@ void UWorld::Tick(float DeltaSeconds)
 				}
 			}
 		}
+		GetPlayerCameraManager()->Tick(GetDeltaTime(EDeltaTime::Game) * GetPlayerCameraManager()->GetCustomTimeDillation());
     }
 
     for (AActor* EditorActor : EditorActors)
