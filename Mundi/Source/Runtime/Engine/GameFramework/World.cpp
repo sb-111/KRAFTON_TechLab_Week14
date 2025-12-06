@@ -564,6 +564,15 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
         }
     }
 
+	const TArray<AActor*>& Actors = Level->GetActors();
+	for (AActor* Actor : Actors)
+	{
+		if (Actor)
+		{
+			Actor->BeginPlay();
+		}
+	}
+
 	// 씬에서 PCM 검색
 	this->PlayerCameraManager = FindActor<APlayerCameraManager>();
 
@@ -621,10 +630,7 @@ void UWorld::ProcessPendingKillActors()
 	for (AActor* Actor : ActorsToKill)
 	{
 		// 게임 수명 종료
-		if (bPie)
-		{
-			Actor->EndPlay();
-		}
+		Actor->EndPlay();
 
 		DestroyActor(Actor);
 	}

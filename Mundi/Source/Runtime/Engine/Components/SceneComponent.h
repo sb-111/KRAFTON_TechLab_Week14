@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <object.hpp>
+
 #include "Vector.h"
 #include "ActorComponent.h"
 #include "USceneComponent.generated.h"
@@ -88,7 +90,11 @@ public:
     // ──────────────────────────────
     // Attach/Detach
     // ──────────────────────────────
-    void SetupAttachment(USceneComponent* InParent, EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+    virtual FTransform GetSocketTransform(FName InSocketName) const { return GetWorldTransform(); }
+    void SetupAttachment(USceneComponent* InParent, EAttachmentRule Rule = EAttachmentRule::KeepWorld, FName SocketName = FName());
+    
+    UFUNCTION(LuaBind, DisplayName="SetupAttachment")
+    void Lua_SetupAttachment(sol::object InParentProxy, const FString& InSocketName);
     void DetachFromParent(bool bKeepWorld = true);
 
     // ──────────────────────────────
@@ -163,6 +169,7 @@ protected:
     
     // Hierarchy
     USceneComponent* AttachParent = nullptr;
+    FName AttachSocketName = FName();
     TArray<USceneComponent*> AttachChildren;
 
     // 로컬(부모 기준) 트랜스폼

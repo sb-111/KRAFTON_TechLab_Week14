@@ -32,6 +32,8 @@ public:
 
     void SetSkeletalMesh(const FString& PathFileName) override;
 
+    FTransform GetSocketTransform(FName InSocketName) const override;
+
     // Animation Integration
 public:
     void SetAnimInstance(class UAnimInstance* InInstance);

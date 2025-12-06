@@ -5,7 +5,7 @@
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
 local ControlManager = require("w14_ControlManager")
-local MapPool = require("w14_MapPool")
+local MapManager = require("w14_MapManager")
 
 function BeginPlay()
     print("=== Game Main Start ===")
@@ -21,12 +21,23 @@ function BeginPlay()
 
     -- ControlManager에 플레이어 등록
     ControlManager:set_player_to_trace(Obj)
-    -- MapPool에 플레이어 등록
-    MapPool:set_player_to_trace(Obj)
-    -- MapPool 초기화
-    MapPool:initialize(
-            "Data/Prefabs/test_map_chunk.prefab",
-            50,
+    
+    -- MapManager에 플레이어 등록
+    MapManager:set_player_to_trace(Obj)
+    -- MapManager 초기화
+    MapManager:add_biom(
+            "Data/Prefabs/test_map_chunk_0.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/test_map_chunk_1.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/test_map_chunk_2.prefab",
+            100,
             Vector(-1000, 0, 0)
     )
 end
@@ -42,7 +53,7 @@ function Tick(dt)
     ControlManager:Control(dt)
     
     -- 맵 업데이트
-    MapPool:Tick()
+    MapManager:Tick()
 end
 
 function HandleInput()

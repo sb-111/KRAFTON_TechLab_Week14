@@ -6,6 +6,7 @@
 #include "PrimitiveComponent.h"
 #include "WorldPartitionManager.h"
 #include "BillboardComponent.h"
+#include "LuaComponentProxy.h"
 // IMPLEMENT_CLASS is now auto-generated in .generated.cpp
 // USceneComponent.cpp
 TMap<uint32, USceneComponent*> USceneComponent::SceneIdMap;
@@ -124,7 +125,8 @@ FTransform USceneComponent::GetWorldTransform() const
     // Dangling pointer 방지를 위한 체크 
     if (AttachParent && !AttachParent->IsPendingDestroy())
     {
-        return AttachParent->GetWorldTransform().GetWorldTransform(RelativeTransform);
+        // AttachSocketName이 비어있으면(""), 부모는 자신의 기본 WorldTransform을 반환
+        return AttachParent->GetSocketTransform(AttachSocketName).GetWorldTransform(RelativeTransform);
     }
 
     return RelativeTransform;
@@ -272,7 +274,7 @@ void USceneComponent::SetLocalLocationAndRotation(const FVector& L, const FQuat&
 
 FMatrix USceneComponent::GetWorldMatrix() const
 {
-    if (bIsTransformDirty)
+    if (bIsTransformDirty || AttachSocketName.IsValid())
     {
         CachedWorldMatrix = GetWorldTransform().ToMatrix();
         bIsTransformDirty = false;
@@ -283,9 +285,9 @@ FMatrix USceneComponent::GetWorldMatrix() const
 // ──────────────────────────────
 // Attach / Detach
 // ──────────────────────────────
-void USceneComponent::SetupAttachment(USceneComponent* InParent, EAttachmentRule Rule)
+void USceneComponent::SetupAttachment(USceneComponent* InParent, EAttachmentRule Rule, FName SocketName)
 {
-    if (AttachParent == InParent) return;
+    if (AttachParent == InParent && SocketName == AttachSocketName) return;
 
     const FTransform OldWorld = GetWorldTransform();
 
@@ -298,14 +300,15 @@ void USceneComponent::SetupAttachment(USceneComponent* InParent, EAttachmentRule
 
     // 새 부모 설정
     AttachParent = InParent;
+    AttachSocketName = SocketName;
 
     if(AttachParent)
     { 
         AttachParent->AttachChildren.push_back(this);
         if (Rule == EAttachmentRule::KeepWorld)
         {
-            const FTransform ParentWorld = AttachParent->GetWorldTransform();
-            RelativeTransform = ParentWorld.GetRelativeTransform(OldWorld);
+            const FTransform ParentSocketWorld = AttachParent->GetSocketTransform(AttachSocketName);
+            RelativeTransform = ParentSocketWorld.GetRelativeTransform(OldWorld);
         }
         // KeepRelative: 기존 RelativeTransform 유지
     }
@@ -318,6 +321,29 @@ void USceneComponent::SetupAttachment(USceneComponent* InParent, EAttachmentRule
     RelativeLocation = RelativeTransform.Translation;
     RelativeRotation = RelativeTransform.Rotation;
     RelativeScale = RelativeTransform.Scale3D;
+}
+
+void USceneComponent::Lua_SetupAttachment(sol::object InParentProxy, const FString& InSocketName)
+{
+    USceneComponent* RealParent = nullptr;
+
+    // 1. 들어온 게 Proxy인지 확인하고 껍질 까기
+    if (InParentProxy.is<LuaComponentProxy>())
+    {
+        auto& Proxy = InParentProxy.as<LuaComponentProxy&>();
+        RealParent = dynamic_cast<USceneComponent*>(Proxy.Instance); // 혹은 Proxy.Comp
+    }
+    // 2. 진짜 포인터일 수도 있으니 확인
+    else if (InParentProxy.is<USceneComponent*>())
+    {
+        RealParent = InParentProxy.as<USceneComponent*>();
+    }
+
+    // 3. 실제 함수 호출
+    if (RealParent)
+    {
+        this->SetupAttachment(RealParent, EAttachmentRule::KeepRelative, InSocketName);
+    }
 }
 
 void USceneComponent::DetachFromParent(bool bKeepWorld)
