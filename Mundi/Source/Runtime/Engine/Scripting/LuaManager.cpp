@@ -45,9 +45,10 @@ FLuaManager::FLuaManager()
     // NOTE: 그냥 FGameObject 개념을 없애고 그냥 Actor/Component 그대로 사용하는 게 좋을듯?
     Lua->new_usertype<FGameObject>("GameObject",
         "UUID", &FGameObject::UUID,
+        "Name", sol::property(&FGameObject::GetName),
         "Tag", sol::property(&FGameObject::GetTag, &FGameObject::SetTag),
         "Location", sol::property(&FGameObject::GetLocation, &FGameObject::SetLocation),
-        "Rotation", sol::property(&FGameObject::GetRotation, &FGameObject::SetRotation), 
+        "Rotation", sol::property(&FGameObject::GetRotation, &FGameObject::SetRotation),
         "Scale", sol::property(&FGameObject::GetScale, &FGameObject::SetScale),
         "bIsActive", sol::property(&FGameObject::GetIsActive, &FGameObject::SetIsActive),
         "Velocity", &FGameObject::Velocity,
@@ -333,14 +334,23 @@ FLuaManager::FLuaManager()
 
     SharedLib.set_function("HitStop", [](float Duration, sol::optional<float> Scale) { GWorld->RequestHitStop(Duration, Scale.value_or(0.0f)); });
     
-    SharedLib.set_function("TargetHitStop", [](FGameObject& Obj, float Duration, sol::optional<float> Scale) 
+    SharedLib.set_function("TargetHitStop", [](FGameObject& Obj, float Duration, sol::optional<float> Scale)
         {
             if (AActor* Owner = Obj.GetOwner())
             {
                 Owner->SetCustomTimeDillation(Duration, Scale.value_or(0.0f));
             }
         });
-    
+
+    // 전역 StartCoroutine (모듈에서도 사용 가능)
+    SharedLib.set_function("StartCoroutine", [this](sol::function f) {
+        sol::state_view L = GetState();
+        sol::thread Thread = sol::thread::create(L);
+        sol::state_view ThreadState = Thread.state();
+        sol::coroutine Coroutine(ThreadState.lua_state(), f);
+        return GetScheduler().Register(std::move(Thread), std::move(Coroutine), nullptr);
+    });
+
     // FVector usertype 등록 (메서드와 프로퍼티)
     SharedLib.new_usertype<FVector>("FVector",
         sol::no_constructor,  // 생성자는 위에서 Vector 함수로 등록했음
@@ -415,6 +425,7 @@ FLuaManager::FLuaManager()
     (*Lua)["SetSlomo"] = SharedLib["SetSlomo"];
     (*Lua)["HitStop"] = SharedLib["HitStop"];
     (*Lua)["TargetHitStop"] = SharedLib["TargetHitStop"];
+    (*Lua)["StartCoroutine"] = SharedLib["StartCoroutine"];
 
     // 위 등록 마친 뒤 fall back 설정 : Shared lib의 fall back은 G
     sol::table MetaTableShared = Lua->create_table();
