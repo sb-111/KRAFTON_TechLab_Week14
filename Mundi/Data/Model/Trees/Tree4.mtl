@@ -1,0 +1,13 @@
+# Blender 5.0.0 MTL File: 'Trees.blend'
+# www.blender.org
+
+newmtl pine_bark
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd pine_bark_baseColor.png
+map_Bump -bm 1.000000 pine_bark_normal.png

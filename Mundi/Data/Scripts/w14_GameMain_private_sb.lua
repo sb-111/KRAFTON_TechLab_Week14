@@ -7,6 +7,11 @@ local UI = require("Game/w14_UIManager")
 local Audio = require("Game/w14_AudioManager")
 local Particle = require("Game/w14_ParticleManager")
 
+-- ===== 테스트용 모듈 =====
+local PlayerSlowClass = require("Player/w14_PlayerSlow")
+local ObstacleConfig = require("w14_ObstacleConfig")
+local TestSlow = nil  -- 테스트용 Slow 인스턴스
+
 function BeginPlay()
     print("=== Game Main Start ===")
 
@@ -30,6 +35,16 @@ function BeginPlay()
 
     -- 시작 화면 표시
     GameState.ShowStartScreen()
+
+    -- ===== Slow 모듈 테스트 초기화 =====
+    TestSlow = PlayerSlowClass:new(Obj)  -- Obj는 이 스크립트가 붙은 Actor
+    print("[Test] PlayerSlow 모듈 로드 완료")
+    print("[Test] ObstacleConfig 로드 완료:")
+    for name, cfg in pairs(ObstacleConfig) do
+        if type(cfg) == "table" then
+            print("  - " .. name .. " = speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration)
+        end
+    end
 end
 
 function Tick(dt)
@@ -78,10 +93,53 @@ function HandleInput()
             if cam then
                 local camPos = cam:GetActorLocation()
                 local camFwd = cam:GetActorForward()
-                local pos = camPos + camFwd * 30  
+                local pos = camPos + camFwd * 30
                 Particle.Spawn("test", pos)
                 print("[Test] Particle.Spawn('test')")
             end
+        end
+    end
+
+    -- ===== Slow 모듈 테스트 =====
+    -- 1: Fence 충돌 시뮬레이션 (50% 속도, 1초)
+    if InputManager:IsKeyPressed('1') then
+        if TestSlow then
+            local cfg = ObstacleConfig["Obstacle_Fence"]
+            print("[Test] Fence 충돌! speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration)
+            TestSlow:ApplySlow(cfg.speedMult, cfg.duration)
+        end
+    end
+
+    -- 2: Tree 충돌 시뮬레이션 (30% 속도, 1.5초)
+    if InputManager:IsKeyPressed('2') then
+        if TestSlow then
+            local cfg = ObstacleConfig["Obstacle_Tree"]
+            print("[Test] Tree 충돌! speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration)
+            TestSlow:ApplySlow(cfg.speedMult, cfg.duration)
+        end
+    end
+
+    -- 3: Box 충돌 시뮬레이션 (70% 속도, 0.5초)
+    if InputManager:IsKeyPressed('3') then
+        if TestSlow then
+            local cfg = ObstacleConfig["Obstacle_Box"]
+            print("[Test] Box 충돌! speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration)
+            TestSlow:ApplySlow(cfg.speedMult, cfg.duration)
+        end
+    end
+
+    -- S: 현재 속도 상태 확인
+    if InputManager:IsKeyPressed('S') then
+        if TestSlow then
+            print("[Test] 속도 배율: " .. TestSlow:GetSpeedMultiplier() .. ", 감속중: " .. tostring(TestSlow:IsSlowed()))
+        end
+    end
+
+    -- R: 상태 리셋
+    if InputManager:IsKeyPressed('R') then
+        if TestSlow then
+            TestSlow:Reset()
+            print("[Test] Slow Reset! 속도 배율: " .. TestSlow:GetSpeedMultiplier())
         end
     end
 end
