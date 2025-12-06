@@ -5,7 +5,9 @@
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
 local ControlManager = require("w14_ControlManager")
-local MapManager = require("w14_MapManager")
+local MapManagerClass = require("w14_MapManager")
+
+local MapManager = nil
 
 function BeginPlay()
     print("=== Game Main Start ===")
@@ -21,7 +23,10 @@ function BeginPlay()
 
     -- ControlManager에 플레이어 등록
     ControlManager:set_player_to_trace(Obj)
-    
+
+    -- MapManager 인스턴스 생성
+    MapManager = MapManagerClass:new()
+
     -- MapManager에 플레이어 등록
     MapManager:set_player_to_trace(Obj)
     -- MapManager 초기화
@@ -48,12 +53,14 @@ function Tick(dt)
 
     -- 입력 처리
     HandleInput()
-    
+
     -- 플레이어 조작
     ControlManager:Control(dt)
-    
+
     -- 맵 업데이트
-    MapManager:Tick()
+    if MapManager then
+        MapManager:Tick()
+    end
 end
 
 function HandleInput()
