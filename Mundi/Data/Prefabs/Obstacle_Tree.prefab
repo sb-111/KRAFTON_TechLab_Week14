@@ -3,7 +3,7 @@
   "OwnedComponents" : [{
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 23928,
+      "Id" : 10485,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "pine_bark",
@@ -29,14 +29,22 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "BoxExtent" : [3.100000, 2.000000, 20.000000],
-      "CollisionType" : 1,
+      "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 23929,
+      "Id" : 10486,
       "Mass" : 10.000000,
-      "MobilityType" : 257,
+      "MobilityType" : 769,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 23928,
+      "ParentId" : 10485,
       "RelativeLocation" : [0.000000, 0.000000, 20.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -53,16 +61,8 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
-    }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
     }],
-  "RootComponentId" : 23928,
+  "RootComponentId" : 10485,
   "Tag" : "",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

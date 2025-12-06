@@ -311,17 +311,9 @@
     "1146" : {
       "ObjectName" : "스태틱 메시_0",
       "OwnedComponents" : [{
-          "ObjectName" : "ULuaScriptComponent_2",
-          "ScriptFilePath" : "Data/Scripts/w14_GameMain.lua",
-          "Type" : "ULuaScriptComponent",
-          "bHiddenInGame" : false,
-          "bIsActive" : true,
-          "bTickEnabled" : true,
-          "bTickInEditor" : false
-        }, {
           "CollisionType" : 1,
           "Density" : 10.000000,
-          "Id" : 1148,
+          "Id" : 1149,
           "Mass" : 10.000000,
           "MaterialSlots" : [{
               "AssetPath" : "texture",
@@ -340,21 +332,29 @@
           "bGenerateOverlapEvents" : true,
           "bHiddenInGame" : false,
           "bIsActive" : true,
-          "bIsTrigger" : false,
+          "bIsTrigger" : true,
           "bIsVisible" : true,
           "bOverrideMass" : false,
           "bSimulatePhysics" : false,
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }, {
+          "ObjectName" : "ULuaScriptComponent_2",
+          "ScriptFilePath" : "Data/Scripts/w14_GameMain.lua",
+          "Type" : "ULuaScriptComponent",
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
           "BoxExtent" : [0.500000, 0.500000, 0.500000],
-          "CollisionType" : 0,
+          "CollisionType" : 3,
           "Density" : 10.000000,
           "Id" : 1150,
           "Mass" : 10.000000,
-          "MobilityType" : 0,
+          "MobilityType" : 769,
           "ObjectName" : "UBoxComponent_2",
-          "ParentId" : 1148,
+          "ParentId" : 1149,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
           "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -372,7 +372,7 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 1148,
+      "RootComponentId" : 1149,
       "Tag" : "",
       "Type" : "AStaticMeshActor",
       "bActorHiddenInGame" : false,
@@ -559,13 +559,13 @@
       "bActorIsActive" : true
     }
   },
-  "NextUUID" : 1196,
+  "NextUUID" : 10488,
   "PerspectiveCamera" : {
     "FOV" : [60.000000],
     "FarClip" : [2000.000000],
-    "Location" : [-22.474314, -43.786140, 33.357403],
+    "Location" : [-16.572702, 24.512327, 13.904372],
     "NearClip" : [0.100000],
-    "Rotation" : [0.000000, 23.800615, 54.401726]
+    "Rotation" : [0.000000, 8.200637, -53.998196]
   },
   "Version" : 1
 }
