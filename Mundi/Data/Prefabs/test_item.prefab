@@ -1,0 +1,46 @@
+{
+  "ObjectName" : "스태틱 메시_0",
+  "OwnedComponents" : [{
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1142,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "Material__30.001",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "Material__29.001",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "Material__31.001",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "Material__33.001",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_7",
+      "ParentId" : 0,
+      "RelativeLocation" : [-11.004449, -2.735342, 13.587517],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [0.500000, 0.500000, 0.500000],
+      "StaticMesh" : "Data/Model/Box.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 1142,
+  "Tag" : "",
+  "Type" : "AStaticMeshActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

@@ -7,11 +7,12 @@ local UI = require("Game/w14_UIManager")
 local MapConfig = require("w14_MapConfig")
 local ControlManager = require("w14_ControlManager")
 local MapManagerClass = require("w14_MapManager")
-local ObstacleManagerClass = require("w14_ObstacleManager")
+local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
 
 local MapManager = nil
 local ObstacleManager = nil
+local ItemManager = nil
 local ObjectPlacer = nil
 
 function BeginPlay()
@@ -55,24 +56,33 @@ function BeginPlay()
     ObjectPlacer = ObjectPlacerClass:new(
             MapConfig.map_chunk_y_size,
             MapConfig.map_chunk_x_size * 0.5,
-            MapConfig.map_chunk_x_size * 0.5 + 10,
+            MapConfig.map_chunk_x_size * 1.5,
             Obj.Location.Y,
             1000
     )
 
-    ObstacleManager = ObstacleManagerClass:new(ObjectPlacer)
-
-    -- ObstacleManager에 플레이어 등록
+    -- ObstacleManager 생성 (GeneralObjectManager 사용)
+    ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer)
     ObstacleManager:set_player_to_trace(Obj)
-
-    ObstacleManager:add_obstacle(
+    ObstacleManager:add_object(
             "Data/Prefabs/test_obstacle.prefab",
-            500,
-            Vector(-2000, 0, 0),
-            10,
-            5  -- radius
+            500,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            10,                     -- spawn_num
+            5                       -- radius
     )
-    
+
+    -- ItemManager 생성 (GeneralObjectManager 사용)
+    ItemManager = GeneralObjectManagerClass:new(ObjectPlacer)
+    ItemManager:set_player_to_trace(Obj)
+    ItemManager:add_object(
+            "Data/Prefabs/test_item.prefab",
+            300,                    -- pool_size
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            5,                      -- spawn_num (적게)
+            3                       -- radius
+    )
+
 end
 
 function Tick(dt)
@@ -95,12 +105,16 @@ function Tick(dt)
                 MapConfig.map_chunk_y_size,                              -- area_width (Y축)
                 MapConfig.map_chunk_x_size,                              -- area_height (X축)
                 Obj.Location.Y,                                          -- area_width_offset (Y축)
-                Obj.Location.X + MapConfig.map_chunk_x_size * 0.5 + 10  -- area_height_offset (X축)
+                Obj.Location.X + MapConfig.map_chunk_x_size * 2.5  -- area_height_offset (X축)
         )
     end
 
     if ObstacleManager then
         ObstacleManager:Tick()
+    end
+
+    if ItemManager then
+        ItemManager:Tick()
     end
 end
 
