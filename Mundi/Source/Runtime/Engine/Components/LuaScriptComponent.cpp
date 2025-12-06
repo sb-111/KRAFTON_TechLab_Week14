@@ -36,7 +36,7 @@ void ULuaScriptComponent::BeginPlay()
 	{
 		BeginHandleLua = Owner->OnComponentBeginOverlap.AddDynamic(this, &ULuaScriptComponent::OnBeginOverlap);
 		EndHandleLua = Owner->OnComponentEndOverlap.AddDynamic(this, &ULuaScriptComponent::OnEndOverlap);
-		//FDelegateHandle HitHandleLua = Owner->OnComponentHit.AddDynamic(this, ULuaScriptComponent::OnHit);
+		HitHandleLua = Owner->OnComponentHit.AddDynamic(this, &ULuaScriptComponent::OnHit);
 	}
 
 	auto LuaVM = GetWorld()->GetLuaManager();
@@ -149,7 +149,7 @@ void ULuaScriptComponent::OnEndOverlap(UPrimitiveComponent* MyComp, UPrimitiveCo
 	}
 }
 
-void ULuaScriptComponent::OnHit(UPrimitiveComponent* MyComp, UPrimitiveComponent* OtherComp)
+void ULuaScriptComponent::OnHit(UPrimitiveComponent* MyComp, UPrimitiveComponent* OtherComp, FHitResult HitResult)
 {
 	if (FuncOnHit.valid())
 	{
@@ -203,7 +203,7 @@ void ULuaScriptComponent::EndPlay()
 	{
 		Owner->OnComponentBeginOverlap.Remove(BeginHandleLua);
 		Owner->OnComponentEndOverlap.Remove(EndHandleLua);
-		// Owner->OnComponentHit.Remove(HitHandleLua);
+		Owner->OnComponentHit.Remove(HitHandleLua);
 	}
 
 	// 모든 Lua 관련 리소스 정리

@@ -10,6 +10,8 @@
 #include "CameraComponent.h"
 #include "PlayerCameraManager.h"
 #include <tuple>
+#include "PhysicsScene.h"
+#include "PrimitiveComponent.h"
 
 sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* Class) {
     LuaComponentProxy Proxy;
@@ -23,7 +25,6 @@ sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* C
 FLuaManager::FLuaManager()
 {
     Lua = new sol::state();
-    
     
     // Open essential standard libraries for gameplay scripts
     Lua->open_libraries(
@@ -51,6 +52,7 @@ FLuaManager::FLuaManager()
         "Rotation", sol::property(&FGameObject::GetRotation, &FGameObject::SetRotation),
         "Scale", sol::property(&FGameObject::GetScale, &FGameObject::SetScale),
         "bIsActive", sol::property(&FGameObject::GetIsActive, &FGameObject::SetIsActive),
+        "bIsHiddenInGame", sol::property(&FGameObject::GetHiddenInGame, &FGameObject::SetHiddenInGame),
         "Velocity", &FGameObject::Velocity,
         "PrintLocation", &FGameObject::PrintLocation,
         "GetForward", &FGameObject::GetForward
@@ -405,11 +407,50 @@ FLuaManager::FLuaManager()
         sol::meta_function::equal_to, [](const FName& a, const FName& b) { return a == b; }
     );
 
+    SharedLib.new_usertype<FHitResult>("FHitResult",
+        sol::no_constructor,
+        // Lua에서는 Actor를 FGameObject로 다루므로 변환해서 반환
+        "Actor", sol::property([](FHitResult& Hit) -> FGameObject* {
+            if (Hit.Actor && !Hit.Actor->IsPendingDestroy())
+            {
+                return Hit.Actor->GetGameObject();
+            }
+            return nullptr;
+        }),
+        "Component", &FHitResult::Component,       // UActorComponent*
+        "Point", &FHitResult::ImpactPoint,         // FVector
+        "Normal", &FHitResult::ImpactNormal,       // FVector
+        "Distance", &FHitResult::Distance,         // float
+        "BoneName", &FHitResult::BoneName,         // FName
+        "Item", &FHitResult::Item,                 // int (FaceIndex)
+        "bBlockingHit", &FHitResult::bBlockingHit  // bool
+    );
+
+    sol::table Physics = SharedLib.create_named("Physics");
+
+    // 사용법: local bHit, HitResult = Physics.Raycast(Start, Dir, Dist)
+    Physics.set_function("Raycast", [](FVector Origin, FVector Direction, float Distance) -> std::tuple<bool, FHitResult> 
+    {
+        FPhysicsScene* PhyScene = GWorld->GetPhysicsScene();
+        
+        FHitResult Hit;
+        bool bHit = false;
+
+        if (PhyScene)
+        {
+            bHit = PhyScene->Raycast(Origin, Direction, Distance, Hit);
+        }
+        
+        // bool과 HitResult를 함께 리턴 (Lua의 다중 리턴 기능 활용)
+        return std::make_tuple(bHit, Hit);
+    });
+
     RegisterComponentProxy(*Lua);
     ExposeGlobalFunctions();
     ExposeAllComponentsToLua();
 
     // require로 로드된 모듈에서도 엔진 함수 사용 가능하도록 globals에 노출
+    (*Lua)["Physics"] = SharedLib["Physics"];
     (*Lua)["GetComponent"] = SharedLib["GetComponent"];
     (*Lua)["GetComponents"] = SharedLib["GetComponents"];
     (*Lua)["AddComponent"] = SharedLib["AddComponent"];

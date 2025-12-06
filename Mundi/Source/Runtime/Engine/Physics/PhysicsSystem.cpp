@@ -4,25 +4,6 @@
 #include "FKConvexElem.h"
 
 #define MAX_PHYSX_THREADS 8
-// ===== 기본 필터 셰이더 =====
-// PhysX Joint가 연결된 바디 간 충돌을 자동으로 비활성화함
-// 따라서 커스텀 래그돌 필터 불필요 - 표준 방식 사용
-static PxFilterFlags DefaultFilterShader(
-    PxFilterObjectAttributes attributes0, PxFilterData filterData0,
-    PxFilterObjectAttributes attributes1, PxFilterData filterData1,
-    PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
-{
-    // 트리거 처리
-    if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
-    {
-        pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
-        return PxFilterFlag::eDEFAULT;
-    }
-
-    // 기본 충돌 처리 (Joint가 인접 본 충돌을 자동 비활성화)
-    pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-    return PxFilterFlag::eDEFAULT;
-}
 
 FPhysicsSystem* FPhysicsSystem::Instance = nullptr;
 FPhysicsSystem& FPhysicsSystem::GetInstance()
@@ -112,6 +93,18 @@ static PxFilterFlags SimulationFilerShader(PxFilterObjectAttributes Attributes0,
 	// 
 	PairFlags = PxPairFlag::eCONTACT_DEFAULT;
 
+	if (PxFilterObjectIsTrigger(Attributes0) || PxFilterObjectIsTrigger(Attributes1))
+	{
+		// Trigger면 뚫고 지나가야 하니 반발력(Solve) 끄기
+		PairFlags &= ~PxPairFlag::eSOLVE_CONTACT;
+        
+		// Trigger 진입/이탈 알림 켜기
+		PairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		PairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
+        
+		return PxFilterFlag::eDEFAULT;
+	}
+	
 	// 충돌 시작하면 onContact 호출
 	// 여기서 추가한 플래그가 콜백할때 쓰이는 거임.
 	// 충돌 후 떨어졌을 때도 알고 싶으면 eNOTIFY_TOUCH_LOST 추가
