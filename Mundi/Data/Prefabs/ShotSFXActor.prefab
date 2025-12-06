@@ -1,0 +1,41 @@
+{
+  "ObjectName" : "ShotSFXActor",
+  "OwnedComponents" : [{
+      "Id" : 21963,
+      "ObjectName" : "USceneComponent_18",
+      "ParentId" : 0,
+      "RelativeLocation" : [-9.779131, 6.754601, 10.169679],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "USceneComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "Id" : 21964,
+      "ObjectName" : "UAudioComponent_2",
+      "ParentId" : 21963,
+      "Pitch" : 1.000000,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Sounds" : ["Data/Audio/Shot.wav"],
+      "Type" : "UAudioComponent",
+      "Volume" : 1.000000,
+      "bAutoPlay" : false,
+      "bHiddenInGame" : false,
+      "bIs2D" : false,
+      "bIsActive" : true,
+      "bIsLooping" : false,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 21963,
+  "Tag" : "",
+  "Type" : "AEmptyActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

@@ -206,9 +206,13 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 			if (StaticMeshComponent->GetStaticMesh()->GetBodySetup() &&
 				StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems.Num() > 0)
 			{
-				FKConvexElem* Convex = &StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems[0];
-				CreateShapeFromConvexElement(Convex, PhysicsActor);
+				if (StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems.Num() > 0)
+				{
+					FKConvexElem* Convex = &StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems[0];
+					CreateShapeFromConvexElement(Convex, PhysicsActor);
+				}
 			}
+			
 			
 			
 			
@@ -253,44 +257,35 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 }
 
 void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Component)
-{
-	switch (Component->CollisionType)
-	{
-	case ECollisionEnabled::None:
-	{
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-	}
-	break;
-	case ECollisionEnabled::QueryOnly:
-	{
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-	}
-	break;
-	case ECollisionEnabled::PhysicsOnly:
-	{
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
-	}
-	break;
-	case ECollisionEnabled::PhysicsAndQuery:
-	{
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
-	}
-	}
-	// 충돌처리 하지 않고 이벤트만 처리하는 컴포넌트
+{PxShapeFlags NewFlags = PxShapeFlag::eVISUALIZATION; 
+
+	// 트리거 여부 우선 확인
 	if (Component->bIsTrigger)
 	{
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		NewFlags |= PxShapeFlag::eTRIGGER_SHAPE;
+		NewFlags |= PxShapeFlag::eSCENE_QUERY_SHAPE;
 	}
+	else
+	{
+		switch (Component->CollisionType)
+		{
+		case ECollisionEnabled::None:
+			// 아무것도 안 함
+			break;
+		case ECollisionEnabled::QueryOnly:
+			NewFlags |= PxShapeFlag::eSCENE_QUERY_SHAPE;
+			break;
+		case ECollisionEnabled::PhysicsOnly:
+			NewFlags |= PxShapeFlag::eSIMULATION_SHAPE;
+			break;
+		case ECollisionEnabled::PhysicsAndQuery:
+			NewFlags |= PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE;
+			break;
+		}
+	}
+
+	// 4. 완성된 플래그를 한 번에 적용 (중간 상태가 존재하지 않아 안전함)
+	Shape->setFlags(NewFlags);
 }
 
 // Shape별 CollisionEnabled를 직접 받는 함수 (래그돌용)

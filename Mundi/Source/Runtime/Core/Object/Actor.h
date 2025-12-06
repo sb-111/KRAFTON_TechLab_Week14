@@ -175,12 +175,8 @@ public:
     // Serialize
     void Serialize(const bool bInIsLoading, JSON& InOutHandle) override;
 
-    FGameObject* GetGameObject() const
-    {
-        if (LuaGameObject)
-            return LuaGameObject;
-        return nullptr;
-    }
+    // On-demand 생성: BeginPlay 전에도 Lua에서 접근 가능
+    FGameObject* GetGameObject();
 
 public:
     UWorld* World = nullptr;

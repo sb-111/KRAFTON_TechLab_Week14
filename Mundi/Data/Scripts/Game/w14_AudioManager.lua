@@ -102,7 +102,12 @@ end
 
 -- BGM 등록
 function M.RegisterBGM(name, actorName)
+    print("[AudioManager] RegisterBGM called with: " .. actorName)
+    print("[AudioManager] FindObjectByName type: " .. type(FindObjectByName))
+
     local actor = FindObjectByName(actorName)
+    print("[AudioManager] FindObjectByName result: " .. tostring(actor))
+
     if not actor then
         print("[AudioManager] Actor not found: " .. actorName)
         return false
