@@ -564,7 +564,7 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
         }
     }
 
-	const TArray<AActor*>& Actors = Level->GetActors();
+	const TArray<AActor*> Actors = Level->GetActors();
 	for (AActor* Actor : Actors)
 	{
 		if (Actor)
