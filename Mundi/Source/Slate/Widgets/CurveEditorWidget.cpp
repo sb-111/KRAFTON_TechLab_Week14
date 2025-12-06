@@ -177,14 +177,32 @@ void FCurveEditorState::AddModuleTracks(UParticleModule* Module)
 			if (Prop.Type == EPropertyType::DistributionFloat)
 			{
 				Track.FloatCurve = Prop.GetValuePtr<FDistributionFloat>(Module);
+				Tracks.Add(Track);
 			}
-			else if (Prop.Type == EPropertyType::DistributionVector ||
-					 Prop.Type == EPropertyType::DistributionColor)
+			else if (Prop.Type == EPropertyType::DistributionVector)
 			{
 				Track.VectorCurve = Prop.GetValuePtr<FDistributionVector>(Module);
+				Tracks.Add(Track);
 			}
+			else if (Prop.Type == EPropertyType::DistributionColor)
+			{
+				// DistributionColor는 RGB(Vector)와 Alpha(Float)를 별도 트랙으로 추가
+				FDistributionColor* ColorDist = Prop.GetValuePtr<FDistributionColor>(Module);
 
-			Tracks.Add(Track);
+				// RGB 트랙
+				Track.VectorCurve = &ColorDist->RGB;
+				Track.DisplayName = FString(Prop.Name) + " (RGB)";
+				Tracks.Add(Track);
+
+				// Alpha 트랙
+				FCurveTrack AlphaTrack;
+				AlphaTrack.Module = Module;
+				AlphaTrack.PropertyName = Prop.Name;
+				AlphaTrack.DisplayName = FString(Prop.Name) + " (Alpha)";
+				AlphaTrack.TrackColor = TrackColors[Tracks.Num() % NumColors];
+				AlphaTrack.FloatCurve = &ColorDist->Alpha;
+				Tracks.Add(AlphaTrack);
+			}
 		}
 	}
 }
