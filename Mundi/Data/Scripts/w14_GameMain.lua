@@ -79,8 +79,29 @@ function GameStart()
     -- ObstacleManager 생성 (GeneralObjectManager 사용)
     ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ObstacleManager:add_object(
-            "Data/Prefabs/Obstacle_Tree.prefab",
-            500,                    -- pool_size
+            "Data/Prefabs/Obstacle_Tree1.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree2.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree3.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree4.prefab",
+            120,                    -- pool_size
             Vector(-2000, 0, 0),    -- pool_standby_location
             3,                     -- spawn_num
             5                       -- radius
