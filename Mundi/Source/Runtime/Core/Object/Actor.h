@@ -25,7 +25,6 @@ public:
     DECLARE_DELEGATE(OnComponentEndOverlap, UPrimitiveComponent*, UPrimitiveComponent*);
     DECLARE_DELEGATE(OnComponentHit, UPrimitiveComponent*, UPrimitiveComponent*, FHitResult);
 
-
     AActor(); 
 
 protected:

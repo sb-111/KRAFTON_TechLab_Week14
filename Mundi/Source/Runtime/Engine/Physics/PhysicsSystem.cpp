@@ -4,25 +4,6 @@
 #include "FKConvexElem.h"
 
 #define MAX_PHYSX_THREADS 8
-// ===== 기본 필터 셰이더 =====
-// PhysX Joint가 연결된 바디 간 충돌을 자동으로 비활성화함
-// 따라서 커스텀 래그돌 필터 불필요 - 표준 방식 사용
-static PxFilterFlags DefaultFilterShader(
-    PxFilterObjectAttributes attributes0, PxFilterData filterData0,
-    PxFilterObjectAttributes attributes1, PxFilterData filterData1,
-    PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
-{
-    // 트리거 처리
-    if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
-    {
-        pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
-        return PxFilterFlag::eDEFAULT;
-    }
-
-    // 기본 충돌 처리 (Joint가 인접 본 충돌을 자동 비활성화)
-    pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-    return PxFilterFlag::eDEFAULT;
-}
 
 FPhysicsSystem* FPhysicsSystem::Instance = nullptr;
 FPhysicsSystem& FPhysicsSystem::GetInstance()
