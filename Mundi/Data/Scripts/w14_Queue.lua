@@ -34,7 +34,7 @@ function Queue:new(index_upper_limit)
         index_upper_limit = index_upper_limit or Const.DEFAULT_INDEX_UPPER_LIMIT,
         items = {}
     }
-    setmetatable(instance, {__index = Queue})
+    setmetatable(instance, Queue)
     return instance
 end
 

@@ -2,6 +2,7 @@
 local Queue = require("w14_Queue")
 
 --- @class Pool
+--- @field name string
 --- @field spawned Queue
 --- @field despawned Queue
 --- @field pool_size number
@@ -17,6 +18,7 @@ Pool.__index = Pool
 function Pool:new()
     -- 인스턴스 생성 (필드 수정 제약 없음)
     local instance = {
+        name = nil,
         spawned = Queue:new(),
         despawned = Queue:new(),
         pool_size = nil,
@@ -25,20 +27,23 @@ function Pool:new()
         despawn_condition_checker = nil,
         spawn_location_getter = nil
     }
-    setmetatable(instance, {__index = Pool})
+    setmetatable(instance, Pool)
     return instance
 end
 
 --- Initialize pool
 --- @param prefab_path userdata c++의 actor 객체 타입. pool에서 관리할 object의 prefab path
+--- @param name string pool의 이름
 --- @param pool_size number pool에서 관리할 object의 수
 --- @param pool_standby_location userdata c++의 FVector 타입 pool에서 관리하는 오브젝트가 비활성 상태에서 대기중일 때의 위치
 --- @return void
 function Pool:initialize(
         prefab_path,
+        name,
         pool_size,
         pool_standby_location
 )
+    self.name = name
     self.pool_size = pool_size
     self.pool_standby_location = pool_standby_location
 
@@ -53,14 +58,14 @@ function Pool:initialize(
 end
 
 --- spawn_condition_checker를 설정
---- @param condition function despawned의 head가 spawned가 되는 조건. 반드시 bool을 반환하고 하나의 obj를 param으로 받는 function을 저장해야 한다.
+--- @param condition function despawned의 head가 spawned가 되는 조건. 반드시 bool을 반환하는 function을 저장해야 한다.
 --- @return void
 function Pool:set_spawn_condition_checker(condition)
     self.spawn_condition_checker = condition
 end
 
 --- despawn_condition_checker를 설정
---- @param condition function spawned의 head가 despawned가 되는 조건. 반드시 bool을 반환하고 하나의 obj를 param으로 받는 function을 저장해야 한다.
+--- @param condition function spawned의 head가 despawned가 되는 조건. 반드시 bool을 반환하는 function을 저장해야 한다.
 --- @return void
 function Pool:set_despawn_condition_checker(condition)
     self.despawn_condition_checker = condition
@@ -107,7 +112,7 @@ function Pool:check_despawn_condition_and_retrieve()
     if not self.despawn_condition_checker then
         return
     end
-    while self.despawn_condition_checker(self.spawned:head()) do
+    while self.despawn_condition_checker() do
         self:despawn()
     end
 end
@@ -118,7 +123,7 @@ function Pool:check_spawn_condition_and_release()
     if not self.spawn_condition_checker then
         return
     end
-    while self.spawn_condition_checker(self.despawned:head()) do
+    while self.spawn_condition_checker() do
         self:spawn()
     end
 end

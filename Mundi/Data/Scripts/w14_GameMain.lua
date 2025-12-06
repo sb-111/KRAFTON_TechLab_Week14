@@ -21,12 +21,23 @@ function BeginPlay()
 
     -- ControlManager에 플레이어 등록
     ControlManager:set_player_to_trace(Obj)
+    
     -- MapPool에 플레이어 등록
     MapPool:set_player_to_trace(Obj)
     -- MapPool 초기화
-    MapPool:initialize(
-            "Data/Prefabs/test_map_chunk.prefab",
-            50,
+    MapPool:add_biom(
+            "Data/Prefabs/test_map_chunk_0.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapPool:add_biom(
+            "Data/Prefabs/test_map_chunk_1.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapPool:add_biom(
+            "Data/Prefabs/test_map_chunk_2.prefab",
+            100,
             Vector(-1000, 0, 0)
     )
 end
