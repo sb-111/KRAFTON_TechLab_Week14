@@ -122,3 +122,7 @@ function ShootCoolEnd()
     PlayerAnim:ToRun()
     IsShootCool = false
 end
+
+function OnBeginOverlap(Other)
+    print(Other.Name)
+end

@@ -83,7 +83,7 @@ void FBodyInstance::UpdateTransform(const FTransform& InTransform)
 			if (Body)
 			{
 				Body->setGlobalPose(PhysxConverter::ToPxTransform(InTransform));
-				Body->setLinearVelocity(PxVec3(0, 0, 0));
+				//Body->setLinearVelocity(PxVec3(0, 0, 0));
 			}
 		}
 		});
@@ -203,7 +203,8 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 		if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PrimitiveComponent))
 		{
 			// TODO: 에셋화한 지오매트리 필요, 일단 구현 패스
-			if (StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems.Num() > 0)
+			if (StaticMeshComponent->GetStaticMesh()->GetBodySetup() &&
+				StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems.Num() > 0)
 			{
 				FKConvexElem* Convex = &StaticMeshComponent->GetStaticMesh()->GetBodySetup()->AggGeom.ConvexElems[0];
 				CreateShapeFromConvexElement(Convex, PhysicsActor);
