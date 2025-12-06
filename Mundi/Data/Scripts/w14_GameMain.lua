@@ -4,8 +4,15 @@
 
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
+local MapConfig = require("w14_MapConfig")
 local ControlManager = require("w14_ControlManager")
-local MapManager = require("w14_MapManager")
+local MapManagerClass = require("w14_MapManager")
+local ObstacleManagerClass = require("w14_ObstacleManager")
+local ObjectPlacerClass = require("w14_ObjectPlacer")
+
+local MapManager = nil
+local ObstacleManager = nil
+local ObjectPlacer = nil
 
 function BeginPlay()
     print("=== Game Main Start ===")
@@ -18,9 +25,11 @@ function BeginPlay()
 
     -- 시작 화면 표시
     GameState.ShowStartScreen()
-
+    
     -- ControlManager에 플레이어 등록
     ControlManager:set_player_to_trace(Obj)
+
+    MapManager = MapManagerClass:new()
     
     -- MapManager에 플레이어 등록
     MapManager:set_player_to_trace(Obj)
@@ -40,6 +49,30 @@ function BeginPlay()
             100,
             Vector(-1000, 0, 0)
     )
+    
+    -- ObjectPlacer 인스턴스 생성
+    --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
+    ObjectPlacer = ObjectPlacerClass:new(
+            MapConfig.map_chunk_y_size,
+            MapConfig.map_chunk_x_size * 0.5,
+            MapConfig.map_chunk_x_size * 0.5 + 10,
+            Obj.Location.Y,
+            1000
+    )
+
+    ObstacleManager = ObstacleManagerClass:new(ObjectPlacer)
+
+    -- ObstacleManager에 플레이어 등록
+    ObstacleManager:set_player_to_trace(Obj)
+
+    ObstacleManager:add_obstacle(
+            "Data/Prefabs/test_obstacle.prefab",
+            500,
+            Vector(-2000, 0, 0),
+            10,
+            5  -- radius
+    )
+    
 end
 
 function Tick(dt)
@@ -48,12 +81,27 @@ function Tick(dt)
 
     -- 입력 처리
     HandleInput()
-    
+
     -- 플레이어 조작
     ControlManager:Control(dt)
-    
+
     -- 맵 업데이트
-    MapManager:Tick()
+    if MapManager then
+        MapManager:Tick()
+    end
+
+    if ObjectPlacer and Obj.Location.X >= ObjectPlacer.area_height_offset then
+        ObjectPlacer:update_area(
+                MapConfig.map_chunk_y_size,                              -- area_width (Y축)
+                MapConfig.map_chunk_x_size,                              -- area_height (X축)
+                Obj.Location.Y,                                          -- area_width_offset (Y축)
+                Obj.Location.X + MapConfig.map_chunk_x_size * 0.5 + 10  -- area_height_offset (X축)
+        )
+    end
+
+    if ObstacleManager then
+        ObstacleManager:Tick()
+    end
 end
 
 function HandleInput()
