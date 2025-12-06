@@ -39,15 +39,15 @@ int32 UAnimStateMachineInstance::Lua_AddState(const FString& Name, const FString
         {
             if (Anim)
             {
-                UE_LOG("[AnimStateMachine]   - %s\n", Anim->GetFilePath().c_str());
+                // UE_LOG("[AnimStateMachine]   - %s\n", Anim->GetFilePath().c_str());
             }
         }
         return -1;
     }
-    UE_LOG("[AnimStateMachine] Adding state '%s' with asset '%s', PlayLength=%.2f\n", Name.c_str(), AssetPath.c_str(), Seq->GetPlayLength());
+    // UE_LOG("[AnimStateMachine] Adding state '%s' with asset '%s', PlayLength=%.2f\n", Name.c_str(), AssetPath.c_str(), Seq->GetPlayLength());
     FAnimState StateDesc; StateDesc.Name = Name; StateDesc.PlayRate = Rate; StateDesc.bLooping = bLooping;
     int32 Index = AddState(StateDesc, Seq);
-    UE_LOG("[AnimStateMachine] State '%s' added at index %d\n", Name.c_str(), Index);
+    // UE_LOG("[AnimStateMachine] State '%s' added at index %d\n", Name.c_str(), Index);
     return Index;
 }
 
@@ -65,12 +65,12 @@ void UAnimStateMachineInstance::Lua_SetState(const FString& Name, float BlendTim
     const int32 Idx = FindStateByName(Name);
     if (Idx >= 0)
     {
-        UE_LOG("[AnimStateMachine] Setting current state to '%s' (index %d) with blend time %.2f\n", Name.c_str(), Idx, BlendTime);
+        // UE_LOG("[AnimStateMachine] Setting current state to '%s' (index %d) with blend time %.2f\n", Name.c_str(), Idx, BlendTime);
         SetCurrentState(Idx, BlendTime);
     }
     else
     {
-        UE_LOG("[AnimStateMachine] Failed to find state '%s'\n", Name.c_str());
+        // UE_LOG("[AnimStateMachine] Failed to find state '%s'\n", Name.c_str());
     }
 }
 

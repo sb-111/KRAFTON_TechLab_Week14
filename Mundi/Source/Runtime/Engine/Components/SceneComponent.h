@@ -45,6 +45,7 @@ public:
     // Relative Transform API
     // ──────────────────────────────
     void SetRelativeLocation(const FVector& NewLocation);
+    UFUNCTION(LuaBind, DisplayName="GetRelativeLocation")
     FVector GetRelativeLocation() const;
 
     void SetRelativeRotation(const FQuat& NewRotation);
@@ -68,6 +69,7 @@ public:
     void SetWorldTransform(const FTransform& W);
 
     void SetWorldLocation(const FVector& L);
+    UFUNCTION(LuaBind, DisplayName="GetWorldLocation")
     FVector GetWorldLocation() const;
 
     void SetForward(FVector InForward);

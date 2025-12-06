@@ -4,41 +4,19 @@
 using namespace physx;
 class FBodyInstance;
 
-struct FCollisionEvent
-{
-	FBodyInstance* BodyA = nullptr;
-	FBodyInstance* BodyB = nullptr;
-
-	// 충돌지점 위치
-	FVector ContactPosition{};
-	// 충돌 지점의 표면에 수직한 벡터(방향: Body B -> Body A)
-	FVector ContactNormal{};
-
-	// 충격량 크기 (스칼라값으로 충분할 때가 많음)
-	float ImpulseMagnitude = 0.0f;  
-	// 스치는지 정통으로 박는지 구분 가능(ContactNormal이랑 내적) -> 내적 값에 따라 끼이익.. 쾅!! 사운드 다르게 적용 가능
-	FVector RelativeVelocity{};
-
-	// 스켈레탈 메시의 경우 필요
-	int32 ShapeIndexA = 0; // BodyA의 몇 번째 Shape인지 저장 (헤드샷 판별 가능)
-	int32 ShapeIndexB = 0; 
-};
-
 class FPhysicsSimulationEventCallback : public PxSimulationEventCallback
 {
 public:
-
-	TArray<FCollisionEvent> EventQueue;
-	std::mutex QueueMutex;
-
 	void onContact(const PxContactPairHeader& PairHeader, const PxContactPair* Pairs, PxU32 NumPairs) override;
+	void onTrigger(PxTriggerPair* Pairs, PxU32 Count) override;
+	void onConstraintBreak(PxConstraintInfo* Constraints, PxU32 Count) override {}
+	void onWake(PxActor** Actors, PxU32 Count) override {}
+	void onSleep(PxActor** Actors, PxU32 Count) override {}
+	void onAdvance(const PxRigidBody* const*, const PxTransform*, const PxU32) override {}
 
-
-	virtual void onTrigger(PxTriggerPair* Pairs, PxU32 Count) override {}
-	virtual void onConstraintBreak(PxConstraintInfo* Constraints, PxU32 Count) override {}
-	virtual void onWake(PxActor** Actors, PxU32 Count) override {}
-	virtual void onSleep(PxActor** Actors, PxU32 Count) override {}
-	virtual void onAdvance(const PxRigidBody* const*, const PxTransform*, const PxU32) override {}
+private:
+	UPrimitiveComponent* GetCompFromPxActor(physx::PxRigidActor* InActor);
+	FName GetBoneNameFromShape(const physx::PxShape* Shape);
 };
 
 class FPhysicsScene
@@ -88,6 +66,10 @@ public:
 	uint32 GetRaycastQueryResultSize();
 
 	PxVehicleDrivableSurfaceToTireFrictionPairs* GetFrictionPairs();
+
+	// 시작점, 방향(정규화 안해도 내부에서 함), 거리, 결과값(Ref)
+	bool Raycast(const FVector& Origin, const FVector& Direction, float MaxDistance, FHitResult& OutHit);
+	
 private:
 
 	// Un/Register 쉽게하려고 Set 사용
@@ -102,13 +84,11 @@ private:
 	TArray<PxActor*> ActorDeathNote;
 
 	PxScene* Scene = nullptr;
+	FPhysicsSimulationEventCallback* EventCallback = nullptr;
 
 	const float FixedDeltaTime = 1.0f / 60.0f;
 	float LeftoverTime = 0.0f;
 	bool bIsSimulated = false;  // 이번 Tick에 Simulate 을 수행했는지
-
-	std::unique_ptr<FPhysicsSimulationEventCallback> EventCallback = nullptr;
-
 	
 	// 자동차 레이캐스팅 묶음 
 	PxBatchQuery* BatchQuery = nullptr;

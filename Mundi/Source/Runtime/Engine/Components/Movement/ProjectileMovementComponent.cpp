@@ -29,7 +29,11 @@ void UProjectileMovementComponent::TickComponent(float DeltaSeconds)
 {
     if (!UpdatedComponent)
     {
-        return;
+        if (GetOwner())
+        {
+            UpdatedComponent = GetOwner()->GetRootComponent();
+        }
+        else { return; }
     }
 
     // 1. 생명주기 체크
@@ -40,12 +44,11 @@ void UProjectileMovementComponent::TickComponent(float DeltaSeconds)
         {
             if (bAutoDestroyWhenLifespanExceeded)
             {
-                // Owner Actor 파괴 (현재 지연 삭제 처리가 없어서 안보이게만 처리.)
+                // Owner Actor 파괴
                 AActor* Owner = UpdatedComponent->GetOwner();
                 if (Owner)
                 {
-                    //Owner->Destroy();
-                    Owner->SetActorHiddenInGame(true);
+                    Owner->Destroy();
                     return;
                 }
             }

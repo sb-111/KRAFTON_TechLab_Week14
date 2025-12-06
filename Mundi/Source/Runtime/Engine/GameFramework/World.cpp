@@ -264,7 +264,7 @@ void UWorld::Tick(float DeltaSeconds)
 
 		for (AActor* Actor : LevelActors)
 		{
-			if (Actor && Actor->IsActorActive())
+			if (Actor && Actor->IsActorActive() && !Actor->IsPendingDestroy())
 			{
 				if (Actor->CanEverTick())
 				{
@@ -340,7 +340,6 @@ UWorld* UWorld::DuplicateWorldForPIE(UWorld* InEditorWorld)
 	PIEWorld->PhysicsScene = FPhysicsSystem::GetInstance().CreateScene();
 
 	// PIE 월드에 파티클 이벤트 매니저 생성
-	PIEWorld->ParticleEventManager = PIEWorld->SpawnActor<AParticleEventManager>();
 
 	const TArray<AActor*>& SourceActors = InEditorWorld->GetLevel()->GetActors();
 	for (AActor* SourceActor : SourceActors)
@@ -375,6 +374,13 @@ UWorld* UWorld::DuplicateWorldForPIE(UWorld* InEditorWorld)
 		}
 
 		PIEWorld->AddActorToLevel(NewActor);
+	}
+
+	
+	PIEWorld->ParticleEventManager = PIEWorld->FindActor<AParticleEventManager>();
+	if (PIEWorld->ParticleEventManager == nullptr)
+	{
+		PIEWorld->ParticleEventManager = PIEWorld->SpawnActor<AParticleEventManager>();
 	}
 
 	return PIEWorld;
@@ -585,6 +591,7 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
 	}
 
 	// 파티클 이벤트 매니저 생성 (Preview World 제외)
+	this->ParticleEventManager = FindActor<AParticleEventManager>();
 	if (!IsPreviewWorld() && ParticleEventManager == nullptr)
 	{
 		ParticleEventManager = SpawnActor<AParticleEventManager>();

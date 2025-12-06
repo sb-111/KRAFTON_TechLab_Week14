@@ -26,6 +26,15 @@ public:
     }
     FVector GetRotation() { return Owner->GetActorRotation().ToEulerZYXDeg(); }
     
+    void SetHiddenInGame(bool NewIsActive)
+    {
+        Owner->SetActorHiddenInGame(NewIsActive);
+    }
+    bool GetHiddenInGame()
+    {
+        return Owner->GetActorHiddenInGame();
+    }
+    
     void SetIsActive(bool NewIsActive)
     {
         Owner->SetActorActive(NewIsActive);

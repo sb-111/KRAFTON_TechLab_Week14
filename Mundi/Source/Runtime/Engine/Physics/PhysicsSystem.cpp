@@ -112,6 +112,18 @@ static PxFilterFlags SimulationFilerShader(PxFilterObjectAttributes Attributes0,
 	// 
 	PairFlags = PxPairFlag::eCONTACT_DEFAULT;
 
+	if (PxFilterObjectIsTrigger(Attributes0) || PxFilterObjectIsTrigger(Attributes1))
+	{
+		// Trigger면 뚫고 지나가야 하니 반발력(Solve) 끄기
+		PairFlags &= ~PxPairFlag::eSOLVE_CONTACT;
+        
+		// Trigger 진입/이탈 알림 켜기
+		PairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		PairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
+        
+		return PxFilterFlag::eDEFAULT;
+	}
+	
 	// 충돌 시작하면 onContact 호출
 	// 여기서 추가한 플래그가 콜백할때 쓰이는 거임.
 	// 충돌 후 떨어졌을 때도 알고 싶으면 eNOTIFY_TOUCH_LOST 추가

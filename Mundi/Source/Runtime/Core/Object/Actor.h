@@ -3,7 +3,7 @@
 #include "Vector.h"
 #include "ActorComponent.h"
 #include "AABB.h"
-#include "LightManager.h"
+#include "HitResult.h"
 #include "Delegates.h"
 #include "AActor.generated.h"
 
@@ -23,7 +23,8 @@ public:
 
     DECLARE_DELEGATE(OnComponentBeginOverlap, UPrimitiveComponent*, UPrimitiveComponent*);
     DECLARE_DELEGATE(OnComponentEndOverlap, UPrimitiveComponent*, UPrimitiveComponent*);
-    DECLARE_DELEGATE(OnComponentHit, UPrimitiveComponent*, UPrimitiveComponent*);
+    DECLARE_DELEGATE(OnComponentHit, UPrimitiveComponent*, UPrimitiveComponent*, FHitResult);
+
 
     AActor(); 
 
