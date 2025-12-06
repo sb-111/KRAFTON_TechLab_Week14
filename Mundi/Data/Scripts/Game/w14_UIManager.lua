@@ -7,8 +7,8 @@ local M = {}
 
 -- 설정
 M.Textures = {
-    START = "Data/Textures/gamestart.png",
-    END = "Data/Textures/gameover.png",
+    START = "Data/Textures/w14_gamestart.png",
+    END = "Data/Textures/w14_gameover.png",
     NONE = ""
 }
 
@@ -108,7 +108,7 @@ function M.Update()
     end
 
     local camPos = camera:GetActorLocation()
-    local camForward = camera:GetActorRight()
+    local camForward = camera:GetActorForward()
 
     uiObject.Location = camPos + (camForward * uiDistance)
 
