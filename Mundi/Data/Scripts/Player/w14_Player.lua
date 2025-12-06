@@ -175,14 +175,14 @@ end
 function OnBeginOverlap(OtherActor)
     if not OtherActor then return end
 
-    -- -- 장애물 충돌 처리
-    -- if OtherActor.Tag == "obstacle" and PlayerSlow then
-    --     local obstacleName = OtherActor.Name
-    --     local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
+    -- 장애물 충돌 처리
+    if OtherActor.Tag == "obstacle" and PlayerSlow then
+        local obstacleName = OtherActor.Name
+        local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
 
-    --     print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
+        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
 
-    --     -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
-    --     PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
-    -- end
+        -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
+        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
+    end
 end
