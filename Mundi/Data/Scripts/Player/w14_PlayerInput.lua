@@ -49,7 +49,7 @@ function PlayerInput:Update(DT)
     self.RotateVector = Vector(RotX, RotY, 0)
 
     -- 발사 입력
-    local isMouseShooting = InputManager:IsMouseButtonPressed(0)
+    local isMouseShooting = InputManager:IsMouseButtonDown(0)
     local isGamepadShooting = false
 
     if InputManager:IsGamepadConnected(0) then

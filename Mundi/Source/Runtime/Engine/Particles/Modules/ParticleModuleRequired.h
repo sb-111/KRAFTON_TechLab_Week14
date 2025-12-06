@@ -16,6 +16,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Required")
 	class UMaterialInterface* Material = nullptr;
 
+	// 컴포넌트가 움직이면 파티클도 그대로 따라 움직입니다.
+	UPROPERTY(EditAnywhere, Category="Required")
+	bool bUseLocalSpace = false;
+
 	// 언리얼 엔진 호환: 렌더링 정렬 방식
 	UPROPERTY(EditAnywhere, Category="Required")
 	int32 ScreenAlignment = 0;  // 0: Billboard, 1: Velocity aligned, 2: Axis aligned 등

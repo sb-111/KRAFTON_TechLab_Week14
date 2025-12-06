@@ -2,6 +2,7 @@ local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
 local PlayerSlowClass = require("Player/w14_PlayerSlow")
 local ObstacleConfig = require("w14_ObstacleConfig")
+local Audio = require("Game/w14_AudioManager")
 local PlayerAnim = nil
 local PlayerInput = nil
 local PlayerSlow = nil
@@ -18,6 +19,9 @@ local IsShootCool = false
 local MovementSpeed = 10.0
 
 function BeginPlay()
+    Audio.Init()
+    local result = Audio.RegisterSFX("gunshot", "GunShotActor")
+
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
     MuzzleParticle = GetComponent(Obj, "UParticleSystemComponent")
@@ -47,8 +51,9 @@ function Tick(Delta)
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
         end
-
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
+
+        PlayerAnim:Update(Delta, PlayerInput.ShootTrigger)
         if PlayerInput.ShootTrigger and not IsShootCool then
             Shoot()
         end
@@ -58,7 +63,6 @@ end
 function ToRun()
     coroutine.yield("wait_time", 1)
     bIsStarted = true
-    PlayerAnim:ToRun()
 end
 
 local MouseSensitivity = 0.1 -- 감도 설정 (필요에 따라 조절)
@@ -95,8 +99,11 @@ end
 function Shoot()
     StartCoroutine(ShootCoolEnd)
     IsShootCool = true
+    PlayerAnim:Fire()
 
-    PlayerAnim:ToShoot()    
+    MuzzleParticle:Activate()
+    Audio.PlaySFX("gunshot")
+  
     local CamPos = PlayerCamera:GetWorldLocation()
     local CamDir = PlayerCamera:GetForward()
     local MaxDist = 10000.0
@@ -105,6 +112,24 @@ function Shoot()
     
     local TargetPoint = nil
     if bHit then
+        if HitResult.BoneName then
+            local BoneStr = HitResult.BoneName:ToString()
+            
+            print(BoneStr)
+            -- 본 이름에 "Head"가 포함되어 있으면 (예: mixamorig6:Head)
+            if string.find(BoneStr, "Head") then
+                print("HEADSHOT! [Vibration Triggered]")
+                
+                if InputManager:IsGamepadConnected(0) then
+                    -- (LeftMotor, RightMotor, Index)
+                    InputManager:SetGamepadVibration(0.3, 0.5, 0)
+                    
+                    -- 진동 끄기 예약
+                    StartCoroutine(VibrateFeedback)
+                end
+            end
+        end
+
         -- 벽이나 적에 맞았으면 그곳이 목표점
         TargetPoint = HitResult.Point
         local BulletDecal = SpawnPrefab("Data/Prefabs/w14_BulletDecal.prefab")
@@ -134,9 +159,15 @@ function Shoot()
     -- ApplyDamage(HitResult.Actor)
 end
 
+function VibrateFeedback()
+    coroutine.yield("wait_time", 0.15) -- 0.15초 동안 '징-'
+    if InputManager:IsGamepadConnected(0) then
+        InputManager:SetGamepadVibration(0, 0, 0) -- 진동 끄기
+    end
+end
+
 function ShootCoolEnd()
     coroutine.yield("wait_time", ShootCoolTime)
-    PlayerAnim:ToRun()
     IsShootCool = false
 end
 

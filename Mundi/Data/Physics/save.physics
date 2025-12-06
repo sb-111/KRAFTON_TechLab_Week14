@@ -96,10 +96,10 @@
         "SphylElems" : [{
             "Center" : [0.029454, 0.000000, 0.135869],
             "CollisionEnabled" : 3,
-            "Length" : 0.046034,
+            "Length" : 0.070010,
             "Name" : "mixamorig6:Head_sphyl",
-            "Radius" : 0.117938,
-            "Rotation" : [179.999954, -0.000000, -179.999969]
+            "Radius" : 0.206148,
+            "Rotation" : [179.999924, 0.000000, -179.999939]
           }]
       },
       "AngularDamping" : 0.100000,
