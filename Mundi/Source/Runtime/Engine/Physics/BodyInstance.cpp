@@ -257,7 +257,8 @@ void FBodyInstance::AddShapesRecursively(USceneComponent* CurrentComponent, UPri
 }
 
 void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Component)
-{PxShapeFlags NewFlags = PxShapeFlag::eVISUALIZATION; 
+{
+	PxShapeFlags NewFlags = PxShapeFlag::eVISUALIZATION; 
 
 	// 트리거 여부 우선 확인
 	if (Component->bIsTrigger)
@@ -291,30 +292,35 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 // Shape별 CollisionEnabled를 직접 받는 함수 (래그돌용)
 static void SetCollisionTypeFromShapeSettings(PxShape* Shape, ECollisionEnabled CollisionEnabled)
 {
+	// 1. 기본 플래그 설정 (시각화 포함)
+	PxShapeFlags NewFlags = PxShapeFlag::eVISUALIZATION;
+
+	// 2. CollisionEnabled에 따라 필요한 비트만 켬
 	switch (CollisionEnabled)
 	{
 	case ECollisionEnabled::None:
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		// 아무것도 안 함 (Query X, Sim X, Trigger X)
 		break;
+
 	case ECollisionEnabled::QueryOnly:
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		NewFlags |= PxShapeFlag::eSCENE_QUERY_SHAPE;
 		break;
+
 	case ECollisionEnabled::PhysicsOnly:
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		NewFlags |= PxShapeFlag::eSIMULATION_SHAPE;
 		break;
+
 	case ECollisionEnabled::PhysicsAndQuery:
 	default:
-		Shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		Shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-		Shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		NewFlags |= PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE;
 		break;
 	}
+
+	// ★ 중요: 래그돌 뼈대는 보통 Trigger가 아니므로 eTRIGGER_SHAPE 플래그는 추가하지 않음.
+	// (NewFlags에 Trigger 비트가 없으므로 자동으로 꺼짐 처리됨)
+
+	// 3. 한 번에 적용 (안전함)
+	Shape->setFlags(NewFlags);
 }
 
 // ===== 래그돌용 함수들 (언리얼 방식) =====

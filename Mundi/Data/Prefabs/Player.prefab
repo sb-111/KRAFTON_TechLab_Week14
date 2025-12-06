@@ -1,109 +1,264 @@
 {
-  "Name" : "AStaticMeshActor_7",
+  "ObjectName" : "Player",
   "OwnedComponents" : [{
-      "ScriptFilePath" : "Data/Scripts/Player.lua",
-      "Type" : "ULuaScriptComponent",
-      "bIsActive" : true,
-      "bTickEnabled" : true
-    }, {
-      "Id" : 6220,
-      "MaterialSlots" : [{
-          "AssetPath" : "Pantaln",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Piel",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Piel",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Zapatos",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "material",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Faja",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Dientes",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Corbata",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Camisa",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "Material.001",
-          "Type" : "UMaterial"
-        }],
-      "ParentId" : 0,
-      "RelativeLocation" : [-3.212486, 0.000000, 4.099945],
-      "RelativeRotationEuler" : [-0.586458, 0.005865, 1.190784],
-      "RelativeScale" : [0.300000, 0.300000, 0.300000],
-      "StaticMesh" : "Data/Model/Player.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsVisible" : true,
-      "bTickEnabled" : true
-    }, {
-      "Id" : 6223,
-      "MaterialSlots" : [{
-          "AssetPath" : "GatlingGun_Turret_Mat",
-          "Type" : "UMaterial"
-        }],
-      "ParentId" : 6220,
-      "RelativeLocation" : [0.046674, -0.031837, 3.014768],
-      "RelativeRotationEuler" : [8.360693, -0.166903, -90.098228],
-      "RelativeScale" : [0.500000, 0.700000, 0.500000],
-      "StaticMesh" : "Data/Model/Gun.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsVisible" : true,
-      "bTickEnabled" : true
-    }, {
-      "BoxExtent" : [1.107728, 1.839137, 1.661383],
-      "Id" : 6221,
-      "ParentId" : 6220,
-      "RelativeLocation" : [0.000008, 0.000793, 1.522545],
+      "CollisionType" : 0,
+      "DebugParticleType" : 0,
+      "Density" : 10.000000,
+      "Id" : 12099,
+      "Mass" : 10.000000,
+      "MobilityType" : 0,
+      "ObjectName" : "UParticleSystemComponent_1",
+      "ParentId" : 12102,
+      "RelativeLocation" : [0.580322, -27.009079, 171.720917],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Template" : "",
+      "Type" : "UParticleSystemComponent",
+      "bAutoActivate" : true,
+      "bBlockComponent" : false,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : true
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 12102,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_10",
+      "ParentId" : 12103,
+      "RelativeLocation" : [-1.300000, -5.300000, -9.800000],
+      "RelativeRotationEuler" : [-20.700001, 13.500000, 104.400002],
+      "RelativeScale" : [0.250000, 0.250000, 0.250000],
+      "StaticMesh" : "Data/Rifle/Ak47.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Player/w14_Player.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "BoxExtent" : [0.100000, 0.300000, 1.000000],
+      "CollisionType" : 3,
+      "Density" : 10.000000,
+      "Id" : 12100,
+      "Mass" : 10.000000,
+      "MobilityType" : 769,
+      "ObjectName" : "UBoxComponent_5",
+      "ParentId" : 12104,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
+      "bIsTrigger" : true,
       "bIsVisible" : true,
+      "bOverrideMass" : false,
       "bShapeHiddenInGame" : true,
       "bShapeIsVisible" : true,
-      "bTickEnabled" : true
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }, {
-      "Id" : 6222,
-      "ParentId" : 6220,
-      "Pitch" : 1.000000,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "Sounds" : ["Data/Audio/Die.wav"],
-      "Type" : "UAudioComponent",
-      "Volume" : 1.000000,
-      "bAutoPlay" : false,
+      "AspectRatio" : 1.000000,
+      "FarClip" : 100.000000,
+      "FieldOfView" : 60.000000,
+      "Id" : 12101,
+      "NearClip" : 0.100000,
+      "ObjectName" : "UCameraComponent_8",
+      "ParentId" : 12104,
+      "ProjectionMode" : 0,
+      "RelativeLocation" : [0.300000, -0.200000, 0.400000],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [0.100000, 0.100000, 0.100000],
+      "Type" : "UCameraComponent",
+      "ZoomFactor" : 1.000000,
       "bHiddenInGame" : false,
       "bIsActive" : true,
-      "bIsLooping" : false,
       "bIsVisible" : true,
-      "bTickEnabled" : true
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 3,
+      "Density" : 10.000000,
+      "Id" : 12103,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "Type" : "None"
+        }, {
+          "AssetPath" : "Ch20_body",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 769,
+      "ObjectName" : "USkeletalMeshComponent_23",
+      "ParentId" : 12104,
+      "PhysicsAssetPathOverride" : "Data/Physics/save.physics",
+      "RelativeLocation" : [0.000000, 0.000000, -1.000000],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "SkeletalMesh" : "Data/DancingRacer.fbx",
+      "Type" : "USkeletalMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsCar" : false,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "Id" : 12104,
+      "ObjectName" : "USceneComponent_29",
+      "ParentId" : 0,
+      "RelativeLocation" : [5.650326, -2.264388, 1.140128],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "USceneComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }],
-  "RootComponentId" : 6220,
-  "Tag" : "player",
-  "Type" : "AStaticMeshActor",
+  "RootComponentId" : 12104,
+  "Tag" : "",
+  "Type" : "AEmptyActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true
 }

@@ -14,9 +14,9 @@ GeneralObjectManager.__index = GeneralObjectManager
 --- GeneralObjectManager 인스턴스 생성
 --- @param object_placer ObjectPlacer Main에서 생성된 object_placer를 받아온다(다른 배치 도구와 같은 Placer를 공유해야 하기 때문)
 --- @return GeneralObjectManager
-function GeneralObjectManager:new(object_placer)
+function GeneralObjectManager:new(object_placer, InPlayer)
     local instance = {
-        player = nil,
+        player = InPlayer,
         objects = {},
         objects_spawn_nums = {},
         object_radius = {},
@@ -24,13 +24,6 @@ function GeneralObjectManager:new(object_placer)
     }
     setmetatable(instance, GeneralObjectManager)
     return instance
-end
-
---- GeneralObjectManager가 추적할 플레이어 설정
---- @param player userdata 추적할 플레이어 GameObject
---- @return void
-function GeneralObjectManager:set_player_to_trace(player)
-    self.player = player
 end
 
 --- 오브젝트 타입 추가

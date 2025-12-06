@@ -1,9 +1,17 @@
 {
   "ObjectName" : "Obstacle_Tree",
   "OwnedComponents" : [{
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 10485,
+      "Id" : 67330,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "pine_bark",
@@ -12,7 +20,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_7",
       "ParentId" : 0,
-      "RelativeLocation" : [-22.406515, -35.114811, 28.377098],
+      "RelativeLocation" : [10.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/Trees/Tree4.obj",
@@ -29,22 +37,14 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "BoxExtent" : [3.100000, 2.000000, 20.000000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 10486,
+      "Id" : 67332,
       "Mass" : 10.000000,
       "MobilityType" : 769,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 10485,
+      "ParentId" : 67330,
       "RelativeLocation" : [0.000000, 0.000000, 20.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -62,8 +62,8 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 10485,
-  "Tag" : "",
+  "RootComponentId" : 67330,
+  "Tag" : "obstacle",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

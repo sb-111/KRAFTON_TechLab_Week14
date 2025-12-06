@@ -1,9 +1,12 @@
 local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
-local PlayerCamera = nil
+local PlayerSlowClass = require("Player/w14_PlayerSlow")
+local ObstacleConfig = require("w14_ObstacleConfig")
 local PlayerAnim = nil
 local PlayerInput = nil
+local PlayerSlow = nil
 
+local PlayerCamera = nil
 local Mesh = nil
 local Gun = nil
 local MuzzleParticle = nil
@@ -23,6 +26,7 @@ function BeginPlay()
 
     PlayerAnim = PlayerAnimClass:new(Obj)
     PlayerInput = PlayerInputClass:new(Obj)
+    PlayerSlow = PlayerSlowClass:new(Obj)
     StartCoroutine(ToRun)
 
     PlayerCamera = GetComponent(Obj, "UCameraComponent")
@@ -38,10 +42,13 @@ function Tick(Delta)
         PlayerInput:Update(Delta)
         Rotate()
 
+        local Forward = MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
+        local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
-            local MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta
-            Obj.Location = Obj.Location + Vector(0, MoveAmount, 0)
+            MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
         end
+
+        Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
 
         if PlayerInput.ShootTrigger and not IsShootCool then
             Shoot()
@@ -84,7 +91,7 @@ function Shoot()
     local CamDir = PlayerCamera:GetForward()
     local MaxDist = 10000.0
     -- 레이캐스트
-    local bHit, HitResult = Physics.Raycast(CamPos + CamDir * 5, CamDir, MaxDist)
+    local bHit, HitResult = Physics.Raycast(CamPos + CamDir, CamDir, MaxDist)
     
     local TargetPoint = nil
     if bHit then
@@ -123,6 +130,21 @@ function ShootCoolEnd()
     IsShootCool = false
 end
 
-function OnBeginOverlap(Other)
-    print(Other.Name)
+-- 충돌 처리: 장애물과 충돌 시 속도 감소
+function OnBeginOverlap(OtherActor)
+    if not OtherActor then return end
+
+    -- 디버그: 충돌한 Actor 정보 출력
+    print("[OnBeginOverlap] OnBeginOverlap - Name: " .. tostring(OtherActor.Name) .. ", Tag: " .. tostring(OtherActor.Tag))
+
+    -- 장애물 충돌 처리
+    if OtherActor.Tag == "obstacle" and PlayerSlow then
+        local obstacleName = OtherActor.Name
+        local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
+
+        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
+
+        -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
+        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
+    end
 end

@@ -49,27 +49,20 @@ function M.Init()
     end
 
     -- 상태 변경 콜백 등록
-    GameState.OnStateChange(function(newState, oldState)
-        M.OnStateChanged(newState)
+    GameState.OnStateChange(GameState.States.START, function() 
+        M.ShowTexture(M.Textures.START) 
     end)
-
-    -- 현재 상태에 맞게 UI 표시
-    M.OnStateChanged(GameState.GetState())
+    GameState.OnStateChange(GameState.States.END, function() 
+        M.ShowTexture(M.Textures.END) 
+    end)
+    GameState.OnStateChange(GameState.States.INIT, function() M.HideUI() end)
+    GameState.OnStateChange(GameState.States.PLAYING, function() M.HideUI() end)
+    GameState.OnStateChange(GameState.States.PAUSED, function() M.HideUI() end)
+    GameState.OnStateChange(GameState.States.DEAD, function() M.HideUI() end)
 
     print("[UIManager] Initialized (Found UIActor)")
     isInitialized = true
     return true
-end
-
--- 상태 변경 시 호출
-function M.OnStateChanged(state)
-    if state == GameState.States.START then
-        M.ShowTexture(M.Textures.START)
-    elseif state == GameState.States.END then
-        M.ShowTexture(M.Textures.END)
-    else
-        M.HideUI()
-    end
 end
 
 -- 텍스처 표시
