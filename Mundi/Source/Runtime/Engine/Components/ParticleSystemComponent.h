@@ -114,9 +114,17 @@ public:
 	virtual void TickComponent(float DeltaTime) override;
 
 	// 활성화/비활성화
+	UFUNCTION(LuaBind, DisplayName="Activate", Tooltip="Activate the particle system")
 	void ActivateSystem();
+
+	UFUNCTION(LuaBind, DisplayName="Deactivate", Tooltip="Deactivate the particle system")
 	void DeactivateSystem();
+
+	UFUNCTION(LuaBind, DisplayName="Reset", Tooltip="Reset all particles")
 	void ResetParticles();
+
+	UFUNCTION(LuaBind, DisplayName="IsActive", Tooltip="Check if the particle system is active")
+	bool IsActive() const { return EmitterInstances.Num() > 0; }
 
 	// 시뮬레이션 속도 제어 (에디터용)
 	void SetSimulationSpeed(float Speed) { CustomTimeScale = Speed; }
