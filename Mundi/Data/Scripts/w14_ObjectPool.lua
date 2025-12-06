@@ -57,6 +57,14 @@ function Pool:initialize(
     end
 end
 
+--- Pool의 모든 object를 해제
+--- @return void
+function Pool:despawn_all()
+    for i=#self.spawned, 1, -1 do
+        self:despawn()
+    end
+end
+
 --- spawn_condition_checker를 설정
 --- @param condition function despawned의 head가 spawned가 되는 조건. 반드시 bool을 반환하는 function을 저장해야 한다.
 --- @return void

@@ -1,6 +1,6 @@
 ﻿local Math = {}
 
-function Math:RandomFloatInRange(MinRange, MaxRange)
+function Math:RandomInRange(MinRange, MaxRange)
     return MinRange + (MaxRange - MinRange) * math.random()
 end
 
