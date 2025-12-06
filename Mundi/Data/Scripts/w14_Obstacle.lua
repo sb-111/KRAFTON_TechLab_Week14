@@ -9,8 +9,8 @@ function BeginPlay()
 
     -- Config에서 속도 감소 설정 가져오기
     local cfg = Config[Obj.Name] or Config.Default
-    Obj.SpeedMult = cfg.speedMult      -- 속도 배율 (0.5 = 50%)
-    Obj.SlowDuration = cfg.duration    -- 지속 시간 (초)
+    --Obj.SpeedMult = cfg.speedMult      -- 속도 배율 (0.5 = 50%)
+    --Obj.SlowDuration = cfg.duration    -- 지속 시간 (초)
 end
 
 function EndPlay()

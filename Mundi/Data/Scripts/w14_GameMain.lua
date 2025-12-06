@@ -65,10 +65,10 @@ function BeginPlay()
     ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer)
     ObstacleManager:set_player_to_trace(Obj)
     ObstacleManager:add_object(
-            "Data/Prefabs/test_obstacle.prefab",
+            "Data/Prefabs/Obstacle_Tree.prefab",
             500,                    -- pool_size
             Vector(-2000, 0, 0),    -- pool_standby_location
-            10,                     -- spawn_num
+            3,                     -- spawn_num
             5                       -- radius
     )
 
