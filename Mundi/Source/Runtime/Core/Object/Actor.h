@@ -109,8 +109,8 @@ public:
     void SetActorIsVisible(bool bIsActive);
     bool GetActorIsVisible();
     
-    void SetActorActive(bool bIsActive) { bActorIsActive = bIsActive; };
-    bool IsActorActive() { return bActorIsActive; };
+    void SetActorActive(bool bIsActive);
+    bool IsActorActive() const { return bActorIsActive; }
 
     FMatrix GetWorldMatrix() const;
 

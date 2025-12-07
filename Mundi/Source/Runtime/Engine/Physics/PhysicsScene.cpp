@@ -95,6 +95,16 @@ void FPhysicsScene::AddActor(PxActor& NewActor)
 	}
 }
 
+void FPhysicsScene::RemoveActor(PxActor& Actor)
+{
+	if (Scene)
+	{
+		// 시뮬레이션 중일 수 있으므로 Write Lock 필요
+		SCOPED_WRITE_LOCK(*Scene);
+		Scene->removeActor(Actor);
+	}
+}
+
 void FPhysicsScene::Simulate(float DeltaTime)
 {
 	// 델타 타임 캡 (MaxFrameTime)

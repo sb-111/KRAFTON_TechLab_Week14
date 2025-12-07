@@ -42,6 +42,7 @@ public:
 	void UnRegisterTemporal(IPrePhysics* Object);*/
 
 	void AddActor(PxActor& NewActor);
+	void RemoveActor(PxActor& Actor);
 
 	void Simulate(float DeltaTime);
 
