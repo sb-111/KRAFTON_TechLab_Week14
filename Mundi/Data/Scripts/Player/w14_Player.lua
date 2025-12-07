@@ -24,6 +24,9 @@ local IsShootCool = false
 local MovementSpeed = 10.0
 
 function BeginPlay()
+    Obj.bIsActive = false
+    Obj.bIsActive = true
+
     Audio.Init()
     local result = Audio.RegisterSFX("gunshot", "GunShotActor")
     local result = Audio.RegisterSFX("gunreload", "GunReloadActor")
