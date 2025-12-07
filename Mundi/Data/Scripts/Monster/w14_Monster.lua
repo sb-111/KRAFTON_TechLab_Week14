@@ -77,7 +77,7 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
 
     -- 애니메이션 상태 추가
     self.anim_instance:AddState("Idle", "Data/GameJamAnim/Monster/BasicZombieIdle_mixamo.com", 1.0, true)
-    self.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/BasicZombieAttack_mixamo.com", 1.0, true)
+    self.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/BasicZombieAttack_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/BasicZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/BasicZombieDying_mixamo.com", 1.0, false)
 
@@ -106,6 +106,32 @@ function Monster:IsDamagedState()
             self.anim_instance:GetStateTime("Damaged") < AnimDurations.DamagedDuration)
 end
 
+--- 공격 중인 상태인지 확인합니다.
+--- @return boolean
+function Monster:IsAttackingState()
+    return self.anim_instance:GetCurrentStateName() == "Attack" and
+            self.anim_instance:GetStateTime("Attack") < AnimDurations.AttackDuration
+end
+
+--- 애니메이션 상태를 업데이트합니다 (Attack, Damaged가 끝나면 Idle로 복귀).
+--- @return void
+function Monster:UpdateAnimationState()
+    local current_state = self.anim_instance:GetCurrentStateName()
+    local current_time = self.anim_instance:GetStateTime(current_state)
+
+    -- Attack 애니메이션이 끝나면 Idle로 복귀
+    if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
+        self.anim_instance:SetState("Idle", 0)
+        return
+    end
+
+    -- Damaged 애니메이션이 끝나면 Idle로 복귀
+    if current_state == "Damaged" and current_time >= AnimDurations.DamagedDuration then
+        self.anim_instance:SetState("Idle", 0)
+        return
+    end
+end
+
 --- 플레이어 위치를 확인하고 공격 범위 내에 있으면 공격합니다.
 --- @return void
 function Monster:CheckPlayerPositionAndAttack()
@@ -114,10 +140,14 @@ function Monster:CheckPlayerPositionAndAttack()
     local distance_squared = offset.X * offset.X + offset.Y * offset.Y
     local attack_range_squared = self.attack_range * self.attack_range
     local is_damaging = self:IsDamagedState()
+    local is_attacking = self:IsAttackingState()
 
-    -- 공격 범위 내에 있고, 피격 상태가 아니면 공격
-    if (distance_squared < attack_range_squared and not is_damaging) then
+    -- 공격 범위 내에 있고, 피격 상태가 아니며, 공격 중이 아닐 때만 공격
+    if (distance_squared < attack_range_squared and not is_damaging and not is_attacking) then
         self.anim_instance:SetState("Attack", 0)
+    -- 그렇지 않으면 idle 상태로 돌아간다.
+    --else
+    --    self.anim_instance:SetState("Idle", 0)
     end
 end
 

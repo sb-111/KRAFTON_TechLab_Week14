@@ -1,6 +1,6 @@
 {
   "Actors" : {
-    "1232" : {
+    "1182" : {
       "ObjectName" : "ADirectionalLightActor_3",
       "OwnedComponents" : [{
           "CascadedAreaColorDebugValue" : 0.000000,
@@ -8,7 +8,7 @@
           "CascadedCount" : 4,
           "CascadedLinearBlendingValue" : 0.500000,
           "CascadedOverlapValue" : 0.200000,
-          "Id" : 1233,
+          "Id" : 1184,
           "Intensity" : 1.000000,
           "LightColor" : [1.000000, 1.000000, 1.000000, 1.000000],
           "ObjectName" : "UDirectionalLightComponent_4",
@@ -30,16 +30,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 1233,
+      "RootComponentId" : 1184,
       "Tag" : "",
       "Type" : "ADirectionalLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "1234" : {
+    "1185" : {
       "ObjectName" : "AAmbientLightActor_3",
       "OwnedComponents" : [{
-          "Id" : 1235,
+          "Id" : 1187,
           "Intensity" : 0.100000,
           "LightColor" : [1.000000, 1.000000, 1.000000, 1.000000],
           "ObjectName" : "UAmbientLightComponent_4",
@@ -60,25 +60,25 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 1235,
+      "RootComponentId" : 1187,
       "Tag" : "",
       "Type" : "AAmbientLightActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "1239" : {
+    "1188" : {
       "ObjectName" : "APlayerCameraManager_3",
       "OwnedComponents" : [{
           "AspectRatio" : 1.000000,
           "FarClip" : 100.000000,
           "FieldOfView" : 60.000000,
-          "Id" : 1240,
+          "Id" : 1190,
           "NearClip" : 0.100000,
           "ObjectName" : "UCameraComponent_8",
           "ParentId" : 0,
           "ProjectionMode" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
           "Type" : "UCameraComponent",
           "ZoomFactor" : 1.000000,
@@ -88,16 +88,16 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 1240,
+      "RootComponentId" : 1190,
       "Tag" : "",
       "Type" : "APlayerCameraManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "1242" : {
+    "1191" : {
       "ObjectName" : "AParticleEventManager_8",
       "OwnedComponents" : [{
-          "Id" : 1243,
+          "Id" : 1192,
           "ObjectName" : "USceneComponent_10",
           "ParentId" : 0,
           "RelativeLocation" : [0.000000, 0.000000, 0.000000],
@@ -110,18 +110,18 @@
           "bTickEnabled" : true,
           "bTickInEditor" : false
         }],
-      "RootComponentId" : 1243,
+      "RootComponentId" : 1192,
       "Tag" : "",
       "Type" : "AParticleEventManager",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
     },
-    "1245" : {
+    "1193" : {
       "ObjectName" : "스켈레탈 메시_0",
       "OwnedComponents" : [{
-          "CollisionType" : 0,
+          "CollisionType" : 3,
           "Density" : 10.000000,
-          "Id" : 1246,
+          "Id" : 1196,
           "Mass" : 10.000000,
           "MaterialSlots" : [{
               "Type" : "None"
@@ -135,12 +135,12 @@
               "AssetPath" : "ZombieGirl_Material",
               "Type" : "UMaterial"
             }],
-          "MobilityType" : 0,
+          "MobilityType" : 769,
           "ObjectName" : "USkeletalMeshComponent_1",
           "ParentId" : 0,
-          "PhysicsAssetPathOverride" : "",
+          "PhysicsAssetPathOverride" : "Data/Physics/BasicMonster.physics",
           "RelativeLocation" : [8.000000, 0.000000, 0.000000],
-          "RelativeRotationEuler" : [0.000000, -0.000000, -179.999985],
+          "RelativeRotationEuler" : [0.000000, -0.000000, -179.999969],
           "RelativeScale" : [1.000000, 1.000000, 1.000000],
           "SkeletalMesh" : "Data/GameJamMonster/Zombiegirl W Kurniawan.fbx",
           "Type" : "USkeletalMeshComponent",
@@ -164,21 +164,124 @@
           "bIsActive" : true,
           "bTickEnabled" : true,
           "bTickInEditor" : false
+        }, {
+          "CapsuleHalfHeight" : 1.000000,
+          "CapsuleRadius" : 0.500000,
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 1197,
+          "Mass" : 10.000000,
+          "MobilityType" : 0,
+          "ObjectName" : "UCapsuleComponent_1",
+          "ParentId" : 1196,
+          "RelativeLocation" : [0.000000, 0.000000, 1.000000],
+          "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "UCapsuleComponent",
+          "bBlockComponent" : false,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bShapeHiddenInGame" : true,
+          "bShapeIsVisible" : true,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
         }],
-      "RootComponentId" : 1246,
+      "RootComponentId" : 1196,
       "Tag" : "",
       "Type" : "ASkeletalMeshActor",
       "bActorHiddenInGame" : false,
       "bActorIsActive" : true
+    },
+    "1198" : {
+      "ObjectName" : "player",
+      "OwnedComponents" : [{
+          "CollisionType" : 3,
+          "Density" : 10.000000,
+          "Id" : 1200,
+          "Mass" : 10.000000,
+          "MaterialSlots" : [{
+              "AssetPath" : "texture",
+              "Type" : "UMaterial"
+            }],
+          "MobilityType" : 768,
+          "ObjectName" : "UStaticMeshComponent_3",
+          "ParentId" : 0,
+          "RelativeLocation" : [8.000000, -4.155007, 0.500000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "StaticMesh" : "Data/cube-tex.obj",
+          "Type" : "UStaticMeshComponent",
+          "bBlockComponent" : false,
+          "bCastShadows" : true,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
+          "BoxExtent" : [0.500000, 0.500000, 0.500000],
+          "CollisionType" : 0,
+          "Density" : 10.000000,
+          "Id" : 1201,
+          "Mass" : 10.000000,
+          "MobilityType" : 0,
+          "ObjectName" : "UBoxComponent_1",
+          "ParentId" : 1200,
+          "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+          "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+          "RelativeScale" : [1.000000, 1.000000, 1.000000],
+          "Type" : "UBoxComponent",
+          "bBlockComponent" : false,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsTrigger" : false,
+          "bIsVisible" : true,
+          "bOverrideMass" : false,
+          "bShapeHiddenInGame" : true,
+          "bShapeIsVisible" : true,
+          "bSimulatePhysics" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }, {
+          "Gravity" : 0.000000,
+          "HomingAccelerationMagnitude" : 0.000000,
+          "InitialSpeed" : 1.000000,
+          "MaxSpeed" : 1.000000,
+          "ObjectName" : "UProjectileMovementComponent_1",
+          "ProjectileLifespan" : 0.000000,
+          "Type" : "UProjectileMovementComponent",
+          "Velocity" : [0.000000, 1.000000, 0.000000],
+          "bAutoDestroyWhenLifespanExceeded" : true,
+          "bHiddenInGame" : false,
+          "bIsActive" : true,
+          "bIsHomingProjectile" : false,
+          "bTickEnabled" : true,
+          "bTickInEditor" : false
+        }],
+      "RootComponentId" : 1200,
+      "Tag" : "player",
+      "Type" : "AStaticMeshActor",
+      "bActorHiddenInGame" : false,
+      "bActorIsActive" : true
     }
   },
-  "NextUUID" : 2993,
+  "NextUUID" : 1408,
   "PerspectiveCamera" : {
     "FOV" : [60.000000],
     "FarClip" : [2000.000000],
-    "Location" : [2.548544, -22.993561, 18.511801],
+    "Location" : [-1.709134, 0.900384, 6.759635],
     "NearClip" : [0.100000],
-    "Rotation" : [0.000000, 41.000305, 74.601295]
+    "Rotation" : [0.000000, 28.900366, 1.601306]
   },
   "Version" : 1
 }

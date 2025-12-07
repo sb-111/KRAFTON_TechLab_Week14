@@ -11,7 +11,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    Monster:Initialize(Obj, 3.0, 100, 10, 2.5)
+    Monster:Initialize(Obj, 3.0, 100, 10, 2.0)
 end
 
 --- 매 프레임마다 호출됩니다.
@@ -22,6 +22,9 @@ function Tick(Delta)
     if not Monster or Monster.is_dead then
         return
     end
+
+    -- 애니메이션 상태 업데이트 (Attack, Damaged 끝나면 Idle로 복귀)
+    Monster:UpdateAnimationState()
 
     -- 플레이어 위치 기반 공격 체크
     Monster:CheckPlayerPositionAndAttack()
@@ -67,6 +70,11 @@ end
 function OnBeginOverlap(OtherActor)
     if not Monster then
         return
+    end
+
+    ---- Test Code
+    if OtherActor.Tag == "player" then
+        Monster:GetDamage(10)
     end
 
     ---- 플레이어의 총알과 충돌 처리
