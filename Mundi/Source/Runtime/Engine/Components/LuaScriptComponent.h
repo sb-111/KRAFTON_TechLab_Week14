@@ -37,6 +37,8 @@ public:
 	bool Call(const char* FuncName, sol::variadic_args VarArgs); // 다른 클래스가 날 호출할 때 씀
 
 	void CleanupLuaResources();
+	sol::environment& GetLuaEnv() { return Env; }
+	
 protected:
 	// 이 컴포넌트가 실행할 .lua 스크립트 파일의 경로 (에디터에서 설정)
 
