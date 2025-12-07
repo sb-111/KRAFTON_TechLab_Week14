@@ -46,11 +46,6 @@ function OnBeginOverlap(OtherActor)
     if not Monster then
         return
     end
-
-    -- 플레이어의 총알과 충돌 처리
-    if OtherActor.Tag == "bullet" then
-        Monster:GetDamage(10)
-    end
 end
 
 function GetDamage(Damage)

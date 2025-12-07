@@ -24,8 +24,8 @@ local IsShootCool = false
 local MovementSpeed = 10.0
 
 function BeginPlay()
-    Obj.bIsActive = false
-    Obj.bIsActive = true
+    Obj:SetPhysicsState(false)
+    Obj:SetPhysicsState(true)
 
     Audio.Init()
     local result = Audio.RegisterSFX("gunshot", "GunShotActor")

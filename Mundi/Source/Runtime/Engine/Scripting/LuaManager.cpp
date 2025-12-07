@@ -58,6 +58,7 @@ FLuaManager::FLuaManager()
         "Velocity", &FGameObject::Velocity,
         "PrintLocation", &FGameObject::PrintLocation,
         "GetForward", &FGameObject::GetForward,
+        "SetPhysicsState", &FGameObject::SetPhysicsState,
         "GetScript", [](FGameObject& self, sol::this_state s) -> sol::object {
             AActor* Owner = self.GetOwner();
             if (!Owner) return sol::make_object(s, sol::nil);

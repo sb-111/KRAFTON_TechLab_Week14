@@ -45,6 +45,11 @@ public:
         return Owner->IsActorActive();
     }
 
+    void SetPhysicsState(bool NewPhysicsState)
+    {
+        Owner->UpdatePhysicsState(NewPhysicsState);
+    }
+    
     void PrintLocation()
     {
         FVector Location =  Owner->GetActorLocation();
