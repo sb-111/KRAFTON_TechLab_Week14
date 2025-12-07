@@ -1,7 +1,7 @@
 {
   "ObjectName" : "ChaserMonster",
   "OwnedComponents" : [{
-      "CollisionType" : 0,
+      "CollisionType" : 3,
       "Density" : 10.000000,
       "Id" : 13478,
       "Mass" : 10.000000,
@@ -51,7 +51,7 @@
       "bTickInEditor" : false
     }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
-      "CollisionType" : 0,
+      "CollisionType" : 3,
       "Density" : 10.000000,
       "Id" : 13479,
       "Mass" : 10.000000,
