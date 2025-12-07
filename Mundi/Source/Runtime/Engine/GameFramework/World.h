@@ -68,6 +68,14 @@ struct FDebugPrimitive
     uint32 UUID = 0;
 };
 
+struct FPrefabCacheData
+{
+    JSON ActorJson;      // 파싱된 JSON 데이터
+    UClass* ActorClass;  // 미리 찾아놓은 클래스 포인터
+
+    bool IsValid() const { return ActorClass != nullptr; }
+};
+
 enum class EWorldType : uint8;
 
 class UWorld final : public UObject
@@ -110,6 +118,10 @@ public:
     AActor* SpawnActor(UClass* Class, const FTransform& Transform);
     AActor* SpawnActor(UClass* Class);
     AActor* SpawnPrefabActor(const FWideString& PrefabPath);
+private:
+    TMap<FWideString, FPrefabCacheData> PrefabCache;
+    
+public:
     void AddActorToLevel(AActor* Actor);
 
     void AddPendingKillActor(AActor* Actor);

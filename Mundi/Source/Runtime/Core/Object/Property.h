@@ -51,6 +51,7 @@ struct FProperty
 	EPropertyType KeyType = EPropertyType::Unknown;   // TMap<K,V>의 'K'
 	const char* TypeName = nullptr;          // Struct/Enum 타입 이름 (예: "FTestTransform", "EAnimationMode")
 	size_t Offset = 0;                       // 클래스 인스턴스 내 오프셋
+	size_t Size = 0;                         // Enum의 경우 underlying type 크기 (1, 2, 4 bytes)
 	EOwnerKind OwnerKind = EOwnerKind::Unknown;   // 프로퍼티 소유자 종류 (Class/Struct)
 	const char* Category = nullptr;          // UI 카테고리
 	float MinValue = 0.0f;                   // 범위 최소값

@@ -16,6 +16,7 @@ local BiomeManagerClass = require("w14_BiomeManager")
 local MapManager = nil
 local BiomeManager = nil
 local ItemManager = nil
+local MonsterManager = nil
 local ObjectPlacer = nil
 local Player = nil
 
@@ -126,6 +127,15 @@ function GameStart()
             5,                      -- spawn_num (적게)
             3                       -- radius
     )
+    
+    MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
+    MonsterManager:add_object(
+            "Data/Prefabs/w14_BasicMonster.prefab",
+            300,
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            10,                     -- spawn_num (적게)
+            2                       -- radius
+    )
 end
 
 function GameEnd()
@@ -172,6 +182,10 @@ function Tick(dt)
 
         if ItemManager then
             ItemManager:Tick()
+        end
+
+        if MonsterManager then
+            MonsterManager:Tick()
         end
     end
 end

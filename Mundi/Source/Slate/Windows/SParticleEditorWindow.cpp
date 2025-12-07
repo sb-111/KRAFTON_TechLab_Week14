@@ -43,6 +43,7 @@
 #include "Widgets/PropertyRenderer.h"
 #include "ParticleStats.h"
 #include "ParticleEmitterInstance.h"
+#include "ParticleModuleVelocityCone.h"
 #include "RenderSettings.h"
 
 // 모듈 드래그 앤 드롭 페이로드 구조체
@@ -2096,6 +2097,10 @@ void SParticleEditorWindow::RenderEmitterColumn(int32 EmitterIndex, UParticleEmi
 			if (ImGui::MenuItem("초기 속도"))
 			{
 				AddModuleToLOD<UParticleModuleVelocity>(LOD, State);
+			}
+			if (ImGui::MenuItem("초기 속도 콘"))
+			{
+				AddModuleToLOD<UParticleModuleVelocityCone>(LOD, State);
 			}
 			ImGui::EndMenu();
 		}

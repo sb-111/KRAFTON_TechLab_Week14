@@ -311,9 +311,23 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\FireballSpawnArea.lua" />
     <Content Include="Data\Scripts\Fireballtest.lua" />
     <Content Include="Data\Scripts\FMath.lua" />
+    <Content Include="Data\Scripts\Game\w14_AudioManager.lua" />
+    <Content Include="Data\Scripts\Game\w14_GameStateManager.lua" />
+    <Content Include="Data\Scripts\Game\w14_ParticleManager.lua" />
+    <Content Include="Data\Scripts\Game\w14_ScoreManager.lua" />
+    <Content Include="Data\Scripts\Game\w14_UIManager.lua" />
+    <Content Include="Data\Scripts\Monster\w14_Monster.lua" />
+    <Content Include="Data\Scripts\Monster\w14_MonsterMain.lua" />
+    <Content Include="Data\Scripts\Monster\w14_Monster_State_Enum.lua" />
     <Content Include="Data\Scripts\names.lua" />
     <Content Include="Data\Scripts\NewScript.lua" />
     <Content Include="Data\Scripts\Player.lua" />
+    <Content Include="Data\Scripts\Player\w14_Player.lua" />
+    <Content Include="Data\Scripts\Player\w14_PlayerAnim.lua" />
+    <Content Include="Data\Scripts\Player\w14_PlayerHP.lua" />
+    <Content Include="Data\Scripts\Player\w14_PlayerInput.lua" />
+    <Content Include="Data\Scripts\Player\w14_PlayerSlow.lua" />
+    <Content Include="Data\Scripts\w14_Bullet.lua" />
     <Content Include="Data\Scripts\w14_ControlManager.lua" />
     <Content Include="Data\Scripts\PlayerController.lua" />
     <Content Include="Data\Scripts\PlayerSpawner.lua" />
@@ -334,6 +348,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\w14_ObjectPool.lua" />
     <Content Include="Data\Scripts\w14_Obstacle.lua" />
     <Content Include="Data\Scripts\w14_Queue.lua" />
+    <Content Include="Data\Scripts\w14_ObjectDestroyer.lua" />
     <Content Include="Shaders\PostProcess\DepthOfField_Gaussian_Blur_CS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_CoCVisualize_PS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_Composite_PS.hlsl" />
@@ -489,6 +504,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTrailSource.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataBeam.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataRibbon.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleVelocityCone.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleDefinitions.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleStats.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\BodyInstance.cpp" />
@@ -774,6 +790,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Generated\UClothComponent.generated.cpp" />
     <ClCompile Include="Generated\ACurtainActor.generated.cpp" />
     <ClCompile Include="Generated\FDecalFadeProperty.generated.cpp" />
+    <ClCompile Include="Generated\UParticleModuleVelocityCone.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -1016,6 +1033,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTrailSource.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataBeam.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataRibbon.h" />
+    <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleVelocityCone.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleBurstTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleEventGeneratorTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleEventTypes.h" />
@@ -1342,6 +1360,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClInclude Include="Generated\UClothComponent.generated.h" />
     <ClInclude Include="Generated\ACurtainActor.generated.h" />
     <ClInclude Include="Generated\FDecalFadeProperty.generated.h" />
+    <ClInclude Include="Generated\UParticleModuleVelocityCone.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />
