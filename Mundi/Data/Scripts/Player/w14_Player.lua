@@ -1,6 +1,7 @@
 local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
 local PlayerSlowClass = require("Player/w14_PlayerSlow")
+local PlayerKnockBackClass = require("Player/w14_PlayerKnockBack")
 local ObstacleConfig = require("w14_ObstacleConfig")
 local MonsterConfig = require("w14_MonsterConfig")
 local Audio = require("Game/w14_AudioManager")
@@ -11,6 +12,7 @@ local HPManager = require("Game/w14_HPManager")
 local PlayerAnim = nil
 local PlayerInput = nil
 local PlayerSlow = nil
+local PlayerKnockBack = nil
 
 local PlayerCamera = nil
 local Mesh = nil
@@ -36,6 +38,7 @@ function BeginPlay()
     PlayerAnim = PlayerAnimClass:new(Obj)
     PlayerInput = PlayerInputClass:new(Obj)
     PlayerSlow = PlayerSlowClass:new(Obj)
+    PlayerKnockBack = PlayerKnockBackClass:new(Obj)
     HPManager.Reset()
     StartCoroutine(ToRun)
 
@@ -54,12 +57,17 @@ function Tick(Delta)
 
         -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
         -- local Forward = 0.01 * PlayerInput.VerticalInput
-        
+
         local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
         end
+
+        -- KnockBack 이동량 추가 (플레이어 조작과 상쇄됨)
+        local KnockBackAmount = PlayerKnockBack:Update(Delta)
+        MoveAmount = MoveAmount + KnockBackAmount
+
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
 
         PlayerAnim:Update(Delta, PlayerInput.ShootTrigger)
@@ -227,6 +235,15 @@ function OnBeginOverlap(OtherActor)
         -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
         PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
 
+        -- KnockBack 적용: 플레이어가 장애물 왼쪽에 있으면 왼쪽으로, 오른쪽에 있으면 오른쪽으로 밀어냄
+        if PlayerKnockBack and cfg.knockBackStrength then
+            local playerY = Obj.Location.Y
+            local obstacleY = OtherActor.Location.Y
+            local direction = (playerY < obstacleY) and -1 or 1
+            PlayerKnockBack:ApplyKnockBack(direction, cfg.knockBackStrength)
+            print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. cfg.knockBackStrength)
+        end
+
         -- 재장전 중이면 취소
         AmmoManager.CancelReload()
     end
@@ -237,6 +254,16 @@ function OnBeginOverlap(OtherActor)
         local died = HPManager.TakeDamage(damage)
 
         print("[OnBeginOverlap] 몹 충돌! Tag: " .. OtherActor.Tag .. ", 데미지: " .. damage)
+
+        -- KnockBack 적용: 플레이어가 몹 왼쪽에 있으면 왼쪽으로, 오른쪽에 있으면 오른쪽으로 밀어냄
+        if PlayerKnockBack then
+            local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
+            local playerY = Obj.Location.Y
+            local monsterY = OtherActor.Location.Y
+            local direction = (playerY < monsterY) and -1 or 1
+            PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
+            print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. knockBackStrength)
+        end
 
         if died then
             -- TODO: 게임 오버 처리

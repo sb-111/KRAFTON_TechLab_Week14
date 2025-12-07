@@ -5,18 +5,21 @@ local MonsterConfig = {
     -- BasicMonster
     BasicMonster = {
         damage = 10,
+        knockBackStrength = 6.0,
         description = "기본 좀비"
     },
 
     -- ChaserMonster
     ChaserMonster = {
         damage = 15,
+        knockBackStrength = 10.0,
         description = "추격 좀비"
     },
 
     -- 기본값 (태그가 정의되지 않은 경우)
     Default = {
         damage = 5,
+        knockBackStrength = 5.0,
         description = "알 수 없는 몬스터"
     }
 }
@@ -27,6 +30,14 @@ local MonsterConfig = {
 function MonsterConfig.GetDamage(tag)
     local config = MonsterConfig[tag] or MonsterConfig.Default
     return config.damage
+end
+
+--- 몬스터 태그로 KnockBack 강도 조회
+--- @param tag string 몬스터 태그
+--- @return number KnockBack 강도
+function MonsterConfig.GetKnockBackStrength(tag)
+    local config = MonsterConfig[tag] or MonsterConfig.Default
+    return config.knockBackStrength
 end
 
 --- 몬스터 태그가 유효한 몬스터인지 확인
