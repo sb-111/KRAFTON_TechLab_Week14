@@ -170,7 +170,7 @@ IDWriteTextFormat* UGameHUD::GetTextFormat(float fontSize)
     // 새 TextFormat 생성
     IDWriteTextFormat* newFormat = nullptr;
     if (FAILED(Dwrite->CreateTextFormat(
-        L"Segoe UI",
+        L"Impact",
         nullptr,
         DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL,

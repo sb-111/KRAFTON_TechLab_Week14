@@ -92,6 +92,7 @@ function ChaserMonster:GetDamage(damage_amount)
     if died then
         self.anim_instance:SetState("Die", 0)
         self.stat.is_dead = true
+        self.obj:SetPhysicsState(false)
     else
         self.anim_instance:SetState("Damaged", 0)
     end
