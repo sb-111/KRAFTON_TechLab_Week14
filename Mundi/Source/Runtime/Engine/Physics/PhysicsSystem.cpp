@@ -187,6 +187,33 @@ void FPhysicsSystem::Destroy()
 		Instance = nullptr;
 	}
 }
+
+void FPhysicsSystem::ReconnectPVD(const char* InIP, int InPort, int InTimeoutMs)
+{
+	if (!Physics || !Pvd) return;
+
+	// 1. 이미 연결되어 있다면 연결 해제
+	if (Pvd->isConnected())
+	{
+		Pvd->disconnect();
+	}
+
+	// 2. Transport(전송 계층) 생성
+	// 주의: 재연결 시마다 새로운 Transport 객체를 생성해야 안전합니다.
+	PxPvdTransport* Transport = PxDefaultPvdSocketTransportCreate(InIP, InPort, InTimeoutMs);
+
+	if (Transport)
+	{
+		// 3. PVD에 연결 (모든 디버그 플래그 활성화)
+		Pvd->connect(*Transport, PxPvdInstrumentationFlag::eALL);
+        
+		if (Pvd->isConnected())
+		{
+			UE_LOG("PVD Connected!");
+		}
+	}
+}
+
 void FPhysicsSystem::Shutdown()
 {
 	PxCloseExtensions();
