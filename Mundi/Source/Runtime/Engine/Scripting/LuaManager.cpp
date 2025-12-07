@@ -13,6 +13,7 @@
 #include "PhysicsScene.h"
 #include "PrimitiveComponent.h"
 #include "GameHUD.h"
+#include "LuaScriptComponent.h"
 
 sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* Class) {
     LuaComponentProxy Proxy;
@@ -56,7 +57,20 @@ FLuaManager::FLuaManager()
         "bIsHiddenInGame", sol::property(&FGameObject::GetHiddenInGame, &FGameObject::SetHiddenInGame),
         "Velocity", &FGameObject::Velocity,
         "PrintLocation", &FGameObject::PrintLocation,
-        "GetForward", &FGameObject::GetForward
+        "GetForward", &FGameObject::GetForward,
+        "GetScript", [](FGameObject& self, sol::this_state s) -> sol::object {
+            AActor* Owner = self.GetOwner();
+            if (!Owner) return sol::make_object(s, sol::nil);
+
+            ULuaScriptComponent* LuaComp = Cast<ULuaScriptComponent>(
+                Owner->GetComponent(ULuaScriptComponent::StaticClass()));
+            if (LuaComp && LuaComp->GetLuaEnv().valid())
+            {
+                // sol::environment는 sol::table 처럼 Lua로 전달 가능합니다.
+                return LuaComp->GetLuaEnv();
+            }
+            return sol::make_object(s, sol::nil);
+        }
     );
     
     Lua->new_usertype<UCameraComponent>("CameraComponent",
@@ -454,6 +468,13 @@ FLuaManager::FLuaManager()
             if (Hit.Actor && !Hit.Actor->IsPendingDestroy())
             {
                 return Hit.Actor->GetGameObject();
+            }
+            return nullptr;
+        }),
+        "Name", sol::property([](FHitResult& Hit) -> FString {
+            if (Hit.Component)
+            {
+                return Hit.Component->GetName();
             }
             return nullptr;
         }),

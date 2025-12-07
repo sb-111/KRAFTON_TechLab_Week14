@@ -64,6 +64,10 @@ function OnBeginOverlap(OtherActor)
     end
 end
 
+function GetDamage(Damage)
+    ChaserMonster:GetDamage(Damage)
+end
+
 --- 게임 종료 시 호출됩니다.
 --- @return void
 function EndPlay()
