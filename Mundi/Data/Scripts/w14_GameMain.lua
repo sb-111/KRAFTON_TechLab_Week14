@@ -110,11 +110,11 @@ function GameStart()
     --         Vector(-1000, 0, 0)
     -- )
 
-    MapManager:add_biom(
-             "Data/Prefabs/w14_map_chunk.prefab",
-             100,
-             Vector(-1000, 0, 0)
-     )
+    -- MapManager:add_biom(
+    --          "Data/Prefabs/w14_map_chunk.prefab",
+    --          100,
+    --          Vector(-1000, 0, 0)
+    --  )
 
     -- ObjectPlacer 인스턴스 생성
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
