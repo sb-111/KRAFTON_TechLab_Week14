@@ -5,6 +5,8 @@
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
 local Audio = require("Game/w14_AudioManager")
+local ScoreManager = require("Game/w14_ScoreManager")
+local AmmoManager = require("Game/w14_AmmoManager")
 local MapConfig = require("w14_MapConfig")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
@@ -73,6 +75,13 @@ end
 function GameStart()
     -- 기존 게임 정리 (재시작 시)
     CleanupGame()
+
+    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
+    UI.ResetHUD()
+
+    -- 점수/탄약 매니저 초기화
+    ScoreManager.Reset()
+    AmmoManager.Reset()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
@@ -150,6 +159,9 @@ function GameEnd()
 end
 
 function Tick(dt)
+    -- HUD 프레임 시작 (D2D 렌더링 준비)
+    UI.BeginHUDFrame()
+
     -- UI 위치 업데이트 (카메라 앞에 유지)
     UI.Update()
 
@@ -157,6 +169,13 @@ function Tick(dt)
     HandleInput()
 
     if GameState.IsPlaying() then
+        -- 거리 업데이트 (ScoreManager가 관리)
+        if Player then
+            ScoreManager.SetDistance(Player.Location.X)
+        end
+
+        -- 게임 HUD 표시 (UIManager가 ScoreManager/AmmoManager에서 직접 값을 가져옴)
+        UI.UpdateGameHUD(dt)
         -- 맵 업데이트
         if MapManager then
             MapManager:Tick()

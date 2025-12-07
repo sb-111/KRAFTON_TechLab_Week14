@@ -61,6 +61,9 @@ public:
     void SetRect(const FRect& InRect) { Rect = InRect; }
     const FRect& GetRect() const { return Rect; }
 
+    // 메인 뷰포트 위치/크기 반환 (HUD 위치 계산용)
+    FRect GetMainViewportRect() const;
+
     // Detached windows accessor
     TArray<SWindow*>& GetDetachedWindows() { return DetachedWindows; }
 

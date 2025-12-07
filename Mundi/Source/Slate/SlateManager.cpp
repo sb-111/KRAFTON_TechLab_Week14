@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "SlateManager.h"
+#include "GameHUD.h"
 
 #include "CameraActor.h"
 #include "Windows/SWindow.h"
@@ -327,6 +328,20 @@ void USlateManager::SwitchPanel(SWindow* SwitchPanel)
 
 void USlateManager::Render()
 {
+    // HUD 화면 크기 및 오프셋 업데이트 (MainViewport 기준)
+    if (MainViewport)
+    {
+        const float ToolbarHeight = 35.0f; // SViewportWindow 툴바 높이
+        FRect ViewportRect = MainViewport->GetRect();
+        float ViewportWidth = ViewportRect.GetWidth();
+        float ViewportHeight = ViewportRect.GetHeight() - ToolbarHeight;
+        float ViewportOffsetX = ViewportRect.Left;
+        float ViewportOffsetY = ViewportRect.Top + ToolbarHeight;
+
+        UGameHUD::Get().SetScreenSize(ViewportWidth, ViewportHeight);
+        UGameHUD::Get().SetScreenOffset(ViewportOffsetX, ViewportOffsetY);
+    }
+
     // 메인 툴바 렌더링 (항상 최상단에)
     MainToolbar->RenderWidget();
     if (TopPanel)
@@ -1008,6 +1023,15 @@ void USlateManager::SetPIEWorld(UWorld* InWorld)
     MainViewport->SetVClientWorld(InWorld);
     // PIE에도 Main Camera Set
     InWorld->SetEditorCameraActor(MainViewport->GetViewportClient()->GetCamera());
+}
+
+FRect USlateManager::GetMainViewportRect() const
+{
+    if (MainViewport)
+    {
+        return MainViewport->GetRect();
+    }
+    return Rect; // fallback to manager rect
 }
 
 void USlateManager::ToggleConsole()
