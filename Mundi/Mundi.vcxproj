@@ -327,6 +327,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Player\w14_PlayerHP.lua" />
     <Content Include="Data\Scripts\Player\w14_PlayerInput.lua" />
     <Content Include="Data\Scripts\Player\w14_PlayerSlow.lua" />
+    <Content Include="Data\Scripts\w14_Bullet.lua" />
     <Content Include="Data\Scripts\w14_ControlManager.lua" />
     <Content Include="Data\Scripts\PlayerController.lua" />
     <Content Include="Data\Scripts\PlayerSpawner.lua" />
@@ -347,6 +348,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\w14_ObjectPool.lua" />
     <Content Include="Data\Scripts\w14_Obstacle.lua" />
     <Content Include="Data\Scripts\w14_Queue.lua" />
+    <Content Include="Data\Scripts\w14_ObjectDestroyer.lua" />
     <Content Include="Shaders\PostProcess\DepthOfField_Gaussian_Blur_CS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_CoCVisualize_PS.hlsl" />
     <Content Include="Shaders\PostProcess\DepthOfField_Composite_PS.hlsl" />

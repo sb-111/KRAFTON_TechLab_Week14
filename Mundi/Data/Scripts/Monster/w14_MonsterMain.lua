@@ -72,15 +72,10 @@ function OnBeginOverlap(OtherActor)
         return
     end
 
-    ---- Test Code
-    if OtherActor.Tag == "player" then
+    -- 플레이어의 총알과 충돌 처리
+    if OtherActor.Tag == "bullet" then
         Monster:GetDamage(10)
     end
-
-    ---- 플레이어의 총알과 충돌 처리
-    --if OtherActor.Tag == "bullet" then
-    --    Monster:GetDamage(10)
-    --end
 end
 
 --- 게임 종료 시 호출됩니다.
