@@ -29,27 +29,53 @@ void UGameHUD::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InContext
 
 void UGameHUD::Shutdown()
 {
-    // 이미지 캐시 해제
+    // D2D가 초기화되지 않았으면 바로 종료
+    if (!bD2DInitialized)
+    {
+        D3DDevice = nullptr;
+        D3DContext = nullptr;
+        SwapChain = nullptr;
+        bInitialized = false;
+        return;
+    }
+
+    // BeginDraw 상태에서 종료 시 EndDraw 호출
+    if (bFrameActive && D2dCtx)
+    {
+        D2dCtx->EndDraw();
+        D2dCtx->SetTarget(nullptr);
+        SafeRelease(FrameTargetBmp);
+        SafeRelease(FrameSurface);
+        FrameTargetBmp = nullptr;
+        FrameSurface = nullptr;
+        bFrameActive = false;
+    }
+
+    // BitmapCache 해제 (D2dCtx 해제 전에 수행해야 함)
     for (auto& [path, bitmap] : BitmapCache)
     {
         SafeRelease(bitmap);
     }
     BitmapCache.clear();
 
-    // TextFormat 캐시 해제
+    // TextFormat 캐시 해제 (DWrite 리소스)
     for (auto& [size, format] : TextFormatCache)
     {
         SafeRelease(format);
     }
     TextFormatCache.clear();
 
-    // D2D 리소스 해제
+    // D2D 리소스 해제 (StatsOverlayD2D 방식)
     SafeRelease(CachedBrush);
     SafeRelease(Dwrite);
     SafeRelease(D2dCtx);
     SafeRelease(D2dDevice);
     SafeRelease(D2dFactory);
-    SafeRelease(WICFactory);
+
+    // WICFactory는 CoCreateInstance로 생성됨 - 해제 시 크래시 발생 가능
+    // 프로세스 종료 시 OS가 정리
+    WICFactory = nullptr;
+
     bD2DInitialized = false;
 
     D3DDevice = nullptr;
