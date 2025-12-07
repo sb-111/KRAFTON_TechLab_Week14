@@ -56,6 +56,9 @@ public:
     /** @brief 화면 크기 설정 (상대 좌표 계산용) */
     void SetScreenSize(float width, float height);
 
+    /** @brief 화면 오프셋 설정 (뷰포트 위치) */
+    void SetScreenOffset(float x, float y);
+
     // ===== Lua에서 호출 가능한 API =====
 
     /**
@@ -128,6 +131,18 @@ public:
     /** @brief HUD 표시 여부 반환 */
     bool IsVisible() const;
 
+    /** @brief 화면 너비 반환 (Lua에서 사용) */
+    float GetScreenWidth() const { return ScreenWidth; }
+
+    /** @brief 화면 높이 반환 (Lua에서 사용) */
+    float GetScreenHeight() const { return ScreenHeight; }
+
+    /** @brief 화면 X 오프셋 반환 (Lua에서 사용) */
+    float GetScreenOffsetX() const { return ScreenOffsetX; }
+
+    /** @brief 화면 Y 오프셋 반환 (Lua에서 사용) */
+    float GetScreenOffsetY() const { return ScreenOffsetY; }
+
 private:
     UGameHUD() = default;
     ~UGameHUD() = default;
@@ -156,6 +171,8 @@ private:
 
     float ScreenWidth = 1280.0f;
     float ScreenHeight = 720.0f;
+    float ScreenOffsetX = 0.0f;
+    float ScreenOffsetY = 0.0f;
 
     // D3D11 리소스 (외부에서 전달받음)
     ID3D11Device* D3DDevice = nullptr;

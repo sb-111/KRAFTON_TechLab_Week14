@@ -265,6 +265,12 @@ void UGameHUD::SetScreenSize(float width, float height)
     ScreenHeight = height;
 }
 
+void UGameHUD::SetScreenOffset(float x, float y)
+{
+    ScreenOffsetX = x;
+    ScreenOffsetY = y;
+}
+
 void UGameHUD::BeginFrame()
 {
     if (!bVisible || !bInitialized || bFrameActive)
@@ -324,6 +330,10 @@ void UGameHUD::DrawTextInternal(const FString& text, float x, float y, float fon
     if (!format)
         return;
 
+    // 뷰포트 오프셋 적용
+    x += ScreenOffsetX;
+    y += ScreenOffsetY;
+
     // UTF-8 -> Wide string 변환
     std::wstring wideText(text.begin(), text.end());
 
@@ -333,8 +343,8 @@ void UGameHUD::DrawTextInternal(const FString& text, float x, float y, float fon
         wideText.c_str(),
         static_cast<UINT32>(wideText.length()),
         format,
-        ScreenWidth - x,  // Max width
-        ScreenHeight - y, // Max height
+        ScreenWidth,  // Max width
+        ScreenHeight, // Max height
         &layout)))
     {
         return;
@@ -412,6 +422,10 @@ void UGameHUD::DrawImage(const FString& imagePath, float x, float y, float width
     ID2D1Bitmap* bitmap = LoadBitmapFromFile(imagePath);
     if (!bitmap)
         return;
+
+    // 뷰포트 오프셋 적용
+    x += ScreenOffsetX;
+    y += ScreenOffsetY;
 
     D2D1_RECT_F destRect = D2D1::RectF(x, y, x + width, y + height);
     D2dCtx->DrawBitmap(bitmap, destRect);

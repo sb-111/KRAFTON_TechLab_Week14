@@ -132,8 +132,8 @@ local hudState = {
     animationSpeed = 50,        -- 초당 증가량 (m/s)
 }
 
--- 툴바 높이 (픽셀) - 툴바 아래에 HUD 표시
-local TOOLBAR_HEIGHT = 100
+-- 상단 여백 (픽셀)
+local TOP_MARGIN = 10
 
 -- 탄환 아이콘 경로
 local AMMO_ICON_PATH = "Data/Textures/Ammo.png"
@@ -156,6 +156,13 @@ function M.UpdateGameHUD(dt)
 
     dt = dt or 0.016  -- 기본값 60fps
 
+    -- 동적 화면 크기 가져오기
+    local screenW = HUD:GetScreenWidth()
+    local screenH = HUD:GetScreenHeight()
+
+    -- 디버그: 화면 크기 출력 (매 프레임)
+    print("[UIManager] HUD ScreenW: " .. screenW .. ", ScreenH: " .. screenH .. ", Center: " .. (screenW/2) .. ", " .. (screenH/2))
+
     -- ScoreManager에서 값 가져오기
     local distance = ScoreManager.GetDistance()
     local kills = ScoreManager.GetKillCount()
@@ -174,56 +181,62 @@ function M.UpdateGameHUD(dt)
         )
     end
 
-    -- 거리 표시 (좌측 상단, 툴바 아래)
+    -- 좌측 여백 (화면 폭의 2%)
+    local leftMargin = screenW * 0.02
+
+    -- 거리 표시 (좌측 상단)
     HUD:DrawText(
         ScoreManager.FormatDistance(hudState.displayedDistance),
-        20, TOOLBAR_HEIGHT,                  -- 툴바 아래 위치
-        36,                                  -- 폰트 크기
-        Color(1, 1, 1, 1)                    -- 흰색
+        leftMargin, TOP_MARGIN,
+        36,
+        Color(1, 1, 1, 1)
     )
 
     -- 킬수 표시 (거리 아래)
     HUD:DrawText(
         "Kills: " .. ScoreManager.FormatNumber(kills),
-        20, TOOLBAR_HEIGHT + 50,
+        leftMargin, TOP_MARGIN + 45,
         28,
-        Color(1, 1, 1, 1)                    -- 흰색
+        Color(1, 1, 1, 1)
     )
 
     -- 점수 표시 (킬수 아래)
     HUD:DrawText(
         "Score: " .. ScoreManager.FormatNumber(score),
-        20, TOOLBAR_HEIGHT + 85,
+        leftMargin, TOP_MARGIN + 75,
         28,
-        Color(1, 1, 1, 1)                    -- 흰색
+        Color(1, 1, 1, 1)
     )
 
-    -- 탄약 수 표시 (화면 정중앙 상단) - 탄창/예비탄약 형식 (30|120)
+    -- 탄약 수 표시 (화면 중앙 상단) - 탄창/예비탄약 형식 (30|120)
     local totalAmmo = AmmoManager.GetTotalAmmo()
     local ammoText = ammo .. " | " .. totalAmmo
+    local ammoCenterX = screenW * 0.5 - 50  -- 텍스트 폭 보정
     HUD:DrawText(
         ammoText,
-        570, TOOLBAR_HEIGHT,                 -- 화면 중앙
-        36,                                  -- 거리와 같은 크기
-        Color(1, 1, 1, 1)                    -- 흰색
+        ammoCenterX, TOP_MARGIN,
+        36,
+        Color(1, 1, 1, 1)
     )
 
     -- 탄약 아이콘 (탄약 수 오른쪽)
+    local ammoIconX = ammoCenterX + 150  -- 텍스트 오른쪽
     HUD:DrawImage(
         AMMO_ICON_PATH,
-        710, TOOLBAR_HEIGHT + 10,             -- 숫자 오른쪽 (30 | 120 형식에 맞춤)
-        40, 40                               -- 아이콘 크기
+        ammoIconX, TOP_MARGIN + 10,
+        40, 40
     )
 
     -- 크로스헤어 (화면 정중앙)
-    -- 상대 좌표 사용: 0.5, 0.5가 중앙, 크기도 상대값으로
-    local crosshairRelSize = 0.025  -- 화면 대비 2.5% 크기
-    HUD:DrawImageRel(
+    local crosshairSize = 64
+    local centerX = screenW / 2
+    local centerY = screenH / 2
+    HUD:DrawImage(
         CROSSHAIR_PATH,
-        0.5 - crosshairRelSize / 2,   -- X: 중앙에서 반 크기만큼 왼쪽
-        0.5 - crosshairRelSize / 2,   -- Y: 중앙에서 반 크기만큼 위
-        crosshairRelSize,              -- 너비
-        crosshairRelSize               -- 높이
+        centerX - crosshairSize / 2,
+        centerY - crosshairSize / 2,
+        crosshairSize,
+        crosshairSize
     )
 end
 

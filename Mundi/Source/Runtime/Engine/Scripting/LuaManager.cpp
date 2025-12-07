@@ -417,8 +417,10 @@ FLuaManager::FLuaManager()
         // 표시 여부 설정/조회
         "SetVisible", &UGameHUD::SetVisible,
         "IsVisible", &UGameHUD::IsVisible,
-        // 화면 크기 설정
-        "SetScreenSize", &UGameHUD::SetScreenSize
+        // 화면 크기 설정/조회
+        "SetScreenSize", &UGameHUD::SetScreenSize,
+        "GetScreenWidth", &UGameHUD::GetScreenWidth,
+        "GetScreenHeight", &UGameHUD::GetScreenHeight
     );
 
     // HUD 전역 인스턴스 노출 (Lua에서 HUD:DrawText(...) 형태로 사용)
