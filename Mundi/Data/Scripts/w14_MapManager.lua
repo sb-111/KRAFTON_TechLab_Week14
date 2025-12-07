@@ -89,6 +89,11 @@ function MapManager:Tick()
         return
     end
 
+    -- biom이 없으면 스킵
+    if #self.bioms == 0 then
+        return
+    end
+
     if self:should_spawn() then
         --- 플레이어가 다음 spawn 위치의 절반 지점에 도달하면 spawn
         self.next_spawn_location = self.next_spawn_location + MapConfig.map_chunk_x_size
