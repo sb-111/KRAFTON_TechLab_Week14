@@ -489,6 +489,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTrailSource.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataBeam.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataRibbon.cpp" />
+    <ClCompile Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleVelocityCone.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleDefinitions.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Particles\ParticleStats.cpp" />
     <ClCompile Include="Source\Runtime\Engine\Physics\BodyInstance.cpp" />
@@ -773,6 +774,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Generated\UClothComponent.generated.cpp" />
     <ClCompile Include="Generated\ACurtainActor.generated.cpp" />
     <ClCompile Include="Generated\FDecalFadeProperty.generated.cpp" />
+    <ClCompile Include="Generated\UParticleModuleVelocityCone.generated.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Common\LightingBuffers.hlsl">
@@ -1015,6 +1017,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTrailSource.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataBeam.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleTypeDataRibbon.h" />
+    <ClInclude Include="Source\Runtime\Engine\Particles\Modules\ParticleModuleVelocityCone.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleBurstTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleEventGeneratorTypes.h" />
     <ClInclude Include="Source\Runtime\Engine\Particles\ParticleEventTypes.h" />
@@ -1340,6 +1343,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClInclude Include="Generated\UClothComponent.generated.h" />
     <ClInclude Include="Generated\ACurtainActor.generated.h" />
     <ClInclude Include="Generated\FDecalFadeProperty.generated.h" />
+    <ClInclude Include="Generated\UParticleModuleVelocityCone.generated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTools\CodeGenerator\generate.py" />
