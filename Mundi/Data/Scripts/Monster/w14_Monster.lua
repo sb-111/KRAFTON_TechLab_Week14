@@ -16,6 +16,9 @@ local AnimDurations = {
     DyingDuration = 1.66
 }
 
+--- 피격 애니메이션 쿨타임 (초)
+local HIT_COOLDOWN_TIME = 0.2
+
 --- Monster 인스턴스를 생성합니다.
 --- @return Monster
 function Monster:new()
@@ -23,6 +26,7 @@ function Monster:new()
     instance.stat = MobStat:new()
     instance.obj = nil
     instance.anim_instance = nil
+    instance.is_hit_cooldown = false
     setmetatable(instance, Monster)
     return instance
 end
@@ -74,6 +78,8 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
 
     -- 초기 상태 설정
     self.anim_instance:SetState("Idle", 0)
+
+    self.is_hit_cooldown = false
 end
 
 --- 데미지를 받습니다.
@@ -87,11 +93,21 @@ function Monster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
-        self.anim_instance:SetState("Die", 0)
+        self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)
     else
-        self.anim_instance:SetState("Damaged", 0)
+        -- 살아있다면, 피격 쿨타임이 아닐 때만 모션 재생
+        if not self.is_hit_cooldown then
+            
+            self.anim_instance:SetState("Damaged", 0.1)
+            self.is_hit_cooldown = true
+
+            StartCoroutine(function()
+                coroutine.yield("wait_time", HIT_COOLDOWN_TIME)
+                self.is_hit_cooldown = false
+            end)
+        end
     end
 end
 
@@ -118,13 +134,13 @@ function Monster:UpdateAnimationState()
 
     -- Attack 애니메이션이 끝나면 Idle로 복귀
     if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
-        self.anim_instance:SetState("Idle", 0)
+        self.anim_instance:SetState("Idle", 0.2)
         return
     end
 
     -- Damaged 애니메이션이 끝나면 Idle로 복귀
     if current_state == "Damaged" and current_time >= AnimDurations.DamagedDuration then
-        self.anim_instance:SetState("Idle", 0)
+        self.anim_instance:SetState("Idle", 0.2)
         return
     end
 end
@@ -139,6 +155,7 @@ function Monster:Reset()
     if self.anim_instance then
         self.anim_instance:SetState("Idle", 0)
     end
+    self.is_hit_cooldown = false
 end
 
 --- 플레이어 위치를 확인하고 공격 범위 내에 있으면 공격합니다.
@@ -153,7 +170,7 @@ function Monster:CheckPlayerPositionAndAttack()
 
     -- 공격 범위 내에 있고, 피격 상태가 아니며, 공격 중이 아닐 때만 공격
     if (distance_squared < attack_range_squared and not is_damaging and not is_attacking) then
-        self.anim_instance:SetState("Attack", 0)
+        self.anim_instance:SetState("Attack", 0.1)
     -- 그렇지 않으면 idle 상태로 돌아간다.
     --else
     --    self.anim_instance:SetState("Idle", 0)

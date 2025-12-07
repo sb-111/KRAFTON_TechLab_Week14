@@ -13,7 +13,7 @@
               "EmitterRotation" : [0.000000, 0.000000, 0.000000],
               "Material" : "",
               "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl",
-              "MaterialTexture" : "Data/Textures/Particles/Spark.png",
+              "MaterialTexture" : "Data/Textures/Particles/Blood.png",
               "ScreenAlignment" : 0,
               "SortMode" : 0,
               "SubImages_Horizontal" : 1,
@@ -28,8 +28,8 @@
               "bUseLocalSpace" : false
             }, {
               "BurstList" : [{
-                  "Count" : 100,
-                  "CountLow" : 90,
+                  "Count" : 200,
+                  "CountLow" : 100,
                   "Time" : 0.000000
                 }],
               "BurstScale" : {
@@ -122,22 +122,22 @@
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "ConstantValue" : [0.200000, 0.200000, 1.000000],
+                "ConstantValue" : [0.100000, 0.100000, 1.000000],
                 "MaxCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MaxValue" : [2.000000, 2.000000, 2.000000],
+                "MaxValue" : [0.100000, 0.100000, 1.000000],
                 "MinCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MinValue" : [0.000000, 0.000000, 0.000000],
+                "MinValue" : [0.050000, 0.050000, 1.000000],
                 "ParameterDefaultValue" : [0.000000, 0.000000, 0.000000],
                 "ParameterName" : "",
-                "Type" : 0
+                "Type" : 1
               },
               "Type" : "UParticleModuleSize",
               "bEnabled" : true,
@@ -156,7 +156,7 @@
                         "OutVal" : 1.000000
                       }, {
                         "ArriveTangent" : 0.000000,
-                        "InVal" : 0.500000,
+                        "InVal" : 0.900000,
                         "InterpMode" : 0,
                         "LeaveTangent" : 0.000000,
                         "OutVal" : 1.000000
@@ -350,10 +350,10 @@
               "bSurfaceOnly" : false,
               "bUpdateModule" : false
             }, {
-              "MaxScaleX" : 1.000000,
-              "MaxScaleY" : 10.000000,
-              "SpeedScaleX" : 0.100000,
-              "SpeedScaleY" : 1.000000,
+              "MaxScaleX" : 2.000000,
+              "MaxScaleY" : 1.000000,
+              "SpeedScaleX" : 1.000000,
+              "SpeedScaleY" : 2.000000,
               "Type" : "UParticleModuleSizeScaleBySpeed",
               "bEnabled" : true,
               "bSpawnModule" : false,

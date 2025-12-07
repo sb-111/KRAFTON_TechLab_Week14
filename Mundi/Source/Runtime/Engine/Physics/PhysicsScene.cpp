@@ -60,9 +60,9 @@ void FPhysicsScene::EnqueueCommand(std::function<void()> Command)
 
 void FPhysicsScene::ProcessCommandQueue()
 {
-	for (std::function<void()> Command : CommandQueue)
+	for (const auto& Command : CommandQueue)
 	{
-		Command();
+		if(Command) Command(); // 저장된 함수(삭제/추가) 실행
 	}
 	CommandQueue.clear();
 }
@@ -85,24 +85,26 @@ void FPhysicsScene::ProcessCommandQueue()
 //	}
 //}
 
-void FPhysicsScene::AddActor(PxActor& NewActor)
+void FPhysicsScene::AddActor(PxActor* Actor)
 {
-	if (Scene)
-	{
-		// Add나 Remove는 Tick 도중 가능하기 때문에 Lock
-		SCOPED_WRITE_LOCK(*Scene)
-		Scene->addActor(NewActor);
-	}
+	EnqueueCommand([this, Actor]()
+		{
+			if (Scene && Actor)
+			{
+				Scene->addActor(*Actor);
+			}
+		});
 }
 
-void FPhysicsScene::RemoveActor(PxActor& Actor)
+void FPhysicsScene::RemoveActor(PxActor* Actor)
 {
-	if (Scene)
-	{
-		// 시뮬레이션 중일 수 있으므로 Write Lock 필요
-		SCOPED_WRITE_LOCK(*Scene);
-		Scene->removeActor(Actor);
-	}
+	EnqueueCommand([this, Actor]()
+		{
+			if (Scene && Actor)
+			{
+				Scene->removeActor(*Actor);
+			}
+		});
 }
 
 void FPhysicsScene::Simulate(float DeltaTime)

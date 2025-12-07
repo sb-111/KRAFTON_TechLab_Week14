@@ -17,6 +17,9 @@ local AnimDurations = {
     DyingDuration = 1.66
 }
 
+--- 피격 애니메이션 쿨타임 (초)
+local HIT_COOLDOWN_TIME = 0.2
+
 --- ChaserMonster 인스턴스를 생성합니다.
 --- @return ChaserMonster
 function ChaserMonster:new()
@@ -77,6 +80,8 @@ function ChaserMonster:Initialize(obj, move_speed, health_point, attack_point, a
 
     -- 초기 상태 설정 (Walk로 시작)
     self.anim_instance:SetState("Walk", 0)
+
+    self.is_hit_cooldown = false
 end
 
 --- 데미지를 받습니다.
@@ -90,11 +95,20 @@ function ChaserMonster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
-        self.anim_instance:SetState("Die", 0)
+        self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)
     else
-        self.anim_instance:SetState("Damaged", 0)
+        if not self.is_hit_cooldown then
+            
+            self.anim_instance:SetState("Damaged", 0.1)
+            self.is_hit_cooldown = true
+
+            StartCoroutine(function()
+                coroutine.yield("wait_time", HIT_COOLDOWN_TIME)
+                self.is_hit_cooldown = false
+            end)
+        end
     end
 end
 
@@ -122,9 +136,9 @@ function ChaserMonster:UpdateAnimationState()
     -- Attack 애니메이션이 끝나면 복귀
     if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
         if self.is_permanently_idle then
-            self.anim_instance:SetState("Idle", 0)
+            self.anim_instance:SetState("Idle", 0.1)
         else
-            self.anim_instance:SetState("Walk", 0)
+            self.anim_instance:SetState("Walk", 0.1)
         end
         return
     end
@@ -132,9 +146,9 @@ function ChaserMonster:UpdateAnimationState()
     -- Damaged 애니메이션이 끝나면 복귀
     if current_state == "Damaged" and current_time >= AnimDurations.DamagedDuration then
         if self.is_permanently_idle then
-            self.anim_instance:SetState("Idle", 0)
+            self.anim_instance:SetState("Idle", 0.1)
         else
-            self.anim_instance:SetState("Walk", 0)
+            self.anim_instance:SetState("Walk", 0.1)
         end
         return
     end
@@ -153,6 +167,7 @@ function ChaserMonster:Reset()
     if self.anim_instance then
         self.anim_instance:SetState("Walk", 0)
     end
+    self.is_hit_cooldown = false
 end
 
 --- 플레이어 위치를 확인하고 공격 범위 내에 있으면 공격합니다.
@@ -177,7 +192,7 @@ function ChaserMonster:SetPermanentIdle()
     if not self.is_permanently_idle then
         self.is_permanently_idle = true
         if self.anim_instance then
-            self.anim_instance:SetState("Idle", 0)
+            self.anim_instance:SetState("Idle", 0.1)
         end
     end
 end
