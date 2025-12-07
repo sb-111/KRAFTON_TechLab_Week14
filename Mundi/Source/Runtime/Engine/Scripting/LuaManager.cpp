@@ -147,7 +147,11 @@ FLuaManager::FLuaManager()
         "IsMouseButtonReleased", &UInputManager::IsMouseButtonReleased,
         "GetMouseDelta", [](UInputManager* Self) {
             const FVector2D Delta = Self->GetMouseDelta();
-            return FVector(Delta.X, Delta.Y, 1.0);
+            return FVector(Delta.X, Delta.Y, 0.0);
+        },
+        "GetMousePosition", [](UInputManager* Self) {
+            const FVector2D Pos = Self->GetMousePosition();
+            return FVector(Pos.X, Pos.Y, 0.0);
         },
         "SetCursorVisible", [](UInputManager* Self, bool bVisible){
             if (bVisible)
@@ -420,7 +424,10 @@ FLuaManager::FLuaManager()
         // 화면 크기 설정/조회
         "SetScreenSize", &UGameHUD::SetScreenSize,
         "GetScreenWidth", &UGameHUD::GetScreenWidth,
-        "GetScreenHeight", &UGameHUD::GetScreenHeight
+        "GetScreenHeight", &UGameHUD::GetScreenHeight,
+        // 화면 오프셋 조회 (뷰포트 위치)
+        "GetScreenOffsetX", &UGameHUD::GetScreenOffsetX,
+        "GetScreenOffsetY", &UGameHUD::GetScreenOffsetY
     );
 
     // HUD 전역 인스턴스 노출 (Lua에서 HUD:DrawText(...) 형태로 사용)

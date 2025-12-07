@@ -66,9 +66,14 @@ function BeginPlay()
     Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
     Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
 
-    -- 시작 화면 표시
+    -- 상태 변경 콜백 등록
     GameState.OnStateChange(GameState.States.PLAYING, GameStart)
     GameState.OnStateChange(GameState.States.END, GameEnd)
+    GameState.OnStateChange(GameState.States.START, function()
+        InputManager:SetCursorVisible(true)  -- 시작 화면에서 커서 표시
+    end)
+
+    -- 시작 화면 표시
     GameState.ShowStartScreen()
 end
 
@@ -162,20 +167,18 @@ function Tick(dt)
     -- HUD 프레임 시작 (D2D 렌더링 준비)
     UI.BeginHUDFrame()
 
-    -- UI 위치 업데이트 (카메라 앞에 유지)
-    UI.Update()
-
     -- 입력 처리
     HandleInput()
 
-    if GameState.IsPlaying() then
-        -- 거리 업데이트 (ScoreManager가 관리)
-        if Player then
-            ScoreManager.SetDistance(Player.Location.X)
-        end
+    -- 거리 업데이트 (ScoreManager가 관리)
+    if GameState.IsPlaying() and Player then
+        ScoreManager.SetDistance(Player.Location.X)
+    end
 
-        -- 게임 HUD 표시 (UIManager가 ScoreManager/AmmoManager에서 직접 값을 가져옴)
-        UI.UpdateGameHUD(dt)
+    -- UI 업데이트 (상태에 따라 시작 화면 또는 게임 HUD 표시)
+    UI.Update(dt)
+
+    if GameState.IsPlaying() then
         -- 맵 업데이트
         if MapManager then
             MapManager:Tick()
@@ -210,16 +213,32 @@ function HandleInput()
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
+            InputManager:SetCursorVisible(false)  -- 게임 시작 시 커서 숨김
             Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
         elseif GameState.IsEnd() then
             GameState.ShowStartScreen()
         end
     end
 
-    -- ESC: 게임 중 종료
+    -- ESC: 게임 중 커서 토글
+    if InputManager:IsKeyPressed(27) then  -- 27 = ESC 키코드
+        if GameState.IsPlaying() then
+            InputManager:SetCursorVisible(true)  -- 커서 표시
+        end
+    end
+
+    -- 마우스 클릭: 커서 숨김 (게임 중일 때)
+    if InputManager:IsMouseButtonPressed(0) then
+        if GameState.IsPlaying() then
+            InputManager:SetCursorVisible(false)  -- 커서 숨김
+        end
+    end
+
+    -- Q: 게임 중 종료
     if InputManager:IsKeyPressed('Q') then
         if GameState.IsPlaying() then
             GameState.EndGame()
+            InputManager:SetCursorVisible(true)  -- 게임 종료 시 커서 표시
             Audio.StopBGM("BGM")  -- 게임 종료 시 BGM 정지
         end
     end

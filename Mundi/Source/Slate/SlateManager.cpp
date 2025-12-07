@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "SlateManager.h"
 #include "GameHUD.h"
+#include "World.h"
 
 #include "CameraActor.h"
 #include "Windows/SWindow.h"
@@ -929,8 +930,8 @@ void USlateManager::OnMouseDown(FVector2D MousePos, uint32 Button)
             {
                 ActiveViewport = VP;
 
-                // 우클릭인 경우 커서 숨김 및 잠금
-                if (Button == 1)
+                // 우클릭인 경우 커서 숨김 및 잠금 (에디터 모드에서만, PIE 모드에서는 제외)
+                if (Button == 1 && (!GWorld || !GWorld->bPie))
                 {
                     INPUT.SetCursorVisible(false);
                     INPUT.LockCursor();
@@ -943,11 +944,15 @@ void USlateManager::OnMouseDown(FVector2D MousePos, uint32 Button)
 
 void USlateManager::OnMouseUp(FVector2D MousePos, uint32 Button)
 {
-    // 우클릭 해제 시 커서 복원 (ActiveViewport와 무관하게 처리)
+    // 우클릭 해제 시 커서 복원 (에디터 모드에서만, PIE 모드에서는 제외)
     if (Button == 1 && INPUT.IsCursorLocked())
     {
-        INPUT.SetCursorVisible(true);
-        INPUT.ReleaseCursor();
+        // PIE(게임 플레이) 모드가 아닐 때만 커서 복원
+        if (!GWorld || !GWorld->bPie)
+        {
+            INPUT.SetCursorVisible(true);
+            INPUT.ReleaseCursor();
+        }
     }
     
     if (ActiveViewport)
