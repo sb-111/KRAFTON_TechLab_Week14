@@ -401,7 +401,7 @@ FLuaManager::FLuaManager()
         "BeginFrame", &UGameHUD::BeginFrame,
         "EndFrame", &UGameHUD::EndFrame,
         // 텍스트 렌더링 (절대 좌표)
-        "DrawText", &UGameHUD::DrawText,
+        "DrawText", &UGameHUD::DrawGameText,
         // 텍스트 렌더링 (상대 좌표 0~1)
         "DrawTextRel", &UGameHUD::DrawTextRel,
         // 배경 있는 텍스트 (절대 좌표)
@@ -413,7 +413,7 @@ FLuaManager::FLuaManager()
         // 이미지 렌더링 (상대 좌표)
         "DrawImageRel", &UGameHUD::DrawImageRel,
         // 이미지 프리로드
-        "LoadImage", &UGameHUD::LoadImage,
+        "LoadImage", &UGameHUD::LoadGameImage,
         // 표시 여부 설정/조회
         "SetVisible", &UGameHUD::SetVisible,
         "IsVisible", &UGameHUD::IsVisible,
