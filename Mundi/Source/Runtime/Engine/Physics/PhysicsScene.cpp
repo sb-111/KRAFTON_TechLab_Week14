@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 #include "PhysicsScene.h"
+
+#include <algorithm>
 #include "BodyInstance.h"
 #include "ConstraintInstance.h"
 #include "HitResult.h"
@@ -8,6 +10,10 @@
 #include "PhysicsSystem.h"
 #include "SkeletalMeshComponent.h"
 #include "RagdollStats.h"
+
+
+#define SCOPED_READ_LOCK(Scene) PxSceneReadLock ScopedReadLock(Scene);
+#define SCOPED_WRITE_LOCK(Scene) PxSceneWriteLock ScopedWriteLock(Scene);
 
 FPhysicsScene::FPhysicsScene(PxScene* InScene) : Scene(InScene)
 {
@@ -81,30 +87,58 @@ void FPhysicsScene::ProcessCommandQueue()
 
 void FPhysicsScene::AddActor(PxActor& NewActor)
 {
-	Scene->addActor(NewActor);
+	if (Scene)
+	{
+		// Add나 Remove는 Tick 도중 가능하기 때문에 Lock
+		SCOPED_WRITE_LOCK(*Scene)
+		Scene->addActor(NewActor);
+	}
 }
- 
+
 void FPhysicsScene::Simulate(float DeltaTime)
 {
+	// 델타 타임 캡 (MaxFrameTime)
+	constexpr float MaxFrameTime = 0.1f;
+	if (DeltaTime > MaxFrameTime) // std::min 대신 명시적 조건문 사용 (취향 차이)
+	{
+		DeltaTime = MaxFrameTime;
+	}
+
 	LeftoverTime += DeltaTime;
-	// 고정 시간 시뮬레이션
-	while (FixedDeltaTime <= LeftoverTime)
+
+	constexpr int32 MaxSubSteps = 10;
+	int32 CurrentStep = 0;
+
+	// 고정 시간 시뮬레이션 (Sub-stepping)
+	while (LeftoverTime >= FixedDeltaTime && CurrentStep < MaxSubSteps)
 	{
 		LeftoverTime -= FixedDeltaTime;
-		Scene->simulate(FixedDeltaTime);
+		CurrentStep++;
 
-		//std::cout << DeltaTime << '\n';
+		// 1. 물리 업데이트 전 처리
 		for (IPrePhysics* PrePhysics : PreUpdateList)
 		{
 			PrePhysics->PrePhysicsUpdate(FixedDeltaTime);
 		}
 
-		bIsSimulated = true;
+		// 2. 시뮬레이션 시작
+		Scene->simulate(FixedDeltaTime);
+		bIsSimulated = true; // 시뮬레이션 시작했으므로 true
 
-		if (FixedDeltaTime <= LeftoverTime)
-		{
-			FetchAndUpdate();
-		}
+		// 3. 결과 대기 및 동기화 (Blocking)
+		// 서브스테핑 중에는 반드시 이전 단계가 끝나야 다음 단계를 계산할 수 있으므로
+		// 여기서 fetchResults를 통해 기다립니다.
+		FetchAndUpdate(); 
+       
+		// [삭제됨] bIsSimulated = true; 
+		// FetchAndUpdate 안에서 bIsSimulated가 false가 되었고, 
+		// PhysX도 Idle 상태가 되었으므로 이 상태가 맞습니다.
+	}
+
+	// 루프 제한으로 남은 시간 버림
+	if (CurrentStep >= MaxSubSteps)
+	{
+		LeftoverTime = 0.0f;
 	}
 }
 
@@ -135,52 +169,6 @@ void FPhysicsScene::FetchAndUpdate()
 			if (Instance->OwnerComponent)
 			{
 				Instance->OwnerComponent->ApplyPhysicsResult();
-
-				// 래그돌 통계 수집 (SkeletalMeshComponent인 경우)
-				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(Instance->OwnerComponent);
-				if (SkelComp && !ProcessedRagdolls.Contains(SkelComp))
-				{
-					ProcessedRagdolls.Add(SkelComp);
-
-					FRagdollStatManager& StatMgr = FRagdollStatManager::GetInstance();
-					const TArray<FBodyInstance*>& Bodies = SkelComp->GetBodies();
-					const TArray<FConstraintInstance*>& Constraints = SkelComp->GetConstraints();
-
-					StatMgr.AddRagdoll(Bodies.Num(), Constraints.Num());
-
-					// Shape 타입별 카운트 및 메모리 계산
-					int32 SphereCount = 0, BoxCount = 0, CapsuleCount = 0;
-					uint64 BodiesMemory = 0;
-					for (const FBodyInstance* Body : Bodies)
-					{
-						if (Body)
-						{
-							BodiesMemory += sizeof(FBodyInstance);
-							if (Body->RigidActor)
-							{
-								PxU32 ShapeCount = Body->RigidActor->getNbShapes();
-								TArray<PxShape*> Shapes;
-								Shapes.SetNum(ShapeCount);
-								Body->RigidActor->getShapes(Shapes.GetData(), ShapeCount);
-								for (PxU32 i = 0; i < ShapeCount; ++i)
-								{
-									PxGeometryType::Enum GeomType = Shapes[i]->getGeometryType();
-									switch (GeomType)
-									{
-									case PxGeometryType::eSPHERE: SphereCount++; break;
-									case PxGeometryType::eBOX: BoxCount++; break;
-									case PxGeometryType::eCAPSULE: CapsuleCount++; break;
-									default: break;
-									}
-								}
-							}
-						}
-					}
-
-					uint64 ConstraintsMemory = Constraints.Num() * sizeof(FConstraintInstance);
-					StatMgr.AddShapeCounts(SphereCount, BoxCount, CapsuleCount);
-					StatMgr.AddMemory(BodiesMemory, ConstraintsMemory);
-				}
 			}
 		}
 	}

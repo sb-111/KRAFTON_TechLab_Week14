@@ -3,7 +3,7 @@
   "OwnedComponents" : [{
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 14528,
+      "Id" : 12261,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -20,7 +20,7 @@
       "MobilityType" : 1,
       "ObjectName" : "USkeletalMeshComponent_1",
       "ParentId" : 0,
-      "PhysicsAssetPathOverride" : "Data/Physics/BasicMonster.physics",
+      "PhysicsAssetPathOverride" : "",
       "RelativeLocation" : [8.000000, 0.000000, 0.033152],
       "RelativeRotationEuler" : [0.000000, -0.000000, -179.999893],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -47,19 +47,18 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "CapsuleHalfHeight" : 1.000000,
-      "CapsuleRadius" : 0.500000,
+      "BoxExtent" : [0.500000, 0.500000, 0.500000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 14530,
+      "Id" : 12263,
       "Mass" : 10.000000,
       "MobilityType" : 1,
-      "ObjectName" : "UCapsuleComponent_1",
-      "ParentId" : 14528,
-      "RelativeLocation" : [0.000000, 0.000000, 1.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "ObjectName" : "Head",
+      "ParentId" : 12261,
+      "RelativeLocation" : [0.000000, 0.000000, 1.450154],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "UCapsuleComponent",
+      "Type" : "UBoxComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
@@ -73,7 +72,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 14528,
+  "RootComponentId" : 12261,
   "Tag" : "monster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
