@@ -236,13 +236,13 @@ void USkeletalMeshComponent::UseStateMachine()
     UAnimStateMachineInstance* StateMachine = Cast<UAnimStateMachineInstance>(AnimInstance);
     if (!StateMachine)
     {
-        UE_LOG("[SkeletalMeshComponent] Creating new AnimStateMachineInstance\n");
+        // UE_LOG("[SkeletalMeshComponent] Creating new AnimStateMachineInstance\n");
         StateMachine = NewObject<UAnimStateMachineInstance>();
         SetAnimInstance(StateMachine);
     }
     else
     {
-        UE_LOG("[SkeletalMeshComponent] AnimStateMachineInstance already exists\n");
+        // UE_LOG("[SkeletalMeshComponent] AnimStateMachineInstance already exists\n");
     }
 }
 
@@ -251,7 +251,7 @@ UAnimStateMachineInstance* USkeletalMeshComponent::GetOrCreateStateMachine()
     UAnimStateMachineInstance* StateMachine = Cast<UAnimStateMachineInstance>(AnimInstance);
     if (!StateMachine)
     {
-        UE_LOG("[SkeletalMeshComponent] Creating new AnimStateMachineInstance\n");
+        // UE_LOG("[SkeletalMeshComponent] Creating new AnimStateMachineInstance\n");
         StateMachine = NewObject<UAnimStateMachineInstance>();
         SetAnimInstance(StateMachine);
     }
@@ -264,7 +264,7 @@ void USkeletalMeshComponent::UseBlendSpace2D()
     UAnimBlendSpaceInstance* BS = Cast<UAnimBlendSpaceInstance>(AnimInstance);
     if (!BS)
     {
-        UE_LOG("[SkeletalMeshComponent] Creating new AnimBlendSpaceInstance\n");
+        // UE_LOG("[SkeletalMeshComponent] Creating new AnimBlendSpaceInstance\n");
         BS = NewObject<UAnimBlendSpaceInstance>();
         SetAnimInstance(BS);
     }

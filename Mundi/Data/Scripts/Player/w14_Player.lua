@@ -163,7 +163,7 @@ function Shoot()
         if HitResult.Actor and MonsterConfig.IsMonsterTag(HitResult.Actor.Tag) then
             Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
             -- Bullet.Location = Vector(TargetPoint.X, TargetPoint.Y - 3, TargetPoint.Z)
-            Bullet.Location = TargetPoint
+            -- Bullet.Location = TargetPoint
         end
 
         print("You shoot " .. HitResult.Actor.Name .. " " .. HitResult.Actor.Tag)
