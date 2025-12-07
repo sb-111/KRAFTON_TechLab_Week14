@@ -53,12 +53,6 @@ public:
     /** @brief 프레임 렌더링 종료 */
     void EndFrame();
 
-    /** @brief 화면 크기 설정 (상대 좌표 계산용) */
-    void SetScreenSize(float width, float height);
-
-    /** @brief 화면 오프셋 설정 (뷰포트 위치) */
-    void SetScreenOffset(float x, float y);
-
     // ===== Lua에서 호출 가능한 API =====
 
     /**

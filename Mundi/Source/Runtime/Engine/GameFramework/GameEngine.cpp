@@ -259,24 +259,6 @@ void UGameEngine::Render()
             PlayerCameraManager->CacheViewport(GameViewport.get());
             Renderer->SetCurrentViewportSize(GameViewport->GetSizeX(), GameViewport->GetSizeY());
 
-            // HUD 화면 크기 및 오프셋을 실제 게임 뷰포트에 맞게 업데이트
-            // SlateManager의 MainViewport Rect 사용 (에디터 뷰포트 위치 반영)
-            const float ToolbarHeight = 35.0f; // SViewportWindow 툴바 높이
-            FRect ViewportRect = USlateManager::GetInstance().GetMainViewportRect();
-            float ViewportWidth = ViewportRect.GetWidth();
-            float ViewportHeight = ViewportRect.GetHeight() - ToolbarHeight;
-            float ViewportOffsetX = ViewportRect.Left;
-            float ViewportOffsetY = ViewportRect.Top + ToolbarHeight;
-
-            // 디버그 로그 (매 프레임)
-            UE_LOG("[HUD] ViewportRect: Left=%.0f, Top=%.0f, Right=%.0f, Bottom=%.0f",
-                ViewportRect.Left, ViewportRect.Top, ViewportRect.Right, ViewportRect.Bottom);
-            UE_LOG("[HUD] Setting Size: %.0f x %.0f, Offset: %.0f, %.0f",
-                ViewportWidth, ViewportHeight, ViewportOffsetX, ViewportOffsetY);
-
-            UGameHUD::Get().SetScreenSize(ViewportWidth, ViewportHeight);
-            UGameHUD::Get().SetScreenOffset(ViewportOffsetX, ViewportOffsetY);
-
             FMinimalViewInfo* MinimalViewInfo = PlayerCameraManager->GetCurrentViewInfo();
             TArray<FPostProcessModifier> Modifiers = PlayerCameraManager->GetModifiers();
 

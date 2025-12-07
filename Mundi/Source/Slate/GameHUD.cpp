@@ -285,18 +285,6 @@ ID2D1Bitmap* UGameHUD::LoadBitmapFromFile(const FString& path)
     return bitmap;
 }
 
-void UGameHUD::SetScreenSize(float width, float height)
-{
-    ScreenWidth = width;
-    ScreenHeight = height;
-}
-
-void UGameHUD::SetScreenOffset(float x, float y)
-{
-    ScreenOffsetX = x;
-    ScreenOffsetY = y;
-}
-
 void UGameHUD::BeginFrame()
 {
     if (!bVisible || !bInitialized || bFrameActive)
@@ -305,6 +293,22 @@ void UGameHUD::BeginFrame()
     EnsureD2DInitialized();
     if (!bD2DInitialized)
         return;
+
+    D3D11_VIEWPORT viewport;
+    UINT numViewports = 1;
+    D3DContext->RSGetViewports(&numViewports, &viewport);
+    
+    ScreenWidth = viewport.Width;
+    ScreenHeight = viewport.Height;
+    ScreenOffsetX = viewport.TopLeftX;
+    ScreenOffsetY = viewport.TopLeftY;
+
+#if _EDITOR
+    // 에디터 모드에서 툴바 높이(35px) 제외
+    const float ToolbarHeight = 35.0f;
+    ScreenHeight -= ToolbarHeight;
+    ScreenOffsetY += ToolbarHeight;
+#endif
 
     // 백버퍼에서 DXGI Surface 가져오기
     if (FAILED(SwapChain->GetBuffer(0, __uuidof(IDXGISurface), (void**)&FrameSurface)))
