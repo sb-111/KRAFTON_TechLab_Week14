@@ -7,6 +7,7 @@ local M = {}
 local currentAmmo = 30      -- 현재 탄창 탄약
 local maxAmmo = 30          -- 탄창 최대 용량
 local totalAmmo = 120       -- 예비 탄약
+local maxTotalAmmo = 120    -- 예비 탄약 최대 용량
 
 -- 재장전 상태
 local isReloading = false
@@ -28,6 +29,10 @@ end
 
 function M.GetTotalAmmo()
     return totalAmmo
+end
+
+function M.GetMaxTotalAmmo()
+    return maxTotalAmmo
 end
 
 -- ============ 탄약 사용/획득 ============
@@ -134,11 +139,22 @@ end
 
 --- 탄약 획득 (아이템 획득 시)
 --- @param amount number 획득할 탄약 수
+--- @return number 실제로 획득한 탄약 수
 function M.AddAmmo(amount)
     amount = amount or 30
-    totalAmmo = totalAmmo + amount
+
+    -- 최대치를 초과하지 않도록 제한
+    local actualAmount = math.min(amount, maxTotalAmmo - totalAmmo)
+
+    if actualAmount <= 0 then
+        print("[AmmoManager] Ammo is already at maximum capacity")
+        return 0
+    end
+
+    totalAmmo = totalAmmo + actualAmount
     M.NotifyChange()
-    print(string.format("[AmmoManager] Ammo added: +%d (Reserve: %d)", amount, totalAmmo))
+    print(string.format("[AmmoManager] Ammo added: +%d (Reserve: %d/%d)", actualAmount, totalAmmo, maxTotalAmmo))
+    return actualAmount
 end
 
 -- ============ 콜백 ============

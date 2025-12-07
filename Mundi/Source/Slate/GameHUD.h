@@ -94,6 +94,16 @@ public:
                            const FLinearColor& textColor, const FLinearColor& bgColor);
 
     /**
+     * @brief 사각형 렌더링 (절대 좌표)
+     * @param x X 좌표 (픽셀)
+     * @param y Y 좌표 (픽셀)
+     * @param width 너비 (픽셀)
+     * @param height 높이 (픽셀)
+     * @param color 사각형 색상
+     */
+    void DrawRect(float x, float y, float width, float height, const FLinearColor& color);
+
+    /**
      * @brief 이미지 렌더링 (절대 좌표)
      * @param imagePath 이미지 경로
      * @param x X 좌표 (픽셀)

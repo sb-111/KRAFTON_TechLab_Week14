@@ -3,7 +3,7 @@
   "OwnedComponents" : [{
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 3026,
+      "Id" : 13478,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -42,14 +42,22 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 3058,
+      "Id" : 13479,
       "Mass" : 10.000000,
       "MobilityType" : 0,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 3026,
+      "ParentId" : 13478,
       "RelativeLocation" : [0.000000, 0.000000, 1.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -58,7 +66,7 @@
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
-      "bIsTrigger" : false,
+      "bIsTrigger" : true,
       "bIsVisible" : true,
       "bOverrideMass" : false,
       "bShapeHiddenInGame" : true,
@@ -66,17 +74,9 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
-    }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
     }],
-  "RootComponentId" : 3026,
-  "Tag" : "monster",
+  "RootComponentId" : 13478,
+  "Tag" : "ChaserMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

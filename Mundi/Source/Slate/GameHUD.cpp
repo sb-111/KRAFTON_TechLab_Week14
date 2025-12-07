@@ -444,6 +444,23 @@ void UGameHUD::DrawTextWithBgRel(const FString& text, float rx, float ry, float 
     DrawTextInternal(text, x, y, fontSize, textColor, true, bgColor);
 }
 
+void UGameHUD::DrawRect(float x, float y, float width, float height, const FLinearColor& color)
+{
+    if (!bFrameActive || !D2dCtx || !CachedBrush)
+        return;
+
+    // 뷰포트 오프셋 적용
+    x += ScreenOffsetX;
+    y += ScreenOffsetY;
+
+    // 브러시 색상 설정
+    CachedBrush->SetColor(D2D1::ColorF(color.R, color.G, color.B, color.A));
+
+    // 사각형 그리기
+    D2D1_RECT_F rect = D2D1::RectF(x, y, x + width, y + height);
+    D2dCtx->FillRectangle(rect, CachedBrush);
+}
+
 void UGameHUD::DrawImage(const FString& imagePath, float x, float y, float width, float height)
 {
     if (!bFrameActive || !D2dCtx)

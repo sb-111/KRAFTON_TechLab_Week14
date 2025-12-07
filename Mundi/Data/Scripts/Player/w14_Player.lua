@@ -2,9 +2,12 @@ local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
 local PlayerSlowClass = require("Player/w14_PlayerSlow")
 local ObstacleConfig = require("w14_ObstacleConfig")
+local MonsterConfig = require("w14_MonsterConfig")
 local Audio = require("Game/w14_AudioManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local ScoreManager = require("Game/w14_ScoreManager")
+local HPManager = require("Game/w14_HPManager")
+
 local PlayerAnim = nil
 local PlayerInput = nil
 local PlayerSlow = nil
@@ -33,13 +36,14 @@ function BeginPlay()
     PlayerAnim = PlayerAnimClass:new(Obj)
     PlayerInput = PlayerInputClass:new(Obj)
     PlayerSlow = PlayerSlowClass:new(Obj)
+    HPManager.Reset()
     StartCoroutine(ToRun)
 
     PlayerCamera = GetComponent(Obj, "UCameraComponent")
     if PlayerCamera then
         GetCameraManager():SetViewTarget(PlayerCamera)
     end
-    
+
     bIsStarted = false
 end
 
@@ -49,9 +53,9 @@ function Tick(Delta)
         Rotate(Delta)
 
         -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
-        local Forward = 0.01 * PlayerInput.VerticalInput
+        -- local Forward = 0.01 * PlayerInput.VerticalInput
         
-        -- local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
+        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
@@ -156,13 +160,13 @@ function Shoot()
         
         BulletDecal.Rotation = Vector(Roll, Pitch, Yaw)
 
-        if HitResult.Actor and HitResult.Actor.Tag == "monster" then
+        if HitResult.Actor and MonsterConfig.IsMonsterTag(HitResult.Actor.Tag) then
             Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
             -- Bullet.Location = Vector(TargetPoint.X, TargetPoint.Y - 3, TargetPoint.Z)
             Bullet.Location = TargetPoint
         end
 
-        print("You shoot" .. HitResult.Actor.Name .. HitResult.Actor.Tag)
+        print("You shoot " .. HitResult.Actor.Name .. " " .. HitResult.Actor.Tag)
     else
         -- 허공을 쐈으면 사거리 끝 지점을 목표점으로 설정
         TargetPoint = CamPos + (CamDir * MaxDist)
@@ -192,7 +196,7 @@ function ShootCoolEnd()
     IsShootCool = false
 end
 
--- 충돌 처리: 장애물/아이템
+-- 충돌 처리: 장애물/아이템/몹
 function OnBeginOverlap(OtherActor)
     if not OtherActor then return end
 
@@ -210,13 +214,25 @@ function OnBeginOverlap(OtherActor)
         AmmoManager.CancelReload()
     end
 
-    -- 탄약 아이템 획득
-    if OtherActor.Tag == "ammo" then
-        AmmoManager.AddAmmo(30)  -- 탄약 30발 추가
-        print("[OnBeginOverlap] 탄약 획득! +30")
-        -- 아이템 제거 (오브젝트 풀로 반환하거나 삭제)
-        if OtherActor.ReturnToPool then
-            OtherActor:ReturnToPool()
+    -- 몹과 충돌 처리 (Tag 기반 데미지)
+    if MonsterConfig.IsMonsterTag(OtherActor.Tag) then
+        local damage = MonsterConfig.GetDamage(OtherActor.Tag)
+        local died = HPManager.TakeDamage(damage)
+
+        print("[OnBeginOverlap] 몹 충돌! Tag: " .. OtherActor.Tag .. ", 데미지: " .. damage)
+
+        if died then
+            -- TODO: 게임 오버 처리
+            print("[Player] Game Over!")
         end
+    end
+
+    -- 탄약 아이템 획득
+    if OtherActor.Tag == "AmmoItem" then
+        local ammoAmount = AmmoManager.GetMaxAmmo()  -- 한 번 장전할 때 채우는 탄약량 (30발)
+        AmmoManager.AddAmmo(ammoAmount)
+        print("[OnBeginOverlap] 탄약 획득! +" .. ammoAmount)
+        -- 아이템 비활성화
+        OtherActor.bIsActive = false
     end
 end
