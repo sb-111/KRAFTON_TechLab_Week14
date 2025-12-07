@@ -333,16 +333,17 @@ void USkeletalMeshComponent::UpdateAnimation(float DeltaTime)
         CurrentLocalSpacePose = OutputPose.LocalSpacePose;
         if (bSimulatePhysics)
         {
-            // TODO: 피지컬 애니메이션
+            // 피지컬 애니메이션 처리
         }
         else
         {
             ForceRecomputePose();
 
-            // TODO: 바디 인스턴스 애니메이션에 맞게 Physx에 업데이트
+            // [추가됨] 애니메이션 포즈가 바뀌었으니, 
+            // 래그돌이 꺼져있을 때(Kinematic 상태) Body들을 본 위치로 옮겨야 함
+            UpdateBodiesFromBones(); 
         }
     }
-
 }
 
 void USkeletalMeshComponent::SetRagdollState(bool InState)
@@ -683,6 +684,20 @@ void USkeletalMeshComponent::SetSimulatePhysics(bool bEnable)
     }
 }
 
+void USkeletalMeshComponent::OnTransformUpdated()
+{
+    Super::OnTransformUpdated();
+
+    // 1. 물리가 본을 움직이는 중(SyncBodiesToBones)이라면, 다시 본이 물리를 움직이면 안 됨 (무한 루프 방지)
+    if (bIsSyncingPhysics) 
+    {
+        return;
+    }
+
+    // 2. 컴포넌트 위치가 변했으니, Kinematic Body들(히트박스 등)도 따라가야 함
+    UpdateBodiesFromBones();
+}
+
 // 과제 요구사항: USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal
 // PhysicsAsset의 BodySetup들을 기반으로 FBodyInstance 배열 생성
 void USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal(UPhysicsAsset* PhysAsset, const TArray<FTransform>& BoneWorldTransforms)
@@ -769,6 +784,40 @@ void USkeletalMeshComponent::SetupBoneHierarchy()
             }
 
             CurrentParentBoneIndex = Skeleton->Bones[CurrentParentBoneIndex].ParentIndex;
+        }
+    }
+}
+
+void USkeletalMeshComponent::UpdateBodiesFromBones()
+{
+    // 물리 시뮬레이션 중이라면, 애니메이션이 물리를 덮어쓰면 안 됨 (단, Teleporting 예외 처리는 필요할 수 있음)
+    // 여기서는 'Component가 움직일 때'를 다루므로, 시뮬레이션 중이 아닐 때(Kinematic 상태)를 주로 처리합니다.
+    if (bSimulatePhysics) 
+    {
+        // 만약 시뮬레이션 중인데 컴포넌트를 강제로 옮겼다면(Teleport),
+        // 모든 Body를 강제로 해당 위치로 옮겨야 합니다.
+        // 그게 아니라면 리턴.
+        // (구현 복잡도를 낮추기 위해 일단 Kinematic 상태 동기화에 집중합니다)
+        return; 
+    }
+
+    if (Bodies.IsEmpty()) return;
+
+    // 모든 바디를 순회하며 현재 본의 위치로 PhysX Actor를 이동
+    for (int32 i = 0; i < Bodies.Num(); ++i)
+    {
+        FBodyInstance* Body = Bodies[i];
+        int32 BoneIndex = BodyBoneIndices[i];
+
+        if (Body && Body->IsValidBodyInstance() && BoneIndex != -1)
+        {
+            // 1. 해당 본의 현재 월드 Transform 계산
+            // (GetBoneWorldTransform은 내부적으로 Component의 WorldTransform을 반영함)
+            FTransform BoneWorldTransform = GetBoneWorldTransform(BoneIndex);
+
+            // 2. PhysX Body 업데이트
+            // BodyInstance::UpdateTransform은 내부적으로 setGlobalPose(Teleport) 혹은 setKinematicTarget(Move)을 수행해야 함
+            Body->UpdateTransform(BoneWorldTransform);
         }
     }
 }
