@@ -160,13 +160,34 @@ function Shoot()
         
         BulletDecal.Rotation = Vector(Roll, Pitch, Yaw)
 
-        if HitResult.Actor and MonsterConfig.IsMonsterTag(HitResult.Actor.Tag) then
-            Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
-            -- Bullet.Location = Vector(TargetPoint.X, TargetPoint.Y - 3, TargetPoint.Z)
-            -- Bullet.Location = TargetPoint
-        end
+        -- [몬스터 피격 로직]
+        if HitResult.Actor and HitResult.Actor.Tag == "monster" then
+            local monsterScript = HitResult.Actor:GetScript()
+            
+            if monsterScript then
+                -- 1. 기본 데미지 설정
+                local finalDamage = 10
+                local isHeadshot = false
 
-        print("You shoot " .. HitResult.Actor.Name .. " " .. HitResult.Actor.Tag)
+                if HitResult.Name == "Head" then
+                    finalDamage = finalDamage * 2   -- 데미지 2배
+                    isHeadshot = true
+                    print("!!! HEADSHOT !!!")
+                end
+
+                -- 3. 데미지 적용
+                if monsterScript.GetDamage then
+                    monsterScript.GetDamage(finalDamage)
+                end
+
+                -- 4. 헤드샷일 경우 진동 피드백 실행
+                if isHeadshot and InputManager:IsGamepadConnected(0) then
+                    InputManager:SetGamepadVibration(0.8, 0.8, 0)
+                    StartCoroutine(VibrateFeedback)
+                end
+            end
+        end
+        print("You shoot: " .. tostring(HitResult.Actor.Name) .. " / Part: " .. tostring(HitResult.Name))
     else
         -- 허공을 쐈으면 사거리 끝 지점을 목표점으로 설정
         TargetPoint = CamPos + (CamDir * MaxDist)
@@ -178,10 +199,6 @@ function Shoot()
     local DirVec = TargetPoint - MuzzlePos
     DirVec:Normalize()
     local RealBulletDir = DirVec
-
-    -- TODO: 킬 감지는 몬스터 시스템 완료 후 연동 필요
-    -- 방법 1: DamageManager 패턴 (몬스터가 등록, 플레이어가 데미지 요청)
-    -- 방법 2: 몬스터 스크립트에서 OnHit 이벤트 구현
 end
 
 function VibrateFeedback()
