@@ -354,12 +354,13 @@ function M.UpdateGameHUD(dt)
     )
 
     -- 크로스헤어 (화면 정중앙)
+    local centerOffsetY = 15
     local centerX = screenW / 2
     local centerY = screenH / 2
     HUD:DrawImage(
         UI_TEXTURES.CROSSHAIR,
         centerX - CROSSHAIR_SIZE / 2,
-        centerY - CROSSHAIR_SIZE / 2,
+        (centerY - CROSSHAIR_SIZE / 2) - centerOffsetY,
         CROSSHAIR_SIZE,
         CROSSHAIR_SIZE
     )
