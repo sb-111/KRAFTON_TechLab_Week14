@@ -135,8 +135,12 @@ local hudState = {
 -- 툴바 높이 (픽셀) - 툴바 아래에 HUD 표시
 local TOOLBAR_HEIGHT = 100
 
--- 탄환 아이콘 경로 
+-- 탄환 아이콘 경로
 local AMMO_ICON_PATH = "Data/Textures/Ammo.png"
+
+-- 크로스헤어 설정
+local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
+local CROSSHAIR_SIZE = 40  -- 크로스헤어 크기 (픽셀)
 
 --- HUD 프레임 시작 (매 프레임 Tick 시작 시 호출)
 function M.BeginHUDFrame()
@@ -209,6 +213,17 @@ function M.UpdateGameHUD(dt)
         AMMO_ICON_PATH,
         710, TOOLBAR_HEIGHT + 10,             -- 숫자 오른쪽 (30 | 120 형식에 맞춤)
         40, 40                               -- 아이콘 크기
+    )
+
+    -- 크로스헤어 (화면 정중앙)
+    -- 상대 좌표 사용: 0.5, 0.5가 중앙, 크기도 상대값으로
+    local crosshairRelSize = 0.025  -- 화면 대비 2.5% 크기
+    HUD:DrawImageRel(
+        CROSSHAIR_PATH,
+        0.5 - crosshairRelSize / 2,   -- X: 중앙에서 반 크기만큼 왼쪽
+        0.5 - crosshairRelSize / 2,   -- Y: 중앙에서 반 크기만큼 위
+        crosshairRelSize,              -- 너비
+        crosshairRelSize               -- 높이
     )
 end
 
