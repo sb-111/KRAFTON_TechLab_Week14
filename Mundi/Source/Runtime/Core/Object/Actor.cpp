@@ -62,6 +62,7 @@ void AActor::BeginPlay()
 		if (Comp)
 		{
 			Comp->InitializeComponent();
+			Comp->CreatePhysicsState();
 		}
 	}
 	for (UActorComponent* Comp : OwnedComponents)
@@ -70,9 +71,6 @@ void AActor::BeginPlay()
 		{
 			Comp->BeginPlay();
 		}
-
-
-		Comp->CreatePhysicsState();
 	}
 }
 

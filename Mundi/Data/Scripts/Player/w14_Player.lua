@@ -7,6 +7,7 @@ local Audio = require("Game/w14_AudioManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local ScoreManager = require("Game/w14_ScoreManager")
 local HPManager = require("Game/w14_HPManager")
+local Particle = require("Game/w14_ParticleManager")
 
 local PlayerAnim = nil
 local PlayerInput = nil
@@ -16,6 +17,7 @@ local PlayerCamera = nil
 local Mesh = nil
 local Gun = nil
 local MuzzleParticle = nil
+local BoxCollider = nil
 
 local bIsStarted = false
 
@@ -32,9 +34,13 @@ function BeginPlay()
     local result = Audio.RegisterSFX("gunreload", "GunReloadActor")
     local result = Audio.RegisterSFX("gundryfire", "GunDryFireActor")
 
+    Particle.Init()
+    Particle.Register("blood", "Data/Prefabs/Particle/BloodParticle.prefab", 20, 1.0)
+
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
     MuzzleParticle = GetComponent(Obj, "UParticleSystemComponent")
+    BoxCollider = GetComponent(Obj, "UBoxComponent")
 
     Gun:SetupAttachment(Mesh, "mixamorig6:RightHand")
 
@@ -53,6 +59,8 @@ function BeginPlay()
 end
 
 function Tick(Delta)
+    Particle.Tick(Delta)
+
     if bIsStarted then
         PlayerInput:Update(Delta)
         Rotate(Delta)
@@ -183,6 +191,8 @@ function Shoot()
                     isHeadshot = true
                     print("!!! HEADSHOT !!!")
                 end
+
+                Particle.Spawn("blood", TargetPoint)
 
                 -- 3. 데미지 적용
                 if monsterScript.GetDamage then

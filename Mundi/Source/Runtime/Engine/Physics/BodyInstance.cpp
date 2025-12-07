@@ -187,7 +187,7 @@ void FBodyInstance::InitPhysics(UPrimitiveComponent* InOwnerComponent)
 	UWorld* OwnerWorld = InOwnerComponent->GetWorld();
 	if (!OwnerWorld) OwnerWorld = GWorld;
 	FPhysicsScene* Scene = OwnerWorld->GetPhysicsScene();
-	Scene->AddActor(*NewActor);
+	Scene->AddActor(NewActor);
 	OwnerScene = Scene;
 }
 
@@ -302,7 +302,7 @@ void FBodyInstance::AddToScene()
 
 	if (TargetScene)
 	{
-		TargetScene->AddActor(*RigidActor);
+		TargetScene->AddActor(RigidActor);
 		// 다시 씬에 들어갔으니 OwnerScene 갱신
 		OwnerScene = TargetScene; 
 	}
@@ -315,7 +315,7 @@ void FBodyInstance::RemoveFromScene()
 	// 등록된 씬에서 제거
 	if (OwnerScene)
 	{
-		OwnerScene->RemoveActor(*RigidActor);
+		OwnerScene->RemoveActor(RigidActor);
 		// 주의: OwnerScene 포인터를 null로 밀어버리면 나중에 다시 넣을 때 
 		// 어느 씬인지 모를 수 있으나, 보통 GWorld->GetPhysicsScene()을 쓰므로 괜찮음.
 		// 여기서는 명시적으로 유지하거나 초기화 정책에 따라 결정.
@@ -324,7 +324,7 @@ void FBodyInstance::RemoveFromScene()
 	else if (GWorld && GWorld->GetPhysicsScene())
 	{
 		// 혹시 모르니 월드 씬에서 시도
-		GWorld->GetPhysicsScene()->RemoveActor(*RigidActor);
+		GWorld->GetPhysicsScene()->RemoveActor(RigidActor);
 	}
 }
 
@@ -481,7 +481,7 @@ void FBodyInstance::InitBody(UBodySetup* Setup, UPrimitiveComponent* InOwnerComp
 
 	// Scene에 추가하고 OwnerScene 저장 (PIE 전환 시 올바른 Scene에서 제거하기 위해)
 	FPhysicsScene* Scene = OwnerWorld->GetPhysicsScene();
-	Scene->AddActor(*Body);
+	Scene->AddActor(Body);
 	OwnerScene = Scene;
 
 	Body->userData = (void*)this;
