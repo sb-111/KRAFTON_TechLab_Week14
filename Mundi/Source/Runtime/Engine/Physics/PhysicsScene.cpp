@@ -2,16 +2,17 @@
 #include "PhysicsScene.h"
 #include "BodyInstance.h"
 #include "ConstraintInstance.h"
+#include "HitResult.h"
+#include "LuaCoroutineScheduler.h"
 #include "PrimitiveComponent.h"
 #include "PhysicsSystem.h"
 #include "SkeletalMeshComponent.h"
 #include "RagdollStats.h"
 
-FPhysicsScene::FPhysicsScene(PxScene* InScene)
-	:Scene(InScene),
-	EventCallback(std::make_unique<FPhysicsSimulationEventCallback>())
+FPhysicsScene::FPhysicsScene(PxScene* InScene) : Scene(InScene)
 {
-	Scene->setSimulationEventCallback(EventCallback.get());
+	EventCallback = new FPhysicsSimulationEventCallback();
+	Scene->setSimulationEventCallback(EventCallback);
 }
 
 FPhysicsScene::~FPhysicsScene()
@@ -30,7 +31,10 @@ FPhysicsScene::~FPhysicsScene()
 		Scene->release();
 		Scene = nullptr;
 	}
-
+	if (EventCallback)
+	{
+		delete EventCallback;
+	}
 }
 
 void FPhysicsScene::RegisterPrePhysics(IPrePhysics* Object)
@@ -112,27 +116,7 @@ void FPhysicsScene::FetchAndUpdate()
 	}
 
     bIsSimulated = false;
-	
 	Scene->fetchResults(true);
-
-	{
-		std::lock_guard<std::mutex> Guard(EventCallback->QueueMutex);
-		for (const FCollisionEvent& Event : EventCallback->EventQueue)
-		{
-			if (Event.BodyA->OwnerComponent && Event.BodyB->OwnerComponent)
-			{
-				Event.BodyA->OwnerComponent->OnComponentHit(Event.BodyB->OwnerComponent);
-				Event.BodyB->OwnerComponent->OnComponentHit(Event.BodyA->OwnerComponent);
-				// UE_LOG("ContactPosition: (%f, %f, %f)\n ContactNormal: (%f, %f, %f)\n ImpulseMagnitude: %f \n RelativeVelocity: (%f, %f, %f)\n ShapeIndex: (%d, %d)",
-				// 	Event.ContactPosition.X, Event.ContactPosition.Y, Event.ContactPosition.Z,
-				// 	Event.ContactNormal.X, Event.ContactNormal.Y, Event.ContactNormal.Z,
-				// 	Event.ImpulseMagnitude,
-				// 	Event.RelativeVelocity.X, Event.RelativeVelocity.Y, Event.RelativeVelocity.Z,
-				// 	Event.ShapeIndexA, Event.ShapeIndexA);
-			}
-		}
-		EventCallback->EventQueue.clear();
-	}
 
 	PxU32 NumActiveActors = 0;
 	PxActor** ActiveActors = Scene->getActiveActors(NumActiveActors);
@@ -328,65 +312,178 @@ PxVehicleDrivableSurfaceToTireFrictionPairs* FPhysicsScene::GetFrictionPairs()
 	return FrictionPairs;
 }
 
+bool FPhysicsScene::Raycast(const FVector& Origin, const FVector& Direction, float MaxDistance, FHitResult& OutHit)
+{
+	if (!Scene) return false;
+
+    PxVec3 POrigin = PhysxConverter::ToPxVec3(Origin); 
+    PxVec3 PDir = PhysxConverter::ToPxVec3(Direction);
+    PDir.normalize();
+
+    PxRaycastBuffer HitBuffer;
+    
+    // Static(벽)과 Dynamic(캐릭터/물체) 모두 충돌 검사
+    PxQueryFilterData FilterData(PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC);
+    
+    bool bHit = Scene->raycast(POrigin, PDir, MaxDistance, HitBuffer, PxHitFlag::eDEFAULT, FilterData);
+
+    // 4. 충돌 결과 처리
+    if (bHit && HitBuffer.hasBlock)
+    {
+        const PxRaycastHit& PxHit = HitBuffer.block;
+
+        // --- 결과 채우기 ---
+        OutHit.bBlockingHit = true;
+        OutHit.Distance = PxHit.distance;
+        OutHit.ImpactPoint = PhysxConverter::ToFVector(PxHit.position);
+        OutHit.ImpactNormal = PhysxConverter::ToFVector(PxHit.normal);
+
+        if (PxHit.actor && PxHit.actor->userData)
+        {
+            FBodyInstance* BodyInst = static_cast<FBodyInstance*>(PxHit.actor->userData);
+            if (BodyInst && BodyInst->OwnerComponent)
+            {
+                OutHit.Component = BodyInst->OwnerComponent;
+                OutHit.Actor = BodyInst->OwnerComponent->GetOwner();
+            }
+        }
+
+        if (PxHit.shape && PxHit.shape->userData)
+        {
+            FName* BoneNamePtr = static_cast<FName*>(PxHit.shape->userData);
+            if (BoneNamePtr)
+            {
+                OutHit.BoneName = *BoneNamePtr;
+            }
+        }
+        
+        // Face Index (필요시)
+        OutHit.Item = PxHit.faceIndex;
+
+        return true;
+    }
+
+    // 충돌 없음
+    OutHit.bBlockingHit = false;
+    OutHit.Distance = 0.0f;
+    OutHit.Actor = nullptr;
+    OutHit.Component = nullptr;
+    
+    return false;
+}
+
 // PairHeader: 누가 누구랑 부딪혔는지 저장
 // Pair: 어떻게 부딪혔는지 충돌 정보 저장
 void FPhysicsSimulationEventCallback::onContact(const PxContactPairHeader& PairHeader, const PxContactPair* Pairs, PxU32 NumPairs)
 {
-	if (!PairHeader.actors[0] || !PairHeader.actors[1])
+    UPrimitiveComponent* CompA = GetCompFromPxActor(PairHeader.actors[0]);
+    UPrimitiveComponent* CompB = GetCompFromPxActor(PairHeader.actors[1]);
+
+    if (!CompA || !CompB || CompA->IsPendingDestroy() || CompB->IsPendingDestroy()) { return; }
+
+    AActor* ActorA = CompA->GetOwner();
+    AActor* ActorB = CompB->GetOwner();
+
+    if (!ActorA || !ActorB) { return; }
+
+    PxContactPairPoint ContactPoints[16];
+
+    for (PxU32 i = 0; i < NumPairs; ++i)
+    {
+        const PxContactPair& CP = Pairs[i];
+
+        if (CP.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
+        {
+            const PxShape* ShapeA = CP.shapes[0];
+            const PxShape* ShapeB = CP.shapes[1];
+
+            FName BoneNameA = GetBoneNameFromShape(ShapeA);
+            FName BoneNameB = GetBoneNameFromShape(ShapeB);
+            
+            PxU32 ContactCount = CP.extractContacts(ContactPoints, 16);
+
+            if (ContactCount > 0)
+            {
+                const PxContactPairPoint& Point = ContactPoints[0];
+                FVector WorldNormal = PhysxConverter::ToFVector(Point.normal);
+                FVector WorldPos = PhysxConverter::ToFVector(Point.position);
+
+                // --- [HitResult A 생성 (A 입장에서의 충돌)] ---
+                FHitResult HitA;
+                HitA.bBlockingHit = true;
+                HitA.Actor = ActorB;
+                HitA.Component = CompB;
+                HitA.ImpactPoint = WorldPos;
+                HitA.ImpactNormal = WorldNormal; 
+                HitA.Location = CompA->GetWorldLocation();
+                HitA.Distance = 0.0f; // 물리 충돌은 거리 0
+                HitA.Item = Point.internalFaceIndex1;
+                HitA.MyBoneName = BoneNameA; 
+                HitA.BoneName = BoneNameB;
+                
+                ActorA->OnComponentHit.Broadcast(CompA, CompB, HitA);
+
+                // --- [HitResult B 생성 (B 입장에서의 충돌)] ---
+                FHitResult HitB;
+                HitB.bBlockingHit = true;
+                HitB.Actor = ActorA;
+                HitB.Component = CompA;
+                HitB.ImpactPoint = WorldPos;
+                HitB.ImpactNormal = -WorldNormal; 
+                HitB.Location = CompB->GetWorldLocation();
+                HitB.Distance = 0.0f; // 물리 충돌은 거리 0
+                HitB.Item = Point.internalFaceIndex1;
+                HitA.MyBoneName = BoneNameB;
+                HitA.BoneName = BoneNameA;
+
+                ActorB->OnComponentHit.Broadcast(CompA, CompB, HitB);
+            }
+        }
+    }
+}
+
+void FPhysicsSimulationEventCallback::onTrigger(PxTriggerPair* Pairs, PxU32 Count)
+{
+	for (PxU32 i = 0; i < Count; ++i)
 	{
-		return;
-	}
+		const PxTriggerPair& TP = Pairs[i];
+        
+		UPrimitiveComponent* TriggerComp = GetCompFromPxActor(TP.triggerActor);
+		UPrimitiveComponent* OtherComp = GetCompFromPxActor(TP.otherActor);
+		if (!TriggerComp || !OtherComp) { continue; }
 
-	FBodyInstance* BodyA = (FBodyInstance*)PairHeader.actors[0]->userData;
-	FBodyInstance* BodyB = (FBodyInstance*)PairHeader.actors[1]->userData;
+		AActor* TriggerActor = TriggerComp->GetOwner();
+		AActor* OtherActor = OtherComp->GetOwner();
+		if (!TriggerActor || !OtherActor) { continue; }
 
-	if (!BodyA || !BodyB)
-	{
-		return;
-	}
-
-	for (PxU32 Index = 0; Index < NumPairs; Index++)
-	{
-		const PxContactPair& Pair = Pairs[Index];
-
-		// 비트연산으로 충돌 정보 저장 ( eNOTIFY... : 이번 프레임에 처음으로 충돌했다)
-		// 필터 셰이더에서 추가했기 때문에 가능한 것. 다른 플래그도 추가해야할 수 있음
-		if (Pair.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
+		// OnComponentBeginOverlap
+		if (TP.status == PxPairFlag::eNOTIFY_TOUCH_FOUND)
 		{
-			FCollisionEvent NewEvent;
-			NewEvent.BodyA = BodyA;
-			NewEvent.BodyB = BodyB;
-
-			// 충돌점 추출(Physx는 점 하나만 리턴하는게 아니라 접촉면을 만들어서 여러개 준다고 함)
-			PxContactPairPoint ContactPoints[16];
-			PxU32 NumContacts = Pair.extractContacts(ContactPoints, 16);
-
-			if (NumContacts > 0)
-			{
-				// 일단 0번째 충돌점으로 단순계산(평균이 제일 정확한데 어차피 구별 안되서 가장 중요도 높은 0번을 쓴다고 함)
-				NewEvent.ContactPosition = PhysxConverter::ToFVector(ContactPoints[0].position);
-				NewEvent.ContactNormal = PhysxConverter::ToFVector(ContactPoints[0].normal);
-				NewEvent.ImpulseMagnitude = ContactPoints[0].impulse.magnitude();
-
-				// void*를(8바이트) int32로 바꾸면 컴파일 에러 -> 8바이트 정수형 포인터 변환 후 int32로 변환
-				NewEvent.ShapeIndexA = (int32)(uintptr_t)Pair.shapes[0]->userData;
-				NewEvent.ShapeIndexB = (int32)(uintptr_t)Pair.shapes[1]->userData;
-
-
-				// RigidDynamic이 아닌 RigidBody -> PxArticulationLink -> 쓸 일 없어서 일단 기존 함수 씀.
-				PxRigidDynamic* RigidDynamicA = BodyA->GetPxRigidDynamic();
-				PxRigidDynamic* RigidDynamicB = BodyA->GetPxRigidDynamic();
-
-				FVector VelocityA = RigidDynamicA ? PhysxConverter::ToFVector(RigidDynamicA->getLinearVelocity()) : FVector::Zero();
-				FVector VelocityB = RigidDynamicB ? PhysxConverter::ToFVector(RigidDynamicB->getLinearVelocity()) : FVector::Zero();
-
-				// B가 가만히 있을때 A가 박는 상황을 생각해보면 A에서 B를 빼야한다.(노말이 B에서 A쪽으로 향하니까)
-				NewEvent.RelativeVelocity = VelocityA - VelocityB;
-			}
-
-			// std::lock은 unlock 명시적으로 해줘야해서 락가드 씀
-			std::lock_guard<std::mutex> Guard(QueueMutex);
-			EventQueue.Add(NewEvent);
+			TriggerActor->OnComponentBeginOverlap.Broadcast(TriggerComp, OtherComp);
+			OtherActor->OnComponentBeginOverlap.Broadcast(OtherComp, TriggerComp);
+		}
+		// OnComponentEndOverlap
+		else if (TP.status == PxPairFlag::eNOTIFY_TOUCH_LOST)
+		{
+			TriggerActor->OnComponentEndOverlap.Broadcast(TriggerComp, OtherComp);
+			OtherActor->OnComponentEndOverlap.Broadcast(OtherComp, TriggerComp);
 		}
 	}
+}
+
+UPrimitiveComponent* FPhysicsSimulationEventCallback::GetCompFromPxActor(physx::PxRigidActor* InActor)
+{
+	if (!InActor || !InActor->userData) { return nullptr; }
+
+	auto* BodyInst = static_cast<FBodyInstance*>(InActor->userData);
+	if (!BodyInst) { return nullptr; }
+
+	return BodyInst->OwnerComponent;
+}
+
+FName FPhysicsSimulationEventCallback::GetBoneNameFromShape(const physx::PxShape* Shape)
+{
+	if (!Shape || !Shape->userData) return FName();
+	FName* NamePtr = static_cast<FName*>(Shape->userData);
+	return *NamePtr;
 }

@@ -118,7 +118,7 @@
                   "Points" : [],
                   "bIsLooped" : false
                 },
-                "MaxValue" : [2.000000, 2.000000, 2.000000],
+                "MaxValue" : [1.000000, 1.000000, 1.000000],
                 "MinCurve" : {
                   "LoopKeyOffset" : 0.000000,
                   "Points" : [],
@@ -141,7 +141,7 @@
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "ConstantValue" : 1.000000,
+                  "ConstantValue" : 0.503000,
                   "MaxCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
@@ -164,7 +164,7 @@
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "ConstantValue" : [1.000000, 0.797215, 0.138996],
+                  "ConstantValue" : [1.000000, 0.000000, 0.000000],
                   "MaxCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
@@ -187,8 +187,8 @@
               "bSpawnModule" : true,
               "bUpdateModule" : true
             }, {
-              "RibbonWidth" : 1.000000,
-              "Tessellation" : 6,
+              "RibbonWidth" : 0.500000,
+              "Tessellation" : 50,
               "TileU" : 1.000000,
               "Type" : "UParticleModuleTypeDataRibbon",
               "bEnabled" : true,

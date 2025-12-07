@@ -13,22 +13,15 @@ MapManager.__index = MapManager
 
 --- MapManager 인스턴스 생성
 --- @return MapManager
-function MapManager:new()
+function MapManager:new(InPlayer)
     local instance = {
-        player = nil,
+        player = InPlayer,
         bioms = {},
         biom_name_to_spawn_this_turn = nil,
         next_spawn_location = -MapConfig.map_chunk_x_size
     }
     setmetatable(instance, MapManager)
     return instance
-end
-
---- MapManager가 추적할 플레이어 설정
---- @param player userdata 추적할 플레이어 GameObject
---- @return void
-function MapManager:set_player_to_trace(player)
-    self.player = player
 end
 
 function MapManager:add_biom(

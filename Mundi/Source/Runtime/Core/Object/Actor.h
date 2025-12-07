@@ -3,7 +3,7 @@
 #include "Vector.h"
 #include "ActorComponent.h"
 #include "AABB.h"
-#include "LightManager.h"
+#include "HitResult.h"
 #include "Delegates.h"
 #include "AActor.generated.h"
 
@@ -23,7 +23,7 @@ public:
 
     DECLARE_DELEGATE(OnComponentBeginOverlap, UPrimitiveComponent*, UPrimitiveComponent*);
     DECLARE_DELEGATE(OnComponentEndOverlap, UPrimitiveComponent*, UPrimitiveComponent*);
-    DECLARE_DELEGATE(OnComponentHit, UPrimitiveComponent*, UPrimitiveComponent*);
+    DECLARE_DELEGATE(OnComponentHit, UPrimitiveComponent*, UPrimitiveComponent*, FHitResult);
 
     AActor(); 
 
@@ -175,12 +175,8 @@ public:
     // Serialize
     void Serialize(const bool bInIsLoading, JSON& InOutHandle) override;
 
-    FGameObject* GetGameObject() const
-    {
-        if (LuaGameObject)
-            return LuaGameObject;
-        return nullptr;
-    }
+    // On-demand 생성: BeginPlay 전에도 Lua에서 접근 가능
+    FGameObject* GetGameObject();
 
 public:
     UWorld* World = nullptr;

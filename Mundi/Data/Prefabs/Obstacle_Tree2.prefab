@@ -1,32 +1,21 @@
 {
-  "ObjectName" : "스태틱 메시_0",
+  "ObjectName" : "Obstacle_Tree2",
   "OwnedComponents" : [{
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 6312,
+      "Id" : 21304,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
-          "Overrides" : {
-            "Scalars" : {
-
-            },
-            "Textures" : {
-              "0" : "Data/Textures/FireballNoise.jpg"
-            },
-            "Vectors" : {
-
-            }
-          },
-          "ParentPath" : "texture",
-          "Type" : "UMaterialInstanceDynamic"
+          "AssetPath" : "aspen_bark",
+          "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_7",
       "ParentId" : 0,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeLocation" : [-62.425777, 6.437044, 36.821022],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [10.000000, 50.000000, 1.000000],
-      "StaticMesh" : "Data/cube-tex.obj",
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Trees/Tree2.obj",
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
@@ -40,15 +29,23 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "BoxExtent" : [0.500000, 0.500000, 0.500000],
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "BoxExtent" : [3.100000, 2.000000, 11.700000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 6314,
+      "Id" : 21306,
       "Mass" : 10.000000,
       "MobilityType" : 769,
-      "ObjectName" : "UBoxComponent_3",
-      "ParentId" : 6312,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "ObjectName" : "UBoxComponent_2",
+      "ParentId" : 21304,
+      "RelativeLocation" : [0.000000, 0.000000, 12.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
@@ -65,8 +62,8 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 6312,
-  "Tag" : "",
+  "RootComponentId" : 21304,
+  "Tag" : "obstacle",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

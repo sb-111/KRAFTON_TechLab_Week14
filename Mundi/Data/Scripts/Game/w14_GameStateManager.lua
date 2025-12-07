@@ -17,8 +17,9 @@ M.States = {
 local currentState = M.States.INIT
 local previousState = M.States.INIT
 
--- 상태 변경 콜백들
-local onStateChangeCallbacks = {}
+-- 상태별 콜백 저장소
+-- { ["Playing"] = {func1, func2}, ["Dead"] = {func3} }
+local stateCallbacks = {}
 
 -- 현재 상태 반환
 function M.GetState()
@@ -41,9 +42,11 @@ function M.SetState(newState)
 
     print("[GameState] " .. previousState .. " -> " .. newState)
 
-    -- 콜백 호출
-    for _, callback in ipairs(onStateChangeCallbacks) do
-        callback(newState, previousState)
+    local callbacks = stateCallbacks[newState]
+    if callbacks then
+        for _, callback in ipairs(callbacks) do
+            callback(previousState)
+        end
     end
 
     return true
@@ -66,36 +69,37 @@ function M.IsEnd()
     return currentState == M.States.END
 end
 
--- 상태 변경 콜백 등록
-function M.OnStateChange(callback)
-    table.insert(onStateChangeCallbacks, callback)
+-- 사용법: GameState.OnStateChange(GameState.States.DEAD, function(prev) ... end)
+function M.OnStateChange(targetState, callback)
+    -- 해당 상태에 대한 콜백 리스트가 없으면 생성
+    if not stateCallbacks[targetState] then
+        stateCallbacks[targetState] = {}
+    end
+    
+    table.insert(stateCallbacks[targetState], callback)
 end
 
 -- 편의 함수들
 function M.ShowStartScreen()
-    -- 시작 화면으로 이동
     M.SetState(M.States.START)
 end
 
 function M.StartGame()
-    -- 플레이 모드로 변경
     M.SetState(M.States.PLAYING)
 end
 
 function M.PlayerDied()
-    -- 플레이어 사망 상태로 변경
     M.SetState(M.States.DEAD)
 end
 
 function M.EndGame()
-    -- 종료 화면으로 이동
     M.SetState(M.States.END)
 end
 
 function M.Reset()
-    -- 초기 상태로 변경
     currentState = M.States.INIT
     previousState = M.States.INIT
+    -- 리셋 시 콜백을 비울지 여부는 선택사항 (여기선 유지)
 end
 
 return M

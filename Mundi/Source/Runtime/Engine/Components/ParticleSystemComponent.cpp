@@ -1630,6 +1630,7 @@ void UParticleSystemComponent::FillSpriteInstanceBuffer(uint32 TotalInstances)
 
 	ID3D11Device* Device = GEngine.GetRHIDevice()->GetDevice();
 	ID3D11DeviceContext* Context = GEngine.GetRHIDevice()->GetDeviceContext();
+	FMatrix ComponentLocalToWorld = GetWorldTransform().ToMatrix();
 
 	// 인스턴스 버퍼 생성/리사이즈
 	if (TotalInstances > AllocatedSpriteInstanceCount)
@@ -1692,12 +1693,14 @@ void UParticleSystemComponent::FillSpriteInstanceBuffer(uint32 TotalInstances)
 		int32 SubImages_V = 1;
 		int32 TotalFrames = 1;
 
+		bool bUseLocalSpace = false;
 		if (SpriteEmitterData->Source.RequiredModule)
 		{
 			SubImages_H = SpriteEmitterData->Source.RequiredModule->SubImages_Horizontal;
 			SubImages_V = SpriteEmitterData->Source.RequiredModule->SubImages_Vertical;
 			int32 MaxElements = SpriteEmitterData->Source.RequiredModule->SubUV_MaxElements;
 			TotalFrames = (MaxElements > 0) ? MaxElements : (SubImages_H * SubImages_V);
+			bUseLocalSpace = SpriteEmitterData->Source.RequiredModule->bUseLocalSpace;
 		}
 
 		// 각 파티클의 인스턴스 데이터 생성
@@ -1711,8 +1714,18 @@ void UParticleSystemComponent::FillSpriteInstanceBuffer(uint32 TotalInstances)
 			FSpriteParticleInstanceVertex& Instance = Instances[InstanceOffset];
 
 			// 월드 위치
-			Instance.WorldPosition =  Particle->Location;
-
+			if (bUseLocalSpace)
+			{
+				// 로컬 스페이스: (0,0,0) 기준인 파티클 위치에 컴포넌트 행렬을 곱해 월드로 보냄
+				// FMatrix::TransformPosition(FVector) 가정
+				Instance.WorldPosition = ComponentLocalToWorld.TransformPosition(Particle->Location);
+			}
+			else
+			{
+				// 월드 스페이스: 이미 시뮬레이션 단계에서 월드 좌표로 계산됨
+				Instance.WorldPosition = Particle->Location;
+			}
+			
 			// 회전 (Z축만)
 			Instance.Rotation = Particle->Rotation;
 

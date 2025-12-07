@@ -67,6 +67,8 @@ public:
         return ViewGizmo;
     }
     // Directions in world space
+    
+    UFUNCTION(LuaBind, DisplayName="GetForward")
     FVector GetForward() const;
     FVector GetRight() const;
     FVector GetUp() const;

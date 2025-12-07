@@ -13,8 +13,6 @@ class URenderer;
 struct FMeshBatchElement;
 class FSceneView;
 
-
-
 struct FOverlapInfo
 {
     AActor* OtherActor = nullptr;
@@ -25,8 +23,7 @@ UCLASS(DisplayName="프리미티브 컴포넌트", Description="렌더링 가능
 class UPrimitiveComponent :public USceneComponent, public IPrePhysics
 {
 public:
-
-    GENERATED_REFLECTION_BODY();
+    GENERATED_REFLECTION_BODY()
 
 public:
 
@@ -134,9 +131,7 @@ public:
     // ───── 충돌 관련 ──────────────────────────── 
     bool IsOverlappingActor(const AActor* Other) const;
     virtual const TArray<FOverlapInfo>& GetOverlapInfos() const { static TArray<FOverlapInfo> Empty; return Empty; }
-
-    virtual void OnComponentHit(UPrimitiveComponent* OtherComponent);
-
+    
     //Delegate 
     
     // ───── 복사 관련 ────────────────────────────

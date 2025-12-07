@@ -31,7 +31,7 @@ function PlayerSlow:ApplySlow(speedMult, duration)
 
     -- 카메라 셰이크 (충돌 피드백)
     GetCameraManager():StartCameraShake(0.15, 0.2, 0.15, 30)
-
+    GetCameraManager():StartVignette(0.3, 0.4, 0.3, 0.8, 2, Color(1, 0, 0, 1))
     -- 코루틴으로 자동 복구
     local selfRef = self
     local restoreDuration = duration

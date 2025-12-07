@@ -32,6 +32,7 @@ public:
 	void Destroy() override;
 	void Tick(float DeltaTime) override;
 	void Serialize(const bool bInIsLoading, JSON& InOutHandle) override;
+	void DuplicateSubObjects() override;
 
 	void RegisterView(UCameraComponent* RegisterViewTarget);
 	void UnregisterView(UCameraComponent* UnregisterViewTarget);

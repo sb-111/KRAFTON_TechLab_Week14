@@ -6,6 +6,7 @@
 --- @field UpVector userdata 상방 벡터 (0, 0, 1)
 local PlayerController = {}
 PlayerController.MovementDelta = 10
+PlayerController.SpeedMultiplier = 1.0  -- 속도 배율 (1.0 = 정상)
 PlayerController.player = nil
 PlayerController.ForwardVector = Vector(1, 0, 0)
 PlayerController.RightVector = Vector(0, 1, 0)
@@ -49,18 +50,34 @@ function PlayerController:SetCamera()
     end
 end
 
+--- 속도 배율 설정 (장애물 충돌 시 사용)
+--- @param multiplier number 속도 배율 (1.0 = 정상, 0.5 = 50%)
+--- @return void
+function PlayerController:SetSpeedMultiplier(multiplier)
+    self.SpeedMultiplier = multiplier
+end
+
+--- 속도 배율 반환
+--- @return number 현재 속도 배율
+function PlayerController:GetSpeedMultiplier()
+    return self.SpeedMultiplier
+end
+
 --- 입력에 따른 플레이어 제어
 --- @param Delta number 프레임 시간 (deltaTime)
 --- @return void
 function PlayerController:Control(Delta)
     self:SetCamera()
-    
+
+    -- 속도 배율 적용
+    local speed = self.MovementDelta * self.SpeedMultiplier
+
     --- 이 게임에서는 기본적으로 앞으로 이동
-    --- if InputManager:IsKeyDown('W') then self:MoveForward(self.MovementDelta * Delta) end
-    --- if InputManager:IsKeyDown('S') then self:MoveForward(-self.MovementDelta * Delta) end
-    self:MoveForward(self.MovementDelta * Delta)
-    if InputManager:IsKeyDown('A') then self:MoveRight(-self.MovementDelta * Delta) end
-    if InputManager:IsKeyDown('D') then self:MoveRight(self.MovementDelta * Delta) end
+    --- if InputManager:IsKeyDown('W') then self:MoveForward(speed * Delta) end
+    --- if InputManager:IsKeyDown('S') then self:MoveForward(-speed * Delta) end
+    self:MoveForward(speed * Delta)
+    if InputManager:IsKeyDown('A') then self:MoveRight(-speed * Delta) end
+    if InputManager:IsKeyDown('D') then self:MoveRight(speed * Delta) end
 
     --- 현재 사용하지 않는 조작이므로 보류
     --if InputManager:IsKeyPressed('Q') then Die() end -- 죽기를 선택

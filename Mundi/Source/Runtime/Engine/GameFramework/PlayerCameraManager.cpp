@@ -71,7 +71,10 @@ void APlayerCameraManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CurrentViewCamera = GetWorld()->FindComponent<UCameraComponent>();
+	if (CurrentViewCamera == nullptr)
+	{
+		CurrentViewCamera = GetWorld()->FindComponent<UCameraComponent>();
+	}
 	if (!CurrentViewCamera)
 	{
 		UE_LOG("[warning] 현재 월드에 카메라가 없습니다. (Editor에서만 Editor 전용 카메라로 Fallback 처리됨)");
@@ -107,6 +110,12 @@ void APlayerCameraManager::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 	{
 		CurrentViewCamera = Cast<UCameraComponent>(RootComponent);
 	}
+}
+
+void APlayerCameraManager::DuplicateSubObjects()
+{
+	AActor::DuplicateSubObjects();
+	CurrentViewCamera = nullptr;
 }
 
 // 만약 현재 월드에 카메라가 없었으면 이 카메라가 View로 등록됨

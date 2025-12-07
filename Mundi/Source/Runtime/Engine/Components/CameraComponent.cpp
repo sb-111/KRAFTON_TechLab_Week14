@@ -36,11 +36,11 @@ void UCameraComponent::OnRegister(UWorld* InWorld)
 
     if (InWorld)
     {
-        if (APlayerCameraManager* PlayerCameraManager = InWorld->GetPlayerCameraManager())
-        {
-            // 만약 현재 월드에 카메라가 없었으면 이 카메라가 View로 등록됨
-            PlayerCameraManager->RegisterView(this);
-        }
+        // if (APlayerCameraManager* PlayerCameraManager = InWorld->GetPlayerCameraManager())
+        // {
+        //     // 만약 현재 월드에 카메라가 없었으면 이 카메라가 View로 등록됨
+        //     PlayerCameraManager->RegisterView(this);
+        // }
 
         // Create Direction Gizmo if not already created
         if (!CameraGizmo && !InWorld->bPie)

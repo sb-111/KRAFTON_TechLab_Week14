@@ -49,6 +49,7 @@ FParticleRequiredModule UParticleModuleRequired::ToRenderThreadData() const
 	RenderData.SubImages_Horizontal = SubImages_Horizontal;
 	RenderData.SubImages_Vertical = SubImages_Vertical;
 	RenderData.SubUV_MaxElements = SubUV_MaxElements;
+	RenderData.bUseLocalSpace = bUseLocalSpace;
 
 	return RenderData;
 }

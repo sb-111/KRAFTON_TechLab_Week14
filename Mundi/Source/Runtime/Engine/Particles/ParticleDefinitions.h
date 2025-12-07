@@ -19,6 +19,7 @@ struct FParticleRequiredModule
 	int32 SubImages_Horizontal;         // 가로 타일 수
 	int32 SubImages_Vertical;           // 세로 타일 수
 	int32 SubUV_MaxElements;            // 실제 프레임 수 (0 = 전체 사용)
+	bool bUseLocalSpace;
 
 	FParticleRequiredModule()
 		: Material(nullptr)
@@ -28,6 +29,7 @@ struct FParticleRequiredModule
 		, SubImages_Horizontal(1)
 		, SubImages_Vertical(1)
 		, SubUV_MaxElements(0)
+		, bUseLocalSpace(false)
 	{
 	}
 };

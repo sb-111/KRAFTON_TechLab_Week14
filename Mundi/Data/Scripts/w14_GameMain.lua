@@ -4,8 +4,8 @@
 
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
+local Audio = require("Game/w14_AudioManager")
 local MapConfig = require("w14_MapConfig")
-local ControlManager = require("w14_ControlManager")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
@@ -14,27 +14,42 @@ local MapManager = nil
 local ObstacleManager = nil
 local ItemManager = nil
 local ObjectPlacer = nil
+local Player = nil
 
 function BeginPlay()
     print("=== Game Main Start ===")
 
+    -- 디버그: GameMain에서 직접 FindObjectByName 테스트
+    local testActor = FindObjectByName("BGMActor")
+    if testActor then
+        print("[DEBUG] GameMain: BGMActor found directly!")
+    else
+        print("[DEBUG] GameMain: BGMActor NOT found directly!")
+    end
+
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
---    GameState.OnStateChange(function()
---      print("콜백 테스트")
---    end)
+
+    -- 오디오 초기화
+    -- 씬에 필요한 Actor:
+    --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)
+    --   ShotActor (AudioComponent 여러 개 + Sounds[0]에 효과음)
+    Audio.Init()
+    Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
+    Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
 
     -- 시작 화면 표시
+    GameState.OnStateChange(GameState.States.PLAYING, GameStart)
     GameState.ShowStartScreen()
-    
-    -- ControlManager에 플레이어 등록
-    ControlManager:set_player_to_trace(Obj)
+end
 
-    MapManager = MapManagerClass:new()
-    
-    -- MapManager에 플레이어 등록
-    MapManager:set_player_to_trace(Obj)
+function GameStart()
+    -- 플레이어 생성
+    Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
+    Player.Location = Vector(0, 0, 1.3)
+
     -- MapManager 초기화
+    MapManager = MapManagerClass:new(Player)
     MapManager:add_biom(
             "Data/Prefabs/test_map_chunk_0.prefab",
             100,
@@ -62,19 +77,38 @@ function BeginPlay()
     )
 
     -- ObstacleManager 생성 (GeneralObjectManager 사용)
-    ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer)
-    ObstacleManager:set_player_to_trace(Obj)
+    ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ObstacleManager:add_object(
-            "Data/Prefabs/test_obstacle.prefab",
-            500,                    -- pool_size
+            "Data/Prefabs/Obstacle_Tree1.prefab",
+            120,                    -- pool_size
             Vector(-2000, 0, 0),    -- pool_standby_location
-            10,                     -- spawn_num
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree2.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree3.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
+            5                       -- radius
+    )
+    ObstacleManager:add_object(
+            "Data/Prefabs/Obstacle_Tree4.prefab",
+            120,                    -- pool_size
+            Vector(-2000, 0, 0),    -- pool_standby_location
+            3,                     -- spawn_num
             5                       -- radius
     )
 
     -- ItemManager 생성 (GeneralObjectManager 사용)
-    ItemManager = GeneralObjectManagerClass:new(ObjectPlacer)
-    ItemManager:set_player_to_trace(Obj)
+    ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
             "Data/Prefabs/test_item.prefab",
             300,                    -- pool_size
@@ -82,7 +116,6 @@ function BeginPlay()
             5,                      -- spawn_num (적게)
             3                       -- radius
     )
-
 end
 
 function Tick(dt)
@@ -92,29 +125,28 @@ function Tick(dt)
     -- 입력 처리
     HandleInput()
 
-    -- 플레이어 조작
-    ControlManager:Control(dt)
+    if GameState.IsPlaying() then
+        -- 맵 업데이트
+        if MapManager then
+            MapManager:Tick()
+        end
 
-    -- 맵 업데이트
-    if MapManager then
-        MapManager:Tick()
-    end
+        if ObjectPlacer and Player.Location.X >= ObjectPlacer.area_height_offset then
+            ObjectPlacer:update_area(
+                    MapConfig.map_chunk_y_size,                              -- area_width (Y축)
+                    MapConfig.map_chunk_x_size,                              -- area_height (X축)
+                    Player.Location.Y,                                          -- area_width_offset (Y축)
+                    Player.Location.X + MapConfig.map_chunk_x_size * 2.5  -- area_height_offset (X축)
+            )
+        end
 
-    if ObjectPlacer and Obj.Location.X >= ObjectPlacer.area_height_offset then
-        ObjectPlacer:update_area(
-                MapConfig.map_chunk_y_size,                              -- area_width (Y축)
-                MapConfig.map_chunk_x_size,                              -- area_height (X축)
-                Obj.Location.Y,                                          -- area_width_offset (Y축)
-                Obj.Location.X + MapConfig.map_chunk_x_size * 2.5  -- area_height_offset (X축)
-        )
-    end
+        if ObstacleManager then
+            ObstacleManager:Tick()
+        end
 
-    if ObstacleManager then
-        ObstacleManager:Tick()
-    end
-
-    if ItemManager then
-        ItemManager:Tick()
+        if ItemManager then
+            ItemManager:Tick()
+        end
     end
 end
 
@@ -123,6 +155,7 @@ function HandleInput()
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
+            Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
         elseif GameState.IsEnd() then
             GameState.ShowStartScreen()
         end
@@ -132,6 +165,7 @@ function HandleInput()
     if InputManager:IsKeyPressed('Q') then
         if GameState.IsPlaying() then
             GameState.EndGame()
+            Audio.StopBGM("BGM")  -- 게임 종료 시 BGM 정지
         end
     end
 end

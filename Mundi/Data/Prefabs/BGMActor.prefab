@@ -1,0 +1,41 @@
+{
+  "ObjectName" : "BGMActor",
+  "OwnedComponents" : [{
+      "Id" : 21960,
+      "ObjectName" : "USceneComponent_17",
+      "ParentId" : 0,
+      "RelativeLocation" : [-9.779131, 6.754601, 10.169679],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "USceneComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "Id" : 21961,
+      "ObjectName" : "UAudioComponent_1",
+      "ParentId" : 21960,
+      "Pitch" : 1.000000,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Sounds" : ["Data/Audio/BGM.wav"],
+      "Type" : "UAudioComponent",
+      "Volume" : 1.000000,
+      "bAutoPlay" : false,
+      "bHiddenInGame" : false,
+      "bIs2D" : true,
+      "bIsActive" : true,
+      "bIsLooping" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 21960,
+  "Tag" : "",
+  "Type" : "AEmptyActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

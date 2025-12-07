@@ -29,7 +29,7 @@ AActor::AActor()
 AActor::~AActor()
 {
 	DestroyAllComponents();
-	
+
 	if (LuaGameObject)
 	{
 		delete LuaGameObject;
@@ -37,16 +37,23 @@ AActor::~AActor()
 	}
 }
 
-void AActor::BeginPlay()
+FGameObject* AActor::GetGameObject()
 {
+	// On-demand 생성: BeginPlay 전에도 Lua에서 접근 가능하도록
 	if (!LuaGameObject)
 	{
-		// Lua Game Object 초기화
 		LuaGameObject = new FGameObject();
-		LuaGameObject ->SetOwner(this); /*순서 보장 필수!*/
+		LuaGameObject->SetOwner(this);
 		LuaGameObject->UUID = this->UUID;
 	}
-	
+	return LuaGameObject;
+}
+
+void AActor::BeginPlay()
+{
+	// LuaGameObject는 GetGameObject()에서 on-demand 생성됨
+	// (BeginPlay 전에도 Lua에서 접근 가능)
+
 	// NOTE: 아직 InitializeComponent/BeginPlay 순서가 완벽히 보장되지 않음 (PIE 시작 순간에는 지연 생성 처리 필요)
 	// 컴포넌트들 Initialize/BeginPlay 순회
 	for (UActorComponent* Comp : OwnedComponents)
@@ -80,15 +87,6 @@ void AActor::Tick(float DeltaSeconds)
 		{
 			// 에디터 모드일 때 컴포넌트별 bTickInEditor 체크 (Preview World 포함)
 			bool bShouldTick = World->bPie || Comp->CanTickInEditor() || World->IsPreviewWorld();
-
-			// DEBUG: 컴포넌트 틱 조건 확인 (추후 제거)
-			static bool bLoggedComp = false;
-			if (!bLoggedComp && !World->bPie)
-			{
-				UE_LOG("[Actor::Tick] Comp=%s, bShouldTick=%d, CanTickInEditor=%d",
-					Comp->ObjectName.ToString().c_str(), bShouldTick, Comp->CanTickInEditor());
-				bLoggedComp = true;
-			}
 
 			if (bShouldTick)
 			{
@@ -125,7 +123,6 @@ void AActor::Destroy()
 	}
 
 	MarkPendingDestroy();
-
 	World->AddPendingKillActor(this);
 }
 

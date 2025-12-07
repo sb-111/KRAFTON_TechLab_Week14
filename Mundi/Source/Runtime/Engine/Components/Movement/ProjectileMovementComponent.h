@@ -55,6 +55,7 @@ public:
     virtual void TickComponent(float DeltaSeconds) override;
 
     // 발사 API
+    UFUNCTION(LuaBind, DisplayName="FireInDirection")
     void FireInDirection(const FVector& ShootDirection);
     void SetVelocityInLocalSpace(const FVector& NewVelocity);
 
