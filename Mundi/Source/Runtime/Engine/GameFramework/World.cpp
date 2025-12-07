@@ -734,51 +734,63 @@ AActor* UWorld::SpawnPrefabActor(const FWideString& PrefabPath)
 		return nullptr;
 	}
 
-	JSON ActorDataJson;
-
-	if (FJsonSerializer::LoadJsonFromFile(ActorDataJson, PrefabPath))
+	// 1. 캐시 확인
+	auto It = PrefabCache.find(PrefabPath);
+	if (It == PrefabCache.end())
 	{
-		// Pair.first는 ID 문자열, Pair.second는 단일 프리미티브의 JSON 데이터입니다.
+		// --- 캐시에 없으므로 로드 시작 ---
+		JSON TempJson;
+		if (!FJsonSerializer::LoadJsonFromFile(TempJson, PrefabPath))
+		{
+			UE_LOG("[error] 존재하지 않는 Prefab 경로입니다. - %s", WideToUTF8(PrefabPath).c_str());
+			return nullptr;
+		}
 
 		FString TypeString;
-		if (FJsonSerializer::ReadString(ActorDataJson, "Type", TypeString))
+		if (!FJsonSerializer::ReadString(TempJson, "Type", TypeString))
 		{
-			//UClass* NewClass = FActorTypeMapper::TypeToActor(TypeString);
-			UClass* NewClass = UClass::FindClass(TypeString);
-
-			UWorld* World = GWorld;
-
-			// 유효성 검사: Class가 유효하고 AActor를 상속했는지 확인
-			if (!NewClass || !NewClass->IsChildOf(AActor::StaticClass()))
-			{
-				UE_LOG("[error] SpawnActor failed: Invalid class provided.");
-				return nullptr;
-			}
-
-			// ObjectFactory를 통해 UClass*로부터 객체 인스턴스 생성
-			AActor* NewActor = Cast<AActor>(ObjectFactory::NewObject(NewClass));
-			if (!NewActor)
-			{
-				UE_LOG("[error] SpawnActor failed: ObjectFactory could not create an instance of");
-				return nullptr;
-			}
-			
-			// 데이터 불러오기
-			NewActor->Serialize(true, ActorDataJson);
-
-			// 현재 레벨에 액터 등록
-			AddActorToLevel(NewActor);
-			NewActor->BeginPlay();
-
-			return NewActor;
+			UE_LOG("[error] Prefab JSON에 'Type'이 없습니다. - %s", WideToUTF8(PrefabPath).c_str());
+			return nullptr;
 		}
-	}
-	else
-	{
-		UE_LOG("[error] 존재하지 않는 Prefab 경로입니다. - %s", WideToUTF8(PrefabPath).c_str());
+
+		UClass* FoundClass = UClass::FindClass(TypeString);
+		if (!FoundClass || !FoundClass->IsChildOf(AActor::StaticClass()))
+		{
+			UE_LOG("[error] 유효하지 않은 클래스입니다. - %s", TypeString.c_str());
+			return nullptr;
+		}
+
+		// 캐시에 저장 (파싱된 JSON과 클래스 포인터를 함께 저장)
+		FPrefabCacheData NewCacheData;
+		NewCacheData.ActorJson = TempJson;
+		NewCacheData.ActorClass = FoundClass;
+
+		// 맵에 삽입하고 반복자 갱신
+		It = PrefabCache.emplace(PrefabPath, NewCacheData).first;
+        
+		UE_LOG("[info] Prefab 캐시됨: %s", WideToUTF8(PrefabPath).c_str());
 	}
 
-	return nullptr;
+	// 2. 캐시된 데이터 사용
+	const FPrefabCacheData& CachedData = It->second;
+
+	// ObjectFactory를 통해 캐시해둔 클래스로 객체 생성
+	AActor* NewActor = Cast<AActor>(ObjectFactory::NewObject(CachedData.ActorClass));
+	if (!NewActor)
+	{
+		UE_LOG("[error] ObjectFactory 인스턴스 생성 실패");
+		return nullptr;
+	}
+    
+	// 3. 데이터 적용 (파싱된 JSON 재사용)
+	// 주의: Serialize 함수가 내부에서 JSON을 '수정'하지 않고 '읽기'만 한다면 안전합니다.
+	NewActor->Serialize(true, const_cast<JSON&>(CachedData.ActorJson));
+
+	// 현재 레벨에 액터 등록
+	AddActorToLevel(NewActor);
+	NewActor->BeginPlay();
+
+	return NewActor;
 }
 
 bool UWorld::TryMarkOverlapPair(const AActor* Actor, const AActor* B)
