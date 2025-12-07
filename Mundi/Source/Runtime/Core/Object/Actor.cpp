@@ -12,8 +12,9 @@
 #include "PrimitiveComponent.h"
 #include "GameObject.h"
 #include "BodyInstance.h"
+#include "SkeletalMeshComponent.h"
 
-	/*BEGIN_PROPERTIES(AActor)
+/*BEGIN_PROPERTIES(AActor)
 	ADD_PROPERTY(FName, ObjectName, "[액터]", true, "액터의 이름입니다")
 	ADD_PROPERTY(bool, bActorIsActive, "[액터]", true, "액터를 활성 여부를 설정합니다")
 	ADD_PROPERTY(bool, bActorHiddenInGame, "[액터]", true, "액터를 게임에서 숨깁니다")
@@ -473,6 +474,73 @@ void AActor::SetActorIsVisible(bool bIsActive)
 bool AActor::GetActorIsVisible()
 {
 	return RootComponent->IsVisible();
+}
+
+void AActor::SetActorActive(bool bIsActive) 
+{ 
+	// 상태가 변하지 않았으면 스킵 (중복 Add/Remove 방지)
+	if (bActorIsActive == bIsActive) return;
+
+	bActorIsActive = bIsActive; 
+
+	if (!bIsActive)
+	{
+		// [비활성화] -> 씬에서 제거 (Remove)
+		// 액터가 가진 모든 컴포넌트 순회
+		for (UActorComponent* Component : OwnedComponents)
+		{
+			UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
+			if (PrimComp)
+			{
+				// 1. 일반 바디 제거
+				PrimComp->BodyInstance.RemoveFromScene();
+
+				// 2. 래그돌(스켈레탈 메시) 바디들 제거
+				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(PrimComp);
+				if (SkelComp)
+				{
+					const TArray<FBodyInstance*>& RagdollBodies = SkelComp->GetBodies();
+					for (FBodyInstance* Body : RagdollBodies)
+					{
+						if (Body)
+						{
+							Body->RemoveFromScene();
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		// [활성화] -> 씬에 다시 등록 (Add)
+		for (UActorComponent* Component : OwnedComponents)
+		{
+			UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
+			if (PrimComp)
+			{
+				// 1. 일반 바디 등록
+				PrimComp->BodyInstance.AddToScene();
+             
+				// 활성화 시 위치가 튀는 것을 방지하기 위해 속도 초기화 권장
+				// PrimComp->BodyInstance.SetLinearVelocity(FVector::ZeroVector); 
+
+				// 2. 래그돌 바디들 등록
+				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(PrimComp);
+				if (SkelComp)
+				{
+					const TArray<FBodyInstance*>& RagdollBodies = SkelComp->GetBodies();
+					for (FBodyInstance* Body : RagdollBodies)
+					{
+						if (Body)
+						{
+							Body->AddToScene();
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 FMatrix AActor::GetWorldMatrix() const
