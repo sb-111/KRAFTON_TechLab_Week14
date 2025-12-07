@@ -160,9 +160,6 @@ function M.UpdateGameHUD(dt)
     local screenW = HUD:GetScreenWidth()
     local screenH = HUD:GetScreenHeight()
 
-    -- 디버그: 화면 크기 출력 (매 프레임)
-    print("[UIManager] HUD ScreenW: " .. screenW .. ", ScreenH: " .. screenH .. ", Center: " .. (screenW/2) .. ", " .. (screenH/2))
-
     -- ScoreManager에서 값 가져오기
     local distance = ScoreManager.GetDistance()
     local kills = ScoreManager.GetKillCount()

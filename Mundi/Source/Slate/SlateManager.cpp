@@ -340,11 +340,6 @@ void USlateManager::Render()
 
         UGameHUD::Get().SetScreenSize(ViewportWidth, ViewportHeight);
         UGameHUD::Get().SetScreenOffset(ViewportOffsetX, ViewportOffsetY);
-
-        // 디버그 로그 (매 프레임)
-        UE_LOG("[HUD] ViewportRect: L=%.0f, T=%.0f, R=%.0f, B=%.0f | Size: %.0f x %.0f, Offset: %.0f, %.0f",
-            ViewportRect.Left, ViewportRect.Top, ViewportRect.Right, ViewportRect.Bottom,
-            ViewportWidth, ViewportHeight, ViewportOffsetX, ViewportOffsetY);
     }
 
     // 메인 툴바 렌더링 (항상 최상단에)

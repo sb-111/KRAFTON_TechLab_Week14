@@ -51,11 +51,8 @@ void UGameHUD::Shutdown()
         bFrameActive = false;
     }
 
-    // BitmapCache 해제 (D2dCtx 해제 전에 수행해야 함)
-    for (auto& [path, bitmap] : BitmapCache)
-    {
-        SafeRelease(bitmap);
-    }
+    // BitmapCache 해제 - D2D 컨텍스트 해제 시 자동 정리됨
+    // 개별 Release 호출 시 D3D 디바이스 상태에 따라 크래시 발생 가능
     BitmapCache.clear();
 
     // TextFormat 캐시 해제 (DWrite 리소스)
