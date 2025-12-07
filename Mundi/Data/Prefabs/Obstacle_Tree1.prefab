@@ -11,7 +11,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 16293,
+      "Id" : 7901,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "Default_OBJ",
@@ -20,7 +20,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_7",
       "ParentId" : 0,
-      "RelativeLocation" : [-52.401260, 6.437044, 36.821022],
+      "RelativeLocation" : [289.237549, -346.370972, -250.455124],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/Trees/Tree1.obj",
@@ -37,14 +37,14 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "BoxExtent" : [3.100000, 2.000000, 20.000000],
+      "BoxExtent" : [1.000000, 0.700000, 20.000000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 16294,
+      "Id" : 7902,
       "Mass" : 10.000000,
       "MobilityType" : 769,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 16293,
+      "ParentId" : 7901,
       "RelativeLocation" : [0.000000, 0.000000, 20.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -62,7 +62,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 16293,
+  "RootComponentId" : 7901,
   "Tag" : "obstacle",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

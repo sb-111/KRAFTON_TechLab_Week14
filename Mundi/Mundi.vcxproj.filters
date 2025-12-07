@@ -1223,6 +1223,9 @@
     <ClCompile Include="ThirdParty\include\ImGui\imgui_widgets.cpp">
       <Filter>ThirdParty\include\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="Generated\UParticleModuleVelocityCone.generated.cpp">
+      <Filter>Generated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Runtime\Core\Misc\DebugUtils.h">
@@ -2602,6 +2605,9 @@
     </ClInclude>
     <ClInclude Include="ThirdParty\include\Lua\lualib.h">
       <Filter>ThirdParty\include\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\UParticleModuleVelocityCone.generated.h">
+      <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
