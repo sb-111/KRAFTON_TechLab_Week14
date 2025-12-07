@@ -408,6 +408,8 @@ FLuaManager::FLuaManager()
         "DrawTextWithBg", &UGameHUD::DrawTextWithBg,
         // 배경 있는 텍스트 (상대 좌표)
         "DrawTextWithBgRel", &UGameHUD::DrawTextWithBgRel,
+        // 사각형 렌더링 (절대 좌표)
+        "DrawRect", &UGameHUD::DrawRect,
         // 이미지 렌더링 (절대 좌표)
         "DrawImage", &UGameHUD::DrawImage,
         // 이미지 렌더링 (상대 좌표)

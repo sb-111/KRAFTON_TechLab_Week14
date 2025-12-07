@@ -138,6 +138,8 @@ local TOP_MARGIN = 10
 
 -- 탄환 아이콘 경로
 local AMMO_ICON_PATH = "Data/Textures/Ammo.png"
+-- 하트 아이콘 경로
+local HEART_ICON_PATH = "Data/Textures/Heart.png"
 
 -- 크로스헤어 설정
 local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
@@ -208,19 +210,61 @@ function M.UpdateGameHUD(dt)
         Color(1, 1, 1, 1)
     )
 
-    -- HP 표시 (점수 아래)
-    local hpColor = Color(0, 1, 0, 1)  -- 초록색
-    if currentHP <= maxHP * 0.3 then
-        hpColor = Color(1, 0, 0, 1)  -- 빨간색 (30% 이하)
-    elseif currentHP <= maxHP * 0.6 then
-        hpColor = Color(1, 1, 0, 1)  -- 노란색 (60% 이하)
+    -- HP 바 (화면 하단 중앙) - 업그레이드 디자인
+    local hpRatio = currentHP / maxHP
+    local barMaxWidth = 450  -- 최대 바 너비 (증가)
+    local barHeight = 35     -- 바 높이 (증가)
+    local barWidth = barMaxWidth * hpRatio  -- 현재 HP에 따른 바 너비
+
+    -- HP 바 위치 (화면 하단 중앙)
+    local barBottomMargin = 50  -- 하단 여백
+    local barX = (screenW - barMaxWidth) / 2  -- 중앙 정렬
+    local barY = screenH - barBottomMargin - barHeight
+
+    -- HP 비율에 따른 색상 결정 (빨간색 → 검은색)
+    -- HP가 높을수록 빨간색, 낮을수록 검은색
+    local hpColor = Color(
+        1.0,                    -- R: 항상 최대
+        hpRatio * 0.1,          -- G: HP가 낮을수록 어두워짐
+        hpRatio * 0.1,          -- B: HP가 낮을수록 어두워짐
+        1.0                     -- A: 불투명
+    )
+
+    -- 외부 테두리 (검은색, 두껍게)
+    local borderSize = 3
+    HUD:DrawRect(barX - borderSize, barY - borderSize, barMaxWidth + borderSize * 2, barHeight + borderSize * 2, Color(0, 0, 0, 0.9))
+
+    -- 배경 바 (어두운 회색)
+    HUD:DrawRect(barX, barY, barMaxWidth, barHeight, Color(0.2, 0.2, 0.2, 0.9))
+
+    -- 현재 HP 바 (색상 변화)
+    if barWidth > 0 then
+        HUD:DrawRect(barX, barY, barWidth, barHeight, hpColor)
+
+        -- HP 바 위에 밝은 하이라이트 효과 (상단 절반)
+        local highlightHeight = barHeight * 0.4
+        HUD:DrawRect(barX, barY, barWidth, highlightHeight, Color(1, 1, 1, 0.2))
     end
 
+    -- 하트 아이콘 (HP 바 왼쪽)
+    local heartSize = 45
+    local heartX = barX - heartSize - 15
+    local heartY = barY - 5
+    HUD:DrawImage(
+        HEART_ICON_PATH,
+        heartX, heartY,
+        heartSize, heartSize
+    )
+
+    -- HP 텍스트 (바 오른쪽에 표시, Bullet 스타일과 동일)
+    local hpText = currentHP .. " | " .. maxHP  -- "10 | 10" 형식
+    local hpTextX = barX + barMaxWidth + 15  -- 바 오른쪽
+    local hpTextY = barY - 12  -- 세로 중앙 정렬
     HUD:DrawText(
-        "HP: " .. currentHP .. "/" .. maxHP,
-        leftMargin, TOP_MARGIN + 105,
-        28,
-        hpColor
+        hpText,
+        hpTextX, hpTextY,
+        36,  -- Bullet과 동일한 폰트 크기
+        Color(1, 1, 1, 1)
     )
 
     -- 탄약 수 표시 (화면 중앙 상단) - 탄창/예비탄약 형식 (30|120)
