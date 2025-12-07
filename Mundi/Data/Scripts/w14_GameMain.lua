@@ -68,6 +68,9 @@ function GameStart()
     -- 기존 게임 정리 (재시작 시)
     CleanupGame()
 
+    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
+    UI.ResetHUD()
+
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
     Player.Location = Vector(0, 0, 1.3)
@@ -125,6 +128,9 @@ function GameEnd()
 end
 
 function Tick(dt)
+    -- HUD 프레임 시작 (D2D 렌더링 준비)
+    UI.BeginHUDFrame()
+
     -- UI 위치 업데이트 (카메라 앞에 유지)
     UI.Update()
 
@@ -132,6 +138,11 @@ function Tick(dt)
     HandleInput()
 
     if GameState.IsPlaying() then
+        -- 게임 HUD 표시 (거리, 킬수, 탄약)
+        local distance = Player and Player.Location.X or 0
+        local kills = 0  -- TODO: 킬 카운터 구현 필요
+        local ammo = 999 -- TODO: 탄약 시스템 구현 필요
+        UI.UpdateGameHUD(distance, kills, ammo, dt)
         -- 맵 업데이트
         if MapManager then
             MapManager:Tick()

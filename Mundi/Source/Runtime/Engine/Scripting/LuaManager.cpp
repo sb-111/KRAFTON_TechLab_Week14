@@ -12,6 +12,7 @@
 #include <tuple>
 #include "PhysicsScene.h"
 #include "PrimitiveComponent.h"
+#include "GameHUD.h"
 
 sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* Class) {
     LuaComponentProxy Proxy;
@@ -392,6 +393,36 @@ FLuaManager::FLuaManager()
         "B", &FLinearColor::B,
         "A", &FLinearColor::A
     );
+
+    // GameHUD usertype - D2D 기반 게임 HUD 렌더링 시스템
+    Lua->new_usertype<UGameHUD>("GameHUD",
+        sol::no_constructor,
+        // 프레임 시작/종료 (Lua에서 직접 호출 가능)
+        "BeginFrame", &UGameHUD::BeginFrame,
+        "EndFrame", &UGameHUD::EndFrame,
+        // 텍스트 렌더링 (절대 좌표)
+        "DrawText", &UGameHUD::DrawText,
+        // 텍스트 렌더링 (상대 좌표 0~1)
+        "DrawTextRel", &UGameHUD::DrawTextRel,
+        // 배경 있는 텍스트 (절대 좌표)
+        "DrawTextWithBg", &UGameHUD::DrawTextWithBg,
+        // 배경 있는 텍스트 (상대 좌표)
+        "DrawTextWithBgRel", &UGameHUD::DrawTextWithBgRel,
+        // 이미지 렌더링 (절대 좌표)
+        "DrawImage", &UGameHUD::DrawImage,
+        // 이미지 렌더링 (상대 좌표)
+        "DrawImageRel", &UGameHUD::DrawImageRel,
+        // 이미지 프리로드
+        "LoadImage", &UGameHUD::LoadImage,
+        // 표시 여부 설정/조회
+        "SetVisible", &UGameHUD::SetVisible,
+        "IsVisible", &UGameHUD::IsVisible,
+        // 화면 크기 설정
+        "SetScreenSize", &UGameHUD::SetScreenSize
+    );
+
+    // HUD 전역 인스턴스 노출 (Lua에서 HUD:DrawText(...) 형태로 사용)
+    (*Lua)["HUD"] = &UGameHUD::Get();
 
     // FName constructor and usertype
     Lua->set_function("Name", sol::overload(

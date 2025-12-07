@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_StandAlone|x64">
@@ -524,6 +524,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\VignettePass.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\SceneView.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\TileLightCuller.cpp" />
+    <ClCompile Include="Source\Slate\GameHUD.cpp" />
     <ClCompile Include="Source\Slate\Widgets\PropertyRenderer.cpp" />
     <ClCompile Include="Source\Slate\Widgets\CurveEditorWidget.cpp" />
     <ClCompile Include="Source\Slate\Windows\ContentBrowserWindow.cpp" />
@@ -1077,6 +1078,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClInclude Include="Source\Runtime\Renderer\TileLightCuller.h" />
     <ClInclude Include="Source\Runtime\RHI\SwapGuard.h" />
     <ClInclude Include="Source\Runtime\RHI\ConstantBufferType.h" />
+    <ClInclude Include="Source\Slate\GameHUD.h" />
     <ClInclude Include="Source\Slate\Widgets\PropertyRenderer.h" />
     <ClInclude Include="Source\Slate\Widgets\CurveEditorWidget.h" />
     <ClInclude Include="Source\Slate\Windows\ContentBrowserWindow.h" />
