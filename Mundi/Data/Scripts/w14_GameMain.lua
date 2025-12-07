@@ -138,6 +138,24 @@ function GameStart()
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
+
+    ItemManager:add_object(
+            "Data/Prefabs/w14_AidKit.prefab",
+            10,                    -- pool_size
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            1,                      -- spawn_num (적게)
+            3,                      -- radius
+            0.8                     -- 물체 스폰 z 위치
+    )
+
+    ItemManager:add_object(
+            "Data/Prefabs/w14_Adrenalin.prefab",
+            10,                    -- pool_size
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            1,                      -- spawn_num (적게)
+            3,                      -- radius
+            0.8                     -- 물체 스폰 z 위치
+    )
     
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     MonsterManager:add_object(
