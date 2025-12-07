@@ -2,7 +2,7 @@
   "ObjectName" : "데칼_0",
   "OwnedComponents" : [{
       "CollisionType" : 0,
-      "DecalTexture" : "Data/UI/Icons/S_LightDirectional.DDS",
+      "DecalTexture" : "Data/Textures/BulletHole.png",
       "Density" : 10.000000,
       "FadeProperty" : {
         "ElapsedFadeTime" : 0.000000,
@@ -17,14 +17,14 @@
         "bIsFadingIn" : false,
         "bIsFadingOut" : false
       },
-      "Id" : 5298,
+      "Id" : 1234,
       "Mass" : 10.000000,
       "MobilityType" : 0,
       "ObjectName" : "UDecalComponent_1",
       "ParentId" : 0,
-      "RelativeLocation" : [15.835241, 2.264402, 2.289039],
+      "RelativeLocation" : [9.624184, 0.040526, 2.812012],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [0.300000, 0.300000, 0.300000],
+      "RelativeScale" : [0.700000, 0.700000, 0.700000],
       "Type" : "UDecalComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
@@ -37,7 +37,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 5298,
+  "RootComponentId" : 1234,
   "Tag" : "",
   "Type" : "ADecalActor",
   "bActorHiddenInGame" : false,
