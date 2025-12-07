@@ -29,7 +29,6 @@ void UGameHUD::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InContext
 
 void UGameHUD::Shutdown()
 {
-    // D2D가 초기화되지 않았으면 바로 종료
     if (!bD2DInitialized)
     {
         D3DDevice = nullptr;
@@ -39,7 +38,6 @@ void UGameHUD::Shutdown()
         return;
     }
 
-    // BeginDraw 상태에서 종료 시 EndDraw 호출
     if (bFrameActive && D2dCtx)
     {
         D2dCtx->EndDraw();
@@ -51,29 +49,31 @@ void UGameHUD::Shutdown()
         bFrameActive = false;
     }
 
-    // BitmapCache 해제 - D2D 컨텍스트 해제 시 자동 정리됨
-    // 개별 Release 호출 시 D3D 디바이스 상태에 따라 크래시 발생 가능
+    for (auto& pair : BitmapCache)
+    {
+        SafeRelease(BitmapCache[pair.first]);
+    }
     BitmapCache.clear();
 
-    // TextFormat 캐시 해제 (DWrite 리소스)
     for (auto& [size, format] : TextFormatCache)
     {
         SafeRelease(format);
     }
     TextFormatCache.clear();
 
-    // D2D 리소스 해제 (StatsOverlayD2D 방식)
     SafeRelease(CachedBrush);
     SafeRelease(Dwrite);
+    
+    // 순서 중요: Context -> Device -> Factory 순서가 안전합니다.
     SafeRelease(D2dCtx);
     SafeRelease(D2dDevice);
     SafeRelease(D2dFactory);
-
-    // WICFactory는 CoCreateInstance로 생성됨 - 해제 시 크래시 발생 가능
-    // 프로세스 종료 시 OS가 정리
-    WICFactory = nullptr;
+    SafeRelease(WICFactory);
 
     bD2DInitialized = false;
+
+    // COM 정리
+    CoUninitialize();
 
     D3DDevice = nullptr;
     D3DContext = nullptr;
@@ -85,6 +85,16 @@ void UGameHUD::EnsureD2DInitialized()
 {
     if (bD2DInitialized || !bInitialized || !D3DDevice)
         return;
+
+    static bool bCOMInitialized = false;
+    if (!bCOMInitialized)
+    {
+        if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)))
+        {
+            return;
+        }
+        bCOMInitialized = true;
+    }
 
     // D2D Factory 생성
     D2D1_FACTORY_OPTIONS Opts{};
@@ -184,18 +194,37 @@ ID2D1Bitmap* UGameHUD::LoadBitmapFromFile(const FString& path)
     if (!WICFactory || !D2dCtx)
         return nullptr;
 
-    std::string pathKey = path.c_str();
+    // FString을 제대로 std::string으로 변환
+    std::string pathKey;
+    if constexpr (std::is_same_v<FString, std::string>)
+    {
+        pathKey = path;
+    }
+    else
+    {
+        // 일반적인 FString은 이렇게
+        pathKey = std::string(path.begin(), path.end());
+    }
+
+    // 경로를 정규화 (대소문자, 슬래시 통일)
+    std::ranges::transform(pathKey, pathKey.begin(), ::tolower);
+    std::ranges::replace(pathKey, '\\', '/');
+
+    // 캐시 확인
     auto it = BitmapCache.find(pathKey);
     if (it != BitmapCache.end())
-        return it->second;
+    {
+        if (it->second)  // nullptr 체크도 추가
+            return it->second;
+    }
 
     // UTF-8 -> Wide string 변환
-    std::wstring widePath(path.begin(), path.end());
+    std::wstring WidePath = UTF8ToWide(path);
 
     // WIC Decoder 생성
     IWICBitmapDecoder* decoder = nullptr;
     if (FAILED(WICFactory->CreateDecoderFromFilename(
-        widePath.c_str(),
+        WidePath.c_str(),
         nullptr,
         GENERIC_READ,
         WICDecodeMetadataCacheOnLoad,
@@ -385,7 +414,7 @@ void UGameHUD::DrawTextInternal(const FString& text, float x, float y, float fon
     SafeRelease(layout);
 }
 
-void UGameHUD::DrawText(const FString& text, float x, float y, float fontSize, const FLinearColor& color)
+void UGameHUD::DrawGameText(const FString& text, float x, float y, float fontSize, const FLinearColor& color)
 {
     DrawTextInternal(text, x, y, fontSize, color, false, FLinearColor());
 }
@@ -437,7 +466,7 @@ void UGameHUD::DrawImageRel(const FString& imagePath, float rx, float ry, float 
     DrawImage(imagePath, x, y, w, h);
 }
 
-void UGameHUD::LoadImage(const FString& imagePath)
+void UGameHUD::LoadGameImage(const FString& imagePath)
 {
     // 이미지 프리로드 (캐시에 저장)
     LoadBitmapFromFile(imagePath);

@@ -69,7 +69,7 @@ public:
      * @param fontSize 폰트 크기
      * @param color 텍스트 색상
      */
-    void DrawText(const FString& text, float x, float y, float fontSize, const FLinearColor& color);
+    void DrawGameText(const FString& text, float x, float y, float fontSize, const FLinearColor& color);
 
     /**
      * @brief 텍스트 렌더링 (상대 좌표)
@@ -123,7 +123,7 @@ public:
      * @brief 이미지 프리로드 (게임 시작 시 호출 권장)
      * @param imagePath 이미지 경로
      */
-    void LoadImage(const FString& imagePath);
+    void LoadGameImage(const FString& imagePath);
 
     /** @brief HUD 표시/숨김 설정 */
     void SetVisible(bool visible);
