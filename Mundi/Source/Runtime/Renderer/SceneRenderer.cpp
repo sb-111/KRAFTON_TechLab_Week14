@@ -101,7 +101,18 @@ uint32 FSceneRenderer::BatchingInstanceBufferCapacity = 0;
 FSceneRenderer::~FSceneRenderer()
 {
 	// BatchingInstanceBuffer는 static이므로 여기서 해제하지 않음
-	// 엔진 종료 시 해제됨
+	// Shutdown()에서 해제됨
+}
+
+void FSceneRenderer::Shutdown()
+{
+	// static 인스턴스 버퍼 해제
+	if (BatchingInstanceBuffer)
+	{
+		BatchingInstanceBuffer->Release();
+		BatchingInstanceBuffer = nullptr;
+		BatchingInstanceBufferCapacity = 0;
+	}
 }
 
 //====================================================================================

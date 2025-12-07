@@ -79,6 +79,9 @@ public:
 	/** @brief 이 씬 렌더러의 모든 렌더링 파이프라인을 실행합니다. */
 	void Render();
 
+	/** @brief 엔진 종료 시 static 리소스 해제 */
+	static void Shutdown();
+
 private:
 	// Render Path
 	void RenderLitPath();

@@ -9,6 +9,7 @@
 #include "PhysicsScene.h"
 #include "SkeletalMeshComponent.h"
 #include "ClothSystem.h"
+#include "SceneRenderer.h"
 #include <ObjManager.h>
 
 float UEditorEngine::ClientWidth = 1024.0f;
@@ -389,6 +390,9 @@ void UEditorEngine::Shutdown()
 
     FPhysicsSystem::Destroy();
     FClothSystem::Destroy();
+
+    // Release static batching instance buffer
+    FSceneRenderer::Shutdown();
 
     Renderer.reset();
 
