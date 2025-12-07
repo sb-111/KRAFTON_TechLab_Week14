@@ -5,6 +5,7 @@ local GameState = require("Game/w14_GameStateManager")
 local ScoreManager = require("Game/w14_ScoreManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local HPManager = require("Game/w14_HPManager")
+local Audio = require("Game/w14_AudioManager")
 
 local M = {}
 
@@ -47,6 +48,12 @@ function M.Init()
             HUD:LoadImage(path)
         end
     end
+    
+
+    Audio.Init()
+    local result = Audio.RegisterSFX("buttonClicked", "ButtonClickedActor")
+    local result = Audio.RegisterSFX("buttonHovered", "ButtonHoveredActor")
+
     print("[UIManager] Initialized (D2D mode)")
     return true
 end
@@ -141,54 +148,75 @@ function M.UpdateStartScreen()
     local screenH = HUD:GetScreenHeight()
     local mouseX, mouseY = getMouseInHUDSpace()
 
-    -- 로고 (화면 상단 중앙)
-    local logoW = 600
-    local logoH = 225
+    -- 로고 (화면 상단 중앙) - 더 크게
+    local logoW = 1000
+    local logoH = 600
     local logoX = (screenW - logoW) / 2
-    local logoY = screenH * 0.10
+    local logoY = 0
     HUD:DrawImage(UI_TEXTURES.LOGO, logoX, logoY, logoW, logoH)
 
-    -- 버튼 크기
-    local btnW = 200
-    local btnH = 60
-    local btnY = screenH * 0.55  -- 화면 중앙 아래
-    local btnSpacing = 40  -- 버튼 간격
+    -- 버튼 크기 - 더 크게
+    local btnW = 500
+    local btnH = 150
+    local btnSpacing = -10  -- 버튼 간격
+    local startY = screenH * 0.50  -- 시작 Y 위치
+    local btnX = (screenW - btnW) / 2  -- 중앙 정렬
 
-    -- 버튼 X 위치 계산 (가운데 정렬)
-    local totalWidth = btnW * 3 + btnSpacing * 2
-    local startX = (screenW - totalWidth) / 2
-
-    -- How To Play 버튼 (왼쪽)
-    local howToPlayX = startX
-    buttonStates.howToPlay.rect = { x = howToPlayX, y = btnY, w = btnW, h = btnH }
-    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
-    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
-    HUD:DrawImage(howToPlayTex, howToPlayX, btnY, btnW, btnH)
-
-    -- START 버튼 (가운데)
-    local startBtnX = startX + btnW + btnSpacing
-    buttonStates.start.rect = { x = startBtnX, y = btnY, w = btnW, h = btnH }
+    -- START 버튼 (위)
+    local startBtnY = startY
+    buttonStates.start.rect = { x = btnX, y = startBtnY, w = btnW, h = btnH }
+    local wasStartHovered = buttonStates.start.hovered
     buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
+    
+    -- START 버튼 호버 사운드
+    if buttonStates.start.hovered and not wasStartHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+    
     local startTex = buttonStates.start.hovered and UI_TEXTURES.START_BUTTON_HOVER or UI_TEXTURES.START_BUTTON
-    HUD:DrawImage(startTex, startBtnX, btnY, btnW, btnH)
+    HUD:DrawImage(startTex, btnX, startBtnY, btnW, btnH)
 
-    -- EXIT 버튼 (오른쪽)
-    local exitX = startX + (btnW + btnSpacing) * 2
-    buttonStates.exit.rect = { x = exitX, y = btnY, w = btnW, h = btnH }
+    -- How To Play 버튼 (가운데)
+    local howToPlayY = startBtnY + btnH + btnSpacing
+    buttonStates.howToPlay.rect = { x = btnX, y = howToPlayY, w = btnW, h = btnH }
+    local wasHowToPlayHovered = buttonStates.howToPlay.hovered
+    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
+    
+    -- How To Play 버튼 호버 사운드
+    if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+    
+    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
+    HUD:DrawImage(howToPlayTex, btnX, howToPlayY, btnW, btnH)
+
+    -- EXIT 버튼 (아래)
+    local exitY = howToPlayY + btnH + btnSpacing
+    buttonStates.exit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
+    local wasExitHovered = buttonStates.exit.hovered
     buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
+    
+    -- EXIT 버튼 호버 사운드
+    if buttonStates.exit.hovered and not wasExitHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+    
     local exitTex = buttonStates.exit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
-    HUD:DrawImage(exitTex, exitX, btnY, btnW, btnH)
+    HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
     -- 클릭 처리
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.start.hovered then
+            Audio.PlaySFX("buttonClicked")
             print("[UIManager] START clicked")
             GameState.StartGame()
             InputManager:SetCursorVisible(false)  -- 게임 시작 시 커서 숨김
         elseif buttonStates.howToPlay.hovered then
+            Audio.PlaySFX("buttonClicked")
             print("[UIManager] HOW TO PLAY clicked")
             -- TODO: How To Play 화면 구현
         elseif buttonStates.exit.hovered then
+            Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
             QuitGame()
         end
