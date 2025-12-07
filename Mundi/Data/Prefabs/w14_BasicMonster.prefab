@@ -98,7 +98,7 @@
       "bTickInEditor" : false
     }],
   "RootComponentId" : 25270,
-  "Tag" : "monster",
+  "Tag" : "BasicMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

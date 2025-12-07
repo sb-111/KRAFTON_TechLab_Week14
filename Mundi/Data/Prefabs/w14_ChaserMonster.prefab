@@ -76,7 +76,7 @@
       "bTickInEditor" : false
     }],
   "RootComponentId" : 3026,
-  "Tag" : "monster",
+  "Tag" : "ChaserMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

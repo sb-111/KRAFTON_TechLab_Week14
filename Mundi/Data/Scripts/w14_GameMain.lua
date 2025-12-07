@@ -126,7 +126,7 @@ function GameStart()
     -- ItemManager 생성 (GeneralObjectManager 사용, 바이옴과 무관)
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
-            "Data/Prefabs/test_item.prefab",
+            "Data/Prefabs/w14_AmmoItem.prefab",
             300,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
             5,                      -- spawn_num (적게)

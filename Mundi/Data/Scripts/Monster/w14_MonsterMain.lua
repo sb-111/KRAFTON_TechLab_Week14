@@ -12,7 +12,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    Monster:Initialize(Obj, 3.0, 50, 10, 4.0)
+    Monster:Initialize(Obj, 3.0, 50, 1, 4.0)
 
     PrevActive = Obj.bIsActive
 end
@@ -37,41 +37,7 @@ function Tick(Delta)
 
     -- 플레이어 위치 기반 공격 체크
     Monster:CheckPlayerPositionAndAttack()
-
-    -- 데미지/죽음 상태가 아닐 때만 이동 (현재 주석 처리)
-    -- if not Monster:IsDamagedState() then
-    --     MoveToPlayer(Delta)
-    -- end
 end
-
------ 플레이어를 향해 이동합니다.
------ @param Delta number 델타 타임
------ @return void
---function MoveToPlayer(Delta)
---    local player_pos = Monster:FindPlayerPosition()
---
---    -- 플레이어를 찾지 못했으면 이동 안함
---    if player_pos.X == 0 and player_pos.Y == 0 and player_pos.Z == 0 then
---        return
---    end
---
---    local offset = player_pos - Obj.Location
---    local distance_squared = offset.X * offset.X + offset.Y * offset.Y
---    local attack_range_squared = Monster.stat.attack_range * Monster.stat.attack_range
---
---    -- 공격 범위 밖이면 플레이어를 향해 이동
---    if distance_squared > attack_range_squared then
---        local direction = Vector(offset.X, offset.Y, 0)
---        direction:Normalize()
---
---        -- 이동
---        Obj.Location = Obj.Location + direction * Monster.stat.move_speed * Delta
---
---        -- 몬스터가 플레이어를 바라보도록 회전
---        local yaw = math.deg(math.atan(direction.Y, direction.X))
---        Obj.Rotation = Vector(0, 0, yaw)
---    end
---end
 
 --- 다른 액터와 충돌 시작 시 호출됩니다.
 --- @param OtherActor userdata 충돌한 액터
