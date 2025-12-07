@@ -73,7 +73,6 @@ void AActor::BeginPlay()
 
 
 		Comp->CreatePhysicsState();
-		
 	}
 }
 

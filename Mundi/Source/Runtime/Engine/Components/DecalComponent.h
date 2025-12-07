@@ -70,6 +70,8 @@ public:
 	// Serialization API
 	void Serialize(const bool bInIsLoading, JSON& InOutHandle) override;
 
+	void CreatePhysicsState() override {}
+
 	// ───── 복사 관련 ────────────────────────────
 	void DuplicateSubObjects() override;
 

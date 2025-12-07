@@ -43,6 +43,8 @@ public:
 
     // Duplication
     void DuplicateSubObjects() override;
+    
+    void CreatePhysicsState() override {}
 
 private:
     FString TexturePath;

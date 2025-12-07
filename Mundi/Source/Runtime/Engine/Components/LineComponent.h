@@ -35,6 +35,8 @@ public:
     // Overlay behavior
     void SetAlwaysOnTop(bool bInAlwaysOnTop) { bAlwaysOnTop = bInAlwaysOnTop; }
     bool IsAlwaysOnTop() const { return bAlwaysOnTop; }
+    
+    void CreatePhysicsState() override {}
 
     // ───── 복사 관련 ────────────────────────────
     void DuplicateSubObjects() override;

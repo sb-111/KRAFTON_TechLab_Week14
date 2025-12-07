@@ -26,6 +26,7 @@ public:
 	UMaterialInterface* GetMaterial(uint32 InSectionIndex) const override;
 	void SetMaterial(uint32 InElementIndex, UMaterialInterface* InNewMaterial) override;
 
+	void CreatePhysicsState() override {}
 	// ───── 복사 관련 ────────────────────────────
 	void DuplicateSubObjects() override;
 
