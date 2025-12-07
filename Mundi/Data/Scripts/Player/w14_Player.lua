@@ -46,7 +46,10 @@ function Tick(Delta)
         PlayerInput:Update(Delta)
         Rotate(Delta)
 
-        local Forward = 0.1 * PlayerSlow:GetSpeedMultiplier()
+        -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
+        -- local Forward = 0.01 * PlayerInput.VerticalInput
+        
+        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
@@ -103,7 +106,7 @@ function Shoot()
 
     MuzzleParticle:Activate()
     Audio.PlaySFX("gunshot")
-  
+
     local CamPos = PlayerCamera:GetWorldLocation()
     local CamDir = PlayerCamera:GetForward()
     local MaxDist = 10000.0
@@ -112,23 +115,23 @@ function Shoot()
 
     local TargetPoint = nil
     if bHit then
-        if HitResult.BoneName then
-            local BoneStr = HitResult.BoneName:ToString()
-            
-            print(BoneStr)
-            -- 본 이름에 "Head"가 포함되어 있으면 (예: mixamorig6:Head)
-            if string.find(BoneStr, "Head") then
-                print("HEADSHOT! [Vibration Triggered]")
-                
-                if InputManager:IsGamepadConnected(0) then
-                    -- (LeftMotor, RightMotor, Index)
-                    InputManager:SetGamepadVibration(0.3, 0.5, 0)
-                    
-                    -- 진동 끄기 예약
-                    StartCoroutine(VibrateFeedback)
-                end
-            end
-        end
+        --if HitResult.BoneName then
+        --    local BoneStr = HitResult.BoneName:ToString()
+        --    
+        --    print(BoneStr)
+        --    -- 본 이름에 "Head"가 포함되어 있으면 (예: mixamorig6:Head)
+        --    if string.find(BoneStr, "Head") then
+        --        print("HEADSHOT! [Vibration Triggered]")
+        --        
+        --        if InputManager:IsGamepadConnected(0) then
+        --            -- (LeftMotor, RightMotor, Index)
+        --            InputManager:SetGamepadVibration(0.3, 0.5, 0)
+        --            
+        --            -- 진동 끄기 예약
+        --            StartCoroutine(VibrateFeedback)
+        --        end
+        --    end
+        --end
 
         -- 벽이나 적에 맞았으면 그곳이 목표점
         TargetPoint = HitResult.Point
@@ -144,6 +147,13 @@ function Shoot()
         local Roll = math.random(0, 360)
         
         BulletDecal.Rotation = Vector(Roll, Pitch, Yaw)
+
+        if HitResult.Actor and HitResult.Actor.Tag == "monster" then
+            Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
+            Bullet.Location = Vector(TargetPoint.X, TargetPoint.Y - 1, TargetPoint.Z)
+        end
+
+        print("You shoot" .. HitResult.Actor.Name .. HitResult.Actor.Tag)
     else
         -- 허공을 쐈으면 사거리 끝 지점을 목표점으로 설정
         TargetPoint = CamPos + (CamDir * MaxDist)

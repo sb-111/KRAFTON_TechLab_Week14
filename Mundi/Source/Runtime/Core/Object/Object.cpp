@@ -558,19 +558,54 @@ void UObject::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 		}
 		case EPropertyType::Enum:
 		{
-			// Enum은 int32로 직렬화
-			int32* Value = Prop.GetValuePtr<int32>(this);
-			if (bInIsLoading)
+			// Enum은 실제 underlying type 크기에 맞춰 직렬화
+			if (Prop.Size == 1) // uint8
 			{
-				int32 ReadValue;
-				if (FJsonSerializer::ReadInt32(InOutHandle, Prop.Name, ReadValue))
+				uint8* Value = Prop.GetValuePtr<uint8>(this);
+				if (bInIsLoading)
 				{
-					*Value = ReadValue;
+					int32 ReadValue;
+					if (FJsonSerializer::ReadInt32(InOutHandle, Prop.Name, ReadValue))
+					{
+						*Value = static_cast<uint8>(ReadValue);
+					}
+				}
+				else
+				{
+					InOutHandle[Prop.Name] = static_cast<int32>(*Value);
 				}
 			}
-			else
+			else if (Prop.Size == 2) // uint16
 			{
-				InOutHandle[Prop.Name] = *Value;
+				uint16* Value = Prop.GetValuePtr<uint16>(this);
+				if (bInIsLoading)
+				{
+					int32 ReadValue;
+					if (FJsonSerializer::ReadInt32(InOutHandle, Prop.Name, ReadValue))
+					{
+						*Value = static_cast<uint16>(ReadValue);
+					}
+				}
+				else
+				{
+					InOutHandle[Prop.Name] = static_cast<int32>(*Value);
+				}
+			}
+			else // int32 or fallback
+			{
+				int32* Value = Prop.GetValuePtr<int32>(this);
+				if (bInIsLoading)
+				{
+					int32 ReadValue;
+					if (FJsonSerializer::ReadInt32(InOutHandle, Prop.Name, ReadValue))
+					{
+						*Value = ReadValue;
+					}
+				}
+				else
+				{
+					InOutHandle[Prop.Name] = *Value;
+				}
 			}
 			break;
 		}
