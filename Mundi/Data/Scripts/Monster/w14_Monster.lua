@@ -52,7 +52,6 @@ end
 --- @return void
 function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_range)
     if not obj then
-        print("[Monster:Initialize][error] The Parameter is invalid.")
         return
     end
 
@@ -63,41 +62,27 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
     self.attack_range = attack_range or 0
 
     self.obj = obj
-    print("[Monster:Initialize] Getting SkeletalMeshComponent...")
     local mesh = GetComponent(self.obj, "USkeletalMeshComponent")
 
     if not mesh then
-        print("[Monster:Initialize][error] The mesh is invalid.")
         return
     end
-    print("[Monster:Initialize] SkeletalMeshComponent found!")
 
     -- 애니메이션 상태 머신 활성화 및 생성
-    print("[Monster:Initialize] Activating StateMachine...")
     mesh:UseStateMachine()
-    print("[Monster:Initialize] Creating StateMachine...")
     self.anim_instance = mesh:GetOrCreateStateMachine()
     if not self.anim_instance then
-        print("[Monster:Initialize][error] The anim_instance is invalid.")
         return
     end
-    print("[Monster:Initialize] StateMachine created!")
 
     -- 애니메이션 상태 추가
-    print("[Monster:Initialize] Adding animation states...")
     self.anim_instance:AddState("Idle", "Data/GameJamAnim/Monster/BasicZombieIdle_mixamo.com", 1.0, true)
     self.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/BasicZombieAttack_mixamo.com", 1.0, true)
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/BasicZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/BasicZombieDying_mixamo.com", 1.0, false)
 
     -- 초기 상태 설정
-    print("[Monster:Initialize] Setting initial state to Idle...")
     self.anim_instance:SetState("Idle", 0)
-
-    -- 설정된 상태 확인
-    local checkState = self.anim_instance:GetCurrentStateName()
-    print("[Monster:Initialize] After SetState, current state: '" .. tostring(checkState) .. "'")
-    print("[Monster:Initialize] Monster initialized successfully! HP: " .. self.health_point)
 end
 
 --- 데미지를 받습니다.
@@ -105,13 +90,10 @@ end
 --- @return void
 function Monster:GetDamage(damage_amount)
     self.health_point = self.health_point - damage_amount
-    print("[Monster:GetDamage] Received " .. damage_amount .. " damage. HP: " .. self.health_point)
     if (self.health_point <= 0) then
-        print("[Monster:GetDamage] Monster died!")
         self.anim_instance:SetState("Die", 0)
         self.is_dead = true
     else
-        print("[Monster:GetDamage] Playing damaged animation")
         self.anim_instance:SetState("Damaged", 0)
     end
 end
@@ -135,7 +117,6 @@ function Monster:CheckPlayerPositionAndAttack()
 
     -- 공격 범위 내에 있고, 피격 상태가 아니면 공격
     if (distance_squared < attack_range_squared and not is_damaging) then
-        print("[Monster:CheckPlayerPositionAndAttack] Player in range! Attacking...")
         self.anim_instance:SetState("Attack", 0)
     end
 end

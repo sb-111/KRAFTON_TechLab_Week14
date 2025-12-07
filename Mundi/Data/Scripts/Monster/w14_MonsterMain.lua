@@ -7,16 +7,12 @@ local Monster = nil
 --- 게임 시작 시 호출됩니다.
 --- @return void
 function BeginPlay()
-    print("[MonsterMain] BeginPlay called")
     Monster = MonsterClass:new()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
     Monster:Initialize(Obj, 3.0, 100, 10, 2.5)
-    print("[MonsterMain] BeginPlay finished")
 end
-
-local TickCount = 0
 
 --- 매 프레임마다 호출됩니다.
 --- @param Delta number 델타 타임
@@ -25,13 +21,6 @@ function Tick(Delta)
     -- Monster가 없거나 이미 죽었으면 업데이트 중지
     if not Monster or Monster.is_dead then
         return
-    end
-
-    -- 1초마다 한 번씩 현재 상태 출력 (디버그용)
-    TickCount = TickCount + 1
-    if TickCount % 60 == 0 then
-        local currentState = Monster.anim_instance:GetCurrentStateName()
-        print("[MonsterMain] Tick running... Current state: '" .. tostring(currentState) .. "' (type: " .. type(currentState) .. ")")
     end
 
     -- 플레이어 위치 기반 공격 체크
@@ -80,19 +69,9 @@ function OnBeginOverlap(OtherActor)
         return
     end
 
-    print("[MonsterMain] OnBeginOverlap called! OtherActor.Tag: " .. tostring(OtherActor.Tag))
-
-    --- Test Code
-    if OtherActor.Tag == "player" then
-        print("[MonsterMain] Player collision detected!")
-        Monster:GetDamage(10)
-        print("[MonsterMain] After damage - HP: " .. Monster.health_point)
-    end
-
     ---- 플레이어의 총알과 충돌 처리
     --if OtherActor.Tag == "bullet" then
     --    Monster:GetDamage(10)
-    --    print("[MonsterMain] Hit! HP: " .. Monster.health_point)
     --end
 end
 
