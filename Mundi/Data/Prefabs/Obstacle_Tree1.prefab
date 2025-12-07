@@ -1,17 +1,9 @@
 {
   "ObjectName" : "Obstacle_Tree1",
   "OwnedComponents" : [{
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 7901,
+      "Id" : 13087,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "Default_OBJ",
@@ -20,7 +12,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_7",
       "ParentId" : 0,
-      "RelativeLocation" : [289.237549, -346.370972, -250.455124],
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/Trees/Tree1.obj",
@@ -37,14 +29,22 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "BoxExtent" : [1.000000, 0.700000, 20.000000],
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "BoxExtent" : [0.500000, 0.500000, 20.500000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 7902,
+      "Id" : 13088,
       "Mass" : 10.000000,
-      "MobilityType" : 769,
+      "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 7901,
+      "ParentId" : 13087,
       "RelativeLocation" : [0.000000, 0.000000, 20.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -62,7 +62,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 7901,
+  "RootComponentId" : 13087,
   "Tag" : "obstacle",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

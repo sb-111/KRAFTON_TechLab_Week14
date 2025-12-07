@@ -1,9 +1,17 @@
 {
   "ObjectName" : "Obstacle_Tree2",
   "OwnedComponents" : [{
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 84733,
+      "Id" : 13091,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "aspen_bark",
@@ -12,7 +20,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_7",
       "ParentId" : 0,
-      "RelativeLocation" : [264.997101, -313.060944, -255.280991],
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/Trees/Tree2.obj",
@@ -29,25 +37,17 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "BoxExtent" : [0.400000, 0.600000, 6.300000],
+      "BoxExtent" : [0.400000, 0.600000, 1.400000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 84735,
+      "Id" : 13093,
       "Mass" : 10.000000,
-      "MobilityType" : 769,
+      "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 84733,
-      "RelativeLocation" : [0.000000, 0.000000, 6.410000],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [2.000000, 1.000000, 1.000000],
+      "ParentId" : 13091,
+      "RelativeLocation" : [-0.311498, 0.000000, 5.287761],
+      "RelativeRotationEuler" : [0.000000, -6.706168, 0.000000],
+      "RelativeScale" : [0.579904, 1.000000, 3.588798],
       "Type" : "UBoxComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
@@ -62,7 +62,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 84733,
+  "RootComponentId" : 13091,
   "Tag" : "obstacle",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
