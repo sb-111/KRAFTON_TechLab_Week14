@@ -6,7 +6,7 @@
       "ParentId" : 0,
       "RelativeLocation" : [10.066133, 0.641412, 1.335294],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "RelativeScale" : [0.100000, 0.100000, 0.100000],
       "Type" : "USceneComponent",
       "bHiddenInGame" : false,
       "bIsActive" : true,
@@ -15,7 +15,7 @@
       "bTickInEditor" : false
     }, {
       "BoxExtent" : [1.000000, 1.000000, 1.000000],
-      "CollisionType" : 3,
+      "CollisionType" : 0,
       "Density" : 10.000000,
       "Id" : 72201,
       "Mass" : 10.000000,
