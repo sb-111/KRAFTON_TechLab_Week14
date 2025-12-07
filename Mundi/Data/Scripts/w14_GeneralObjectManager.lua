@@ -14,13 +14,14 @@ GeneralObjectManager.__index = GeneralObjectManager
 --- GeneralObjectManager 인스턴스 생성
 --- @param object_placer ObjectPlacer Main에서 생성된 object_placer를 받아온다(다른 배치 도구와 같은 Placer를 공유해야 하기 때문)
 --- @return GeneralObjectManager
-function GeneralObjectManager:new(object_placer, InPlayer)
+function GeneralObjectManager:new(object_placer, player)
     local instance = {
-        player = InPlayer,
+        player = player,
+        object_placer = object_placer,
+
         objects = {},
         objects_spawn_nums = {},
         object_radius = {},
-        object_placer = object_placer
     }
     setmetatable(instance, GeneralObjectManager)
     return instance
@@ -37,7 +38,8 @@ function GeneralObjectManager:add_object(
         pool_size,
         pool_standby_location,
         object_spawn_num,
-        radius
+        radius,
+        spawn_z_offset
 )
     pool_size = pool_size or 100
     pool_standby_location = pool_standby_location or Vector(-2000, 0, 0)
@@ -78,7 +80,8 @@ function GeneralObjectManager:add_object(
                 if not self.player then
                     return Vector(0, 0, 0)
                 end
-                return self.object_placer:place_object(self.object_radius[new_object.name])
+                local spawn_xy_location = self.object_placer:place_object(self.object_radius[new_object.name])
+                return Vector(spawn_xy_location.X, spawn_xy_location.Y, spawn_z_offset)
             end
     )
 

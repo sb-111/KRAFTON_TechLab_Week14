@@ -141,24 +141,6 @@ function Shoot()
 
     local TargetPoint = nil
     if bHit then
-        --if HitResult.BoneName then
-        --    local BoneStr = HitResult.BoneName:ToString()
-        --    
-        --    print(BoneStr)
-        --    -- 본 이름에 "Head"가 포함되어 있으면 (예: mixamorig6:Head)
-        --    if string.find(BoneStr, "Head") then
-        --        print("HEADSHOT! [Vibration Triggered]")
-        --        
-        --        if InputManager:IsGamepadConnected(0) then
-        --            -- (LeftMotor, RightMotor, Index)
-        --            InputManager:SetGamepadVibration(0.3, 0.5, 0)
-        --            
-        --            -- 진동 끄기 예약
-        --            StartCoroutine(VibrateFeedback)
-        --        end
-        --    end
-        --end
-
         -- 벽이나 적에 맞았으면 그곳이 목표점
         TargetPoint = HitResult.Point
         local BulletDecal = SpawnPrefab("Data/Prefabs/w14_BulletDecal.prefab")
