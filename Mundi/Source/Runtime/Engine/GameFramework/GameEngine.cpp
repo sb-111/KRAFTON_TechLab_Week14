@@ -224,11 +224,11 @@ bool UGameEngine::Startup(HINSTANCE hInstance)
     }
 
     // 로드된 월드의 모든 액터에 대해 BeginPlay() 호출
-    TArray<AActor*> LevelActors = GWorld->GetLevel()->GetActors();
-    for (AActor* Actor : LevelActors)
-    {
-        Actor->BeginPlay();
-    }
+    // TArray<AActor*> LevelActors = GWorld->GetLevel()->GetActors();
+    // for (AActor* Actor : LevelActors)
+    // {
+    //     Actor->BeginPlay();
+    // }
 
     bPlayActive = true;
     bRunning = true;
