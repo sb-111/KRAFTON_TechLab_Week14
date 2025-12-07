@@ -142,6 +142,8 @@ public:
     {
         return SceneIdMap;
     }
+    
+    TArray<USceneComponent*> AttachChildren;
 protected:
     /** @brief OnTransformUpdated() 내부에서 클래스 별 특수 로직을 처리하기 위한 가상함수 */
     //virtual void OnTransformUpdatedChildImpl();
@@ -172,7 +174,6 @@ protected:
     // Hierarchy
     USceneComponent* AttachParent = nullptr;
     FName AttachSocketName = FName();
-    TArray<USceneComponent*> AttachChildren;
 
     // 로컬(부모 기준) 트랜스폼
     FTransform RelativeTransform;

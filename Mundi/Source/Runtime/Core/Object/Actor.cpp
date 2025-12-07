@@ -294,6 +294,19 @@ void AActor::RegisterAllComponents(UWorld* InWorld)
 // 소유 중인 Component 전체 삭제
 void AActor::DestroyAllComponents()
 {
+	for (UActorComponent* C : OwnedComponents) 
+	{
+		if (USceneComponent* SC = Cast<USceneComponent>(C)) // Cast 함수가 있다고 가정
+		{
+			// 부모와의 연결 해제
+			SC->DetachFromParent(); 
+            
+			// ★핵심: 내 자식 목록을 비워버림 (내가 죽을 때 자식을 길동무로 데려가지 않게)
+			// 주의: 자식들의 메모리는 OwnedComponents에 남아있으므로 아래 루프에서 안전하게 삭제됨
+			SC->AttachChildren.Empty(); 
+		}
+	}
+	
 	TArray<UActorComponent*> Temp;
 	Temp.reserve(OwnedComponents.size());
 
