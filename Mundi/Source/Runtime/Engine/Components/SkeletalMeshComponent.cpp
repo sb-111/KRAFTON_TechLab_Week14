@@ -174,13 +174,13 @@ void USkeletalMeshComponent::SetSkeletalMesh(const FString& PathFileName)
 FTransform USkeletalMeshComponent::GetSocketTransform(FName InSocketName) const
 {
     // 1. 소켓 이름이 없으면 그냥 내 컴포넌트 위치 리턴
-    if (InSocketName.IsNone())
+    if (InSocketName.IsNone() || !GetSkeletalMesh() || !GetSkeletalMesh()->GetSkeletalMeshData())
     {
         return Super::GetSocketTransform(""); 
     }
 
     // 2. 본 인덱스 찾기 (엔진 구조에 따라 다름)
-    int32 BoneIndex = FindBodyIndex(InSocketName);
+    int32 BoneIndex = GetSkeletalMesh()->GetSkeletalMeshData()->Skeleton.BoneNameToIndex.FindRef(InSocketName.ToString());
     if (BoneIndex != -1)
     {
         FTransform BoneTransform = const_cast<USkeletalMeshComponent*>(this)->GetBoneWorldTransform(BoneIndex);
