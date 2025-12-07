@@ -20,6 +20,7 @@ local UI_TEXTURES = {
     EXIT_BUTTON_HOVER = "Data/Textures/UI/UI_ExitButton_Hover.png",
     CROSSHAIR = "Data/Textures/CrossHair.png",
     AMMO_ICON = "Data/Textures/Ammo.png",
+    HEADSHOT = "Data/Textures/HeadShot.png",
 }
 
 -- ===== 버튼 상태 =====
@@ -36,9 +37,14 @@ local hudState = {
     animationSpeed = 50,
 }
 
+-- 헤드샷 피드백 타이머
+local headshotTimer = 0
+local HEADSHOT_DURATION = 0.1 -- 0.5초 동안 표시
+
 -- ===== 설정 상수 =====
 local TOP_MARGIN = 10
 local CROSSHAIR_SIZE = 64
+local HEADSHOT_SIZE = 16
 
 -- ===== 초기화 =====
 function M.Init()
@@ -56,6 +62,10 @@ function M.Init()
 
     print("[UIManager] Initialized (D2D mode)")
     return true
+end
+
+function M.ShowHeadshotFeedback()
+    headshotTimer = HEADSHOT_DURATION
 end
 
 -- ===== 유틸리티 =====
@@ -364,6 +374,21 @@ function M.UpdateGameHUD(dt)
         CROSSHAIR_SIZE,
         CROSSHAIR_SIZE
     )
+
+    if headshotTimer > 0 then
+        -- 타이머 감소
+        headshotTimer = headshotTimer - dt
+
+        -- 붉은 X 표시 그리기
+        -- 수학 공식: (화면중앙) - (이미지크기의 절반) = 이미지가 정중앙에 위치함
+        HUD:DrawImage(
+            UI_TEXTURES.HEADSHOT,
+            centerX - HEADSHOT_SIZE / 2,                    -- X좌표: 내 크기 기준으로 중앙 정렬
+            (centerY - HEADSHOT_SIZE / 2) - centerOffsetY,  -- Y좌표: 내 크기 기준 중앙 + 오프셋 보정
+            HEADSHOT_SIZE,                                  -- 가로 크기
+            HEADSHOT_SIZE                                   -- 세로 크기
+        )
+    end
 end
 
 -- ===== HUD 상태 초기화 =====

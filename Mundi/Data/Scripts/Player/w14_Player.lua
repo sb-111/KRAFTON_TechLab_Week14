@@ -8,6 +8,7 @@ local AmmoManager = require("Game/w14_AmmoManager")
 local ScoreManager = require("Game/w14_ScoreManager")
 local HPManager = require("Game/w14_HPManager")
 local Particle = require("Game/w14_ParticleManager")
+local UI = require("Game/w14_UIManager")
 
 local PlayerAnim = nil
 local PlayerInput = nil
@@ -190,6 +191,7 @@ function Shoot()
                     finalDamage = finalDamage * 2   -- 데미지 2배
                     isHeadshot = true
                     print("!!! HEADSHOT !!!")
+                    UI.ShowHeadshotFeedback()
                 end
 
                 Particle.Spawn("blood", TargetPoint)
