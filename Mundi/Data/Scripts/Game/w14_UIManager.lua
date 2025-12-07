@@ -127,7 +127,7 @@ function M.UpdateStartScreen()
             -- TODO: How To Play 화면 구현
         elseif buttonStates.exit.hovered then
             print("[UIManager] EXIT clicked")
-            -- TODO: 게임 종료 요청 (C++ 바인딩 필요)
+            QuitGame()
         end
     end
 end

@@ -508,6 +508,11 @@ FLuaManager::FLuaManager()
     (*Lua)["TargetHitStop"] = SharedLib["TargetHitStop"];
     (*Lua)["StartCoroutine"] = SharedLib["StartCoroutine"];
 
+    // 게임 종료 함수
+    Lua->set_function("QuitGame", []() {
+        PostQuitMessage(0);
+    });
+
     // 위 등록 마친 뒤 fall back 설정 : Shared lib의 fall back은 G
     sol::table MetaTableShared = Lua->create_table();
     MetaTableShared[sol::meta_function::index] = Lua->globals();
