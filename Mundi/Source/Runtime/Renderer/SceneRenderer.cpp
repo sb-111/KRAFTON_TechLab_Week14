@@ -1020,6 +1020,8 @@ void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 	auto CollectStartTime = std::chrono::high_resolution_clock::now();
 
 	MeshBatchElements.Empty();
+	MeshBatchElements.reserve(Proxies.Meshes.Num() * 3 + Proxies.Billboards.Num());  // 메시당 3개 머티리얼 슬롯 가정
+
 	for (UMeshComponent* MeshComponent : Proxies.Meshes)
 	{
 		MeshComponent->CollectMeshBatches(MeshBatchElements, View);
