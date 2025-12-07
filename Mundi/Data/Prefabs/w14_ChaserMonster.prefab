@@ -1,30 +1,33 @@
 {
-  "ObjectName" : "monster",
+  "ObjectName" : "ChaserMonster",
   "OwnedComponents" : [{
-      "CollisionType" : 3,
+      "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 83852,
+      "Id" : 3026,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
         }, {
-          "AssetPath" : "ZombieGirl_body_Material",
+          "AssetPath" : "glass_hair_M",
           "Type" : "UMaterial"
         }, {
-          "AssetPath" : "ZombieGirl_Material",
+          "AssetPath" : "glass_hair_M",
           "Type" : "UMaterial"
         }, {
-          "AssetPath" : "ZombieGirl_Material",
+          "AssetPath" : "body_M",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "body_M1",
           "Type" : "UMaterial"
         }],
-      "MobilityType" : 1,
-      "ObjectName" : "USkeletalMeshComponent_1",
+      "MobilityType" : 0,
+      "ObjectName" : "USkeletalMeshComponent_2",
       "ParentId" : 0,
       "PhysicsAssetPathOverride" : "",
-      "RelativeLocation" : [8.000000, 0.000000, 0.033152],
-      "RelativeRotationEuler" : [0.000000, -0.000000, -179.999893],
+      "RelativeLocation" : [1.475850, -8.399864, 6.603066],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "SkeletalMesh" : "Data/GameJamMonster/Zombiegirl W Kurniawan.fbx",
+      "SkeletalMesh" : "Data/GameJamMonster/copzombie_l_actisdato.fbx",
       "Type" : "USkeletalMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
@@ -39,24 +42,16 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/Monster/w14_MonsterMain.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
-      "CollisionType" : 3,
+      "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 83854,
+      "Id" : 3058,
       "Mass" : 10.000000,
-      "MobilityType" : 1,
-      "ObjectName" : "Head",
-      "ParentId" : 83852,
+      "MobilityType" : 0,
+      "ObjectName" : "UBoxComponent_2",
+      "ParentId" : 3026,
       "RelativeLocation" : [0.000000, 0.000000, 1.000000],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
       "bBlockComponent" : false,
@@ -71,8 +66,16 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
+    }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }],
-  "RootComponentId" : 83852,
+  "RootComponentId" : 3026,
   "Tag" : "monster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,

@@ -40,7 +40,7 @@
       "bTickInEditor" : false
     }, {
       "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/Monster/w14_MonsterMain.lua",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
       "Type" : "ULuaScriptComponent",
       "bHiddenInGame" : false,
       "bIsActive" : true,

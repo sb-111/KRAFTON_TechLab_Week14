@@ -3,6 +3,7 @@
 
 local MonsterClass = require("Monster/w14_Monster")
 local Monster = nil
+local PrevActive = false
 
 --- 게임 시작 시 호출됩니다.
 --- @return void
@@ -12,14 +13,22 @@ function BeginPlay()
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
     Monster:Initialize(Obj, 3.0, 50, 10, 4.0)
+
+    PrevActive = Obj.bIsActive
 end
 
 --- 매 프레임마다 호출됩니다.
 --- @param Delta number 델타 타임
 --- @return void
 function Tick(Delta)
+    -- Respawn 감지: 비활성 -> 활성 전환 시 Monster 재초기화
+    if not PrevActive and Obj.bIsActive and Monster then
+        Monster:Reset()
+    end
+    PrevActive = Obj.bIsActive
+
     -- Monster가 없거나 이미 죽었으면 업데이트 중지
-    if not Monster or Monster.is_dead then
+    if not Monster or Monster.stat.is_dead then
         return
     end
 
@@ -48,7 +57,7 @@ end
 --
 --    local offset = player_pos - Obj.Location
 --    local distance_squared = offset.X * offset.X + offset.Y * offset.Y
---    local attack_range_squared = Monster.attack_range * Monster.attack_range
+--    local attack_range_squared = Monster.stat.attack_range * Monster.stat.attack_range
 --
 --    -- 공격 범위 밖이면 플레이어를 향해 이동
 --    if distance_squared > attack_range_squared then
@@ -56,7 +65,7 @@ end
 --        direction:Normalize()
 --
 --        -- 이동
---        Obj.Location = Obj.Location + direction * Monster.move_speed * Delta
+--        Obj.Location = Obj.Location + direction * Monster.stat.move_speed * Delta
 --
 --        -- 몬스터가 플레이어를 바라보도록 회전
 --        local yaw = math.deg(math.atan(direction.Y, direction.X))

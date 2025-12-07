@@ -36,6 +36,11 @@ local function CleanupGame()
         ItemManager = nil
     end
 
+    if MonsterManager and MonsterManager.destroy then
+        MonsterManager:destroy()
+        MonsterManager = nil
+    end
+
     -- 플레이어 삭제
     if Player and DeleteObject then
         DeleteObject(Player)
@@ -127,6 +132,14 @@ function GameStart()
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2,                      -- radius
+            0.5                     -- 물체 스폰 z 위치
+    )
+    MonsterManager:add_object(
+            "Data/Prefabs/w14_ChaserMonster.prefab",
+            200,
+            Vector(-2000, 150, 0),  -- pool_standby_location
+            5,                      -- spawn_num (기본보다 적게)
+            2.5,                    -- radius
             0.5                     -- 물체 스폰 z 위치
     )
 end
