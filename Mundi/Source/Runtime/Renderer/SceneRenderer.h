@@ -108,6 +108,9 @@ private:
 
 	void DrawMeshBatches(TArray<FMeshBatchElement>& InMeshBatches, bool bClearListAfterDraw);
 
+	/** @brief 같은 메시+머티리얼 조합을 가진 배치들을 인스턴싱으로 합칩니다. */
+	void BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatches);
+
 	/** @brief 데칼(Decal)을 렌더링하는 패스입니다. */
 	void RenderDecalPass();
 
@@ -168,6 +171,11 @@ private:
 
 	// 타일 기반 라이트 컬링 시스템 (매 프레임 생성되고 소멸되어서 스마트 포인터로 설정)
 	std::unique_ptr<FTileLightCuller> TileLightCuller;
+
+	// 자동 배칭용 단일 인스턴스 버퍼 (동적, 프레임간 재사용)
+	// static으로 선언하여 FSceneRenderer 인스턴스 간에 공유
+	static struct ID3D11Buffer* BatchingInstanceBuffer;
+	static uint32 BatchingInstanceBufferCapacity;
 
 	// TODO : 자동으로 등록되게 바꾸기!, bloom 빼고 다 stateless해서 걔네는 static(etc..) 등 하이브리도 구조로 바꾸기
 	// PostProcessing

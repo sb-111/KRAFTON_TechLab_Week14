@@ -354,6 +354,26 @@ void UShader::CreateInputLayout(ID3D11Device* Device, const FString& InShaderPat
 		descArray.Add({ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 });
 	}
 
+	// GPU 인스턴싱을 사용하는 경우 인스턴스별 트랜스폼 추가
+	bool bHasGPUInstancing = false;
+	for (const FShaderMacro& Macro : InMacros)
+	{
+		if (Macro.Name.ToString() == "GPU_INSTANCING")
+		{
+			bHasGPUInstancing = true;
+			break;
+		}
+	}
+
+	if (bHasGPUInstancing && InShaderPath.find("UberLit") != FString::npos)
+	{
+		// GPU 인스턴싱을 위한 추가 입력 요소 (슬롯 1, per-instance)
+		// FStaticMeshInstanceData: Transform0(16) + Transform1(16) + Transform2(16) = 48 bytes
+		descArray.Add({ "TEXCOORD", 4, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 });
+		descArray.Add({ "TEXCOORD", 5, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 });
+		descArray.Add({ "TEXCOORD", 6, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 });
+	}
+
 	const D3D11_INPUT_ELEMENT_DESC* layout = descArray.data();
 	uint32 layoutCount = static_cast<uint32>(descArray.size());
 

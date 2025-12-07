@@ -41,6 +41,7 @@
 #include "ResourceManager.h"
 #include "../RHI/ConstantBufferType.h"
 #include <chrono>
+#include <unordered_map>
 #include "TileLightCuller.h"
 #include "LineComponent.h"
 #include "LightStats.h"
@@ -93,8 +94,14 @@ FSceneRenderer::FSceneRenderer(UWorld* InWorld, FSceneView* InView, URenderer* I
 	OwnerRenderer->BeginLineBatch();
 }
 
+// static 멤버 변수 정의 (프레임간 재사용)
+ID3D11Buffer* FSceneRenderer::BatchingInstanceBuffer = nullptr;
+uint32 FSceneRenderer::BatchingInstanceBufferCapacity = 0;
+
 FSceneRenderer::~FSceneRenderer()
 {
+	// BatchingInstanceBuffer는 static이므로 여기서 해제하지 않음
+	// 엔진 종료 시 해제됨
 }
 
 //====================================================================================
@@ -1010,6 +1017,8 @@ void FSceneRenderer::PerformFrustumCulling()
 void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 {
 	// --- 1. 수집 (Collect) ---
+	auto CollectStartTime = std::chrono::high_resolution_clock::now();
+
 	MeshBatchElements.Empty();
 	for (UMeshComponent* MeshComponent : Proxies.Meshes)
 	{
@@ -1027,12 +1036,78 @@ void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 		//TextRenderComponent->CollectMeshBatches(MeshBatchElements, View);
 	}
 
-	// --- 2. 정렬 (Sort) ---
-	MeshBatchElements.Sort();
+	auto CollectEndTime = std::chrono::high_resolution_clock::now();
+	static float AccumulatedCollectTime = 0.0f;
+	static int32 CollectSampleCount = 0;
+	AccumulatedCollectTime += std::chrono::duration<float, std::milli>(CollectEndTime - CollectStartTime).count();
+	++CollectSampleCount;
 
-	// --- 3. 그리기 (Draw) ---
-	// GPU 타이머는 Renderer::BeginFrame/EndFrame에서 프레임 레벨로 측정됨
+	// --- 2. 자동 배칭 (같은 메시+머티리얼을 인스턴싱으로 합침) ---
+	int32 BeforeBatchCount = MeshBatchElements.Num();
+
+	auto BatchStartTime = std::chrono::high_resolution_clock::now();
+	BatchStaticMeshes(MeshBatchElements);
+	auto BatchEndTime = std::chrono::high_resolution_clock::now();
+
+	int32 AfterBatchCount = MeshBatchElements.Num();
+
+	// --- 3. 정렬 (Sort) ---
+	auto SortStartTime = std::chrono::high_resolution_clock::now();
+	MeshBatchElements.Sort();
+	auto SortEndTime = std::chrono::high_resolution_clock::now();
+
+	// 디버그: 배칭 결과 확인 (Draw 전에!)
+	static int32 LogCounter = 0;
+	bool bShouldLog = (++LogCounter % 60 == 0);
+
+	if (bShouldLog)
+	{
+		int32 InstancedBatches = 0;
+		int32 TotalInstances = 0;
+		for (const FMeshBatchElement& Batch : MeshBatchElements)
+		{
+			if (Batch.NumInstances > 1 && Batch.InstanceBuffer)
+			{
+				++InstancedBatches;
+				TotalInstances += Batch.NumInstances;
+			}
+		}
+
+		float BatchTimeMs = std::chrono::duration<float, std::milli>(BatchEndTime - BatchStartTime).count();
+		float SortTimeMs = std::chrono::duration<float, std::milli>(SortEndTime - SortStartTime).count();
+		float AvgCollectTime = AccumulatedCollectTime / CollectSampleCount;
+
+		UE_LOG("[Batching] Before: %d, After: %d, Instanced: %d batches (%d instances)\n",
+			BeforeBatchCount, AfterBatchCount, InstancedBatches, TotalInstances);
+
+		// 결과 배치 상태 확인
+		for (int32 i = 0; i < FMath::Min(5, MeshBatchElements.Num()); ++i)
+		{
+			const FMeshBatchElement& Batch = MeshBatchElements[i];
+			UE_LOG("[ResultBatch %d] NumInst=%d, InstBuf=%p, InstStride=%d, StartInstLoc=%d\n",
+				i, Batch.NumInstances, Batch.InstanceBuffer, Batch.InstanceStride, Batch.StartInstanceLocation);
+		}
+	}
+
+	// --- 4. 그리기 (Draw) ---
+	auto DrawStartTime = std::chrono::high_resolution_clock::now();
 	DrawMeshBatches(MeshBatchElements, true);
+	auto DrawEndTime = std::chrono::high_resolution_clock::now();
+
+	if (bShouldLog)
+	{
+		float BatchTimeMs = std::chrono::duration<float, std::milli>(BatchEndTime - BatchStartTime).count();
+		float SortTimeMs = std::chrono::duration<float, std::milli>(SortEndTime - SortStartTime).count();
+		float DrawTimeMs = std::chrono::duration<float, std::milli>(DrawEndTime - DrawStartTime).count();
+		float AvgCollectTime = AccumulatedCollectTime / CollectSampleCount;
+
+		UE_LOG("[Timing] Collect: %.2fms, Batch: %.2fms, Sort: %.2fms, Draw: %.2fms\n",
+			AvgCollectTime, BatchTimeMs, SortTimeMs, DrawTimeMs);
+
+		// 리셋
+		AccumulatedCollectTime = 0.0f;
+		CollectSampleCount = 0;
+	}
 }
 
 void FSceneRenderer::RenderDecalPass()
@@ -1964,6 +2039,278 @@ void FSceneRenderer::DrawMeshBatches(TArray<FMeshBatchElement>& InMeshBatches, b
 	{
 		InMeshBatches.Empty();
 	}
+}
+
+// 자동 배칭: 같은 메시+머티리얼 조합을 인스턴싱으로 합침
+void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatches)
+{
+	if (InOutMeshBatches.Num() < 2)
+	{
+		return;  // 배칭할 것이 없음
+	}
+
+	// 인스턴스 데이터 구조체 (48 bytes)
+	struct FInstanceData
+	{
+		FVector4 Transform0;
+		FVector4 Transform1;
+		FVector4 Transform2;
+	};
+
+	// 배칭 키: (VertexBuffer, IndexBuffer, Material, IndexCount, StartIndex)
+	struct FBatchKey
+	{
+		ID3D11Buffer* VertexBuffer;
+		ID3D11Buffer* IndexBuffer;
+		UMaterialInterface* Material;
+		uint32 IndexCount;
+		uint32 StartIndex;
+		uint32 VertexStride;
+
+		bool operator==(const FBatchKey& Other) const
+		{
+			return VertexBuffer == Other.VertexBuffer &&
+				IndexBuffer == Other.IndexBuffer &&
+				Material == Other.Material &&
+				IndexCount == Other.IndexCount &&
+				StartIndex == Other.StartIndex &&
+				VertexStride == Other.VertexStride;
+		}
+	};
+
+	struct FBatchKeyHash
+	{
+		size_t operator()(const FBatchKey& Key) const
+		{
+			size_t Hash = reinterpret_cast<size_t>(Key.VertexBuffer);
+			Hash ^= reinterpret_cast<size_t>(Key.IndexBuffer) << 1;
+			Hash ^= reinterpret_cast<size_t>(Key.Material) << 2;
+			Hash ^= static_cast<size_t>(Key.IndexCount) << 3;
+			Hash ^= static_cast<size_t>(Key.StartIndex) << 4;
+			return Hash;
+		}
+	};
+
+	// --- 1단계: 배치 그룹화 및 유효성 검사 ---
+	struct FValidBatchGroup
+	{
+		TArray<int32> Indices;
+		FShaderVariant* ShaderVariant;
+	};
+	std::unordered_map<FBatchKey, FValidBatchGroup, FBatchKeyHash> ValidBatchGroups;
+	uint32 TotalInstanceCount = 0;
+
+	// 디버그용 카운터
+	static int32 DebugLogCounter = 0;
+	bool bShouldLog = (++DebugLogCounter % 60 == 0);
+
+	// 임시 그룹화
+	std::unordered_map<FBatchKey, TArray<int32>, FBatchKeyHash> TempGroups;
+	int32 SkippedAlreadyInstanced = 0;
+	int32 SkippedSkinned = 0;
+
+	for (int32 i = 0; i < InOutMeshBatches.Num(); ++i)
+	{
+		const FMeshBatchElement& Batch = InOutMeshBatches[i];
+
+		// 이미 인스턴싱 중이거나 스키닝 중인 배치는 스킵
+		if (Batch.InstanceBuffer != nullptr)
+		{
+			++SkippedAlreadyInstanced;
+			continue;
+		}
+		if (Batch.BoneMatricesBuffer != nullptr)
+		{
+			++SkippedSkinned;
+			continue;
+		}
+
+		FBatchKey Key;
+		Key.VertexBuffer = Batch.VertexBuffer;
+		Key.IndexBuffer = Batch.IndexBuffer;
+		Key.Material = Batch.Material;
+		Key.IndexCount = Batch.IndexCount;
+		Key.StartIndex = Batch.StartIndex;
+		Key.VertexStride = Batch.VertexStride;
+
+		TempGroups[Key].Add(i);
+	}
+
+	if (bShouldLog)
+	{
+		UE_LOG("[BatchStaticMeshes] Total batches: %d, Groups: %d, SkippedInstanced: %d, SkippedSkinned: %d\n",
+			InOutMeshBatches.Num(), (int32)TempGroups.size(), SkippedAlreadyInstanced, SkippedSkinned);
+
+		// 각 그룹의 크기 출력 (상위 5개)
+		int32 GroupLogCount = 0;
+		for (auto& Pair : TempGroups)
+		{
+			if (GroupLogCount++ >= 5) break;
+			const FMeshBatchElement& FirstBatch = InOutMeshBatches[Pair.second[0]];
+			FString MatName = FirstBatch.Material ? FirstBatch.Material->GetName() : "NULL";
+			UE_LOG("[BatchStaticMeshes] Group[%d]: count=%d, VB=%p, IB=%p, Mat=%s, IdxCnt=%d, StartIdx=%d, Stride=%d\n",
+				GroupLogCount, Pair.second.Num(),
+				Pair.first.VertexBuffer, Pair.first.IndexBuffer, MatName.c_str(),
+				Pair.first.IndexCount, Pair.first.StartIndex, Pair.first.VertexStride);
+		}
+	}
+
+	// 유효한 그룹만 필터링 (2개 이상 + UberLit + 셰이더 컴파일 성공)
+	int32 SkippedSingleBatch = 0;
+	int32 SkippedNoMaterial = 0;
+	int32 SkippedNotUberLit = 0;
+	int32 SkippedShaderFail = 0;
+
+	for (auto& Pair : TempGroups)
+	{
+		if (Pair.second.Num() < 2)
+		{
+			++SkippedSingleBatch;
+			continue;
+		}
+
+		const FMeshBatchElement& FirstBatch = InOutMeshBatches[Pair.second[0]];
+		if (!FirstBatch.Material || !FirstBatch.Material->GetShader())
+		{
+			++SkippedNoMaterial;
+			continue;
+		}
+
+		UShader* Shader = FirstBatch.Material->GetShader();
+		if (Shader->GetFilePath().find("UberLit") == FString::npos)
+		{
+			if (bShouldLog)
+			{
+				UE_LOG("[BatchStaticMeshes] Not UberLit: %s (count: %d)\n",
+					Shader->GetFilePath().c_str(), Pair.second.Num());
+			}
+			++SkippedNotUberLit;
+			continue;
+		}
+
+		TArray<FShaderMacro> ShaderMacros = View->ViewShaderMacros;
+		if (FirstBatch.Material->GetShaderMacros().Num() > 0)
+		{
+			ShaderMacros.Append(FirstBatch.Material->GetShaderMacros());
+		}
+		ShaderMacros.Add(FShaderMacro{ "GPU_INSTANCING", "1" });
+
+		FShaderVariant* InstancedVariant = Shader->GetOrCompileShaderVariant(ShaderMacros);
+		if (!InstancedVariant || !InstancedVariant->InputLayout)
+		{
+			if (bShouldLog)
+			{
+				UE_LOG("[BatchStaticMeshes] Shader compile failed for UberLit (count: %d)\n", Pair.second.Num());
+			}
+			++SkippedShaderFail;
+			continue;
+		}
+
+		FValidBatchGroup Group;
+		Group.Indices = std::move(Pair.second);
+		Group.ShaderVariant = InstancedVariant;
+		TotalInstanceCount += Group.Indices.Num();
+		ValidBatchGroups[Pair.first] = std::move(Group);
+	}
+
+	if (bShouldLog)
+	{
+		UE_LOG("[BatchStaticMeshes] Skip reasons - Single: %d, NoMat: %d, NotUberLit: %d, ShaderFail: %d\n",
+			SkippedSingleBatch, SkippedNoMaterial, SkippedNotUberLit, SkippedShaderFail);
+		UE_LOG("[BatchStaticMeshes] Valid groups: %d, TotalInstances: %d\n",
+			(int32)ValidBatchGroups.size(), TotalInstanceCount);
+	}
+
+	if (TotalInstanceCount == 0)
+	{
+		return;  // 배칭할 것이 없음
+	}
+
+	// --- 2단계: 단일 동적 인스턴스 버퍼 확보 ---
+	uint32 RequiredCapacity = TotalInstanceCount * sizeof(FInstanceData);
+
+	if (RequiredCapacity > BatchingInstanceBufferCapacity)
+	{
+		// 버퍼 재생성 (2배 여유 확보)
+		if (BatchingInstanceBuffer)
+		{
+			BatchingInstanceBuffer->Release();
+			BatchingInstanceBuffer = nullptr;
+		}
+
+		uint32 NewCapacity = FMath::Max(RequiredCapacity * 2, 16384u);  // 최소 16KB
+		D3D11_BUFFER_DESC Desc = {};
+		Desc.ByteWidth = NewCapacity;
+		Desc.Usage = D3D11_USAGE_DYNAMIC;
+		Desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		if (FAILED(RHIDevice->GetDevice()->CreateBuffer(&Desc, nullptr, &BatchingInstanceBuffer)))
+		{
+			return;  // 버퍼 생성 실패
+		}
+		BatchingInstanceBufferCapacity = NewCapacity;
+	}
+
+	// --- 3단계: 버퍼 매핑하고 모든 인스턴스 데이터 기록 ---
+	D3D11_MAPPED_SUBRESOURCE MappedData;
+	if (FAILED(RHIDevice->GetDeviceContext()->Map(BatchingInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedData)))
+	{
+		return;  // 매핑 실패
+	}
+
+	FInstanceData* DestPtr = static_cast<FInstanceData*>(MappedData.pData);
+	TArray<int32> BatchesToRemove;
+	TArray<FMeshBatchElement> NewBatches;
+	uint32 CurrentInstanceOffset = 0;
+
+	for (auto& Pair : ValidBatchGroups)
+	{
+		const FValidBatchGroup& Group = Pair.second;
+		const FMeshBatchElement& FirstBatch = InOutMeshBatches[Group.Indices[0]];
+
+		// 인스턴스 데이터 기록
+		for (int32 Idx : Group.Indices)
+		{
+			const FMeshBatchElement& Batch = InOutMeshBatches[Idx];
+			FMatrix TransposedMatrix = Batch.WorldMatrix.Transpose();
+
+			DestPtr->Transform0 = TransposedMatrix.VRows[0];
+			DestPtr->Transform1 = TransposedMatrix.VRows[1];
+			DestPtr->Transform2 = TransposedMatrix.VRows[2];
+			++DestPtr;
+		}
+
+		// 새 배치 생성
+		FMeshBatchElement NewBatch = FirstBatch;
+		NewBatch.VertexShader = Group.ShaderVariant->VertexShader;
+		NewBatch.PixelShader = Group.ShaderVariant->PixelShader;
+		NewBatch.InputLayout = Group.ShaderVariant->InputLayout;
+		NewBatch.InstanceBuffer = BatchingInstanceBuffer;
+		NewBatch.NumInstances = static_cast<uint32>(Group.Indices.Num());
+		NewBatch.InstanceStride = sizeof(FInstanceData);
+		NewBatch.StartInstanceLocation = CurrentInstanceOffset;
+
+		NewBatches.Add(NewBatch);
+		CurrentInstanceOffset += Group.Indices.Num();
+
+		// 원본 배치들 제거 목록에 추가
+		for (int32 Idx : Group.Indices)
+		{
+			BatchesToRemove.Add(Idx);
+		}
+	}
+
+	RHIDevice->GetDeviceContext()->Unmap(BatchingInstanceBuffer, 0);
+
+	// --- 4단계: 원본 배치 제거 및 새 배치 추가 ---
+	BatchesToRemove.Sort([](int32 A, int32 B) { return A > B; });
+	for (int32 Idx : BatchesToRemove)
+	{
+		InOutMeshBatches.RemoveAt(Idx);
+	}
+
+	InOutMeshBatches.Append(NewBatches);
 }
 
 void FSceneRenderer::ApplyScreenEffectsPass()

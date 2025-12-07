@@ -12,13 +12,17 @@
 #include "LuaBindHelpers.h"
 #include "BodySetup.h"
 #include "CollisionShapes.h"
+#include <d3d11.h>
 // IMPLEMENT_CLASS is now auto-generated in .generated.cpp
 UStaticMeshComponent::UStaticMeshComponent()
 {
 	SetStaticMesh(GDataDir + "/cube-tex.obj");     // 임시 기본 static mesh 설정
 }
 
-UStaticMeshComponent::~UStaticMeshComponent() = default;
+UStaticMeshComponent::~UStaticMeshComponent()
+{
+	ReleaseInstanceBuffer();
+}
 
 void UStaticMeshComponent::OnStaticMeshReleased(UStaticMesh* ReleasedMesh)
 {
@@ -36,6 +40,13 @@ void UStaticMeshComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMesh
 	if (!StaticMesh || !StaticMesh->GetStaticMeshAsset())
 	{
 		return;
+	}
+
+	// 인스턴싱 모드: 인스턴스 버퍼 업데이트
+	const bool bInstanced = IsInstanced();
+	if (bInstanced && bInstanceBufferDirty)
+	{
+		const_cast<UStaticMeshComponent*>(this)->UpdateInstanceBuffer();
 	}
 
 	const TArray<FGroupInfo>& MeshGroupInfos = StaticMesh->GetMeshGroupInfo();
@@ -104,6 +115,13 @@ void UStaticMeshComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMesh
 		{
 			ShaderMacros.Append(MaterialToUse->GetShaderMacros());
 		}
+
+		// 인스턴싱 모드: GPU_INSTANCING 매크로 추가
+		if (bInstanced)
+		{
+			ShaderMacros.Add(FShaderMacro{ "GPU_INSTANCING", "1" });
+		}
+
 		FShaderVariant* ShaderVariant = ShaderToUse->GetOrCompileShaderVariant(ShaderMacros);
 
 		if (ShaderVariant)
@@ -125,6 +143,14 @@ void UStaticMeshComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMesh
 		BatchElement.WorldMatrix = GetWorldMatrix();
 		BatchElement.ObjectID = InternalIndex;
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+		// 인스턴싱 모드: 인스턴스 버퍼 설정
+		if (bInstanced && InstanceBuffer)
+		{
+			BatchElement.InstanceBuffer = InstanceBuffer;
+			BatchElement.NumInstances = static_cast<uint32>(InstanceTransforms.size());
+			BatchElement.InstanceStride = sizeof(FStaticMeshInstanceData);
+		}
 
 		OutMeshBatchElements.Add(BatchElement);
 	}
@@ -441,4 +467,120 @@ void UStaticMeshComponent::Serialize(const bool bInIsLoading, JSON& InOutHandle)
 			}
 		}
 	}
+}
+
+// ===== GPU 인스턴싱 구현 =====
+
+int32 UStaticMeshComponent::AddInstance(const FTransform& WorldTransform)
+{
+	int32 Index = static_cast<int32>(InstanceTransforms.size());
+	InstanceTransforms.Add(WorldTransform);
+	bUseInstancing = true;
+	bInstanceBufferDirty = true;
+	return Index;
+}
+
+void UStaticMeshComponent::RemoveInstance(int32 Index)
+{
+	if (Index >= 0 && Index < static_cast<int32>(InstanceTransforms.size()))
+	{
+		InstanceTransforms.RemoveAt(Index);
+		bInstanceBufferDirty = true;
+
+		if (InstanceTransforms.IsEmpty())
+		{
+			bUseInstancing = false;
+		}
+	}
+}
+
+void UStaticMeshComponent::ClearInstances()
+{
+	InstanceTransforms.Empty();
+	bUseInstancing = false;
+	bInstanceBufferDirty = true;
+}
+
+void UStaticMeshComponent::UpdateInstanceTransform(int32 Index, const FTransform& NewTransform)
+{
+	if (Index >= 0 && Index < static_cast<int32>(InstanceTransforms.size()))
+	{
+		InstanceTransforms[Index] = NewTransform;
+		bInstanceBufferDirty = true;
+	}
+}
+
+void UStaticMeshComponent::UpdateInstanceBuffer()
+{
+	const uint32 InstanceCount = static_cast<uint32>(InstanceTransforms.size());
+	if (InstanceCount == 0)
+	{
+		return;
+	}
+
+	ID3D11Device* Device = GEngine.GetRHIDevice()->GetDevice();
+	ID3D11DeviceContext* Context = GEngine.GetRHIDevice()->GetDeviceContext();
+
+	// 인스턴스 버퍼 생성/리사이즈 (2배 크기로 할당하여 잦은 재할당 방지)
+	if (InstanceCount > AllocatedInstanceCount)
+	{
+		if (InstanceBuffer)
+		{
+			InstanceBuffer->Release();
+			InstanceBuffer = nullptr;
+		}
+
+		uint32 NewCount = FMath::Max(InstanceCount * 2, 64u);
+		D3D11_BUFFER_DESC Desc = {};
+		Desc.ByteWidth = NewCount * sizeof(FStaticMeshInstanceData);
+		Desc.Usage = D3D11_USAGE_DYNAMIC;
+		Desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		if (SUCCEEDED(Device->CreateBuffer(&Desc, nullptr, &InstanceBuffer)))
+		{
+			AllocatedInstanceCount = NewCount;
+		}
+	}
+
+	if (!InstanceBuffer)
+	{
+		return;
+	}
+
+	// 버퍼 매핑 및 데이터 채우기
+	D3D11_MAPPED_SUBRESOURCE MappedData;
+	if (FAILED(Context->Map(InstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedData)))
+	{
+		return;
+	}
+
+	FStaticMeshInstanceData* Instances = static_cast<FStaticMeshInstanceData*>(MappedData.pData);
+
+	for (uint32 i = 0; i < InstanceCount; ++i)
+	{
+		const FTransform& Transform = InstanceTransforms[i];
+
+		// FTransform을 4x4 행렬로 변환 후 3x4로 전치하여 저장
+		// (셰이더에서 row_major로 읽음)
+		FMatrix WorldMatrix = Transform.ToMatrix();
+		FMatrix TransposedMatrix = WorldMatrix.Transpose();
+
+		Instances[i].Transform0 = TransposedMatrix.VRows[0];
+		Instances[i].Transform1 = TransposedMatrix.VRows[1];
+		Instances[i].Transform2 = TransposedMatrix.VRows[2];
+	}
+
+	Context->Unmap(InstanceBuffer, 0);
+	bInstanceBufferDirty = false;
+}
+
+void UStaticMeshComponent::ReleaseInstanceBuffer()
+{
+	if (InstanceBuffer)
+	{
+		InstanceBuffer->Release();
+		InstanceBuffer = nullptr;
+	}
+	AllocatedInstanceCount = 0;
 }

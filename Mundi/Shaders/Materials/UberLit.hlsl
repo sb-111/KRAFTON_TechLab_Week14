@@ -119,6 +119,16 @@ struct VS_INPUT
 #endif
 };
 
+// GPU 인스턴싱용 인스턴스 입력 구조체 (ParticleMesh.hlsl 패턴과 동일)
+#ifdef GPU_INSTANCING
+struct VS_INSTANCE_INPUT
+{
+    float4 Transform0 : TEXCOORD4;  // 3x4 행렬 row 0 (x축 + translation.x)
+    float4 Transform1 : TEXCOORD5;  // 3x4 행렬 row 1 (y축 + translation.y)
+    float4 Transform2 : TEXCOORD6;  // 3x4 행렬 row 2 (z축 + translation.z)
+};
+#endif
+
 struct PS_INPUT
 {
     float4 Position : SV_POSITION;
@@ -138,7 +148,11 @@ struct PS_OUTPUT
 //================================================================================================
 // 버텍스 셰이더 (Vertex Shader)
 //================================================================================================
+#ifdef GPU_INSTANCING
+PS_INPUT mainVS(VS_INPUT Input, VS_INSTANCE_INPUT Inst)
+#else
 PS_INPUT mainVS(VS_INPUT Input)
+#endif
 {
     PS_INPUT Out;
 
@@ -178,9 +192,20 @@ PS_INPUT mainVS(VS_INPUT Input)
 #endif
 
     // 위치를 월드 공간으로 먼저 변환
+#ifdef GPU_INSTANCING
+    // GPU 인스턴싱: 인스턴스별 트랜스폼 사용 (3x4 행렬을 4x4로 재구성)
+    float4x4 InstanceWorld = float4x4(
+        float4(Inst.Transform0.x, Inst.Transform1.x, Inst.Transform2.x, 0.0f),
+        float4(Inst.Transform0.y, Inst.Transform1.y, Inst.Transform2.y, 0.0f),
+        float4(Inst.Transform0.z, Inst.Transform1.z, Inst.Transform2.z, 0.0f),
+        float4(Inst.Transform0.w, Inst.Transform1.w, Inst.Transform2.w, 1.0f)
+    );
+    float4 worldPos = mul(float4(localPosition, 1.0f), InstanceWorld);
+#else
     float4 worldPos = mul(float4(localPosition, 1.0f), WorldMatrix);
+#endif
     Out.WorldPos = worldPos.xyz;
-    
+
     // 뷰 공간으로 변환
     float4 viewPos = mul(worldPos, ViewMatrix);
 
@@ -188,11 +213,19 @@ PS_INPUT mainVS(VS_INPUT Input)
     Out.Position = mul(viewPos, ProjectionMatrix);
 
     // 노멀을 월드 공간으로 변환
+#ifdef GPU_INSTANCING
+    // GPU 인스턴싱: 인스턴스 월드 행렬로 노멀 변환
+    // 주의: 비균등 스케일 시 정확한 노멀 변환을 위해서는 inverse transpose 필요
+    // 여기서는 균등 스케일 가정하고 일반 행렬 사용 (성능 최적화)
+    float3 worldNormal = normalize(mul(localNormal, (float3x3)InstanceWorld));
+    float3 Tangent = normalize(mul(localTangent, (float3x3)InstanceWorld));
+#else
     // 비균등 스케일에서 올바른 노멀 변환을 위해 WorldInverseTranspose 사용
     // 노멀 벡터는 transpose(inverse(WorldMatrix))로 변환됨
     float3 worldNormal = normalize(mul(localNormal, (float3x3) WorldInverseTranspose));
-    Out.Normal = worldNormal;
     float3 Tangent = normalize(mul(localTangent, (float3x3) WorldMatrix));
+#endif
+    Out.Normal = worldNormal;
     Tangent = normalize(Tangent - worldNormal * dot(worldNormal, Tangent));  // 그람-슈미트 재직교화
     float3 BiTangent = normalize(cross(Tangent, worldNormal) * Input.Tangent.w);
     row_major float3x3 TBN;
