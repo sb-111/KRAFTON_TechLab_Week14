@@ -1,54 +1,23 @@
 # Blender 5.0.0 MTL File: 'GrassTile.blend'
 # www.blender.org
 
-newmtl 1300954650
-Ns 83.870903
-Ka 0.458816 0.458816 0.458816
-Ks 0.389868 0.389868 0.389868
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
-illum 3
-map_Kd 1300954650_baseColor.png
-map_Bump -bm 1.000000 1300954650_normal.png
-
-newmtl 2785131480
-Ns 2.262739
+newmtl grass1
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
+Ni 1000.000000
 illum 2
-map_Kd 2785131480_baseColor.png
+map_Kd grass1_diffuse.png
+map_Ns grass1_specularGlossiness.png
+map_d grass1_diffuse.png
+map_Bump -bm 1.000000 grass1_normal.png
 
-newmtl 3457643232
-Ns 159.999985
+newmtl ground
+Ns 250.000000
 Ka 1.000000 1.000000 1.000000
-Ks 0.500000 0.500000 0.500000
+Ks 0.000000 0.000000 0.000000
 Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
-illum 2
-map_Kd 3457643232_baseColor.png
-
-newmtl 383085165
-Ns 8.320853
-Ka 0.447147 0.447147 0.447147
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
-illum 3
-map_Kd 383085165_baseColor.png
-map_Bump -bm 1.000000 383085165_normal.png
-
-newmtl M_Grass_Tile
-Ns 18.595039
-Ka 1.000000 1.000000 1.000000
-Ks 0.200000 0.200000 0.200000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
-illum 2
-map_Kd Tile_BaseColor.png
+illum 1
+map_Kd Material_baseColor.png
