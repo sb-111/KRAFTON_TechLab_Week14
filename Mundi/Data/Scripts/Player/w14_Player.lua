@@ -170,7 +170,7 @@ function Shoot()
         BulletDecal.Rotation = Vector(Roll, Pitch, Yaw)
 
         -- [몬스터 피격 로직]
-        if HitResult.Actor and HitResult.Actor.Tag == "monster" then
+        if HitResult.Actor and MonsterConfig.IsMonsterTag(HitResult.Actor.Tag) then
             local monsterScript = HitResult.Actor:GetScript()
             
             if monsterScript then

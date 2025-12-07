@@ -83,10 +83,15 @@ end
 --- @param damage_amount number 받을 데미지량
 --- @return void
 function ChaserMonster:GetDamage(damage_amount)
+    if self.stat.is_dead then
+        return
+    end
+    
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
         self.anim_instance:SetState("Die", 0)
+        self.stat.is_dead = true
     else
         self.anim_instance:SetState("Damaged", 0)
     end

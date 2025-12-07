@@ -1,9 +1,9 @@
 {
   "ObjectName" : "ChaserMonster",
   "OwnedComponents" : [{
-      "CollisionType" : 0,
+      "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 13478,
+      "Id" : 1283,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -20,11 +20,11 @@
           "AssetPath" : "body_M1",
           "Type" : "UMaterial"
         }],
-      "MobilityType" : 0,
+      "MobilityType" : 1,
       "ObjectName" : "USkeletalMeshComponent_2",
       "ParentId" : 0,
       "PhysicsAssetPathOverride" : "",
-      "RelativeLocation" : [1.475850, -8.399864, 6.603066],
+      "RelativeLocation" : [6.634550, -0.876060, -1.744590],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "SkeletalMesh" : "Data/GameJamMonster/copzombie_l_actisdato.fbx",
@@ -35,7 +35,7 @@
       "bHiddenInGame" : false,
       "bIsActive" : true,
       "bIsCar" : false,
-      "bIsTrigger" : false,
+      "bIsTrigger" : true,
       "bIsVisible" : true,
       "bOverrideMass" : false,
       "bSimulatePhysics" : false,
@@ -51,13 +51,13 @@
       "bTickInEditor" : false
     }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
-      "CollisionType" : 0,
+      "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 13479,
+      "Id" : 1285,
       "Mass" : 10.000000,
-      "MobilityType" : 0,
+      "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 13478,
+      "ParentId" : 1283,
       "RelativeLocation" : [0.000000, 0.000000, 1.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -75,7 +75,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 13478,
+  "RootComponentId" : 1283,
   "Tag" : "ChaserMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
