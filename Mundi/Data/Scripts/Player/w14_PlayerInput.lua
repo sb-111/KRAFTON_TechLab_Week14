@@ -5,6 +5,7 @@ function PlayerInput:new(Obj)
     self.__index = self
 
     Instance.HorizontalInput = 0
+    Instance.VerticalInput = 0 -- 디버그 용
     Instance.RotateVector = Vector(0, 0, 0)
     Instance.ShootTrigger = false
     Instance.DeadZone = 0.2 -- 패드 데드존
@@ -14,12 +15,17 @@ end
 
 function PlayerInput:Update(DT)
     self.HorizontalInput = 0
+    self.VerticalInput = 0 -- 디버그 용
     self.ShootTrigger = false
 
     if InputManager:IsKeyDown('A') then 
         self.HorizontalInput = -1 
     elseif InputManager:IsKeyDown('D') then 
-        self.HorizontalInput = 1 
+        self.HorizontalInput = 1
+    elseif InputManager:IsKeyDown('S') then -- 디버그 용
+        self.VerticalInput = -1 -- 디버그 용
+    elseif InputManager:IsKeyDown('W') then -- 디버그 용
+        self.VerticalInput = 1 -- 디버그 용
     end
 
     if InputManager:IsGamepadConnected(0) then

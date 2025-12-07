@@ -220,6 +220,7 @@ struct TPropertyTypeTraits<FDistributionColor>
 		Prop.Type = TPropertyTypeTraits<VarType>::GetType(); \
 		Prop.TypeName = #VarType; \
 		Prop.Offset = offsetof(ThisClass_t, VarName); \
+		Prop.Size = sizeof(VarType); \
 		Prop.Category = CategoryName; \
 		Prop.MinValue = MinVal; \
 		Prop.MaxValue = MaxVal; \

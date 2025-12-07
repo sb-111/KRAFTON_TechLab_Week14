@@ -94,12 +94,12 @@
         "BoxElems" : [],
         "SphereElems" : [],
         "SphylElems" : [{
-            "Center" : [0.000000, 0.000000, 0.100000],
+            "Center" : [-0.000000, -0.000000, 0.100000],
             "CollisionEnabled" : 3,
-            "Length" : 0.080000,
+            "Length" : 3.517172,
             "Name" : "mixamorig:Head_sphyl",
-            "Radius" : 0.080000,
-            "Rotation" : [179.999985, 0.000000, 180.000000]
+            "Radius" : 3.525433,
+            "Rotation" : [179.999969, -0.000000, -179.999985]
           }]
       },
       "AngularDamping" : 0.100000,

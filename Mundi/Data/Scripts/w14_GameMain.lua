@@ -122,7 +122,7 @@ function GameStart()
     MonsterManager:add_object(
             "Data/Prefabs/w14_BasicMonster.prefab",
             300,
-            Vector(-2000, 100, 0),  -- pool_standby_location
+            Vector(10, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2                       -- radius
     )
