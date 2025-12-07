@@ -94,27 +94,27 @@ function GameStart()
 
     -- MapManager 초기화
     MapManager = MapManagerClass:new(Player)
-    -- MapManager:add_biom(
-    --         "Data/Prefabs/test_map_chunk_0.prefab",
-    --         100,
-    --         Vector(-1000, 0, 0)
-    -- )
-    -- MapManager:add_biom(
-    --         "Data/Prefabs/test_map_chunk_1.prefab",
-    --         100,
-    --         Vector(-1000, 0, 0)
-    -- )
-    -- MapManager:add_biom(
-    --         "Data/Prefabs/test_map_chunk_2.prefab",
-    --         100,
-    --         Vector(-1000, 0, 0)
-    -- )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_Chunk64_1.prefab", --풀6:땅4로 미리 구워놓은 프리팹 바리에이션 4가지임.
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_Chunk64_2.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_Chunk64_3.prefab",
+            100,
+            Vector(-1000, 0, 0)
+    )
 
-    -- MapManager:add_biom(
-    --          "Data/Prefabs/w14_map_chunk.prefab",
-    --          100,
-    --          Vector(-1000, 0, 0)
-    --  )
+    MapManager:add_biom(
+             "Data/Prefabs/w14_Chunk64_4.prefab",
+             100,
+             Vector(-1000, 0, 0)
+     )
 
     -- ObjectPlacer 인스턴스 생성
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.

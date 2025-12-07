@@ -16,8 +16,8 @@ local tileSpacingX = 1.0    -- X축 타일 간격
 local tileSpacingY = 1.0    -- Y축 타일 간격
 
 -- 메시 가중치 설정 (A:B 비율)
-local weightA = 7            -- 메시 A 가중치
-local weightB = 3            -- 메시 B 가중치
+local weightA = 6            -- 메시 A 가중치
+local weightB = 4            -- 메시 B 가중치
 -- ==============================
 
 -- 내부 상태
