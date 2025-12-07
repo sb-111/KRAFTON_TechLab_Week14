@@ -26,6 +26,8 @@ local MovementSpeed = 10.0
 function BeginPlay()
     Audio.Init()
     local result = Audio.RegisterSFX("gunshot", "GunShotActor")
+    local result = Audio.RegisterSFX("gunreload", "GunReloadActor")
+    local result = Audio.RegisterSFX("gundryfire", "GunDryFireActor")
 
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
@@ -62,13 +64,15 @@ function Tick(Delta)
         end
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
 
-        PlayerAnim:Update(Delta, PlayerInput.ShootTrigger)
+
+        local bCanFire = AmmoManager.GetCurrentAmmo() > 0 and not AmmoManager.IsReloading()
+        PlayerAnim:Update(Delta, PlayerInput.ShootTrigger, bCanFire)
         if PlayerInput.ShootTrigger and not IsShootCool and not AmmoManager.IsReloading() then
             Shoot()
         end
 
         -- R키 재장전
-        if InputManager:IsKeyPressed('R') then
+        if PlayerInput.ReloadTrigger then
             TryReload()
         end
     end
@@ -77,7 +81,8 @@ end
 --- 재장전 시도 (AmmoManager에게 위임)
 function TryReload()
     if AmmoManager.StartReload() then
-        -- TODO: 재장전 애니메이션 재생
+        PlayerAnim:StartReload()  -- ← 애니메이션 시작
+        Audio.PlaySFX("gunreload")
         StartCoroutine(ReloadCoroutine)
     end
 end
@@ -124,14 +129,15 @@ function Rotate(DeltaTime)
 end
 
 function Shoot()
+    StartCoroutine(ShootCoolEnd)
+    IsShootCool = true
+    
     -- 탄약 체크 및 소비
     if not AmmoManager.UseAmmo(1) then
-        -- TODO: 탄약 부족 효과음 재생
+        Audio.PlaySFX("gundryfire")
         return
     end
 
-    StartCoroutine(ShootCoolEnd)
-    IsShootCool = true
     PlayerAnim:Fire()
 
     MuzzleParticle:Activate()
@@ -228,7 +234,11 @@ function OnBeginOverlap(OtherActor)
         PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
 
         -- 재장전 중이면 취소
-        AmmoManager.CancelReload()
+        if AmmoManager.IsReloading() then
+            Audio.StopSFX("gunreload")
+            AmmoManager.CancelReload()
+            PlayerAnim:CancelReload()  -- ← 애니메이션 취소
+        end
     end
 
     -- 몹과 충돌 처리 (Tag 기반 데미지)
