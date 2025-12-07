@@ -68,6 +68,22 @@ function M.TakeDamage(damage)
     return false  -- 생존
 end
 
+--- 체력 회복
+--- @param amount number 회복량
+function M.Heal(amount)
+    if bDead then
+        return  -- 사망 상태면 회복 불가
+    end
+
+    currentHP = currentHP + amount
+    if currentHP > maxHP then
+        currentHP = maxHP  -- 최대 HP 초과 방지
+    end
+
+    M.NotifyChange()
+    print(string.format("[HPManager] Healed %d HP (Current: %d/%d)", amount, currentHP, maxHP))
+end
+
 --- 무적 상태 시작
 function M.StartInvincibility()
     bInvincible = true

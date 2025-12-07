@@ -252,4 +252,20 @@ function OnBeginOverlap(OtherActor)
         -- 아이템 비활성화
         OtherActor.bIsActive = false
     end
+
+    -- 회복 아이템 획득 (AidKit)
+    if OtherActor.Tag == "AidKit" then
+        HPManager.Heal(5)
+        print("[OnBeginOverlap] AidKit 획득! HP +5")
+        -- 아이템 비활성화
+        OtherActor.bIsActive = false
+    end
+
+    -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
+    if OtherActor.Tag == "Adrenalin" then
+        SetSlomo(10.0, 0.5)  -- 10초 동안 0.5배속 (슬로우 모션)
+        print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
+        -- 아이템 비활성화
+        OtherActor.bIsActive = false
+    end
 end
