@@ -95,14 +95,9 @@ function Pool:spawn()
     else
         local new_location = self.spawn_location_getter()
         local spawned = self.despawned:pop()
-
-        -- 순서 중요: bIsActive를 먼저 true로 설정한 후 Location 변경
-        spawned.bIsActive = true
         spawned.Location = new_location
-
+        spawned.bIsActive = true
         self.spawned:push(spawned)
-
-        print("[DEBUG Pool] Spawned object: " .. tostring(spawned.Name) .. " at " .. tostring(spawned.Location.X) .. "," .. tostring(spawned.Location.Y) .. "," .. tostring(spawned.Location.Z) .. " Tag: " .. tostring(spawned.Tag))
     end
 end
 

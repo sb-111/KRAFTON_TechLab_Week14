@@ -45,9 +45,11 @@ function Tick(Delta)
     if bIsStarted then
         PlayerInput:Update(Delta)
         Rotate(Delta)
+
+        -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
+        -- local Forward = 0.01 * PlayerInput.VerticalInput
         
-        -- local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
-        local Forward = 0.01 * PlayerInput.VerticalInput
+        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
@@ -111,12 +113,6 @@ function Shoot()
     -- 레이캐스트
     local bHit, HitResult = Physics.Raycast(CamPos + CamDir, CamDir, MaxDist)
 
-    -- 디버깅: Raycast 결과 출력
-    print("[DEBUG] Raycast - bHit: " .. tostring(bHit))
-    if HitResult.Actor then
-        print("[DEBUG] Hit Actor: " .. tostring(HitResult.Actor.Name) .. " Tag: " .. tostring(HitResult.Actor.Tag))
-    end
-
     local TargetPoint = nil
     if bHit then
         --if HitResult.BoneName then
@@ -152,20 +148,12 @@ function Shoot()
         
         BulletDecal.Rotation = Vector(Roll, Pitch, Yaw)
 
-        -- HitResult.Actor 체크 및 디버깅
-        if HitResult.Actor then
-            print("[DEBUG] You shoot " .. tostring(HitResult.Actor.Name) .. " Tag: " .. tostring(HitResult.Actor.Tag))
-
-            if HitResult.Actor.Tag == "monster" then
-                print("[DEBUG] Monster detected! Spawning bullet effect")
-                Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
-                Bullet.Location = TargetPoint
-            else
-                print("[DEBUG] Not a monster. Tag is: " .. tostring(HitResult.Actor.Tag))
-            end
-        else
-            print("[DEBUG] HitResult.Actor is nil - hit something without Actor (terrain/static mesh?)")
+        if HitResult.Actor and HitResult.Actor.Tag == "monster" then
+            Bullet = SpawnPrefab("Data/Prefabs/w14_Bullet0.prefab")
+            Bullet.Location = Vector(TargetPoint.X, TargetPoint.Y - 1, TargetPoint.Z)
         end
+
+        print("You shoot" .. HitResult.Actor.Name .. HitResult.Actor.Tag)
     else
         -- 허공을 쐈으면 사거리 끝 지점을 목표점으로 설정
         TargetPoint = CamPos + (CamDir * MaxDist)

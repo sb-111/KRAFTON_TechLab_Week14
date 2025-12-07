@@ -4,35 +4,6 @@
 local MonsterClass = require("Monster/w14_Monster")
 local Monster = nil
 
---- Physics를 재초기화하는 함수 (ObjectPool 재사용 시)
-local function ReinitializePhysics()
-    print("[DEBUG Monster] ReinitializePhysics - Name: " .. tostring(Obj.Name))
-
-    -- SkeletalMeshComponent의 Physics State를 완전히 재생성
-    local SkeletalMesh = GetComponent(Obj, "USkeletalMeshComponent")
-    if SkeletalMesh then
-        -- 기존 Physics 완전 파괴 후 재생성 (Bodies의 위치가 새 Actor 위치로 업데이트됨)
-        if SkeletalMesh.DestroyPhysicsState then
-            SkeletalMesh:DestroyPhysicsState()
-            print("[DEBUG Monster] SkeletalMesh DestroyPhysicsState called")
-        end
-
-        if SkeletalMesh.CreatePhysicsState then
-            SkeletalMesh:CreatePhysicsState()
-            print("[DEBUG Monster] SkeletalMesh CreatePhysicsState called")
-        end
-    end
-
-    -- CapsuleComponent도 재초기화
-    local CapsuleComp = GetComponent(Obj, "UCapsuleComponent")
-    if CapsuleComp then
-        CapsuleComp.CollisionEnabled = 0
-        CapsuleComp.CollisionEnabled = 3
-        CapsuleComp.BlockAll = true
-        print("[DEBUG Monster] CapsuleComponent reinitialized")
-    end
-end
-
 --- 게임 시작 시 호출됩니다.
 --- @return void
 function BeginPlay()
@@ -41,42 +12,14 @@ function BeginPlay()
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
     Monster:Initialize(Obj, 3.0, 50, 10, 4.0)
-
-    -- 이 인스턴스의 이전 활성 상태를 Monster 객체에 저장 (인스턴스별로 독립적)
-    Monster.bWasActive = Obj.bIsActive
-
-    -- 초기 Physics 설정
-    ReinitializePhysics()
 end
 
 --- 매 프레임마다 호출됩니다.
 --- @param Delta number 델타 타임
 --- @return void
 function Tick(Delta)
-    -- Monster가 없으면 초기화되지 않은 상태
-    if not Monster then
-        return
-    end
-
-    -- ObjectPool에서 재활성화되었는지 체크 (false -> true 전환)
-    -- Monster.bWasActive를 사용하여 인스턴스별로 독립적으로 추적
-    if not Monster.bWasActive and Obj.bIsActive then
-        print("[DEBUG Monster] Detected reactivation from ObjectPool! Name: " .. tostring(Obj.Name))
-        ReinitializePhysics()
-
-        -- Monster 상태도 재초기화
-        Monster.is_dead = false
-        Monster.current_health = Monster.max_health
-    end
-    Monster.bWasActive = Obj.bIsActive
-
-    -- 비활성 상태면 업데이트 중지
-    if not Obj.bIsActive then
-        return
-    end
-
-    -- Monster가 이미 죽었으면 업데이트 중지
-    if Monster.is_dead then
+    -- Monster가 없거나 이미 죽었으면 업데이트 중지
+    if not Monster or Monster.is_dead then
         return
     end
 
