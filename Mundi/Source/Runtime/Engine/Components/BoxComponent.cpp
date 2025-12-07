@@ -18,6 +18,9 @@
 UBoxComponent::UBoxComponent()
 {
 	BoxExtent = FVector(0.5f, 0.5f, 0.5f);
+	CollisionType = ECollisionEnabled::PhysicsAndQuery;
+	bIsTrigger = true;
+	MobilityType = EMobilityType::Movable;
 	UpdateBounds();
 }
 
