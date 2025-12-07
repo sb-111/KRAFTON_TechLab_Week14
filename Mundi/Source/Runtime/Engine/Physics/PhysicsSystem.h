@@ -26,6 +26,8 @@ public:
 
     static void Destroy();
 
+	void ReconnectPVD(const char* InIP, int InPort, int InTimeoutMs);
+
 	void Shutdown();
 
     FPhysicsSystem() = default;
