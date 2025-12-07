@@ -116,7 +116,8 @@ function GameStart()
             300,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
             5,                      -- spawn_num (적게)
-            3                       -- radius
+            3,                      -- radius
+            0.5                     -- 물체 스폰 z 위치
     )
     
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
@@ -125,7 +126,8 @@ function GameStart()
             300,
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
-            2                       -- radius
+            2,                      -- radius
+            0.5                     -- 물체 스폰 z 위치
     )
 end
 

@@ -55,7 +55,8 @@ function BiomeManager:_initialize_biomes()
                 BiomeConfig.pool_size,
                 BiomeConfig.pool_standby_location,
                 obstacle.spawn_num or BiomeConfig.default_spawn_num,
-                obstacle.radius or BiomeConfig.default_radius
+                obstacle.radius or BiomeConfig.default_radius,
+                0.5
             )
         end
 
