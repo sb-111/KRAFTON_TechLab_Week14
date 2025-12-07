@@ -1,0 +1,13 @@
+# Blender 5.0.0 MTL File: 'HpBox.blend'
+# www.blender.org
+
+newmtl Scene_-_Root
+Ns 307.400696
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd Scene_-_Root_baseColor.png
+map_Bump -bm 1.000000 Scene_-_Root_normal.png
