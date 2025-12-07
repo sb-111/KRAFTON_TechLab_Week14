@@ -1,17 +1,16 @@
 local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
 local PlayerSlowClass = require("Player/w14_PlayerSlow")
-local PlayerHPClass = require("Player/w14_PlayerHP")
 local ObstacleConfig = require("w14_ObstacleConfig")
 local MonsterConfig = require("w14_MonsterConfig")
 local Audio = require("Game/w14_AudioManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local ScoreManager = require("Game/w14_ScoreManager")
+local HPManager = require("Game/w14_HPManager")
 
 local PlayerAnim = nil
 local PlayerInput = nil
 local PlayerSlow = nil
-local PlayerHP = nil
 
 local PlayerCamera = nil
 local Mesh = nil
@@ -37,8 +36,7 @@ function BeginPlay()
     PlayerAnim = PlayerAnimClass:new(Obj)
     PlayerInput = PlayerInputClass:new(Obj)
     PlayerSlow = PlayerSlowClass:new(Obj)
-    PlayerHP = PlayerHPClass:new(Obj)
-    PlayerHP:Reset()
+    HPManager.Reset()
     StartCoroutine(ToRun)
 
     PlayerCamera = GetComponent(Obj, "UCameraComponent")
@@ -55,9 +53,9 @@ function Tick(Delta)
         Rotate(Delta)
 
         -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
-        local Forward = 0.01 * PlayerInput.VerticalInput
+        -- local Forward = 0.01 * PlayerInput.VerticalInput
         
-        -- local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
+        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
@@ -219,7 +217,7 @@ function OnBeginOverlap(OtherActor)
     -- 몹과 충돌 처리 (Tag 기반 데미지)
     if MonsterConfig.IsMonsterTag(OtherActor.Tag) then
         local damage = MonsterConfig.GetDamage(OtherActor.Tag)
-        local died = PlayerHP:TakeDamage(damage)
+        local died = HPManager.TakeDamage(damage)
 
         print("[OnBeginOverlap] 몹 충돌! Tag: " .. OtherActor.Tag .. ", 데미지: " .. damage)
 
@@ -234,9 +232,7 @@ function OnBeginOverlap(OtherActor)
         local ammoAmount = AmmoManager.GetMaxAmmo()  -- 한 번 장전할 때 채우는 탄약량 (30발)
         AmmoManager.AddAmmo(ammoAmount)
         print("[OnBeginOverlap] 탄약 획득! +" .. ammoAmount)
-        -- 아이템 제거 (오브젝트 풀로 반환하거나 삭제)
-        if OtherActor.ReturnToPool then
-            OtherActor:ReturnToPool()
-        end
+        -- 아이템 비활성화
+        OtherActor.bIsActive = false
     end
 end

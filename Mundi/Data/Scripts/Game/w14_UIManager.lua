@@ -4,6 +4,7 @@
 local GameState = require("Game/w14_GameStateManager")
 local ScoreManager = require("Game/w14_ScoreManager")
 local AmmoManager = require("Game/w14_AmmoManager")
+local HPManager = require("Game/w14_HPManager")
 
 local M = {}
 
@@ -165,6 +166,8 @@ function M.UpdateGameHUD(dt)
     local kills = ScoreManager.GetKillCount()
     local score = ScoreManager.GetScore()
     local ammo = AmmoManager.GetCurrentAmmo()
+    local currentHP = HPManager.GetCurrentHP()
+    local maxHP = HPManager.GetMaxHP()
 
     -- 슬롯머신 애니메이션: 표시 거리를 실제 거리로 서서히 증가
     hudState.targetDistance = distance
@@ -203,6 +206,21 @@ function M.UpdateGameHUD(dt)
         leftMargin, TOP_MARGIN + 75,
         28,
         Color(1, 1, 1, 1)
+    )
+
+    -- HP 표시 (점수 아래)
+    local hpColor = Color(0, 1, 0, 1)  -- 초록색
+    if currentHP <= maxHP * 0.3 then
+        hpColor = Color(1, 0, 0, 1)  -- 빨간색 (30% 이하)
+    elseif currentHP <= maxHP * 0.6 then
+        hpColor = Color(1, 1, 0, 1)  -- 노란색 (60% 이하)
+    end
+
+    HUD:DrawText(
+        "HP: " .. currentHP .. "/" .. maxHP,
+        leftMargin, TOP_MARGIN + 105,
+        28,
+        hpColor
     )
 
     -- 탄약 수 표시 (화면 중앙 상단) - 탄창/예비탄약 형식 (30|120)

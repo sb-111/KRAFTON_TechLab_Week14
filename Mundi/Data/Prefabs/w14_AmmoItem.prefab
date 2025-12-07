@@ -17,7 +17,7 @@
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
-      "bIsTrigger" : false,
+      "bIsTrigger" : true,
       "bIsVisible" : true,
       "bOverrideMass" : false,
       "bShapeHiddenInGame" : true,
@@ -26,7 +26,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "CollisionType" : 3,
+      "CollisionType" : 0,
       "Density" : 10.000000,
       "Id" : 28191,
       "Mass" : 10.000000,
@@ -44,7 +44,7 @@
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
+      "bGenerateOverlapEvents" : false,
       "bHiddenInGame" : false,
       "bIsActive" : true,
       "bIsTrigger" : false,
