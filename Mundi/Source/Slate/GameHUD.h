@@ -53,12 +53,6 @@ public:
     /** @brief 프레임 렌더링 종료 */
     void EndFrame();
 
-    /** @brief 화면 크기 설정 (상대 좌표 계산용) */
-    void SetScreenSize(float width, float height);
-
-    /** @brief 화면 오프셋 설정 (뷰포트 위치) */
-    void SetScreenOffset(float x, float y);
-
     // ===== Lua에서 호출 가능한 API =====
 
     /**
@@ -98,6 +92,16 @@ public:
      */
     void DrawTextWithBgRel(const FString& text, float rx, float ry, float fontSize,
                            const FLinearColor& textColor, const FLinearColor& bgColor);
+
+    /**
+     * @brief 사각형 렌더링 (절대 좌표)
+     * @param x X 좌표 (픽셀)
+     * @param y Y 좌표 (픽셀)
+     * @param width 너비 (픽셀)
+     * @param height 높이 (픽셀)
+     * @param color 사각형 색상
+     */
+    void DrawRect(float x, float y, float width, float height, const FLinearColor& color);
 
     /**
      * @brief 이미지 렌더링 (절대 좌표)

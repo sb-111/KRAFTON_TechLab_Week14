@@ -73,7 +73,6 @@ void AActor::BeginPlay()
 
 
 		Comp->CreatePhysicsState();
-		
 	}
 }
 
@@ -482,61 +481,44 @@ void AActor::SetActorActive(bool bIsActive)
 	if (bActorIsActive == bIsActive) return;
 
 	bActorIsActive = bIsActive; 
+	UpdatePhysicsState(bIsActive);
+}
 
-	if (!bIsActive)
+void AActor::UpdatePhysicsState(bool bAddToScene)
+{
+	for (UActorComponent* Component : OwnedComponents)
 	{
-		// [비활성화] -> 씬에서 제거 (Remove)
-		// 액터가 가진 모든 컴포넌트 순회
-		for (UActorComponent* Component : OwnedComponents)
-		{
-			UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
-			if (PrimComp)
-			{
-				// 1. 일반 바디 제거
-				PrimComp->BodyInstance.RemoveFromScene();
+		UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
+		if (!PrimComp) continue;
 
-				// 2. 래그돌(스켈레탈 메시) 바디들 제거
-				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(PrimComp);
-				if (SkelComp)
-				{
-					const TArray<FBodyInstance*>& RagdollBodies = SkelComp->GetBodies();
-					for (FBodyInstance* Body : RagdollBodies)
-					{
-						if (Body)
-						{
-							Body->RemoveFromScene();
-						}
-					}
-				}
-			}
+		// 1. 일반 바디 (Main Body) 처리
+		if (bAddToScene)
+		{
+			PrimComp->BodyInstance.AddToScene();
+			PrimComp->BodyInstance.WakeUp(); 
 		}
-	}
-	else
-	{
-		// [활성화] -> 씬에 다시 등록 (Add)
-		for (UActorComponent* Component : OwnedComponents)
+		else
 		{
-			UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
-			if (PrimComp)
-			{
-				// 1. 일반 바디 등록
-				PrimComp->BodyInstance.AddToScene();
-             
-				// 활성화 시 위치가 튀는 것을 방지하기 위해 속도 초기화 권장
-				// PrimComp->BodyInstance.SetLinearVelocity(FVector::ZeroVector); 
+			PrimComp->BodyInstance.RemoveFromScene();
+		}
 
-				// 2. 래그돌 바디들 등록
-				USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(PrimComp);
-				if (SkelComp)
+		// 2. 래그돌(스켈레탈 메시) 바디들 처리
+		USkeletalMeshComponent* SkelComp = Cast<USkeletalMeshComponent>(PrimComp);
+		if (SkelComp)
+		{
+			const TArray<FBodyInstance*>& RagdollBodies = SkelComp->GetBodies();
+			for (FBodyInstance* Body : RagdollBodies)
+			{
+				if (!Body) continue;
+
+				if (bAddToScene)
 				{
-					const TArray<FBodyInstance*>& RagdollBodies = SkelComp->GetBodies();
-					for (FBodyInstance* Body : RagdollBodies)
-					{
-						if (Body)
-						{
-							Body->AddToScene();
-						}
-					}
+					Body->AddToScene();
+					// (옵션) Body->WakeUp();
+				}
+				else
+				{
+					Body->RemoveFromScene();
 				}
 			}
 		}

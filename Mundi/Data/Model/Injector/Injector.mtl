@@ -1,0 +1,23 @@
+# Blender 5.0.0 MTL File: 'Injector.blend'
+# www.blender.org
+
+newmtl M_Holder
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd material_1_baseColor.png
+map_Bump -bm 1.000000 material_1_normal.png
+
+newmtl M_Liquid
+Ns 2.262739
+Ka 1.000000 1.000000 1.000000
+Kd 0.204818 0.437335 0.196801
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 2.057149 0.068572
+Ni 1.500000
+d 1.000000
+illum 2

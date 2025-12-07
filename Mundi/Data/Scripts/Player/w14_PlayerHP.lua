@@ -11,8 +11,8 @@ function PlayerHP:new(Obj)
     self.__index = self
 
     Instance.Obj = Obj
-    Instance.MaxHP = 3
-    Instance.CurrentHP = 3
+    Instance.MaxHP = 10
+    Instance.CurrentHP = 10
     Instance.bInvincible = false -- 무적 상태
     Instance.bDead = false       -- 죽었는지
     Instance.InvincibleDuration = 1.5 -- 무적 시간

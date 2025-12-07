@@ -112,6 +112,8 @@ public:
     void SetActorActive(bool bIsActive);
     bool IsActorActive() const { return bActorIsActive; }
 
+    void UpdatePhysicsState(bool bAddToScene);    
+
     FMatrix GetWorldMatrix() const;
 
     FVector GetActorForward() const { return GetActorRotation().RotateVector(FVector(0, 1, 0)); }

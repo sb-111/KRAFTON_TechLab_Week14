@@ -8,6 +8,7 @@ function PlayerInput:new(Obj)
     Instance.VerticalInput = 0 -- 디버그 용
     Instance.RotateVector = Vector(0, 0, 0)
     Instance.ShootTrigger = false
+    Instance.ReloadTrigger = false
     Instance.DeadZone = 0.2 -- 패드 데드존
     Instance.GamepadSensitivity = 1000.0
     return Instance
@@ -17,6 +18,7 @@ function PlayerInput:Update(DT)
     self.HorizontalInput = 0
     self.VerticalInput = 0 -- 디버그 용
     self.ShootTrigger = false
+    self.ReloadTrigger = false
 
     if InputManager:IsKeyDown('A') then 
         self.HorizontalInput = -1 
@@ -28,10 +30,19 @@ function PlayerInput:Update(DT)
         self.VerticalInput = 1 -- 디버그 용
     end
 
+    if InputManager:IsKeyPressed('R') then
+        self.ReloadTrigger = true
+    end
+
     if InputManager:IsGamepadConnected(0) then
         local stickInput = InputManager:GetGamepadLeftStickX(0)
         if math.abs(stickInput) > self.DeadZone then
             self.HorizontalInput = stickInput
+        end
+
+        local reloadValue = InputManager:GetGamepadLeftTrigger(0)
+        if reloadValue > 0.5 then
+            self.ReloadTrigger = true
         end
     end
 

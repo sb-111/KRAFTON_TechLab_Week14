@@ -13,6 +13,7 @@
 #include "PhysicsScene.h"
 #include "PrimitiveComponent.h"
 #include "GameHUD.h"
+#include "LuaScriptComponent.h"
 
 sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* Class) {
     LuaComponentProxy Proxy;
@@ -56,7 +57,21 @@ FLuaManager::FLuaManager()
         "bIsHiddenInGame", sol::property(&FGameObject::GetHiddenInGame, &FGameObject::SetHiddenInGame),
         "Velocity", &FGameObject::Velocity,
         "PrintLocation", &FGameObject::PrintLocation,
-        "GetForward", &FGameObject::GetForward
+        "GetForward", &FGameObject::GetForward,
+        "SetPhysicsState", &FGameObject::SetPhysicsState,
+        "GetScript", [](FGameObject& self, sol::this_state s) -> sol::object {
+            AActor* Owner = self.GetOwner();
+            if (!Owner) return sol::make_object(s, sol::nil);
+
+            ULuaScriptComponent* LuaComp = Cast<ULuaScriptComponent>(
+                Owner->GetComponent(ULuaScriptComponent::StaticClass()));
+            if (LuaComp && LuaComp->GetLuaEnv().valid())
+            {
+                // sol::environment는 sol::table 처럼 Lua로 전달 가능합니다.
+                return LuaComp->GetLuaEnv();
+            }
+            return sol::make_object(s, sol::nil);
+        }
     );
     
     Lua->new_usertype<UCameraComponent>("CameraComponent",
@@ -412,6 +427,8 @@ FLuaManager::FLuaManager()
         "DrawTextWithBg", &UGameHUD::DrawTextWithBg,
         // 배경 있는 텍스트 (상대 좌표)
         "DrawTextWithBgRel", &UGameHUD::DrawTextWithBgRel,
+        // 사각형 렌더링 (절대 좌표)
+        "DrawRect", &UGameHUD::DrawRect,
         // 이미지 렌더링 (절대 좌표)
         "DrawImage", &UGameHUD::DrawImage,
         // 이미지 렌더링 (상대 좌표)
@@ -421,8 +438,6 @@ FLuaManager::FLuaManager()
         // 표시 여부 설정/조회
         "SetVisible", &UGameHUD::SetVisible,
         "IsVisible", &UGameHUD::IsVisible,
-        // 화면 크기 설정/조회
-        "SetScreenSize", &UGameHUD::SetScreenSize,
         "GetScreenWidth", &UGameHUD::GetScreenWidth,
         "GetScreenHeight", &UGameHUD::GetScreenHeight,
         // 화면 오프셋 조회 (뷰포트 위치)
@@ -454,6 +469,13 @@ FLuaManager::FLuaManager()
             if (Hit.Actor && !Hit.Actor->IsPendingDestroy())
             {
                 return Hit.Actor->GetGameObject();
+            }
+            return nullptr;
+        }),
+        "Name", sol::property([](FHitResult& Hit) -> FString {
+            if (Hit.Component)
+            {
+                return Hit.Component->GetName();
             }
             return nullptr;
         }),

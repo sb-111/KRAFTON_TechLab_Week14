@@ -442,9 +442,17 @@ void FPhysicsSimulationEventCallback::onContact(const PxContactPairHeader& PairH
 
 void FPhysicsSimulationEventCallback::onTrigger(PxTriggerPair* Pairs, PxU32 Count)
 {
+	// 이번 호출에서 이미 이벤트를 보낸 액터 쌍을 기억하기 위한 Set
+	// Key: 두 액터의 포인터를 조합한 해시값 혹은 단순 포인터 쌍
+	std::set<std::pair<AActor*, AActor*>> ProcessedPairs;
+	
 	for (PxU32 i = 0; i < Count; ++i)
 	{
 		const PxTriggerPair& TP = Pairs[i];
+
+		// 삭제된 액터면 패스
+		if (TP.flags & (PxTriggerPairFlag::eREMOVED_SHAPE_TRIGGER | PxTriggerPairFlag::eREMOVED_SHAPE_OTHER))
+			continue;
         
 		UPrimitiveComponent* TriggerComp = GetCompFromPxActor(TP.triggerActor);
 		UPrimitiveComponent* OtherComp = GetCompFromPxActor(TP.otherActor);
@@ -453,14 +461,30 @@ void FPhysicsSimulationEventCallback::onTrigger(PxTriggerPair* Pairs, PxU32 Coun
 		AActor* TriggerActor = TriggerComp->GetOwner();
 		AActor* OtherActor = OtherComp->GetOwner();
 		if (!TriggerActor || !OtherActor) { continue; }
+       
+		// 자기 자신과의 충돌은 무시 (혹시 모를 상황)
+		if (TriggerActor == OtherActor) continue;
+		
+		AActor* ActorA = TriggerActor < OtherActor ? TriggerActor : OtherActor;
+		AActor* ActorB = TriggerActor < OtherActor ? OtherActor : TriggerActor;
+       
+		std::pair<AActor*, AActor*> CurrentPair = { ActorA, ActorB };
 
-		// OnComponentBeginOverlap
+		if (ProcessedPairs.find(CurrentPair) != ProcessedPairs.end())
+		{
+			continue; 
+		}
+		ProcessedPairs.insert(CurrentPair);
+
+		// [중복 방지 2단계 - 권장] 실제 엔진처럼 하려면 Actor나 Component에 '현재 겹친 목록'을 저장해야 함.
+		// 예: if (TriggerActor->IsOverlapping(OtherActor)) return; 
+		// 일단 여기서는 1단계(쉐이프 중복 방지)만 적용해도 많이 개선됨.
+
 		if (TP.status == PxPairFlag::eNOTIFY_TOUCH_FOUND)
 		{
 			TriggerActor->OnComponentBeginOverlap.Broadcast(TriggerComp, OtherComp);
 			OtherActor->OnComponentBeginOverlap.Broadcast(OtherComp, TriggerComp);
 		}
-		// OnComponentEndOverlap
 		else if (TP.status == PxPairFlag::eNOTIFY_TOUCH_LOST)
 		{
 			TriggerActor->OnComponentEndOverlap.Broadcast(TriggerComp, OtherComp);

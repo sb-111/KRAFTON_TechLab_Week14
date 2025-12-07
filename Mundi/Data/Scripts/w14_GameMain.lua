@@ -137,12 +137,30 @@ function GameStart()
     -- ItemManager 생성 (GeneralObjectManager 사용, 바이옴과 무관)
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
-            "Data/Prefabs/test_item.prefab",
-            300,                    -- pool_size
+            "Data/Prefabs/w14_AmmoItem.prefab",
+            10,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            5,                      -- spawn_num (적게)
+            1,                      -- spawn_num (적게)
             3,                      -- radius
-            0.5                     -- 물체 스폰 z 위치
+            0.8                     -- 물체 스폰 z 위치
+    )
+
+    ItemManager:add_object(
+            "Data/Prefabs/w14_AidKit.prefab",
+            10,                    -- pool_size
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            1,                      -- spawn_num (적게)
+            3,                      -- radius
+            0.8                     -- 물체 스폰 z 위치
+    )
+
+    ItemManager:add_object(
+            "Data/Prefabs/w14_Adrenalin.prefab",
+            10,                    -- pool_size
+            Vector(-2000, 100, 0),  -- pool_standby_location
+            1,                      -- spawn_num (적게)
+            3,                      -- radius
+            0.8                     -- 물체 스폰 z 위치
     )
     
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
