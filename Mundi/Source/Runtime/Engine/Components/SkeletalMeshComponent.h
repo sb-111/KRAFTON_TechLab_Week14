@@ -193,12 +193,14 @@ public:
     const TArray<FConstraintInstance*>& GetConstraints() const { return Constraints; }
     const TArray<int32>& GetBodyParentIndices() const { return BodyParentIndices; }
     const TArray<int32>& GetBodyBoneIndices() const { return BodyBoneIndices; }
+    void OnTransformUpdated() override;
 
 private:
     // 과제 요구사항: USkeletalMeshComponent::InstantiatePhysicsAssetBodies_Internal
     void InstantiatePhysicsAssetBodies_Internal(UPhysicsAsset* PhysAsset, const TArray<FTransform>& BoneWorldTransforms);
     void CreateConstraints(UPhysicsAsset* PhysAsset);
     void SetupBoneHierarchy();
+    void UpdateBodiesFromBones();
 
     // 물리 -> 렌더링 동기화
     void SyncBodiesToBones();
