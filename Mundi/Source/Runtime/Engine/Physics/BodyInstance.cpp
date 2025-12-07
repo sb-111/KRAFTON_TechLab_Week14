@@ -289,6 +289,101 @@ void FBodyInstance::SetCollisionType(PxShape* Shape, UPrimitiveComponent* Compon
 	Shape->setFlags(NewFlags);
 }
 
+void FBodyInstance::AddToScene()
+{
+	if (!RigidActor) return;
+    
+	// OwnerScene이 있으면 거기 넣고, 없으면 월드 씬에 넣음
+	FPhysicsScene* TargetScene = OwnerScene;
+	if (!TargetScene && GWorld)
+	{
+		TargetScene = GWorld->GetPhysicsScene();
+	}
+
+	if (TargetScene)
+	{
+		TargetScene->AddActor(*RigidActor);
+		// 다시 씬에 들어갔으니 OwnerScene 갱신
+		OwnerScene = TargetScene; 
+	}
+}
+
+void FBodyInstance::RemoveFromScene()
+{
+	if (!RigidActor) return;
+
+	// 등록된 씬에서 제거
+	if (OwnerScene)
+	{
+		OwnerScene->RemoveActor(*RigidActor);
+		// 주의: OwnerScene 포인터를 null로 밀어버리면 나중에 다시 넣을 때 
+		// 어느 씬인지 모를 수 있으나, 보통 GWorld->GetPhysicsScene()을 쓰므로 괜찮음.
+		// 여기서는 명시적으로 유지하거나 초기화 정책에 따라 결정.
+		// OwnerScene = nullptr; 
+	}
+	else if (GWorld && GWorld->GetPhysicsScene())
+	{
+		// 혹시 모르니 월드 씬에서 시도
+		GWorld->GetPhysicsScene()->RemoveActor(*RigidActor);
+	}
+}
+
+void FBodyInstance::PutToSleep()
+{
+	PxRigidActor* Actor = RigidActor;
+    
+	if (!Actor || !GWorld || !GWorld->GetPhysicsScene()) return;
+
+	GWorld->GetPhysicsScene()->EnqueueCommand([Actor] {
+	   if (Actor)
+	   {
+		  // Dynamic 액터인지 확인
+		  PxRigidDynamic* DynamicBody = Actor->is<PxRigidDynamic>();
+          
+		  // Kinematic이 아닌 경우(순수 물리 시뮬레이션 액터)에만 Sleep 처리
+		  if (DynamicBody && !(DynamicBody->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+		  {
+			 // 즉시 속도를 0으로 만들고 Sleep 상태로 전환
+			 DynamicBody->putToSleep();
+		  }
+	   }
+	});
+}
+
+void FBodyInstance::WakeUp()
+{
+	PxRigidActor* Actor = RigidActor;
+
+	if (!Actor || !GWorld || !GWorld->GetPhysicsScene()) return;
+
+	GWorld->GetPhysicsScene()->EnqueueCommand([Actor] {
+	   if (Actor)
+	   {
+		  PxRigidDynamic* DynamicBody = Actor->is<PxRigidDynamic>();
+          
+		  // Kinematic이 아닌 경우에만 WakeUp 처리
+		  if (DynamicBody && !(DynamicBody->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+		  {
+			 // 강제로 깨움 (충돌이나 힘을 받지 않아도 연산 시작)
+			 DynamicBody->wakeUp();
+		  }
+	   }
+	});
+}
+
+bool FBodyInstance::IsSleeping() const
+{
+	if (RigidActor)
+	{
+		PxRigidDynamic* DynamicBody = RigidActor->is<PxRigidDynamic>();
+		if (DynamicBody)
+		{
+			return DynamicBody->isSleeping();
+		}
+	}
+	return false; // Static이거나 없으면 False
+}
+
 // Shape별 CollisionEnabled를 직접 받는 함수 (래그돌용)
 static void SetCollisionTypeFromShapeSettings(PxShape* Shape, ECollisionEnabled CollisionEnabled)
 {

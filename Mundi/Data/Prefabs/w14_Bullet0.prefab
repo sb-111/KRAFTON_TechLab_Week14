@@ -1,7 +1,7 @@
 {
   "ObjectName" : "bullet",
   "OwnedComponents" : [{
-      "Id" : 1230,
+      "Id" : 72200,
       "ObjectName" : "USceneComponent_5",
       "ParentId" : 0,
       "RelativeLocation" : [10.066133, 0.641412, 1.335294],
@@ -15,18 +15,18 @@
       "bTickInEditor" : false
     }, {
       "BoxExtent" : [1.000000, 1.000000, 1.000000],
-      "CollisionType" : 0,
+      "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1231,
+      "Id" : 72201,
       "Mass" : 10.000000,
       "MobilityType" : 0,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 1230,
+      "ParentId" : 72200,
       "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
-      "bBlockComponent" : false,
+      "bBlockComponent" : true,
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
@@ -49,8 +49,8 @@
     }, {
       "Gravity" : 0.000000,
       "HomingAccelerationMagnitude" : 0.000000,
-      "InitialSpeed" : 30.000000,
-      "MaxSpeed" : 30.000000,
+      "InitialSpeed" : 1.000000,
+      "MaxSpeed" : 1.000000,
       "ObjectName" : "UProjectileMovementComponent_1",
       "ProjectileLifespan" : 0.000000,
       "Type" : "UProjectileMovementComponent",
@@ -62,7 +62,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1230,
+  "RootComponentId" : 72200,
   "Tag" : "bullet",
   "Type" : "AEmptyActor",
   "bActorHiddenInGame" : false,

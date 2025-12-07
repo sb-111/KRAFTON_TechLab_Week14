@@ -311,7 +311,7 @@ void UWorld::Tick(float DeltaSeconds)
 	// 충돌 BVH 업데이트 (에디터/PIE 모두에서 호출 - Partition과 동일)
 	if (CollisionManager)
 	{
-		CollisionManager->UpdateCollisions(GetDeltaTime(EDeltaTime::Game));
+		// CollisionManager->UpdateCollisions(GetDeltaTime(EDeltaTime::Game));
 	}
 }
 

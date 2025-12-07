@@ -1,0 +1,83 @@
+{
+  "ObjectName" : "ChaserMonster",
+  "OwnedComponents" : [{
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 3026,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "Type" : "None"
+        }, {
+          "AssetPath" : "glass_hair_M",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "glass_hair_M",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "body_M",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "body_M1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "USkeletalMeshComponent_2",
+      "ParentId" : 0,
+      "PhysicsAssetPathOverride" : "",
+      "RelativeLocation" : [1.475850, -8.399864, 6.603066],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "SkeletalMesh" : "Data/GameJamMonster/copzombie_l_actisdato.fbx",
+      "Type" : "USkeletalMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsCar" : false,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "BoxExtent" : [0.500000, 0.500000, 1.000000],
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 3058,
+      "Mass" : 10.000000,
+      "MobilityType" : 0,
+      "ObjectName" : "UBoxComponent_2",
+      "ParentId" : 3026,
+      "RelativeLocation" : [0.000000, 0.000000, 1.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "UBoxComponent",
+      "bBlockComponent" : false,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bShapeHiddenInGame" : true,
+      "bShapeIsVisible" : true,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 3026,
+  "Tag" : "monster",
+  "Type" : "ASkeletalMeshActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

@@ -5,6 +5,8 @@
 local GameState = require("Game/w14_GameStateManager")
 local UI = require("Game/w14_UIManager")
 local Audio = require("Game/w14_AudioManager")
+local ScoreManager = require("Game/w14_ScoreManager")
+local AmmoManager = require("Game/w14_AmmoManager")
 local MapConfig = require("w14_MapConfig")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
@@ -34,6 +36,11 @@ local function CleanupGame()
     if ItemManager and ItemManager.destroy then
         ItemManager:destroy()
         ItemManager = nil
+    end
+
+    if MonsterManager and MonsterManager.destroy then
+        MonsterManager:destroy()
+        MonsterManager = nil
     end
 
     -- 플레이어 삭제
@@ -68,6 +75,13 @@ end
 function GameStart()
     -- 기존 게임 정리 (재시작 시)
     CleanupGame()
+
+    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
+    UI.ResetHUD()
+
+    -- 점수/탄약 매니저 초기화
+    ScoreManager.Reset()
+    AmmoManager.Reset()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
@@ -116,7 +130,8 @@ function GameStart()
             300,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
             5,                      -- spawn_num (적게)
-            3                       -- radius
+            3,                      -- radius
+            0.5                     -- 물체 스폰 z 위치
     )
     
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
@@ -125,7 +140,16 @@ function GameStart()
             300,
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
-            2                       -- radius
+            2,                      -- radius
+            0.5                     -- 물체 스폰 z 위치
+    )
+    MonsterManager:add_object(
+            "Data/Prefabs/w14_ChaserMonster.prefab",
+            200,
+            Vector(-2000, 150, 0),  -- pool_standby_location
+            5,                      -- spawn_num (기본보다 적게)
+            2.5,                    -- radius
+            0.5                     -- 물체 스폰 z 위치
     )
 end
 
@@ -135,6 +159,9 @@ function GameEnd()
 end
 
 function Tick(dt)
+    -- HUD 프레임 시작 (D2D 렌더링 준비)
+    UI.BeginHUDFrame()
+
     -- UI 위치 업데이트 (카메라 앞에 유지)
     UI.Update()
 
@@ -142,6 +169,13 @@ function Tick(dt)
     HandleInput()
 
     if GameState.IsPlaying() then
+        -- 거리 업데이트 (ScoreManager가 관리)
+        if Player then
+            ScoreManager.SetDistance(Player.Location.X)
+        end
+
+        -- 게임 HUD 표시 (UIManager가 ScoreManager/AmmoManager에서 직접 값을 가져옴)
+        UI.UpdateGameHUD(dt)
         -- 맵 업데이트
         if MapManager then
             MapManager:Tick()

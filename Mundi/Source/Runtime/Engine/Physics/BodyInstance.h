@@ -64,6 +64,21 @@ struct FBodyInstance
 
 	static void SetCollisionType(PxShape* Shape, UPrimitiveComponent* Component);
 
+public:
+	// 씬에 물리 액터 등록
+	void AddToScene();
+	// 씬에서 물리 액터 제거
+	void RemoveFromScene();
+	
+	// 강제로 Sleep 모드로 전환 (물리 연산 중지)
+	void PutToSleep();
+
+	// 강제로 깨우기 (물리 연산 재개)
+	void WakeUp();
+    
+	// 현재 Sleep 상태인지 확인
+	bool IsSleeping() const;
+	
 private:
 	// UBodySetup의 AggGeom에서 Shape들 생성 (래그돌용)
 	void CreateShapesFromBodySetup(UBodySetup* Setup, PxRigidActor* Body, UPrimitiveComponent* OwnerComponent);

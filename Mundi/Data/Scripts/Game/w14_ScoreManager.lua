@@ -10,6 +10,10 @@ local killCount = 0         -- 처치한 몬스터 수
 -- 최고 기록
 local bestDistance = 0
 local bestKillCount = 0
+local bestScore = 0
+
+-- 점수 배율
+local KILL_SCORE_MULTIPLIER = 100  -- 킬당 100점
 
 -- 콜백
 local onDistanceChangeCallbacks = {}
@@ -74,6 +78,20 @@ function M.AddKill(amount)
     end
 end
 
+-- ============ 점수 관련 ============
+
+--- 현재 점수 계산 (거리 + 킬수 * 100)
+--- @return number 현재 점수
+function M.GetScore()
+    return math.floor(distance) + (killCount * KILL_SCORE_MULTIPLIER)
+end
+
+--- 최고 점수 반환
+--- @return number 최고 점수
+function M.GetBestScore()
+    return bestScore
+end
+
 -- ============ 콜백 등록 ============
 
 function M.OnDistanceChange(callback)
@@ -87,11 +105,17 @@ end
 -- ============ 리셋 ============
 
 function M.Reset()
+    -- 최고 점수 갱신
+    local currentScore = M.GetScore()
+    if currentScore > bestScore then
+        bestScore = currentScore
+    end
+
     distance = 0
     killCount = 0
     -- 최고 기록은 유지
 
-    print("[ScoreManager] Reset - Distance: 0, Kills: 0")
+    print("[ScoreManager] Reset - Distance: 0, Kills: 0, Best Score: " .. bestScore)
 end
 
 function M.ResetAll()
@@ -99,33 +123,42 @@ function M.ResetAll()
     killCount = 0
     bestDistance = 0
     bestKillCount = 0
+    bestScore = 0
 
     print("[ScoreManager] Full Reset")
 end
 
 -- ============ 포맷팅 헬퍼 ============
 
--- 거리를 문자열로 (1234 -> "1,234m")
-function M.FormatDistance(value)
-    value = value or distance
-    local formatted = tostring(math.floor(value))
-    -- 천 단위 콤마
+--- 숫자를 천단위 쉼표로 포맷팅 (1234 -> "1,234")
+--- @param num number 숫자
+--- @return string 포맷된 문자열
+function M.FormatNumber(num)
+    local formatted = string.format("%.0f", num)
     local k
     while true do
         formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
         if k == 0 then break end
     end
-    return formatted .. "m"
+    return formatted
+end
+
+-- 거리를 문자열로 (1234 -> "1,234m")
+function M.FormatDistance(value)
+    value = value or distance
+    return M.FormatNumber(value) .. "m"
 end
 
 -- ============ 디버그 ============
 
 function M.PrintStatus()
-    print(string.format("[ScoreManager] Distance: %s (Best: %s) | Kills: %d (Best: %d)",
+    print(string.format("[ScoreManager] Distance: %s (Best: %s) | Kills: %d (Best: %d) | Score: %d (Best: %d)",
         M.FormatDistance(distance),
         M.FormatDistance(bestDistance),
         killCount,
-        bestKillCount
+        bestKillCount,
+        M.GetScore(),
+        bestScore
     ))
 end
 
