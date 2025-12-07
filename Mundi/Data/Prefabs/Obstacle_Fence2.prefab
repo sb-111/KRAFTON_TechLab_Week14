@@ -1,53 +1,51 @@
 {
-  "ObjectName" : "Obstacle_Tree2",
+  "ObjectName" : "Obstacle_Fence2",
   "OwnedComponents" : [{
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 84733,
+      "Id" : 80887,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
-          "AssetPath" : "aspen_bark",
+          "AssetPath" : "Bark",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "TreeEnds",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "Barbwire-PNG-Image",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_7",
+      "ObjectName" : "UStaticMeshComponent_28114",
       "ParentId" : 0,
-      "RelativeLocation" : [264.997101, -313.060944, -255.280991],
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Trees/Tree2.obj",
+      "StaticMesh" : "Data/Model/WireObstacle/WireObstacle2.obj",
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
       "bGenerateOverlapEvents" : true,
       "bHiddenInGame" : false,
       "bIsActive" : true,
-      "bIsTrigger" : true,
+      "bIsTrigger" : false,
       "bIsVisible" : true,
       "bOverrideMass" : false,
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "BoxExtent" : [0.400000, 0.600000, 6.300000],
+      "BoxExtent" : [0.500000, 0.900000, 0.400000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 84735,
+      "Id" : 80888,
       "Mass" : 10.000000,
       "MobilityType" : 769,
-      "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 84733,
-      "RelativeLocation" : [0.000000, 0.000000, 6.410000],
+      "ObjectName" : "UBoxComponent_8366",
+      "ParentId" : 80887,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [2.000000, 1.000000, 1.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "UBoxComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : true,
@@ -61,9 +59,17 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
+    }, {
+      "ObjectName" : "ULuaScriptComponent_2666",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }],
-  "RootComponentId" : 84733,
-  "Tag" : "obstacle",
+  "RootComponentId" : 80887,
+  "Tag" : "",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
   "bActorIsActive" : true

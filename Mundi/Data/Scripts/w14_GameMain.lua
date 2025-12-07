@@ -9,23 +9,43 @@ local MapConfig = require("w14_MapConfig")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
+local BiomeManagerClass = require("w14_BiomeManager")
 
 local MapManager = nil
-local ObstacleManager = nil
+local BiomeManager = nil
 local ItemManager = nil
 local ObjectPlacer = nil
 local Player = nil
 
+--- 게임 정리 함수 (재시작 전에 호출)
+local function CleanupGame()
+    -- 매니저들 정리
+    if MapManager and MapManager.destroy then
+        MapManager:destroy()
+        MapManager = nil
+    end
+
+    if BiomeManager and BiomeManager.destroy then
+        BiomeManager:destroy()
+        BiomeManager = nil
+    end
+
+    if ItemManager and ItemManager.destroy then
+        ItemManager:destroy()
+        ItemManager = nil
+    end
+
+    -- 플레이어 삭제
+    if Player and DeleteObject then
+        DeleteObject(Player)
+        Player = nil
+    end
+
+    ObjectPlacer = nil
+end
+
 function BeginPlay()
     print("=== Game Main Start ===")
-
-    -- 디버그: GameMain에서 직접 FindObjectByName 테스트
-    local testActor = FindObjectByName("BGMActor")
-    if testActor then
-        print("[DEBUG] GameMain: BGMActor found directly!")
-    else
-        print("[DEBUG] GameMain: BGMActor NOT found directly!")
-    end
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
@@ -40,10 +60,14 @@ function BeginPlay()
 
     -- 시작 화면 표시
     GameState.OnStateChange(GameState.States.PLAYING, GameStart)
+    GameState.OnStateChange(GameState.States.END, GameEnd)
     GameState.ShowStartScreen()
 end
 
 function GameStart()
+    -- 기존 게임 정리 (재시작 시)
+    CleanupGame()
+
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
     Player.Location = Vector(0, 0, 1.3)
@@ -65,7 +89,7 @@ function GameStart()
             100,
             Vector(-1000, 0, 0)
     )
-    
+
     -- ObjectPlacer 인스턴스 생성
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
     ObjectPlacer = ObjectPlacerClass:new(
@@ -76,38 +100,15 @@ function GameStart()
             1000
     )
 
-    -- ObstacleManager 생성 (GeneralObjectManager 사용)
-    ObstacleManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
-    ObstacleManager:add_object(
-            "Data/Prefabs/Obstacle_Tree1.prefab",
-            120,                    -- pool_size
-            Vector(-2000, 0, 0),    -- pool_standby_location
-            3,                     -- spawn_num
-            5                       -- radius
-    )
-    ObstacleManager:add_object(
-            "Data/Prefabs/Obstacle_Tree2.prefab",
-            120,                    -- pool_size
-            Vector(-2000, 0, 0),    -- pool_standby_location
-            3,                     -- spawn_num
-            5                       -- radius
-    )
-    ObstacleManager:add_object(
-            "Data/Prefabs/Obstacle_Tree3.prefab",
-            120,                    -- pool_size
-            Vector(-2000, 0, 0),    -- pool_standby_location
-            3,                     -- spawn_num
-            5                       -- radius
-    )
-    ObstacleManager:add_object(
-            "Data/Prefabs/Obstacle_Tree4.prefab",
-            120,                    -- pool_size
-            Vector(-2000, 0, 0),    -- pool_standby_location
-            3,                     -- spawn_num
-            5                       -- radius
+    -- BiomeManager 생성 (바이옴별 장애물 관리)
+    -- 바이옴 설정은 w14_BiomeConfig.lua에서 관리
+    BiomeManager = BiomeManagerClass:new(
+            Player,
+            ObjectPlacer,
+            MapConfig.map_chunk_x_size * 10  -- 바이옴 전환 간격
     )
 
-    -- ItemManager 생성 (GeneralObjectManager 사용)
+    -- ItemManager 생성 (GeneralObjectManager 사용, 바이옴과 무관)
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
             "Data/Prefabs/test_item.prefab",
@@ -116,6 +117,11 @@ function GameStart()
             5,                      -- spawn_num (적게)
             3                       -- radius
     )
+end
+
+function GameEnd()
+    -- 게임 종료 시 정리는 다음 게임 시작 시 CleanupGame에서 처리
+    print("=== Game End ===")
 end
 
 function Tick(dt)
@@ -131,7 +137,7 @@ function Tick(dt)
             MapManager:Tick()
         end
 
-        if ObjectPlacer and Player.Location.X >= ObjectPlacer.area_height_offset then
+        if ObjectPlacer and Player and Player.Location.X >= ObjectPlacer.area_height_offset then
             ObjectPlacer:update_area(
                     MapConfig.map_chunk_y_size,                              -- area_width (Y축)
                     MapConfig.map_chunk_x_size,                              -- area_height (X축)
@@ -140,8 +146,9 @@ function Tick(dt)
             )
         end
 
-        if ObstacleManager then
-            ObstacleManager:Tick()
+        -- BiomeManager가 바이옴별 장애물 관리
+        if BiomeManager then
+            BiomeManager:Tick()
         end
 
         if ItemManager then

@@ -46,7 +46,7 @@ function Tick(Delta)
         PlayerInput:Update(Delta)
         Rotate(Delta)
 
-        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
+        local Forward = 0.1 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()
@@ -109,7 +109,7 @@ function Shoot()
     local MaxDist = 10000.0
     -- 레이캐스트
     local bHit, HitResult = Physics.Raycast(CamPos + CamDir, CamDir, MaxDist)
-    
+
     local TargetPoint = nil
     if bHit then
         if HitResult.BoneName then

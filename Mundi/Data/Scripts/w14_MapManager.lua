@@ -103,4 +103,17 @@ function MapManager:Tick()
     end
 end
 
+--- 모든 맵 청크 정리 (게임 재시작 시 호출)
+function MapManager:destroy()
+    for i=1, #self.bioms do
+        if self.bioms[i] and self.bioms[i].destroy then
+            self.bioms[i]:destroy()
+        end
+    end
+    self.bioms = {}
+    self.player = nil
+    self.biom_name_to_spawn_this_turn = nil
+    self.next_spawn_location = -MapConfig.map_chunk_x_size
+end
+
 return MapManager

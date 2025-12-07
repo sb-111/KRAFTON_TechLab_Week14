@@ -144,6 +144,33 @@ function Pool:Tick()
     self:check_spawn_condition_and_release()
 end
 
+--- Pool의 모든 오브젝트를 삭제하고 정리 (게임 재시작 시 호출)
+--- @return void
+function Pool:destroy()
+    -- spawned 큐의 모든 오브젝트 삭제
+    while not self.spawned:is_empty() do
+        local obj = self.spawned:pop()
+        if obj and DeleteObject then
+            DeleteObject(obj)
+        end
+    end
+
+    -- despawned 큐의 모든 오브젝트 삭제
+    while not self.despawned:is_empty() do
+        local obj = self.despawned:pop()
+        if obj and DeleteObject then
+            DeleteObject(obj)
+        end
+    end
+
+    self.name = nil
+    self.pool_size = nil
+    self.pool_standby_location = nil
+    self.spawn_condition_checker = nil
+    self.despawn_condition_checker = nil
+    self.spawn_location_getter = nil
+end
+
 -- 모든 메서드 정의 후 클래스 프로토타입 보호
 -- (__newindex는 클래스 수정만 방지, 인스턴스는 자유롭게 수정 가능)
 do
