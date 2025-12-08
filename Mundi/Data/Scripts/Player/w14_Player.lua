@@ -83,6 +83,13 @@ function Reset()
     HPManager.Reset()
     PlayerAnim:Reset()
     ClearGameVignette()
+
+    -- 카메라 회전/리코일 초기화
+    TargetYaw = 0.0
+    TargetPitch = 0.0
+    CurrentYaw = 0.0
+    CurrentPitch = 0.0
+    CurrentRecoil = 0.0
 end
 
 function Tick(Delta)
@@ -117,9 +124,11 @@ function Tick(Delta)
             PlayerADS:Update(Delta, PlayerInput.ZoomTrigger)
         end
 
-        local bCanFire = AmmoManager.GetCurrentAmmo() > 0 and not AmmoManager.IsReloading()
+        -- ADS 보간 중에는 발사 불가
+        local bADSCanFire = not PlayerADS or PlayerADS:CanFire()
+        local bCanFire = AmmoManager.GetCurrentAmmo() > 0 and not AmmoManager.IsReloading() and bADSCanFire
         PlayerAnim:Update(Delta, PlayerInput.ShootTrigger, bCanFire)
-        if PlayerInput.ShootTrigger and not IsShootCool and not AmmoManager.IsReloading() then
+        if PlayerInput.ShootTrigger and not IsShootCool and not AmmoManager.IsReloading() and bADSCanFire then
             Shoot()
         end
 
@@ -177,11 +186,13 @@ function Rotate(DeltaTime)
     TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity * SensMult)
 
     -- 리코일 복구 (쏘지 않을 때 서서히 원래 조준점으로)
-    if CurrentRecoil > 0 then
+    if CurrentRecoil > 0.001 then  -- 부동소수점 오차 방지
         local recovery = RecoilRecoverySpeed * DeltaTime
         if recovery > CurrentRecoil then recovery = CurrentRecoil end
         TargetPitch = TargetPitch + recovery  -- 아래로 복구 (Pitch 증가 = 아래)
         CurrentRecoil = CurrentRecoil - recovery
+    else
+        CurrentRecoil = 0  -- 작은 값은 0으로 정리
     end
 
     -- Yaw 제한
