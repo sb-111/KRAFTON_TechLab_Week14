@@ -246,7 +246,12 @@ function Shoot()
     PlayerAnim:Fire()
     ApplyRecoil()  -- 카메라 리코일 적용
 
-    MuzzleParticle:Activate()
+    
+    local isADS = PlayerADS and PlayerADS:IsAiming()
+    if not isADS then
+        MuzzleParticle:Activate()
+    end
+    
     Audio.PlaySFX("gunshot")
 
     local CamPos = PlayerCamera:GetWorldLocation()
