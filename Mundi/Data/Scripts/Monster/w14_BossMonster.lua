@@ -95,7 +95,7 @@ function BossMonster:new(obj)
             if instance.anim_instance then
                 instance.anim_instance:AddState("Floating", "Data/GameJamAnim/Monster/BossFloating_mixamo.com", 1.0, true)
                 instance.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/BossAttack_mixamo.com", 1.0, false)
-                instance.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BossAttack.wav", 10.0)
+                instance.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BossAttack.wav", 10.0, 40.0)
                 instance.anim_instance:SetState("Floating", 0)
             end
         end
