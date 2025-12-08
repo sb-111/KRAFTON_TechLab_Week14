@@ -68,6 +68,15 @@ function GetDamage(Damage)
     ChaserMonster:GetDamage(Damage)
 end
 
+--- Pool에서 Respawn 시 호출됩니다.
+--- @return void
+function Reset()
+    if ChaserMonster then
+        ChaserMonster:Reset()
+    end
+    PrevActive = true
+end
+
 --- 게임 종료 시 호출됩니다.
 --- @return void
 function EndPlay()

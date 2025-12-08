@@ -148,7 +148,7 @@ function BeginPlay()
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     MonsterManager:add_object(
             "Data/Prefabs/w14_BasicMonster.prefab",
-            100,
+            300,
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2,                      -- radius
@@ -156,15 +156,15 @@ function BeginPlay()
     )
     MonsterManager:add_object(
             "Data/Prefabs/w14_ChaserMonster.prefab",
-            100,
+            200,
             Vector(-2000, 150, 0),  -- pool_standby_location
             5,                      -- spawn_num (기본보다 적게)
             2.5,                    -- radius
             0.5                     -- 물체 스폰 z 위치
     )
     
-    BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 80, 60)
-    ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 50, 60)
+    BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 280, 60)
+    ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 180, 60)
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
