@@ -60,7 +60,7 @@ function GeneralObjectManager:add_object(
                 if not head_obj or not head_obj.Location or not self.player then
                     return false
                 end
-                return head_obj.Location.X < self.player.Location.X - MapConfig.map_chunk_x_size
+                return head_obj.Location.X < self.player.Location.X - 1
             end
     )
 
