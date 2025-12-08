@@ -96,6 +96,7 @@ end
 
 --- 모든 오브젝트 풀 정리 (게임 재시작 시 호출)
 function GeneralObjectManager:reset()
+    print("GeneralObject reset!")
     for i=1, #self.objects do
         if self.objects[i] and self.objects[i].despawn_all then
             self.objects[i]:despawn_all()

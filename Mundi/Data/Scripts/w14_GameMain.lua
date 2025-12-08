@@ -59,6 +59,11 @@ local function CleanupGame()
         BossMonsterManager:reset()
     end
 
+    
+    if GameStageManager then
+        GameStageManager:reset()
+    end
+    
     PlayerScript.Reset()
 end
 
