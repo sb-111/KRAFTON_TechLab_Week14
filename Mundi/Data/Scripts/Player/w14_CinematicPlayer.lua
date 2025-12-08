@@ -38,12 +38,8 @@ function Tick(Delta)
             if ElapsedTime >= RunDuration then
                 HasCheckedSurvival = true
 
-                if IsSurvivor then
-                    print(Obj.Name .. " 생존! 계속 달린다!")
-                else
-                    print(Obj.Name .. " 사망...")
+                if not IsSurvivor then
                     IsRunning = false
-
                     if StateMachine then
                         StateMachine:SetState("Die", 0)
                     end
