@@ -1,0 +1,23 @@
+# Blender 5.0.0 MTL File: 'GrassTile.blend'
+# www.blender.org
+
+newmtl Maize
+Ns 19.306007
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd Maize_baseColor.png
+map_Bump -bm 1.000000 Maize_normal.png
+
+newmtl ground
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd Ground_Dark_Final.png
