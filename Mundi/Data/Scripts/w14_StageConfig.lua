@@ -9,11 +9,14 @@ local StageConfig = {
     default_spawn_num = 3,
     default_radius = 5,
 
+    -- 전환 간격 설정
+    stage_change_interval = 200,  -- 난이도 스테이지 전환 간격 (m)
+    theme_change_interval = 80,   -- 장애물 테마 전환 간격 (m)
+
     -- 난이도 스케일링 설정
     difficulty = {
-        scale_interval = 500,    -- 500m마다 밀도 증가
-        spawn_increment = 1,     -- 간격마다 증가할 스폰 개수
-        max_multiplier = 3.0,    -- 최대 배수 (base_spawn_num * max_multiplier)
+        max_stage = 7,           -- 최대 스테이지
+        max_multiplier = 3.0,    -- 최대 배수 (Stage 7에서 3.0배)
     },
 
     -- 스테이지 정의 (랜덤 로테이션)

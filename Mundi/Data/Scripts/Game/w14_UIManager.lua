@@ -6,6 +6,7 @@ local ScoreManager = require("Game/w14_ScoreManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local HPManager = require("Game/w14_HPManager")
 local Audio = require("Game/w14_AudioManager")
+local StageManager = require("w14_StageManager")
 
 local M = {}
 
@@ -381,6 +382,20 @@ function M.UpdateGameHUD(dt)
         UI_TEXTURES.AMMO_ICON,
         ammoIconX, TOP_MARGIN + 10,
         40, 40
+    )
+
+    -- 스테이지 표시 (우측 상단, 탄약과 동일 라인/크기)
+    local stageName = "Stage ?"
+    if StageManager.instance then
+        stageName = StageManager.instance:get_current_stage_name()
+    end
+    local rightMargin = screenW * 0.02
+    local stageTextWidth = 150  -- 대략적인 텍스트 너비
+    HUD:DrawText(
+        stageName,
+        screenW - rightMargin - stageTextWidth, TOP_MARGIN,
+        36,
+        Color(1, 1, 1, 1)
     )
 
     -- 크로스헤어 (화면 정중앙)

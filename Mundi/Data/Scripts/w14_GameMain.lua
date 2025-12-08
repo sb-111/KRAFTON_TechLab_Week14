@@ -15,7 +15,7 @@ local ObjectPlacerClass = require("w14_ObjectPlacer")
 local StageManagerClass = require("w14_StageManager")
 
 local MapManager = nil
-local StageManager = nil
+local GameStageManager = nil  -- StageManager.instance로 외부 접근 가능
 local ItemManager = nil
 local MonsterManager = nil
 local ObjectPlacer = nil
@@ -90,11 +90,7 @@ function BeginPlay()
 
     -- StageManager 생성 (스테이지별 장애물 관리)
     -- 스테이지 설정은 w14_StageConfig.lua에서 관리
-    StageManager = StageManagerClass:new(
-            Player,
-            ObjectPlacer,
-            MapConfig.map_chunk_x_size * 10  -- 스테이지 전환 간격
-    )
+    GameStageManager = StageManagerClass:new(Player, ObjectPlacer)
 
     -- ItemManager 생성 (GeneralObjectManager 사용, 스테이지와 무관)
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
@@ -235,8 +231,8 @@ function Tick(dt)
         end
 
         -- StageManager가 스테이지별 장애물 관리
-        if StageManager then
-            StageManager:Tick()
+        if GameStageManager then
+            GameStageManager:Tick()
         end
 
         if ItemManager then
