@@ -9,6 +9,7 @@ function PlayerInput:new(Obj)
     Instance.RotateVector = Vector(0, 0, 0)
     Instance.ShootTrigger = false
     Instance.ReloadTrigger = false
+    Instance.ZoomTrigger = false  -- 우클릭 줌
     Instance.DeadZone = 0.2 -- 패드 데드존
     Instance.GamepadSensitivity = 1000.0
     return Instance
@@ -81,6 +82,9 @@ function PlayerInput:Update(DT)
     else
         self.ShootTrigger = false
     end
+
+    -- 줌 입력 (우클릭)
+    self.ZoomTrigger = InputManager:IsMouseButtonDown(1)
 end
 
 return PlayerInput

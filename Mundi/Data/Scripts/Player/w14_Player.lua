@@ -29,6 +29,13 @@ local ShootCoolTime = 0.1
 local IsShootCool = false
 local MovementSpeed = 10.0
 
+-- 줌 관련 변수
+local DefaultFOV = 90.0
+local ZoomFOV = 55.0
+local ZoomSpeed = 10.0
+local CurrentFOV = DefaultFOV
+local ZoomSensitivityMult = 0.5
+
 function BeginPlay()
     Obj:SetPhysicsState(false)
     Obj:SetPhysicsState(true)
@@ -94,6 +101,12 @@ function Tick(Delta)
 
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
 
+        -- 줌 FOV 보간
+        local TargetFOV = PlayerInput.ZoomTrigger and ZoomFOV or DefaultFOV
+        CurrentFOV = CurrentFOV + (TargetFOV - CurrentFOV) * ZoomSpeed * Delta
+        if PlayerCamera then
+            PlayerCamera.FieldOfView = CurrentFOV
+        end
 
         local bCanFire = AmmoManager.GetCurrentAmmo() > 0 and not AmmoManager.IsReloading()
         PlayerAnim:Update(Delta, PlayerInput.ShootTrigger, bCanFire)
@@ -142,9 +155,11 @@ local RotationSmoothSpeed = 20.0
 
 function Rotate(DeltaTime)
     local InputDelta = PlayerInput.RotateVector
-    
-    TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity)
-    TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity)
+
+    -- 줌 시 감도 감소
+    local SensMult = PlayerInput.ZoomTrigger and ZoomSensitivityMult or 1.0
+    TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity * SensMult)
+    TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity * SensMult)
     
     if TargetPitch > 70.0 then TargetPitch = 70.0
     elseif TargetPitch < -70.0 then TargetPitch = -70.0 end
