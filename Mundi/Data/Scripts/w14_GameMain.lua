@@ -68,27 +68,47 @@ function BeginPlay()
 
     -- MapManager 초기화
     MapManager = MapManagerClass:new(Player)
+    
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk_3_x_20_1.prefab", --풀6:땅4로 미리 구워놓은 프리팹 바리에이션 4가지임.
-            100,
+            "Data/Prefabs/w14_chunk_30_1x8_1.prefab",
+            10,
             Vector(-1000, 0, 0)
     )
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk_3_x_20_3.prefab",
-            100,
+            "Data/Prefabs/w14_chunk_30_1x8_2.prefab",
+            10,
             Vector(-1000, 0, 0)
     )
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk_3_x_20_1.prefab",
-            100,
+            "Data/Prefabs/w14_chunk_30_1x8_3.prefab",
+            10,
             Vector(-1000, 0, 0)
     )
-
     MapManager:add_biom(
-             "Data/Prefabs/w14_Chunk_3_x_20_3.prefab",
-             100,
-             Vector(-1000, 0, 0)
-     )
+            "Data/Prefabs/w14_chunk_30_1x8_4.prefab",
+            10,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_chunk_30_1x8_5.prefab",
+            10,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_chunk_30_1x8_6.prefab",
+            10,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_chunk_30_1x8_7.prefab",
+            10,
+            Vector(-1000, 0, 0)
+    )
+    MapManager:add_biom(
+            "Data/Prefabs/w14_chunk_30_1x8_8.prefab",
+            10,
+            Vector(-1000, 0, 0)
+    )
 
     -- ObjectPlacer 인스턴스 생성
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
@@ -112,27 +132,27 @@ function BeginPlay()
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
             "Data/Prefabs/w14_AmmoItem.prefab",
-            10,                    -- pool_size
+            5,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            3,                      -- spawn_num (적게)
+            1,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
 
     ItemManager:add_object(
             "Data/Prefabs/w14_AidKit.prefab",
-            10,                    -- pool_size
+            5,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            3,                      -- spawn_num (적게)
+            1,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
 
     ItemManager:add_object(
             "Data/Prefabs/w14_Adrenalin.prefab",
-            10,                    -- pool_size
+            5,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            3,                      -- spawn_num (적게)
+            1,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
@@ -140,23 +160,23 @@ function BeginPlay()
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     MonsterManager:add_object(
             "Data/Prefabs/w14_BasicMonster.prefab",
-            100,
-            Vector(-2000, 100, 0),  -- pool_standby_location
+            40,
+            Vector(-2000, 60, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2,                      -- radius
             0.25                     -- 물체 스폰 z 위치
     )
     MonsterManager:add_object(
             "Data/Prefabs/w14_ChaserMonster.prefab",
-            100,
-            Vector(-2000, 150, 0),  -- pool_standby_location
+            30,
+            Vector(-2000, 40, 0),  -- pool_standby_location
             5,                      -- spawn_num (기본보다 적게)
             2.5,                    -- radius
             0.25                     -- 물체 스폰 z 위치
     )
     
-    BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 20, 60)
-    ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 20, 60)
+    BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 30, 60)
+    ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 24, 60)
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()

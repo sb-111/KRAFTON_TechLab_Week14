@@ -29,7 +29,7 @@ local bIsStarted = false
 
 local ShootCoolTime = 0.1
 local IsShootCool = false
-local MovementSpeed = 10.0
+local MovementSpeed = 6.0
 
 function BeginPlay()
     Obj:SetPhysicsState(false)
