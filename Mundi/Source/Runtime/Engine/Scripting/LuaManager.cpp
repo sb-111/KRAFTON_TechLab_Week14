@@ -95,6 +95,24 @@ FLuaManager::FLuaManager()
                 Camera->SetWorldLocation(FVector(X, Y, Z));
             }
         ),
+        "GetWorldRotation",
+        [](UCameraComponent* Camera)-> FVector
+        {
+            if (!Camera)
+            {
+                return FVector();
+            }
+            return Camera->GetWorldRotation().ToEulerZYXDeg();
+        },
+        "SetWorldRotation",
+        [](UCameraComponent* Camera, FVector Rotation) 
+        {
+            if (!Camera)
+            {
+                return;
+            }
+            Camera->SetWorldRotation(FQuat::MakeFromEulerZYX(Rotation));
+        },
         "SetCameraForward",
         [](UCameraComponent* Camera, FVector Direction)
         {

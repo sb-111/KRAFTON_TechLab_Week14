@@ -194,7 +194,7 @@ void APlayerCameraManager::BuildForFrame(float DeltaTime)
 		UCameraModifierBase* M = ActiveModifiers[i];
 		if (!M) 
 		{ 
-			ActiveModifiers.RemoveAtSwap(i); 
+			ActiveModifiers.RemoveAt(i); 
 			continue; 
 		}
 		
@@ -203,7 +203,7 @@ void APlayerCameraManager::BuildForFrame(float DeltaTime)
 		if (M->Duration >= 0.f && !M->bEnabled)
 		{
 			delete M;
-			ActiveModifiers.RemoveAtSwap(i); 
+			ActiveModifiers.RemoveAt(i); 
 			continue; 
 		}
 	}
@@ -280,7 +280,7 @@ int APlayerCameraManager::StartVignette(float InDuration, float Radius, float So
 	VignetteModifier->Color = InColor;
 
 	ActiveModifiers.Add(VignetteModifier);
-	return (ActiveModifiers.Num() - 1);
+	return ActiveModifiers.Num() - 1;
 }
 
 int APlayerCameraManager::UpdateVignette(int Idx, float InDuration, float Radius, float Softness, float Intensity, float Roundness, const FLinearColor& InColor, int32 InPriority)
@@ -318,9 +318,11 @@ void APlayerCameraManager::AdjustVignette(float InDuration, float Radius, float 
 
 void APlayerCameraManager::DeleteVignette()
 {
+	if (LastVignetteIdx == -1) return;
 	if (ActiveModifiers.Num() <= LastVignetteIdx || !ActiveModifiers[LastVignetteIdx] || !Cast<UCamMod_Vignette>(ActiveModifiers[LastVignetteIdx]))
 		return;
 	ActiveModifiers[LastVignetteIdx]->bEnabled = false;
+	LastVignetteIdx = -1;
 }
 
 void APlayerCameraManager::StartGamma(float Gamma)
