@@ -12,7 +12,7 @@ function PlayerKnockBack:new(Obj)
 
     Instance.Obj = Obj
     Instance.Velocity = 0.0      -- 현재 밀려나는 속도 (Y축 방향, + = 오른쪽, - = 왼쪽)
-    Instance.Friction = 8.0      -- 마찰 계수 (높을수록 빠르게 감속)
+    Instance.Friction = 2.0      -- 마찰 계수 (높을수록 빠르게 감속)
     Instance.MinVelocity = 0.01  -- 이 속도 이하면 0으로 처리
 
     return Instance

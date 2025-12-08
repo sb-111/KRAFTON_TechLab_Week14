@@ -72,7 +72,7 @@ function Tick(Delta)
         -- 사용자 임의로 위아래로 움직이고 싶을 때 디버그용
         -- local Forward = 0.01 * PlayerInput.VerticalInput
 
-        local Forward = 0.01 * PlayerSlow:GetSpeedMultiplier()
+        local Forward = 0.05 * PlayerSlow:GetSpeedMultiplier()
         local MoveAmount = 0
         if math.abs(PlayerInput.HorizontalInput) > 0 then
             MoveAmount = PlayerInput.HorizontalInput * MovementSpeed * Delta * PlayerSlow:GetSpeedMultiplier()

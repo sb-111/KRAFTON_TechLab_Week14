@@ -3,7 +3,7 @@
   "OwnedComponents" : [{
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 13114,
+      "Id" : 148602,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "Bark",
@@ -18,7 +18,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_28114",
       "ParentId" : 0,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeLocation" : [8.348244, 0.000000, 0.088933],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/WireObstacle/WireObstacle2.obj",
@@ -35,15 +35,15 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "BoxExtent" : [0.500000, 0.900000, 0.400000],
+      "BoxExtent" : [0.700000, 1.100000, 0.500000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 13115,
+      "Id" : 148603,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_8366",
-      "ParentId" : 13114,
-      "RelativeLocation" : [0.000000, 0.000000, 0.335713],
+      "ParentId" : 148602,
+      "RelativeLocation" : [0.000000, 0.000000, 0.500000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [0.628114, 0.844111, 1.000000],
       "Type" : "UBoxComponent",
@@ -68,7 +68,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 13114,
+  "RootComponentId" : 148602,
   "Tag" : "",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

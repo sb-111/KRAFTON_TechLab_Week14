@@ -1,9 +1,17 @@
 {
   "ObjectName" : "Obstacle_Fence3",
   "OwnedComponents" : [{
+      "ObjectName" : "ULuaScriptComponent_2666",
+      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 13633,
+      "Id" : 148607,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "WoodLog_Plank",
@@ -12,7 +20,7 @@
       "MobilityType" : 0,
       "ObjectName" : "UStaticMeshComponent_28114",
       "ParentId" : 0,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeLocation" : [6.269630, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "StaticMesh" : "Data/Model/FenceWood/FenceWood.obj",
@@ -29,23 +37,15 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2666",
-      "ScriptFilePath" : "Data/Scripts/w14_Obstacle.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "BoxExtent" : [0.200000, 1.000000, 0.400000],
+      "BoxExtent" : [0.200000, 1.000000, 0.500000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 13634,
+      "Id" : 148609,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_8366",
-      "ParentId" : 13633,
-      "RelativeLocation" : [0.000000, 0.000000, 0.330993],
+      "ParentId" : 148607,
+      "RelativeLocation" : [0.000000, 0.000000, 0.400000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [0.304740, 0.958831, 0.829133],
       "Type" : "UBoxComponent",
@@ -62,7 +62,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 13633,
+  "RootComponentId" : 148607,
   "Tag" : "",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,

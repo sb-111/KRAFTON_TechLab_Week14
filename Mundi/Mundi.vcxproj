@@ -329,6 +329,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Player\w14_PlayerAnim.lua" />
     <Content Include="Data\Scripts\Player\w14_PlayerHP.lua" />
     <Content Include="Data\Scripts\Player\w14_PlayerInput.lua" />
+    <Content Include="Data\Scripts\Player\w14_PlayerKnockBack.lua" />
     <Content Include="Data\Scripts\Player\w14_PlayerSlow.lua" />
     <Content Include="Data\Scripts\w14_BiomeConfig.lua" />
     <Content Include="Data\Scripts\w14_BiomeManager.lua" />
