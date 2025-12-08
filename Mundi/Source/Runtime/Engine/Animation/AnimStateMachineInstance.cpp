@@ -109,7 +109,7 @@ void UAnimStateMachineInstance::Lua_SetStateTime(const FString& Name, float Time
     if (Idx >= 0) SetStateTime(Idx, TimeSeconds);
 }
 
-bool UAnimStateMachineInstance::Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath)
+bool UAnimStateMachineInstance::Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath, float Volume)
 {
     const int32 Idx = FindStateByName(StateName);
     if (Idx < 0)
@@ -122,6 +122,7 @@ bool UAnimStateMachineInstance::Lua_AddSoundNotify(const FString& StateName, flo
     Notify.TriggerTime = TriggerTime;
     Notify.NotifyName = FName(NotifyName);
     Notify.SoundPath = SoundPath;
+    Notify.Volume = Volume;
 
     return StateMachine.AddNotify(Idx, Notify);
 }

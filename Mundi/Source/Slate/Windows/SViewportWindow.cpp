@@ -16,6 +16,7 @@
 #include "StaticMeshActor.h"
 #include "ResourceManager.h"
 #include "SViewerWindow.h"
+#include "FAudioDevice.h"
 #include <filesystem>
 
 extern float CLIENTWIDTH;
@@ -959,6 +960,26 @@ void SViewportWindow::RenderCameraOptionDropdownMenu()
 			if (ImGui::IsItemHovered())
 			{
 				ImGui::SetTooltip("카메라에서 가장 먼 렌더링 거리 (10-10000)\n이 값보다 먼 오브젝트는 보이지 않습니다");
+			}
+		}
+
+		// --- 섹션 5: 오디오 ---
+		ImGui::Spacing();
+		ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "오디오");
+		ImGui::Separator();
+
+		{
+			ImGui::Text("마스터 볼륨");
+
+			float masterVolume = FAudioDevice::GetMasterVolume();
+			ImGui::SetNextItemWidth(180);
+			if (ImGui::SliderFloat("##MasterVolume", &masterVolume, 0.0f, 5.0f, "%.2f"))
+			{
+				FAudioDevice::SetMasterVolume(masterVolume);
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("전체 오디오 볼륨 (0.0-5.0)\n1.0이 기본값, 더 큰 값으로 증폭 가능");
 			}
 		}
 

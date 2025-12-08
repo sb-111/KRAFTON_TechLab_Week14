@@ -551,7 +551,8 @@ void USkeletalMeshComponent::TriggerAnimNotify(const FAnimNotifyEvent& NotifyEve
         USound* Sound = UResourceManager::GetInstance().Load<USound>(NotifyEvent.SoundPath);
         if (Sound)
         {
-            FAudioDevice::PlaySound3D(Sound, GetWorldLocation());
+            // Volume을 적용하여 사운드 재생 (MasterVolume은 PlaySound3D 내부에서 적용됨)
+            FAudioDevice::PlaySound3D(Sound, GetWorldLocation(), NotifyEvent.Volume);
         }
     }
 

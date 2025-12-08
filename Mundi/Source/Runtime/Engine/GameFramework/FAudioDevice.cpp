@@ -10,6 +10,7 @@ IXAudio2MasteringVoice* FAudioDevice::pMasteringVoice = nullptr;
 X3DAUDIO_HANDLE         FAudioDevice::X3DInstance = {};
 X3DAUDIO_LISTENER       FAudioDevice::Listener = {};
 DWORD                   FAudioDevice::dwChannelMask = 0;
+float                   FAudioDevice::MasterVolume = 1.0f;
 
 UINT32 FAudioDevice::GetOutputChannelCount()
 {
@@ -178,7 +179,8 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound3D(USound* SoundToPlay, const FVecto
         return nullptr;
     }
 
-    voice->SetVolume(Volume);
+    // Apply MasterVolume to the final volume
+    voice->SetVolume(Volume * MasterVolume);
     UpdateSoundPosition(voice, EmitterPosition);
 
     hr = voice->Start(0);
@@ -249,7 +251,8 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound2D(USound* SoundToPlay, float Volume
         return nullptr;
     }
 
-    voice->SetVolume(Volume);
+    // Apply MasterVolume to the final volume
+    voice->SetVolume(Volume * MasterVolume);
     // No 3D positioning - audio plays at equal volume in both ears
 
     hr = voice->Start(0);
@@ -261,6 +264,17 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound2D(USound* SoundToPlay, float Volume
     }
 
     return voice;
+}
+
+void FAudioDevice::SetMasterVolume(float Volume)
+{
+    MasterVolume = std::max(0.0f, Volume);
+    UE_LOG("[Audio] Master volume set to: %.2f", MasterVolume);
+}
+
+float FAudioDevice::GetMasterVolume()
+{
+    return MasterVolume;
 }
 
 void FAudioDevice::SetListenerPosition(const FVector& Position, const FVector& ForwardVec, const FVector& UpVec)

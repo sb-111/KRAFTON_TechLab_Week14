@@ -333,15 +333,19 @@ struct FAnimNotifyEvent
 	/** 자동 재생할 사운드 경로 (비어있으면 재생 안 함) */
 	FString SoundPath;
 
+	/** 사운드 볼륨 (0.0 ~ 무제한, 기본값 1.0) */
+	float Volume = 1.0f;
+
 	/** 에디터 시각화용 색상 */
 	FLinearColor Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	FAnimNotifyEvent() = default;
 
-	FAnimNotifyEvent(float InTriggerTime, const FName& InNotifyName, const FString& InSoundPath = "")
+	FAnimNotifyEvent(float InTriggerTime, const FName& InNotifyName, const FString& InSoundPath = "", float InVolume = 1.0f)
 		: TriggerTime(InTriggerTime)
 		, NotifyName(InNotifyName)
 		, SoundPath(InSoundPath)
+		, Volume(InVolume)
 	{}
 };
 

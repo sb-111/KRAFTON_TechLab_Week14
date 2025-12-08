@@ -78,6 +78,11 @@ function ChaserMonster:Initialize(obj, move_speed, health_point, attack_point, a
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/ChaserZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/ChaserZombieDying_mixamo.com", 1.0, false)
 
+    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/ChaserZombieIdle.wav", 3.0)
+    self.anim_instance:AddSoundNotify("Walk", 0.01, "WalkSound", "Data/Audio/ChaserZombieIdle.wav", 3.0)
+    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/ChaserZombieAttack.wav", 3.0)
+    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/ChaserZombieDeath.wav", 100.0)
+
     -- 초기 상태 설정 (Walk로 시작)
     self.anim_instance:SetState("Walk", 0)
 
