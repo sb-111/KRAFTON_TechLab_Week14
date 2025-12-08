@@ -83,11 +83,11 @@ private:
     int32 FXAAQualityIterations = 12;       // 엣지 탐색 반복 횟수 (권장: 12)
 
     // Depth of Field parameters
-    float DOFFocalDistance = 10.0f;          // 포커스 거리 (미터, 기본값: 10.0)
-    float DOFNearTransitionRange = 5.0f;     // 포그라운드 전환 범위 (미터, 기본값: 5.0)
-    float DOFFarTransitionRange = 10.0f;     // 백그라운드 전환 범위 (미터, 기본값: 10.0)
+    float DOFFocalDistance = 8.5f;          // 포커스 거리 (미터, 기본값: 10.0)
+    float DOFNearTransitionRange = 0.1f;     // 포그라운드 전환 범위 (미터, 기본값: 5.0)
+    float DOFFarTransitionRange = 19.7f;     // 백그라운드 전환 범위 (미터, 기본값: 10.0)
     float DOFMaxCoCRadius = 1.0f;            // 최대 CoC 반경 (픽셀, 기본값: 1.0)
-    int32 DOFBlurPassCount = 2;              // Poisson Blur 적용 횟수 (1=Bokeh 강조, 2=깔끔한 블러, 기본값: 2)
+    int32 DOFBlurPassCount = 1;              // Poisson Blur 적용 횟수 (1=Bokeh 강조, 2=깔끔한 블러, 기본값: 2)
 
     // Tile-based light culling
     uint32 TileSize = 16;                   // 타일 크기 (픽셀, 기본값: 16)

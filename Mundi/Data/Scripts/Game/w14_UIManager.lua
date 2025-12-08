@@ -22,6 +22,7 @@ local UI_TEXTURES = {
     HOW_TO_PLAY_IMG = "Data/Textures/UI/HowToPlay.png",
     CROSSHAIR = "Data/Textures/CrossHair.png",
     AMMO_ICON = "Data/Textures/Ammo.png",
+    SHOT = "Data/Textures/Shot.png",
     HEADSHOT = "Data/Textures/HeadShot.png",
 }
 
@@ -44,12 +45,17 @@ local hudState = {
 
 -- 헤드샷 피드백 타이머
 local headshotTimer = 0
-local HEADSHOT_DURATION = 0.1 -- 0.5초 동안 표시
+local HEADSHOT_DURATION = 0.1 -- 0.1초 동안 표시
+
+-- 일반 샷 피드백 타이머
+local shotTimer = 0
+local SHOT_DURATION = 0.08 -- 0.08초 동안 표시
 
 -- ===== 설정 상수 =====
 local TOP_MARGIN = 10
 local CROSSHAIR_SIZE = 64
-local HEADSHOT_SIZE = 16
+local HEADSHOT_SIZE = 32
+local SHOT_SIZE = 24
 
 local showHowToPlayImage = false
 -- 초기화 플래그
@@ -77,6 +83,10 @@ end
 
 function M.ShowHeadshotFeedback()
     headshotTimer = HEADSHOT_DURATION
+end
+
+function M.ShowShotFeedback()
+    shotTimer = SHOT_DURATION
 end
 
 -- ===== 유틸리티 =====
@@ -152,7 +162,7 @@ local HEART_ICON_PATH = "Data/Textures/Heart.png"
 
 -- 크로스헤어 설정
 local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
-local CROSSHAIR_SIZE = 60  -- 크로스헤어 크기 (픽셀)
+local CROSSHAIR_SIZE = 80  -- 크로스헤어 크기 (픽셀)
 
 --- HUD 프레임 시작 (매 프레임 Tick 시작 시 호출)
 function M.BeginHUDFrame()
@@ -411,17 +421,25 @@ function M.UpdateGameHUD(dt)
     )
 
     if headshotTimer > 0 then
-        -- 타이머 감소
         headshotTimer = headshotTimer - dt
-
-        -- 붉은 X 표시 그리기
-        -- 수학 공식: (화면중앙) - (이미지크기의 절반) = 이미지가 정중앙에 위치함
         HUD:DrawImage(
             UI_TEXTURES.HEADSHOT,
-            centerX - HEADSHOT_SIZE / 2,                    -- X좌표: 내 크기 기준으로 중앙 정렬
-            (centerY - HEADSHOT_SIZE / 2) - centerOffsetY,  -- Y좌표: 내 크기 기준 중앙 + 오프셋 보정
-            HEADSHOT_SIZE,                                  -- 가로 크기
-            HEADSHOT_SIZE                                   -- 세로 크기
+            centerX - HEADSHOT_SIZE / 2,
+            (centerY - HEADSHOT_SIZE / 2) - centerOffsetY,
+            HEADSHOT_SIZE,
+            HEADSHOT_SIZE
+        )
+    end
+
+    -- 일반 샷 표시 (헤드샷이 아닐 때만)
+    if shotTimer > 0 and headshotTimer <= 0 then
+        shotTimer = shotTimer - dt
+        HUD:DrawImage(
+            UI_TEXTURES.SHOT,
+            centerX - SHOT_SIZE / 2,
+            (centerY - SHOT_SIZE / 2) - centerOffsetY,
+            SHOT_SIZE,
+            SHOT_SIZE
         )
     end
 end

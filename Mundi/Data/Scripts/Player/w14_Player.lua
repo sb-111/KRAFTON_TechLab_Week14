@@ -30,7 +30,7 @@ local bIsStarted = false
 
 local ShootCoolTime = 0.1
 local IsShootCool = false
-local MovementSpeed = 10.0
+local MovementSpeed = 6.0
 
 function BeginPlay()
     Obj:SetPhysicsState(false)
@@ -74,7 +74,7 @@ end
 
 function StartGame()
     if PlayerCamera then
-        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.0)
+        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.2)
         RestoreBaseVignette()
     end
 
@@ -83,6 +83,7 @@ end
 
 function Reset()
     Obj.Location = Vector(0, 0, 1.3)
+    Obj.Rotation = Vector(0, 0, 0)
     bIsStarted = false
     HPManager.Reset()
     PlayerAnim:Reset()
@@ -278,6 +279,8 @@ function Shoot()
                     isHeadshot = true
                     print("!!! HEADSHOT !!!")
                     UI.ShowHeadshotFeedback()
+                else
+                    UI.ShowShotFeedback()
                 end
 
                 -- 피 색상과 부위에 따른 파티클 스폰
