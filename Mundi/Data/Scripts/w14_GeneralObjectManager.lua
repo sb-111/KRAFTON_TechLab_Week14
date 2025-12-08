@@ -61,7 +61,7 @@ function GeneralObjectManager:add_object(
                     return false
                 end
                 return head_obj.Location.X < self.player.Location.X - 1
-            end
+            end 
     )
 
     --- object Spawn 조건 설정
