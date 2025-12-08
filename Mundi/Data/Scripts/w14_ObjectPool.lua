@@ -97,6 +97,13 @@ function Pool:spawn()
         local spawned = self.despawned:pop()
         spawned.Location = new_location
         spawned.bIsActive = true
+
+        -- 스크립트의 Reset 함수가 있으면 호출하여 상태 초기화
+        local script = spawned:GetScript()
+        if script and script.Reset then
+            script.Reset()
+        end
+
         self.spawned:push(spawned)
     end
 end

@@ -81,7 +81,7 @@ function MapManager:should_spawn()
         return false
     end
     return self.player.Location.X >=
-            self.next_spawn_location - MapConfig.map_chunk_x_size * 1.5
+            self.next_spawn_location - MapConfig.map_chunk_x_size
 end
 
 function MapManager:Tick()

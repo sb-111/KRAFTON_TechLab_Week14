@@ -97,6 +97,8 @@ FSceneRenderer::FSceneRenderer(UWorld* InWorld, FSceneView* InView, URenderer* I
 // static 멤버 변수 정의 (프레임간 재사용)
 ID3D11Buffer* FSceneRenderer::BatchingInstanceBuffer = nullptr;
 uint32 FSceneRenderer::BatchingInstanceBufferCapacity = 0;
+ID3D11Buffer* FSceneRenderer::ShadowBatchingInstanceBuffer = nullptr;
+uint32 FSceneRenderer::ShadowBatchingInstanceBufferCapacity = 0;
 
 FSceneRenderer::~FSceneRenderer()
 {
@@ -112,6 +114,12 @@ void FSceneRenderer::Shutdown()
 		BatchingInstanceBuffer->Release();
 		BatchingInstanceBuffer = nullptr;
 		BatchingInstanceBufferCapacity = 0;
+	}
+	if (ShadowBatchingInstanceBuffer)
+	{
+		ShadowBatchingInstanceBuffer->Release();
+		ShadowBatchingInstanceBuffer = nullptr;
+		ShadowBatchingInstanceBufferCapacity = 0;
 	}
 }
 
@@ -363,6 +371,9 @@ void FSceneRenderer::RenderShadowMaps()
 		}
 	}
 
+	// 3. 그림자 메시 인스턴싱 배칭 (동일 메시를 하나의 드로우 콜로 합침)
+	BatchShadowMeshes(ShadowMeshBatches);
+
 	// NOTE: 카메라 오버라이드 기능을 항상 활성화 하기 위해서 그림자를 그릴 곳이 없어도 함수 실행
 	//if (ShadowMeshBatches.IsEmpty()) return;
 
@@ -583,11 +594,13 @@ void FSceneRenderer::RenderShadowDepthPass(FShadowRenderRequest& ShadowRequest, 
 
 	// GPU 스키닝용 셰이더 variant
 	TArray<FShaderMacro> GPUSkinningMacros;
-	FShaderMacro GPUSkinningMacro;
-	GPUSkinningMacro.Name = FName("GPU_SKINNING");
-	GPUSkinningMacro.Definition = FName("1");
-	GPUSkinningMacros.Add(GPUSkinningMacro);
+	GPUSkinningMacros.Add(FShaderMacro{ "GPU_SKINNING", "1" });
 	FShaderVariant* GPUSkinningShaderVariant = DepthVS->GetOrCompileShaderVariant(GPUSkinningMacros);
+
+	// GPU 인스턴싱용 셰이더 variant
+	TArray<FShaderMacro> GPUInstancingMacros;
+	GPUInstancingMacros.Add(FShaderMacro{ "GPU_INSTANCING", "1" });
+	FShaderVariant* GPUInstancingShaderVariant = DepthVS->GetOrCompileShaderVariant(GPUInstancingMacros);
 
 	// vsm용 픽셀 셰이더
 	UShader* DepthPs = UResourceManager::GetInstance().Load<UShader>("Shaders/Shadows/DepthOnly_PS.hlsl");
@@ -620,40 +633,69 @@ void FSceneRenderer::RenderShadowDepthPass(FShadowRenderRequest& ShadowRequest, 
 	// 4. (DrawMeshBatches와 유사하게) 배치 순회하며 그리기
 	ID3D11Buffer* CurrentVertexBuffer = nullptr;
 	ID3D11Buffer* CurrentIndexBuffer = nullptr;
+	ID3D11Buffer* CurrentInstanceBuffer = nullptr;
 	UINT CurrentVertexStride = 0;
 	D3D11_PRIMITIVE_TOPOLOGY CurrentTopology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
-	bool bCurrentUsingGPUSkinning = false;
 
-	// 기본 셰이더 variant로 초기화
-	RHIDevice->GetDeviceContext()->IASetInputLayout(ShaderVariant->InputLayout);
-	RHIDevice->GetDeviceContext()->VSSetShader(ShaderVariant->VertexShader, nullptr, 0);
+	// 셰이더 모드 추적: 0=기본, 1=GPU 스키닝, 2=GPU 인스턴싱
+	int32 CurrentShaderMode = -1;
 
 	for (const FMeshBatchElement& Batch : InShadowBatches)
 	{
-		// GPU 스키닝 여부 확인
-		bool bUseGPUSkinning = (Batch.BoneMatricesBuffer != nullptr);
+		// 셰이더 모드 결정: GPU 스키닝 > GPU 인스턴싱 > 기본
+		int32 DesiredShaderMode = 0;  // 기본
+		FShaderVariant* VariantToUse = ShaderVariant;
 
-		// 셰이더 variant 전환 (GPU 스키닝 여부에 따라)
-		if (bUseGPUSkinning != bCurrentUsingGPUSkinning)
+		if (Batch.BoneMatricesBuffer != nullptr)
 		{
-			FShaderVariant* VariantToUse = bUseGPUSkinning ? GPUSkinningShaderVariant : ShaderVariant;
+			DesiredShaderMode = 1;  // GPU 스키닝
+			VariantToUse = GPUSkinningShaderVariant;
+		}
+		else if (Batch.InstanceBuffer != nullptr && Batch.NumInstances >= 1)
+		{
+			DesiredShaderMode = 2;  // GPU 인스턴싱
+			VariantToUse = GPUInstancingShaderVariant;
+		}
+
+		// 셰이더 variant 전환
+		if (DesiredShaderMode != CurrentShaderMode)
+		{
 			if (VariantToUse)
 			{
 				RHIDevice->GetDeviceContext()->IASetInputLayout(VariantToUse->InputLayout);
 				RHIDevice->GetDeviceContext()->VSSetShader(VariantToUse->VertexShader, nullptr, 0);
 			}
-			bCurrentUsingGPUSkinning = bUseGPUSkinning;
+			CurrentShaderMode = DesiredShaderMode;
 		}
+
+		// 인스턴싱 배치 처리
+		bool bIsInstanced = (Batch.InstanceBuffer != nullptr && Batch.NumInstances >= 1);
 
 		// IA 상태 변경
 		if (Batch.VertexBuffer != CurrentVertexBuffer ||
 			Batch.IndexBuffer != CurrentIndexBuffer ||
 			Batch.VertexStride != CurrentVertexStride ||
-			Batch.PrimitiveTopology != CurrentTopology)
+			Batch.PrimitiveTopology != CurrentTopology ||
+			(bIsInstanced && Batch.InstanceBuffer != CurrentInstanceBuffer))
 		{
-			UINT Stride = Batch.VertexStride;
-			UINT Offset = 0;
-			RHIDevice->GetDeviceContext()->IASetVertexBuffers(0, 1, &Batch.VertexBuffer, &Stride, &Offset);
+			if (bIsInstanced)
+			{
+				// 인스턴싱: 2개 스트림 (메시 + 인스턴스 데이터)
+				ID3D11Buffer* Buffers[2] = { Batch.VertexBuffer, Batch.InstanceBuffer };
+				UINT Strides[2] = { Batch.VertexStride, Batch.InstanceStride };
+				UINT Offsets[2] = { 0, 0 };
+				RHIDevice->GetDeviceContext()->IASetVertexBuffers(0, 2, Buffers, Strides, Offsets);
+				CurrentInstanceBuffer = Batch.InstanceBuffer;
+			}
+			else
+			{
+				// 비인스턴싱: 1개 스트림
+				UINT Stride = Batch.VertexStride;
+				UINT Offset = 0;
+				RHIDevice->GetDeviceContext()->IASetVertexBuffers(0, 1, &Batch.VertexBuffer, &Stride, &Offset);
+				CurrentInstanceBuffer = nullptr;
+			}
+
 			RHIDevice->GetDeviceContext()->IASetIndexBuffer(Batch.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 			RHIDevice->GetDeviceContext()->IASetPrimitiveTopology(Batch.PrimitiveTopology);
 
@@ -663,15 +705,31 @@ void FSceneRenderer::RenderShadowDepthPass(FShadowRenderRequest& ShadowRequest, 
 			CurrentTopology = Batch.PrimitiveTopology;
 		}
 
-		// 오브젝트별 World 행렬 설정 (VS에서 필요)
-		RHIDevice->SetAndUpdateConstantBuffer(ModelBufferType(Batch.WorldMatrix, Batch.WorldMatrix.InverseAffine().Transpose()));
+		// 오브젝트별 World 행렬 설정 (인스턴싱의 경우 셰이더에서 무시됨)
+		if (!bIsInstanced)
+		{
+			RHIDevice->SetAndUpdateConstantBuffer(ModelBufferType(Batch.WorldMatrix, Batch.WorldMatrix.InverseAffine().Transpose()));
+		}
 
 		// GPU 스키닝: 본 행렬 상수 버퍼 바인딩 (b6)
 		ID3D11Buffer* BoneBuffer = Batch.BoneMatricesBuffer;
 		RHIDevice->GetDeviceContext()->VSSetConstantBuffers(6, 1, &BoneBuffer);
 
 		// 드로우 콜
-		RHIDevice->GetDeviceContext()->DrawIndexed(Batch.IndexCount, Batch.StartIndex, Batch.BaseVertexIndex);
+		if (bIsInstanced)
+		{
+			RHIDevice->GetDeviceContext()->DrawIndexedInstanced(
+				Batch.IndexCount,
+				Batch.NumInstances,
+				Batch.StartIndex,
+				Batch.BaseVertexIndex,
+				Batch.StartInstanceLocation
+			);
+		}
+		else
+		{
+			RHIDevice->GetDeviceContext()->DrawIndexed(Batch.IndexCount, Batch.StartIndex, Batch.BaseVertexIndex);
+		}
 	}
 }
 
@@ -2324,6 +2382,185 @@ void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatch
 	}
 
 	InOutMeshBatches.Append(NewBatches);
+}
+
+void FSceneRenderer::BatchShadowMeshes(TArray<FMeshBatchElement>& InOutShadowBatches)
+{
+	if (InOutShadowBatches.Num() < 2)
+	{
+		return;  // 배칭할 것이 없음
+	}
+
+	// 인스턴스 데이터 구조체 (48 bytes) - BatchStaticMeshes와 동일
+	struct FInstanceData
+	{
+		FVector4 Transform0;
+		FVector4 Transform1;
+		FVector4 Transform2;
+	};
+
+	// Shadow 배칭 키: 머티리얼 무시, 메시 버퍼만 비교
+	struct FShadowBatchKey
+	{
+		ID3D11Buffer* VertexBuffer;
+		ID3D11Buffer* IndexBuffer;
+		uint32 IndexCount;
+		uint32 StartIndex;
+		uint32 VertexStride;
+
+		bool operator==(const FShadowBatchKey& Other) const
+		{
+			return VertexBuffer == Other.VertexBuffer &&
+				IndexBuffer == Other.IndexBuffer &&
+				IndexCount == Other.IndexCount &&
+				StartIndex == Other.StartIndex &&
+				VertexStride == Other.VertexStride;
+		}
+	};
+
+	struct FShadowBatchKeyHash
+	{
+		size_t operator()(const FShadowBatchKey& Key) const
+		{
+			size_t Hash = reinterpret_cast<size_t>(Key.VertexBuffer);
+			Hash ^= reinterpret_cast<size_t>(Key.IndexBuffer) << 1;
+			Hash ^= static_cast<size_t>(Key.IndexCount) << 2;
+			Hash ^= static_cast<size_t>(Key.StartIndex) << 3;
+			Hash ^= static_cast<size_t>(Key.VertexStride) << 4;
+			return Hash;
+		}
+	};
+
+	// --- 1단계: 배치 그룹화 ---
+	struct FShadowBatchGroup
+	{
+		TArray<int32> Indices;
+	};
+	std::unordered_map<FShadowBatchKey, FShadowBatchGroup, FShadowBatchKeyHash> TempGroups;
+	uint32 TotalInstanceCount = 0;
+
+	for (int32 i = 0; i < InOutShadowBatches.Num(); ++i)
+	{
+		const FMeshBatchElement& Batch = InOutShadowBatches[i];
+
+		// 이미 인스턴싱 중이거나 스키닝 중인 배치는 스킵
+		if (Batch.InstanceBuffer != nullptr)
+		{
+			continue;
+		}
+		if (Batch.BoneMatricesBuffer != nullptr)
+		{
+			continue;  // GPU 스키닝 배치는 인스턴싱 불가
+		}
+
+		FShadowBatchKey Key;
+		Key.VertexBuffer = Batch.VertexBuffer;
+		Key.IndexBuffer = Batch.IndexBuffer;
+		Key.IndexCount = Batch.IndexCount;
+		Key.StartIndex = Batch.StartIndex;
+		Key.VertexStride = Batch.VertexStride;
+
+		TempGroups[Key].Indices.Add(i);
+	}
+
+	// 유효한 그룹만 필터링 (2개 이상인 그룹만)
+	std::unordered_map<FShadowBatchKey, FShadowBatchGroup, FShadowBatchKeyHash> ValidGroups;
+	for (auto& Pair : TempGroups)
+	{
+		if (Pair.second.Indices.Num() >= 2)
+		{
+			TotalInstanceCount += Pair.second.Indices.Num();
+			ValidGroups[Pair.first] = std::move(Pair.second);
+		}
+	}
+
+	if (TotalInstanceCount == 0)
+	{
+		return;  // 배칭할 것이 없음
+	}
+
+	// --- 2단계: 단일 동적 인스턴스 버퍼 확보 ---
+	uint32 RequiredCapacity = TotalInstanceCount * sizeof(FInstanceData);
+
+	if (RequiredCapacity > ShadowBatchingInstanceBufferCapacity)
+	{
+		// 버퍼 재생성 (2배 여유 확보)
+		if (ShadowBatchingInstanceBuffer)
+		{
+			ShadowBatchingInstanceBuffer->Release();
+			ShadowBatchingInstanceBuffer = nullptr;
+		}
+
+		uint32 NewCapacity = FMath::Max(RequiredCapacity * 2, 16384u);  // 최소 16KB
+		D3D11_BUFFER_DESC Desc = {};
+		Desc.ByteWidth = NewCapacity;
+		Desc.Usage = D3D11_USAGE_DYNAMIC;
+		Desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		if (FAILED(RHIDevice->GetDevice()->CreateBuffer(&Desc, nullptr, &ShadowBatchingInstanceBuffer)))
+		{
+			return;  // 버퍼 생성 실패
+		}
+		ShadowBatchingInstanceBufferCapacity = NewCapacity;
+	}
+
+	// --- 3단계: 버퍼 매핑하고 모든 인스턴스 데이터 기록 ---
+	D3D11_MAPPED_SUBRESOURCE MappedData;
+	if (FAILED(RHIDevice->GetDeviceContext()->Map(ShadowBatchingInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedData)))
+	{
+		return;  // 매핑 실패
+	}
+
+	FInstanceData* DestPtr = static_cast<FInstanceData*>(MappedData.pData);
+	TArray<int32> BatchesToRemove;
+	TArray<FMeshBatchElement> NewBatches;
+	uint32 CurrentInstanceOffset = 0;
+
+	for (auto& Pair : ValidGroups)
+	{
+		const FShadowBatchGroup& Group = Pair.second;
+		const FMeshBatchElement& FirstBatch = InOutShadowBatches[Group.Indices[0]];
+
+		// 인스턴스 데이터 기록
+		for (int32 Idx : Group.Indices)
+		{
+			const FMeshBatchElement& Batch = InOutShadowBatches[Idx];
+			FMatrix TransposedMatrix = Batch.WorldMatrix.Transpose();
+
+			DestPtr->Transform0 = TransposedMatrix.VRows[0];
+			DestPtr->Transform1 = TransposedMatrix.VRows[1];
+			DestPtr->Transform2 = TransposedMatrix.VRows[2];
+			++DestPtr;
+		}
+
+		// 새 배치 생성 (셰이더는 RenderShadowDepthPass에서 설정)
+		FMeshBatchElement NewBatch = FirstBatch;
+		NewBatch.InstanceBuffer = ShadowBatchingInstanceBuffer;
+		NewBatch.NumInstances = static_cast<uint32>(Group.Indices.Num());
+		NewBatch.InstanceStride = sizeof(FInstanceData);
+		NewBatch.StartInstanceLocation = CurrentInstanceOffset;
+
+		NewBatches.Add(NewBatch);
+		CurrentInstanceOffset += Group.Indices.Num();
+
+		// 원본 배치들 제거 목록에 추가
+		for (int32 Idx : Group.Indices)
+		{
+			BatchesToRemove.Add(Idx);
+		}
+	}
+
+	RHIDevice->GetDeviceContext()->Unmap(ShadowBatchingInstanceBuffer, 0);
+
+	// --- 4단계: 원본 배치 제거 및 새 배치 추가 ---
+	BatchesToRemove.Sort([](int32 A, int32 B) { return A > B; });
+	for (int32 Idx : BatchesToRemove)
+	{
+		InOutShadowBatches.RemoveAt(Idx);
+	}
+
+	InOutShadowBatches.Append(NewBatches);
 }
 
 void FSceneRenderer::ApplyScreenEffectsPass()
