@@ -4,7 +4,7 @@
 
 local StageConfig = {
     -- 공통 설정
-    pool_size = 120,
+    pool_size = 20, -- 최대 spawn_num(현재 stage에서는 최대로 쳐도 3(base_spawn_num)x3.0(multiplier)=9) + 여유분(despawn 지연 대비)
     pool_standby_location = Vector(-2000, 0, 0),
     default_spawn_num = 3,
     default_radius = 5,
