@@ -40,10 +40,10 @@ function BeginPlay()
 
     Particle.Init()
     -- 피 파티클 등록 (Body/Head × Red/Green)
-    Particle.Register("blood_body_red", "Data/Prefabs/Particle/w14_Blood_Body_Red.prefab", 20, 1.0)
-    --Particle.Register("blood_body_green", "Data/Prefabs/Particle/w14_Blood_Body_Green.prefab", 20, 1.0) -- 지금 없음 (색만 바꾸면 될듯)
-    Particle.Register("blood_head_red", "Data/Prefabs/Particle/w14_Blood_Head_Red.prefab", 15, 1.2)
-    --Particle.Register("blood_head_green", "Data/Prefabs/Particle/w14_Blood_Head_Green.prefab", 15, 1.2) -- 지금 없음
+    Particle.Register("blood_body_red", "Data/Prefabs/w14_Blood_Body_Red.prefab", 20, 1.0)
+    --Particle.Register("blood_body_green", "Data/Prefabs/w14_Blood_Body_Green.prefab", 20, 1.0) -- 지금 없음 (색만 바꾸면 될듯)
+    Particle.Register("blood_head_red", "Data/Prefabs/w14_Blood_Head_Red.prefab", 15, 1.2)
+    --Particle.Register("blood_head_green", "Data/Prefabs/w14_Blood_Head_Green.prefab", 15, 1.2) -- 지금 없음
 
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
@@ -217,7 +217,13 @@ function Shoot()
                 local particleName = isHeadshot
                     and ("blood_head_" .. bloodColor)
                     or ("blood_body_" .. bloodColor)
-                Particle.Spawn(particleName, TargetPoint)
+                print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
+                local spawnResult = Particle.Spawn(particleName, TargetPoint)
+                if spawnResult then
+                    print("[DEBUG] Particle spawned successfully")
+                else
+                    print("[DEBUG] Particle spawn FAILED - pool exhausted?")
+                end
 
                 -- 3. 데미지 적용
                 if monsterScript.GetDamage then
