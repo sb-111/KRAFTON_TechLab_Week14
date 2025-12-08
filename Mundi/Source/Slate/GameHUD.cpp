@@ -365,13 +365,13 @@ void UGameHUD::DrawTextInternal(const FString& text, float x, float y, float fon
     y += ScreenOffsetY;
 
     // UTF-8 -> Wide string 변환
-    std::wstring wideText(text.begin(), text.end());
+    FWideString WideText = UTF8ToWide(text);
 
     // 텍스트 레이아웃 생성하여 크기 측정
     IDWriteTextLayout* layout = nullptr;
     if (FAILED(Dwrite->CreateTextLayout(
-        wideText.c_str(),
-        static_cast<UINT32>(wideText.length()),
+        WideText.c_str(),
+        static_cast<UINT32>(WideText.length()),
         format,
         ScreenWidth,  // Max width
         ScreenHeight, // Max height
@@ -408,8 +408,8 @@ void UGameHUD::DrawTextInternal(const FString& text, float x, float y, float fon
         rect.bottom
     );
     D2dCtx->DrawTextW(
-        wideText.c_str(),
-        static_cast<UINT32>(wideText.length()),
+        WideText.c_str(),
+        static_cast<UINT32>(WideText.length()),
         format,
         textRect,
         CachedBrush

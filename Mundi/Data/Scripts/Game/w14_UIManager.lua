@@ -19,6 +19,8 @@ local UI_TEXTURES = {
     HOW_TO_PLAY_HOVER = "Data/Textures/UI/UI_HowToPlay_Hover.png",
     EXIT_BUTTON = "Data/Textures/UI/UI_ExitButton.png",
     EXIT_BUTTON_HOVER = "Data/Textures/UI/UI_ExitButton_Hover.png",
+    RESTART_BUTTON = "Data/Textures/UI/UI_RestartButton.png",
+    RESTART_BUTTON_HOVER = "Data/Textures/UI/UI_RestartButton_Hover.png",
     HOW_TO_PLAY_IMG = "Data/Textures/UI/HowToPlay.png",
     CROSSHAIR = "Data/Textures/CrossHair.png",
     AMMO_ICON = "Data/Textures/Ammo.png",
@@ -244,6 +246,15 @@ function M.UpdateStartScreen()
         HUD:DrawImage(UI_TEXTURES.HOW_TO_PLAY_IMG, imgX, imgY, imgW, imgH)
     end
 
+    -- ★ 왼쪽 아래 크레딧 텍스트
+    HUD:DrawText(
+        "게임테크랩 2기 - 국동희, 허준, 홍신화, 허승빈",
+        10,  -- X 좌표 (왼쪽에서 10픽셀)
+        screenH - 40,  -- Y 좌표 (아래에서 30픽셀)
+        20,  -- 폰트 크기
+        Color(0.8, 0.8, 0.8, 1)  -- 밝은 회색
+    )
+
     -- 클릭 처리
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.start.hovered then
@@ -463,7 +474,7 @@ function M.UpdateGameOverScreen()
 
     -- "GAME OVER" 텍스트 (화면 상단)
     local gameOverText = "GAME OVER"
-    local gameOverY = screenH * 0.25
+    local gameOverY = screenH * 0.2
     HUD:DrawText(gameOverText, screenW / 2 - 150, gameOverY, 72, Color(1, 0.2, 0.2, 1))
 
     -- 최종 점수 표시
@@ -471,17 +482,17 @@ function M.UpdateGameOverScreen()
     local kills = ScoreManager.GetKillCount()
     local score = ScoreManager.GetScore()
 
-    local statsY = screenH * 0.40
+    local statsY = screenH * 0.35
     local statsSpacing = 40
-    HUD:DrawText("Distance: " .. ScoreManager.FormatDistance(distance), screenW / 2 - 100, statsY, 28, Color(1, 1, 1, 1))
-    HUD:DrawText("Kills: " .. ScoreManager.FormatNumber(kills), screenW / 2 - 100, statsY + statsSpacing, 28, Color(1, 1, 1, 1))
-    HUD:DrawText("Score: " .. ScoreManager.FormatNumber(score), screenW / 2 - 100, statsY + statsSpacing * 2, 28, Color(1, 1, 1, 1))
+    HUD:DrawText("Distance: " .. ScoreManager.FormatDistance(distance), screenW / 2 - 100, statsY, 40, Color(1, 1, 1, 1))
+    HUD:DrawText("Kills: " .. ScoreManager.FormatNumber(kills), screenW / 2 - 100, statsY + statsSpacing, 40, Color(1, 1, 1, 1))
+    HUD:DrawText("Score: " .. ScoreManager.FormatNumber(score), screenW / 2 - 100, statsY + statsSpacing * 2, 40, Color(1, 1, 1, 1))
 
     -- 버튼 크기 설정
     local btnW = 400
-    local btnH = 80
-    local btnSpacing = 20
-    local startY = screenH * 0.60
+    local btnH = 200
+    local btnSpacing = -50
+    local startY = screenH * 0.50
     local btnX = (screenW - btnW) / 2
 
     -- RESTART 버튼
@@ -494,10 +505,9 @@ function M.UpdateGameOverScreen()
         Audio.PlaySFX("buttonHovered")
     end
 
-    -- RESTART 버튼 배경
-    local restartColor = buttonStates.restart.hovered and Color(0.3, 0.8, 0.3, 1) or Color(0.2, 0.6, 0.2, 1)
-    HUD:DrawRect(btnX, restartY, btnW, btnH, restartColor)
-    HUD:DrawText("RESTART", btnX + btnW / 2 - 70, restartY + 20, 40, Color(1, 1, 1, 1))
+    -- RESTART 버튼 이미지
+    local restartTex = buttonStates.restart.hovered and UI_TEXTURES.RESTART_BUTTON_HOVER or UI_TEXTURES.RESTART_BUTTON
+    HUD:DrawImage(restartTex, btnX, restartY, btnW, btnH)
 
     -- EXIT 버튼
     local exitY = restartY + btnH + btnSpacing
@@ -509,10 +519,9 @@ function M.UpdateGameOverScreen()
         Audio.PlaySFX("buttonHovered")
     end
 
-    -- EXIT 버튼 배경
-    local exitColor = buttonStates.gameOverExit.hovered and Color(0.8, 0.3, 0.3, 1) or Color(0.6, 0.2, 0.2, 1)
-    HUD:DrawRect(btnX, exitY, btnW, btnH, exitColor)
-    HUD:DrawText("EXIT", btnX + btnW / 2 - 40, exitY + 20, 40, Color(1, 1, 1, 1))
+    -- EXIT 버튼 이미지
+    local exitTex = buttonStates.gameOverExit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
+    HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
     -- 클릭 처리
     if InputManager:IsMouseButtonPressed(0) then
