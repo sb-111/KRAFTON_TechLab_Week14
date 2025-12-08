@@ -1,3 +1,5 @@
+local MobStat = require("Monster/w14_MobStat")
+
 --- ChaserMonster 클래스
 --- @class ChaserMonster
 --- @field stat MobStat 스탯 관리 객체
