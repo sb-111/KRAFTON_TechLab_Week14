@@ -47,7 +47,7 @@ function BeginPlay()
         end
 
         -- 파티클 끝날 때까지 대기 후 제거
-        coroutine.yield("wait_time", 2.5)
+        coroutine.yield("wait_time", 1)
         if Obj then
             DeleteObject(Obj)
         end
