@@ -230,10 +230,12 @@ void APlayerCameraManager::BuildForFrame(float DeltaTime)
 }
 
 void APlayerCameraManager::StartCameraShake(float InDuration, float AmpLoc, float AmpRotDeg, float Frequency,
-	int32 InPriority)
+	int32 InPriority, float BlendIn, float BlendOut)
 {
 	UCamMod_Shake* ShakeModifier = new UCamMod_Shake();
 	ShakeModifier->Priority = InPriority;
+	ShakeModifier->BlendIn = BlendIn;
+	ShakeModifier->BlendOut = BlendOut;
 	ShakeModifier->Initialize(InDuration, AmpLoc, AmpRotDeg, Frequency);
 	ActiveModifiers.Add(ShakeModifier);
 }

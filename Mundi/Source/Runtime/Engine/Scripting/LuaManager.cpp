@@ -785,12 +785,22 @@ void FLuaManager::ExposeGlobalFunctions()
 
         // --- StartCameraShake ---
         "StartCameraShake", sol::overload(
-            // (Full) 5개 인수
+            // (Full) 7개 인수: Duration, AmpLoc, AmpRotDeg, Frequency, Priority, BlendIn, BlendOut
+            [](APlayerCameraManager* Self, float InDuration, float AmpLoc, float AmpRotDeg, float Frequency, int32 InPriority, float BlendIn, float BlendOut)
+            {
+                if (Self) Self->StartCameraShake(InDuration, AmpLoc, AmpRotDeg, Frequency, InPriority, BlendIn, BlendOut);
+            },
+            // 6개 인수: BlendOut 기본값 사용
+            [](APlayerCameraManager* Self, float InDuration, float AmpLoc, float AmpRotDeg, float Frequency, int32 InPriority, float BlendIn)
+            {
+                if (Self) Self->StartCameraShake(InDuration, AmpLoc, AmpRotDeg, Frequency, InPriority, BlendIn);
+            },
+            // 5개 인수: BlendIn, BlendOut 기본값 사용
             [](APlayerCameraManager* Self, float InDuration, float AmpLoc, float AmpRotDeg, float Frequency, int32 InPriority)
             {
                 if (Self) Self->StartCameraShake(InDuration, AmpLoc, AmpRotDeg, Frequency, InPriority);
             },
-            // (Priority 기본값 사용) 4개 인수
+            // 4개 인수: Priority, BlendIn, BlendOut 기본값 사용
             [](APlayerCameraManager* Self, float InDuration, float AmpLoc, float AmpRotDeg, float Frequency)
             {
                 if (Self) Self->StartCameraShake(InDuration, AmpLoc, AmpRotDeg, Frequency);

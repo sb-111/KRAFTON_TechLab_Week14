@@ -40,7 +40,7 @@ public:
 	void SetViewCamera(UCameraComponent* NewViewTarget);
 	void SetViewCameraWithBlend(UCameraComponent* NewViewTarget, float InBlendTime);
 
-	void StartCameraShake(float InDuration, float AmpLoc, float AmpRotDeg, float Frequency, int32 InPriority = 0);
+	void StartCameraShake(float InDuration, float AmpLoc, float AmpRotDeg, float Frequency, int32 InPriority = 0, float BlendIn = 0.02f, float BlendOut = 0.10f);
 	
 	void StartFade(float InDuration, float FromAlpha, float ToAlpha, const FLinearColor& InColor= FLinearColor::Zero(), int32 InPriority = 0);
 	
