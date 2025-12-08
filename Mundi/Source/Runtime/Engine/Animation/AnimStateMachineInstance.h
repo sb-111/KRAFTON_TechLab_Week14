@@ -25,6 +25,12 @@ public:
     float GetStateTime(int32 Index) const { return StateMachine.GetStateTime(Index); }
     bool SetStateTime(int32 Index, float TimeSeconds) { return StateMachine.SetStateTime(Index, TimeSeconds); }
 
+    // Notify API (for convenience)
+    bool AddNotify(int32 StateIndex, const FAnimNotifyEvent& Notify) { return StateMachine.AddNotify(StateIndex, Notify); }
+    bool RemoveNotify(int32 StateIndex, const FName& NotifyName) { return StateMachine.RemoveNotify(StateIndex, NotifyName); }
+    void ClearNotifies(int32 StateIndex) { StateMachine.ClearNotifies(StateIndex); }
+    const TArray<FAnimNotifyEvent>* GetNotifies(int32 StateIndex) const { return StateMachine.GetNotifies(StateIndex); }
+
     // ==== Lua-facing API (moved from SkeletalMeshComponent) ====
     UFUNCTION(LuaBind, DisplayName="Clear")
     void Clear();
@@ -58,6 +64,24 @@ public:
 
     UFUNCTION(LuaBind, DisplayName="SetStateTime")
     void Lua_SetStateTime(const FString& Name, float TimeSeconds);
+
+    // ==== Sound Notify 관리 (Lua에서 동적으로 추가 가능) ====
+    // 특정 상태에 사운드 노티파이 추가
+    // StateName: 상태 이름
+    // TriggerTime: 애니메이션 시간(초)에서 노티파이 발생 시점
+    // NotifyName: 노티파이 식별자 (콜백에서 사용)
+    // SoundPath: 재생할 사운드 경로 (비어있으면 사운드 재생 안 함)
+    // Volume: 사운드 볼륨 (MasterVolume과 곱해져서 최종 볼륨 결정)
+    UFUNCTION(LuaBind, DisplayName="AddSoundNotify")
+    bool Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath, float Volume);
+
+    // 특정 상태에서 노티파이 제거
+    UFUNCTION(LuaBind, DisplayName="RemoveNotify")
+    bool Lua_RemoveNotify(const FString& StateName, const FString& NotifyName);
+
+    // 특정 상태의 모든 노티파이 제거
+    UFUNCTION(LuaBind, DisplayName="ClearStateNotifies")
+    void Lua_ClearStateNotifies(const FString& StateName);
 
     // UAnimInstance overrides
     void NativeUpdateAnimation(float DeltaSeconds) override;

@@ -51,21 +51,25 @@ local CROSSHAIR_SIZE = 64
 local HEADSHOT_SIZE = 16
 
 local showHowToPlayImage = false
+-- 초기화 플래그
+local isInitialized = false
 
 -- ===== 초기화 =====
 function M.Init()
+    if isInitialized then return true end
+
     -- 이미지 프리로드
     if HUD then
         for _, path in pairs(UI_TEXTURES) do
             HUD:LoadImage(path)
         end
     end
-    
 
     Audio.Init()
-    local result = Audio.RegisterSFX("buttonClicked", "ButtonClickedActor")
-    local result = Audio.RegisterSFX("buttonHovered", "ButtonHoveredActor")
+    Audio.RegisterSFX("buttonClicked", "ButtonClickedActor")
+    Audio.RegisterSFX("buttonHovered", "ButtonHoveredActor")
 
+    isInitialized = true
     print("[UIManager] Initialized (D2D mode)")
     return true
 end

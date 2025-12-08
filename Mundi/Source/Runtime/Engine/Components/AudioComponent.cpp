@@ -47,7 +47,7 @@ void UAudioComponent::TickComponent(float DeltaTime)
         if (!bIs2D)
         {
             FVector CurrentLocation = GetWorldLocation();
-            FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation);
+            FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation, Volume);
         }
 
         if (!bIsLooping)
@@ -93,6 +93,17 @@ void UAudioComponent::Stop()
 void UAudioComponent::DuplicateSubObjects()
 {
     Super::DuplicateSubObjects();
+}
+
+void UAudioComponent::SetVolume(float InVolume)
+{
+    Volume = InVolume;
+
+    // 재생 중인 사운드가 있으면 즉시 볼륨 적용
+    if (bIsPlaying && SourceVoice)
+    {
+        SourceVoice->SetVolume(Volume);
+    }
 }
 
 

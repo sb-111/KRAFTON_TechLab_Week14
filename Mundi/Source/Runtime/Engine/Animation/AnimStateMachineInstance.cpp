@@ -108,3 +108,45 @@ void UAnimStateMachineInstance::Lua_SetStateTime(const FString& Name, float Time
     const int32 Idx = FindStateByName(Name);
     if (Idx >= 0) SetStateTime(Idx, TimeSeconds);
 }
+
+bool UAnimStateMachineInstance::Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath, float Volume)
+{
+    const int32 Idx = FindStateByName(StateName);
+    if (Idx < 0)
+    {
+        UE_LOG("[AnimStateMachine] AddSoundNotify failed: state '%s' not found\n", StateName.c_str());
+        return false;
+    }
+
+    FAnimNotifyEvent Notify;
+    Notify.TriggerTime = TriggerTime;
+    Notify.NotifyName = FName(NotifyName);
+    Notify.SoundPath = SoundPath;
+    Notify.Volume = Volume;
+
+    return StateMachine.AddNotify(Idx, Notify);
+}
+
+bool UAnimStateMachineInstance::Lua_RemoveNotify(const FString& StateName, const FString& NotifyName)
+{
+    const int32 Idx = FindStateByName(StateName);
+    if (Idx < 0)
+    {
+        UE_LOG("[AnimStateMachine] RemoveNotify failed: state '%s' not found\n", StateName.c_str());
+        return false;
+    }
+
+    return StateMachine.RemoveNotify(Idx, FName(NotifyName));
+}
+
+void UAnimStateMachineInstance::Lua_ClearStateNotifies(const FString& StateName)
+{
+    const int32 Idx = FindStateByName(StateName);
+    if (Idx < 0)
+    {
+        UE_LOG("[AnimStateMachine] ClearStateNotifies failed: state '%s' not found\n", StateName.c_str());
+        return;
+    }
+
+    StateMachine.ClearNotifies(Idx);
+}

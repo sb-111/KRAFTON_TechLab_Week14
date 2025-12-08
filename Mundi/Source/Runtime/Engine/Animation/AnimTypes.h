@@ -314,3 +314,50 @@ public:
 		return Ar;
 	}
 };
+
+/**
+ * 애니메이션 노티파이 이벤트
+ * 특정 시간에 발생하는 이벤트 (사운드, 이펙트 등)
+ */
+struct FAnimNotifyEvent
+{
+	/** 애니메이션 시간 (초) 에서 노티파이가 발생하는 시점 */
+	float TriggerTime = 0.f;
+
+	/** 노티파이 지속 시간 (Duration-based notify용) */
+	float Duration = 0.f;
+
+	/** 노티파이 식별자 */
+	FName NotifyName;
+
+	/** 자동 재생할 사운드 경로 (비어있으면 재생 안 함) */
+	FString SoundPath;
+
+	/** 사운드 볼륨 (0.0 ~ 무제한, 기본값 1.0) */
+	float Volume = 1.0f;
+
+	/** 에디터 시각화용 색상 */
+	FLinearColor Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+	FAnimNotifyEvent() = default;
+
+	FAnimNotifyEvent(float InTriggerTime, const FName& InNotifyName, const FString& InSoundPath = "", float InVolume = 1.0f)
+		: TriggerTime(InTriggerTime)
+		, NotifyName(InNotifyName)
+		, SoundPath(InSoundPath)
+		, Volume(InVolume)
+	{}
+};
+
+/**
+ * 노티파이 트랙
+ * 동일한 종류의 노티파이들을 그룹화
+ */
+struct FNotifyTrack
+{
+	FString Name;
+	TArray<FAnimNotifyEvent> Notifies;
+
+	FNotifyTrack() = default;
+	FNotifyTrack(const FString& InName) : Name(InName) {}
+};

@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimNodeBase.h"
 #include "AnimSequencePlayer.h"
+#include "AnimTypes.h"
 
 class UAnimSequenceBase;
 
@@ -11,6 +12,12 @@ struct FAnimState
     FString Name;
     float PlayRate = 1.f;
     bool bLooping = true;
+
+    // 이 상태에서 발생할 노티파이 목록 (Lua에서 동적으로 추가 가능)
+    TArray<FAnimNotifyEvent> Notifies;
+
+    // 노티파이 트리거를 위한 이전 프레임 시간
+    float PreviousTime = 0.f;
 
     // Internal player node (owns the sequence and playback state)
     FAnimNode_SequencePlayer Player;
@@ -53,6 +60,12 @@ struct FAnimNode_StateMachine : public FAnimNode_Base
     bool SetStateLooping(int32 Index, bool bInLooping);
     float GetStateTime(int32 Index) const;
     bool SetStateTime(int32 Index, float TimeSeconds);
+
+    // Notify 관리
+    bool AddNotify(int32 StateIndex, const FAnimNotifyEvent& Notify);
+    bool RemoveNotify(int32 StateIndex, const FName& NotifyName);
+    void ClearNotifies(int32 StateIndex);
+    const TArray<FAnimNotifyEvent>* GetNotifies(int32 StateIndex) const;
 
     // FAnimNode_Base overrides
     void Update(FAnimationBaseContext& Context) override;

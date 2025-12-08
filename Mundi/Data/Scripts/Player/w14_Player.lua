@@ -305,6 +305,12 @@ function OnBeginOverlap(OtherActor)
             AmmoManager.CancelReload()
             PlayerAnim:CancelReload()  -- ← 애니메이션 취소
         end
+        
+        -- 충돌 효과음 출력
+        Audio.PlaySFX("ObstacleCollisionScream")
+        -- Audio.SetSFXVolume("ObstacleCollisionScream", 50)
+        Audio.PlaySFX("ObstacleCollisionSmash")
+        -- Audio.SetSFXVolume("ObstacleCollisionSmash", 50)
     end
 
     -- 몹과 충돌 처리 (Tag 기반 데미지)
@@ -327,6 +333,10 @@ function OnBeginOverlap(OtherActor)
         if died then
             -- TODO: 게임 오버 처리
             print("[Player] Game Over!")
+        else
+            -- 충돌 효과음 출력
+            Audio.PlaySFX("MonsterCollisionScream")
+            Audio.PlaySFX("MonsterCollisionSmash")
         end
     end
 
@@ -337,6 +347,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] 탄약 획득! +" .. ammoAmount)
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+        
+        Audio.PlaySFX("GainedAmmo")
     end
 
     -- 회복 아이템 획득 (AidKit)
@@ -345,6 +357,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] AidKit 획득! HP +5")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAidKit")
     end
 
     -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
@@ -353,5 +367,7 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAdrenalin")
     end
 end

@@ -21,10 +21,14 @@ public:
     static void StopSound(IXAudio2SourceVoice* pSourceVoice);
 
     static void SetListenerPosition(const FVector& Position, const FVector& ForwardVec, const FVector& UpVec);
-    static void UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition);
+    static void UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition, float Volume = 1.0f);
 
     // Loads .wav files under GDataDir/Audio into resource manager
     static void Preload();
+
+    // Master Volume control (affects all sounds)
+    static void SetMasterVolume(float Volume);
+    static float GetMasterVolume();
 
 private:
     static IXAudio2*                pXAudio2;
@@ -32,5 +36,6 @@ private:
     static X3DAUDIO_HANDLE          X3DInstance;
     static X3DAUDIO_LISTENER        Listener;
     static DWORD                    dwChannelMask;
+    static float                    MasterVolume;
 };
 
