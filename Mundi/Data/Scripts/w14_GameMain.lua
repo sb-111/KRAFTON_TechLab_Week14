@@ -62,13 +62,8 @@ function BeginPlay()
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
 
-    -- 오디오 초기화
-    -- 씬에 필요한 Actor:
-    --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)
-    --   ShotActor (AudioComponent 여러 개 + Sounds[0]에 효과음)
-    Audio.Init()
-    Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
-    Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
+    -- 오디오 초기화 (기본 사운드 등록: BGM, 버튼 소리)
+    Audio.RegisterDefaults()
 
     -- 상태 변경 콜백 등록
     GameState.OnStateChange(GameState.States.PLAYING, GameStart)
@@ -93,6 +88,11 @@ end
 function GameStart()
     -- 기존 게임 정리 (재시작 시)
     CleanupGame()
+
+    -- 오디오 재초기화 (재시작 시 풀 리셋 후 재등록)
+    Audio.Reset()
+    Audio.RegisterDefaults()
+    Audio.PlayBGM("BGM")
 
     -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
     UI.ResetHUD()
