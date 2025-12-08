@@ -3,6 +3,7 @@
 
 local ScoreManager = require("Game/w14_ScoreManager")
 local MonsterConfig = require("w14_MonsterConfig")
+local Audio = require("Game/w14_AudioManager")
 
 local DAMAGE = 9999
 local SphereCollider = nil
@@ -19,6 +20,9 @@ function BeginPlay()
     if cm and cm.StartCameraShake then
         cm:StartCameraShake(0.5, 3.0, 4.0, 10.0)
     end
+
+    -- 폭발 사운드 재생
+    Audio.PlaySFX("Explosion")
 
     -- 약간의 딜레이 후 콜라이더 활성화 → 잠시 후 비활성화 → 제거
     StartCoroutine(function()

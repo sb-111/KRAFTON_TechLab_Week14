@@ -4,26 +4,34 @@
 local AirstrikeManager = {}
 
 local CONFIG = {
-    bombDistance = 70,   -- 플레이어 정면 거리 (m)
-    dropHeight = 30,     -- 폭탄 투하 높이
+    bombDistance = 40,   -- 플레이어 정면 거리 (m)
+    dropHeight = 60,     -- 폭탄 투하 높이
     bombPrefab = "Data/Prefabs/w14_Bomb.prefab",
+}
+local JetCONFIG = {
+    jetX = 50,
+    jetY = 80,
+    jetZ = 40, 
+    jetPrefab = "Data/Prefabs/w14_Jet.prefab"
 }
 
 --- 공중폭격 실행
 --- @param playerLocation Vector 플레이어 위치
 function AirstrikeManager.Execute(playerLocation)
-    -- 폭탄 투하 위치 (플레이어 정면 70m, 공중에서 시작)
-    local dropPos = Vector(
-        playerLocation.X + CONFIG.bombDistance,
-        playerLocation.Y,
-        CONFIG.dropHeight
+    -- 제트기 시작 위치 계산
+    local JetStartPos = Vector(
+        playerLocation.X + JetCONFIG.jetX,
+        playerLocation.Y + JetCONFIG.jetY,
+        JetCONFIG.jetZ
     )
 
-    -- 폭탄 스폰 (낙하 → 지면 도달 시 폭발)
-    local bomb = SpawnPrefab(CONFIG.bombPrefab)
-    if bomb then
-        bomb.Location = dropPos
-        print("[Airstrike] Bomb dropped at X=" .. dropPos.X .. ", Y=" .. dropPos.Y)
+    -- 제트기 스폰 (w14_Jet.lua가 실시간 플레이어 위치 추적 및 폭탄 투하 담당)
+    local jetActor = SpawnPrefab(JetCONFIG.jetPrefab)
+    if jetActor then
+        jetActor.Location = JetStartPos
+        print("[Airstrike] Jet dispatched at Y=" .. JetStartPos.Y)
+    else
+        print("[Airstrike] ERROR: Failed to spawn Jet prefab.")
     end
 end
 
