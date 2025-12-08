@@ -1,0 +1,39 @@
+{
+  "ObjectName" : "IronSight",
+  "OwnedComponents" : [{
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1295,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "Type" : "None"
+        }, {
+          "AssetPath" : "Default",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_3",
+      "ParentId" : 0,
+      "RelativeLocation" : [0.769134, -6.359127, 10.985024],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [0.010000, 0.010000, 0.010000],
+      "StaticMesh" : "Data/Model/armeta-flip-v/source/LOW_implode.fbx",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 1295,
+  "Tag" : "",
+  "Type" : "AStaticMeshActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

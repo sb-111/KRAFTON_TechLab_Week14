@@ -2,6 +2,7 @@ local PlayerAnimClass = require("Player/w14_PlayerAnim")
 local PlayerInputClass = require("Player/w14_PlayerInput")
 local PlayerSlowClass = require("Player/w14_PlayerSlow")
 local PlayerKnockBackClass = require("Player/w14_PlayerKnockBack")
+local PlayerADSClass = require("Player/w14_PlayerADS")
 local ObstacleConfig = require("w14_ObstacleConfig")
 local MonsterConfig = require("w14_MonsterConfig")
 local GameState = require("Game/w14_GameStateManager")
@@ -16,6 +17,7 @@ local PlayerAnim = nil
 local PlayerInput = nil
 local PlayerSlow = nil
 local PlayerKnockBack = nil
+local PlayerADS = nil
 
 local PlayerCamera = nil
 local Mesh = nil
@@ -28,13 +30,6 @@ local bIsStarted = false
 local ShootCoolTime = 0.1
 local IsShootCool = false
 local MovementSpeed = 10.0
-
--- 줌 관련 변수
-local DefaultFOV = 90.0
-local ZoomFOV = 55.0
-local ZoomSpeed = 10.0
-local CurrentFOV = DefaultFOV
-local ZoomSensitivityMult = 0.5
 
 function BeginPlay()
     Obj:SetPhysicsState(false)
@@ -71,6 +66,10 @@ function BeginPlay()
         GetCameraManager():SetViewTarget(PlayerCamera)
     end
 
+    -- ADS 시스템 초기화 (카메라, 총, 플레이어, 스켈레탈메시)
+    PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
+    PlayerADS:InitIronSight("Data/Prefabs/w14_IronSight.prefab")
+
     bIsStarted = false
 end
 
@@ -101,11 +100,9 @@ function Tick(Delta)
 
         Obj.Location = Obj.Location + Vector(Forward, MoveAmount, 0)
 
-        -- 줌 FOV 보간
-        local TargetFOV = PlayerInput.ZoomTrigger and ZoomFOV or DefaultFOV
-        CurrentFOV = CurrentFOV + (TargetFOV - CurrentFOV) * ZoomSpeed * Delta
-        if PlayerCamera then
-            PlayerCamera.FieldOfView = CurrentFOV
+        -- ADS 업데이트 (FOV, 아이언사이트, 총 가시성)
+        if PlayerADS then
+            PlayerADS:Update(Delta, PlayerInput.ZoomTrigger)
         end
 
         local bCanFire = AmmoManager.GetCurrentAmmo() > 0 and not AmmoManager.IsReloading()
@@ -156,8 +153,8 @@ local RotationSmoothSpeed = 20.0
 function Rotate(DeltaTime)
     local InputDelta = PlayerInput.RotateVector
 
-    -- 줌 시 감도 감소
-    local SensMult = PlayerInput.ZoomTrigger and ZoomSensitivityMult or 1.0
+    -- ADS 시 감도 감소
+    local SensMult = PlayerADS and PlayerADS:GetSensitivityMultiplier() or 1.0
     TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity * SensMult)
     TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity * SensMult)
     
