@@ -27,6 +27,7 @@ local StartUICam = nil
 local BasicMonsterDifficultyManager = nil
 local ChaserMonsterDifficultyManager = nil
 local BossMonsterManager = nil
+local IntroCamera = nil
 
 --- 게임 정리 함수 (재시작 전에 호출)
 local function CleanupGame()
@@ -71,6 +72,9 @@ function BeginPlay()
     print("=== Game Main Start ===")
 
     StartUICam = GetCameraManager():GetCamera()
+    IntroCamera = GetComponent(Obj, "UCameraComponent")
+
+    GetCameraManager():SetViewTarget(IntroCamera)
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
@@ -228,7 +232,20 @@ function BeginPlay()
         GameState.PlayerDied()
     end)
 
+    StartCoroutine(CinematicToStart)
+end
+
+function CinematicToStart()
+    coroutine.yield("wait_time", 5)
+    GetCameraManager():StartFade(0.5, 0, 1, Color(0, 0, 0, 1), 0)
+    coroutine.yield("wait_time", 0.5)
+
+    -- 0.5초 FadeOut
     GameReset()
+    
+    --0.5초 FadeIn
+    GetCameraManager():StartFade(0.5, 1, 0, Color(0, 0, 0, 1), 0)
+    coroutine.yield("wait_time", 0.5)
 end
 
 function GameReset()    

@@ -125,6 +125,13 @@ void UFbxLoader::PreLoad()
 			continue;
 
 		const fs::path& Path = Entry.path();
+		FString PathStr = NormalizePath(WideToUTF8(Path.wstring())); // 경로 문자열 미리 확보
+
+		// [추가] .fbm 폴더 내부는 무시 (FBX 임베디드 텍스처 폴더)
+		if (PathStr.find(".fbm") != std::string::npos)
+		{
+			continue;
+		}
 		FString Extension = WideToUTF8(Path.extension().wstring());
 		std::transform(Extension.begin(), Extension.end(), Extension.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 

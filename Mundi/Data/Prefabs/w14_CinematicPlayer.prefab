@@ -1,0 +1,195 @@
+{
+  "ObjectName" : "Player",
+  "OwnedComponents" : [{
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1477,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_10",
+      "ParentId" : 1439,
+      "RelativeLocation" : [5.400000, -0.600000, 24.000000],
+      "RelativeRotationEuler" : [7.500000, 6.400000, 0.000000],
+      "RelativeScale" : [0.250000, 0.250000, 0.250000],
+      "StaticMesh" : "Data/Rifle/Ak47.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : false,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1439,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "Type" : "None"
+        }, {
+          "AssetPath" : "Ch20_body",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 1,
+      "ObjectName" : "USkeletalMeshComponent_23",
+      "ParentId" : 1476,
+      "PhysicsAssetPathOverride" : "",
+      "RelativeLocation" : [0.000000, 0.000000, -1.000000],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "SkeletalMesh" : "Data/DancingRacer.fbx",
+      "Type" : "USkeletalMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : false,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsCar" : false,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Player/w14_CinematicPlayer.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "Id" : 1476,
+      "ObjectName" : "USceneComponent_29",
+      "ParentId" : 0,
+      "RelativeLocation" : [5.650326, -2.264388, 1.140128],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "USceneComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 1476,
+  "Tag" : "",
+  "Type" : "AEmptyActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}
