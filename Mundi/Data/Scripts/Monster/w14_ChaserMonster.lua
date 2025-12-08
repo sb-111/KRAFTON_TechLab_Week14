@@ -12,7 +12,7 @@ ChaserMonster.__index = ChaserMonster
 --- 애니메이션 재생 시간 상수
 local AnimDurations = {
     WalkDuration = 2.0,        -- Walk는 루프
-    AttackDuration = 2.6,      -- 공격 애니메이션 길이
+    AttackDuration = 3.0,      -- 공격 애니메이션 길이
     DamagedDuration = 2.0,     -- 피격 애니메이션 길이
     DyingDuration = 1.66
 }
@@ -73,7 +73,7 @@ function ChaserMonster:Initialize(obj, move_speed, health_point, attack_point, a
 
     -- 애니메이션 상태 추가
     self.anim_instance:AddState("Idle", "Data/GameJamAnim/Monster/ChaserZombieIdle_mixamo.com", 1.0, true)
-    self.anim_instance:AddState("Walk", "Data/GameJamAnim/Monster/ChaserZombieWalk_mixamo.com", 1.0, true)
+    self.anim_instance:AddState("Walk", "Data/GameJamAnim/Monster/ChaserZombieWalk_mixamo.com", 3.0, true)
     self.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/ChaserZombieAttack_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/ChaserZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/ChaserZombieDying_mixamo.com", 1.0, false)
@@ -138,14 +138,27 @@ function ChaserMonster:UpdateAnimationState()
     local current_state = self.anim_instance:GetCurrentStateName()
     local current_time = self.anim_instance:GetStateTime(current_state)
 
-    -- Attack 애니메이션이 끝나면 복귀
+    -- Attack 애니메이션이 끝났을 때
     if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
-        if self.is_permanently_idle then
-            self.anim_instance:SetState("Idle", 0.1)
+        -- 플레이어가 여전히 공격 범위 안에 있는지 확인
+        local player_pos = self:FindPlayerPosition()
+        local offset = self.obj.Location - player_pos
+        local distance_squared = offset.X * offset.X + offset.Y * offset.Y
+        local attack_range_squared = self.stat.attack_range * self.stat.attack_range
+        
+        -- 여전히 공격 범위 안이면 Attack 루프
+        if distance_squared < attack_range_squared then
+            self.anim_instance:SetState("Attack", 0.2)  -- 즉시 다시 Attack 시작
+            return
         else
-            self.anim_instance:SetState("Walk", 0.1)
+            -- 범위 밖이면 Walk/Idle로 복귀
+            if self.is_permanently_idle then
+                self.anim_instance:SetState("Idle", 0.1)
+            else
+                self.anim_instance:SetState("Walk", 0.1)
+            end
+            return
         end
-        return
     end
 
     -- Damaged 애니메이션이 끝나면 복귀
@@ -187,7 +200,7 @@ function ChaserMonster:CheckPlayerPositionAndAttack()
 
     -- 공격 범위 내에 있고, 피격 상태가 아니며, 공격 중이 아닐 때만 공격
     if (distance_squared < attack_range_squared and not is_damaging and not is_attacking) then
-        self.anim_instance:SetState("Attack", 0)
+        self.anim_instance:SetState("Attack", 0.2)
     end
 end
 
