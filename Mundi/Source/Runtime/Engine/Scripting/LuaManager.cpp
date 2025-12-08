@@ -14,6 +14,7 @@
 #include "PrimitiveComponent.h"
 #include "GameHUD.h"
 #include "LuaScriptComponent.h"
+#include "SkeletalMeshComponent.h"
 
 sol::object MakeCompProxy(sol::state_view SolState, UObject* Instance, UClass* Class) {
     LuaComponentProxy Proxy;
@@ -529,6 +530,8 @@ FLuaManager::FLuaManager()
     (*Lua)["HitStop"] = SharedLib["HitStop"];
     (*Lua)["TargetHitStop"] = SharedLib["TargetHitStop"];
     (*Lua)["StartCoroutine"] = SharedLib["StartCoroutine"];
+    (*Lua)["SetAnimNotifyCallback"] = SharedLib["SetAnimNotifyCallback"];
+    (*Lua)["ClearAnimNotifyCallback"] = SharedLib["ClearAnimNotifyCallback"];
 
     // 게임 종료 함수
     Lua->set_function("QuitGame", []() {
@@ -680,6 +683,54 @@ void FLuaManager::ExposeAllComponentsToLua()
             return MakeCompProxy(*Lua, Actor, Class);
         }
     );
+
+    // ===== AnimNotify 콜백 등록 (SkeletalMeshComponent 확장) =====
+    SharedLib.set_function("SetAnimNotifyCallback",
+        [](LuaComponentProxy& Proxy, sol::function Callback)
+        {
+            if (!Proxy.Instance || !Proxy.Class->IsChildOf(USkeletalMeshComponent::StaticClass()))
+            {
+                UE_LOG("[Lua][error] SetAnimNotifyCallback: Expected SkeletalMeshComponent\n");
+                return;
+            }
+
+            auto* SkelComp = static_cast<USkeletalMeshComponent*>(Proxy.Instance);
+
+            if (Callback.valid())
+            {
+                // sol::function을 std::function으로 래핑하여 저장
+                SkelComp->SetAnimNotifyCallback(
+                    [Callback](const FString& NotifyName, const FString& SoundPath)
+                    {
+                        if (Callback.valid())
+                        {
+                            auto Result = Callback(NotifyName, SoundPath);
+                            if (!Result.valid())
+                            {
+                                sol::error Err = Result;
+                                UE_LOG("[Lua][error] AnimNotifyCallback: %s\n", Err.what());
+                            }
+                        }
+                    });
+            }
+            else
+            {
+                SkelComp->ClearAnimNotifyCallback();
+            }
+        }
+    );
+
+    SharedLib.set_function("ClearAnimNotifyCallback",
+        [](LuaComponentProxy& Proxy)
+        {
+            if (!Proxy.Instance || !Proxy.Class->IsChildOf(USkeletalMeshComponent::StaticClass()))
+            {
+                return;
+            }
+            auto* SkelComp = static_cast<USkeletalMeshComponent*>(Proxy.Instance);
+            SkelComp->ClearAnimNotifyCallback();
+        }
+    );
 }
 
 void FLuaManager::ExposeGlobalFunctions()
@@ -802,17 +853,32 @@ void FLuaManager::ExposeGlobalFunctions()
         {
             if (Self) Self->DeleteVignette();
         },
-            
-        "SetViewTarget", [](APlayerCameraManager* self, LuaComponentProxy& Proxy)
+        
+        "GetCamera", [](APlayerCameraManager* Self)
         {
-            // 타입 안정성 확인
-            if (self && Proxy.Instance && Proxy.Class == UCameraComponent::StaticClass())
-            {
-                // 프록시에서 실제 컴포넌트 포인터 추출
-                auto* CameraComp = static_cast<UCameraComponent*>(Proxy.Instance);
-                self->SetViewCamera(CameraComp);
-            }
+            return Self->GetViewCamera();
         },
+            
+        "SetViewTarget", sol::overload(
+            // [Case 1] 기존 방식: LuaComponentProxy를 넘겼을 때
+            [](APlayerCameraManager* self, LuaComponentProxy& Proxy)
+            {
+                if (self && Proxy.Instance && Proxy.Class == UCameraComponent::StaticClass())
+                {
+                    auto* CameraComp = static_cast<UCameraComponent*>(Proxy.Instance);
+                    self->SetViewCamera(CameraComp);
+                }
+            },
+
+            // [Case 2] 해결책: UCameraComponent* (네이티브 포인터)를 직접 넘겼을 때
+            [](APlayerCameraManager* self, UCameraComponent* Camera)
+            {
+                if (self && Camera)
+                {
+                    self->SetViewCamera(Camera);
+                }
+            }
+        ),
 
         "SetViewTargetWithBlend", [](APlayerCameraManager* self, LuaComponentProxy& Proxy, float InBlendTime)
         {

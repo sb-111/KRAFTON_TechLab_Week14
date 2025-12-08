@@ -20,91 +20,39 @@ local ItemManager = nil
 local MonsterManager = nil
 local ObjectPlacer = nil
 local Player = nil
+local PlayerScript = nil
+local StartUICam = nil
 
 --- 게임 정리 함수 (재시작 전에 호출)
 local function CleanupGame()
     -- 매니저들 정리
-    if MapManager and MapManager.destroy then
-        MapManager:destroy()
-        MapManager = nil
+    if MapManager and MapManager.reset then
+        MapManager:reset()
     end
 
-    if StageManager and StageManager.destroy then
-        StageManager:destroy()
-        StageManager = nil
+    if BiomeManager and BiomeManager.reset then
+        BiomeManager:reset()
     end
 
-    if ItemManager and ItemManager.destroy then
-        ItemManager:destroy()
-        ItemManager = nil
+    if ItemManager and ItemManager.reset then
+        ItemManager:reset()
     end
 
-    if MonsterManager and MonsterManager.destroy then
-        MonsterManager:destroy()
-        MonsterManager = nil
+    if MonsterManager and MonsterManager.reset then
+        MonsterManager:reset()
     end
-
-    -- 플레이어 삭제 (물리 상태 먼저 비활성화)
-    if Player then
-        Player:SetPhysicsState(false)
-        if DeleteObject then
-            DeleteObject(Player)
-        end
-        Player = nil
-    end
-
-    ObjectPlacer = nil
+    PlayerScript.Reset()
 end
 
 function BeginPlay()
     print("=== Game Main Start ===")
 
-    -- UI 초기화 (UIActor를 자동으로 찾음)
-    UI.Init()
-
-    -- 오디오 초기화
-    -- 씬에 필요한 Actor:
-    --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)
-    --   ShotActor (AudioComponent 여러 개 + Sounds[0]에 효과음)
-    Audio.Init()
-    Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
-    Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
-
-    -- 상태 변경 콜백 등록
-    GameState.OnStateChange(GameState.States.PLAYING, GameStart)
-    GameState.OnStateChange(GameState.States.START, function()
-        InputManager:SetCursorVisible(true)  -- 시작 화면에서 커서 표시
-    end)
-    GameState.OnStateChange(GameState.States.DEAD, function()
-        InputManager:SetCursorVisible(true)  -- 게임 오버 화면에서 커서 표시
-        Audio.StopBGM("BGM")
-        print("[GameMain] Game Over")
-    end)
-
-    -- 플레이어 사망 시 게임 오버 상태로 전환
-    HPManager.OnDeath(function()
-        GameState.PlayerDied()
-    end)
-
-    -- 시작 화면 표시
-    GameState.ShowStartScreen()
-end
-
-function GameStart()
-    -- 기존 게임 정리 (재시작 시)
-    CleanupGame()
-
-    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
-    UI.ResetHUD()
-
-    -- 점수/탄약/HP 매니저 초기화
-    ScoreManager.Reset()
-    AmmoManager.Reset()
-    HPManager.Reset()
+    StartUICam = GetCameraManager():GetCamera()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
     Player.Location = Vector(0, 0, 1.3)
+    PlayerScript = Player:GetScript()
 
     -- MapManager 초기화
     MapManager = MapManagerClass:new(Player)
@@ -180,7 +128,7 @@ function GameStart()
     MonsterManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     MonsterManager:add_object(
             "Data/Prefabs/w14_BasicMonster.prefab",
-            300,
+            100,
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2,                      -- radius
@@ -188,12 +136,67 @@ function GameStart()
     )
     MonsterManager:add_object(
             "Data/Prefabs/w14_ChaserMonster.prefab",
-            200,
+            100,
             Vector(-2000, 150, 0),  -- pool_standby_location
             5,                      -- spawn_num (기본보다 적게)
             2.5,                    -- radius
             0.5                     -- 물체 스폰 z 위치
     )
+
+    -- UI 초기화 (UIActor를 자동으로 찾음)
+    UI.Init()
+
+    -- 오디오 초기화
+    -- 씬에 필요한 Actor:
+    --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)
+    --   ShotActor (AudioComponent 여러 개 + Sounds[0]에 효과음)
+    Audio.Init()
+    Audio.RegisterBGM("BGM", "BGMActor")      -- Looping 자동 설정
+    Audio.RegisterSFX("Shot", "ShotSFXActor")    -- AutoPlay 자동 비활성화
+
+    -- 상태 변경 콜백 등록
+    GameState.OnStateChange(GameState.States.START, GameReset)
+    GameState.OnStateChange(GameState.States.PLAYING, GameStart)
+    GameState.OnStateChange(GameState.States.DEAD, function()
+        InputManager:SetCursorVisible(true)  -- 게임 오버 화면에서 커서 표시
+        Audio.StopBGM("BGM")
+        print("[GameMain] Game Over")
+    end)
+
+    -- 플레이어 사망 시 게임 오버 상태로 전환
+    HPManager.OnDeath(function()
+        GameState.PlayerDied()
+    end)
+
+    GameReset()
+end
+
+function GameReset()
+    InputManager:SetCursorVisible(true)
+    -- 기존 게임 정리 (재시작 시)
+    CleanupGame()
+    
+    GetCameraManager():SetViewTarget(StartUICam)
+    
+    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
+    UI.ResetHUD()
+
+    -- 점수/탄약/HP 매니저 초기화
+    ScoreManager.Reset()
+    AmmoManager.Reset()
+    HPManager.Reset()
+
+    -- 시작 화면 표시
+    GameState.ShowStartScreen()
+end
+
+function GameStart()
+    -- 플레이어에게 시작 알림
+    PlayerScript.StartGame()
+
+    Audio.Reset()
+    Audio.RegisterDefaults() -- 기본 오디오 등록
+    Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
 end
 
 function Tick(dt)
@@ -252,7 +255,6 @@ function HandleInput()
         if GameState.IsStart() then
             GameState.StartGame()
             InputManager:SetCursorVisible(false)  -- 게임 시작 시 커서 숨김
-            Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
         end
     end
 

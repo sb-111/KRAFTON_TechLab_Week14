@@ -28,14 +28,22 @@ function PlayerAnim:new(Obj)
             Instance.AnimInstance:AddState("ShootEnd", "Data/GameJamAnim/Player/Rifle_ShootEnd_mixamo.com", 1.5, false)
             Instance.AnimInstance:AddState("Reload", "Data/GameJamAnim/Player/Rifle_Reload_mixamo.com", 1.0, false)
 
-            -- [정리 2] AddTransitionByName 삭제
-            -- 이유: 아래 Update 함수에서 SetState 할 때 시간을 직접 넣으므로 필요 없음.
+            Instance.AnimInstance:AddSoundNotify("Run", 0.01, "RunSound", "Data/Audio/PlayerFootstep.wav", 10.0)
+            Instance.AnimInstance:AddSoundNotify("Run", 0.35, "RunSound", "Data/Audio/PlayerFootstep.wav", 10.0)
+            Instance.AnimInstance:AddSoundNotify("Run", 0.35, "BreathingSound", "Data/Audio/PlayerHeavyBreathing.wav", 100.0)
             
             -- 초기 상태
             Instance.AnimInstance:SetState("Idle", 0)
         end
     end
     return Instance
+end
+
+function PlayerAnim:Reset()
+    -- 초기 상태
+    self.AnimInstance:SetState("Idle", 0)
+    self.bIsShooting = false
+    self.bIsReloading = false
 end
 
 function PlayerAnim:StartReload()

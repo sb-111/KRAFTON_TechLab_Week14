@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "SkinnedMeshComponent.h"
 #include "PrePhysics.h"
+#include <functional>
 #include "USkeletalMeshComponent.generated.h"
 
 class UAnimInstance;
@@ -110,8 +111,16 @@ public:
     TArray<FTransform> RefPose;
     TArray<FTransform> BaseAnimationPose;
 
-    // Notify
+    // AnimNotify
     void TriggerAnimNotify(const FAnimNotifyEvent& NotifyEvent);
+
+    // AnimNotify Lua 콜백 (NotifyName, SoundPath)
+    using FAnimNotifyCallback = std::function<void(const FString&, const FString&)>;
+    void SetAnimNotifyCallback(FAnimNotifyCallback InCallback) { AnimNotifyCallback = std::move(InCallback); }
+    void ClearAnimNotifyCallback() { AnimNotifyCallback = nullptr; }
+
+private:
+    FAnimNotifyCallback AnimNotifyCallback;
 
 protected:
     /**

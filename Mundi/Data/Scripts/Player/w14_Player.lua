@@ -58,19 +58,29 @@ function BeginPlay()
     PlayerInput = PlayerInputClass:new(Obj)
     PlayerSlow = PlayerSlowClass:new(Obj)
     PlayerKnockBack = PlayerKnockBackClass:new(Obj)
-    HPManager.Reset()
-    StartCoroutine(ToRun)
 
     PlayerCamera = GetComponent(Obj, "UCameraComponent")
-    if PlayerCamera then
-        GetCameraManager():SetViewTarget(PlayerCamera)
-    end
 
     -- ADS 시스템 초기화 (카메라, 총, 플레이어, 스켈레탈메시)
     PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
     PlayerADS:InitIronSight("Data/Prefabs/w14_IronSight.prefab")
 
+    Reset()
+end
+
+function StartGame()
+    if PlayerCamera then
+        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.0)
+    end
+
+    StartCoroutine(ToRun)
+end
+
+function Reset()
+    Obj.Location = Vector(0, 0, 1.3)
     bIsStarted = false
+    HPManager.Reset()
+    PlayerAnim:Reset()
 end
 
 function Tick(Delta)
@@ -171,6 +181,10 @@ function Rotate(DeltaTime)
         TargetPitch = TargetPitch + recovery  -- 아래로 복구 (Pitch 증가 = 아래)
         CurrentRecoil = CurrentRecoil - recovery
     end
+
+    -- Yaw 제한
+    if TargetYaw > 90.0 then TargetYaw = 90.0
+    elseif TargetYaw < -90.0 then TargetYaw = -90.0 end
 
     if TargetPitch > 70.0 then TargetPitch = 70.0
     elseif TargetPitch < -70.0 then TargetPitch = -70.0 end
@@ -329,6 +343,12 @@ function OnBeginOverlap(OtherActor)
             AmmoManager.CancelReload()
             PlayerAnim:CancelReload()  -- ← 애니메이션 취소
         end
+        
+        -- 충돌 효과음 출력
+        Audio.PlaySFX("ObstacleCollisionScream")
+        -- Audio.SetSFXVolume("ObstacleCollisionScream", 50)
+        Audio.PlaySFX("ObstacleCollisionSmash")
+        -- Audio.SetSFXVolume("ObstacleCollisionSmash", 50)
     end
 
     -- 몹과 충돌 처리 (Tag 기반 데미지)
@@ -351,6 +371,10 @@ function OnBeginOverlap(OtherActor)
         if died then
             -- TODO: 게임 오버 처리
             print("[Player] Game Over!")
+        else
+            -- 충돌 효과음 출력
+            Audio.PlaySFX("MonsterCollisionScream")
+            Audio.PlaySFX("MonsterCollisionSmash")
         end
     end
 
@@ -361,6 +385,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] 탄약 획득! +" .. ammoAmount)
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+        
+        Audio.PlaySFX("GainedAmmo")
     end
 
     -- 회복 아이템 획득 (AidKit)
@@ -369,6 +395,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] AidKit 획득! HP +5")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAidKit")
     end
 
     -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
@@ -377,5 +405,7 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAdrenalin")
     end
 end

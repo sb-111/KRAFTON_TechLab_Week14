@@ -8,6 +8,11 @@
 #include "AnimStateMachineInstance.h"
 #include "AnimBlendSpaceInstance.h"
 
+// AnimNotify Sound 자동 재생
+#include "FAudioDevice.h"
+#include "ResourceManager.h"
+#include "Sound.h"
+
 // 래그돌 관련
 #include "BodyInstance.h"
 #include "PhysicsAsset.h"
@@ -540,8 +545,25 @@ void USkeletalMeshComponent::ResetToAnimationPose()
 
 void USkeletalMeshComponent::TriggerAnimNotify(const FAnimNotifyEvent& NotifyEvent)
 {
-    AActor* Owner = GetOwner();
-    if (Owner)
+    // SoundPath가 설정되어 있으면 자동으로 사운드 재생
+    if (!NotifyEvent.SoundPath.empty())
+    {
+        USound* Sound = UResourceManager::GetInstance().Load<USound>(NotifyEvent.SoundPath);
+        if (Sound)
+        {
+            // Volume을 적용하여 사운드 재생 (MasterVolume은 PlaySound3D 내부에서 적용됨)
+            FAudioDevice::PlaySound3D(Sound, GetWorldLocation(), NotifyEvent.Volume);
+        }
+    }
+
+    // Lua 콜백이 등록되어 있으면 호출
+    if (AnimNotifyCallback)
+    {
+        AnimNotifyCallback(NotifyEvent.NotifyName.ToString(), NotifyEvent.SoundPath);
+    }
+
+    // C++ Actor 핸들러 호출 (커스텀 처리용)
+    if (AActor* Owner = GetOwner())
     {
         Owner->HandleAnimNotify(NotifyEvent);
     }

@@ -18,6 +18,7 @@ local UI_TEXTURES = {
     HOW_TO_PLAY_HOVER = "Data/Textures/UI/UI_HowToPlay_Hover.png",
     EXIT_BUTTON = "Data/Textures/UI/UI_ExitButton.png",
     EXIT_BUTTON_HOVER = "Data/Textures/UI/UI_ExitButton_Hover.png",
+    HOW_TO_PLAY_IMG = "Data/Textures/UI/HowToPlay.png",
     CROSSHAIR = "Data/Textures/CrossHair.png",
     AMMO_ICON = "Data/Textures/Ammo.png",
     HEADSHOT = "Data/Textures/HeadShot.png",
@@ -49,20 +50,26 @@ local TOP_MARGIN = 10
 local CROSSHAIR_SIZE = 64
 local HEADSHOT_SIZE = 16
 
+local showHowToPlayImage = false
+-- 초기화 플래그
+local isInitialized = false
+
 -- ===== 초기화 =====
 function M.Init()
+    if isInitialized then return true end
+
     -- 이미지 프리로드
     if HUD then
         for _, path in pairs(UI_TEXTURES) do
             HUD:LoadImage(path)
         end
     end
-    
 
     Audio.Init()
-    local result = Audio.RegisterSFX("buttonClicked", "ButtonClickedActor")
-    local result = Audio.RegisterSFX("buttonHovered", "ButtonHoveredActor")
+    Audio.RegisterSFX("buttonClicked", "ButtonClickedActor")
+    Audio.RegisterSFX("buttonHovered", "ButtonHoveredActor")
 
+    isInitialized = true
     print("[UIManager] Initialized (D2D mode)")
     return true
 end
@@ -144,7 +151,7 @@ local HEART_ICON_PATH = "Data/Textures/Heart.png"
 
 -- 크로스헤어 설정
 local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
-local CROSSHAIR_SIZE = 40  -- 크로스헤어 크기 (픽셀)
+local CROSSHAIR_SIZE = 60  -- 크로스헤어 크기 (픽셀)
 
 --- HUD 프레임 시작 (매 프레임 Tick 시작 시 호출)
 function M.BeginHUDFrame()
@@ -152,7 +159,6 @@ function M.BeginHUDFrame()
         HUD:BeginFrame()
     end
 end
-
 -- ===== 시작 화면 렌더링 =====
 function M.UpdateStartScreen()
     if not HUD or not HUD:IsVisible() then return end
@@ -165,18 +171,33 @@ function M.UpdateStartScreen()
     local logoW = 1000
     local logoH = 600
     local logoX = (screenW - logoW) / 2
-    local logoY = 0
+    local logoY = -80
     HUD:DrawImage(UI_TEXTURES.LOGO, logoX, logoY, logoW, logoH)
 
     -- 버튼 크기 - 더 크게
-    local btnW = 500
+    local btnW = 350  -- 버튼 폭 조정 (이미지 길이 맞추기)
     local btnH = 150
-    local btnSpacing = -10  -- 버튼 간격
-    local startY = screenH * 0.50  -- 시작 Y 위치
-    local btnX = (screenW - btnW) / 2  -- 중앙 정렬
+    local btnSpacing = -50  -- 버튼 간격
+    local startY = screenH * 0.45  -- 시작 Y 위치
+    local btnX = 55  -- 왼쪽 정렬
+    local howToPlayBtnX = 100  -- 왼쪽 정렬
 
-    -- START 버튼 (위)
-    local startBtnY = startY
+    -- How To Play 버튼 (맨 위)
+    local howToPlayY = startY
+    buttonStates.howToPlay.rect = { x = howToPlayBtnX, y = howToPlayY, w = btnW, h = btnH }
+    local wasHowToPlayHovered = buttonStates.howToPlay.hovered
+    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
+    
+    -- How To Play 버튼 호버 사운드
+    if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+    
+    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
+    HUD:DrawImage(howToPlayTex, howToPlayBtnX, howToPlayY, btnW, btnH)
+
+    -- START 버튼 (가운데)
+    local startBtnY = howToPlayY + btnH + btnSpacing + 30
     buttonStates.start.rect = { x = btnX, y = startBtnY, w = btnW, h = btnH }
     local wasStartHovered = buttonStates.start.hovered
     buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
@@ -189,22 +210,8 @@ function M.UpdateStartScreen()
     local startTex = buttonStates.start.hovered and UI_TEXTURES.START_BUTTON_HOVER or UI_TEXTURES.START_BUTTON
     HUD:DrawImage(startTex, btnX, startBtnY, btnW, btnH)
 
-    -- How To Play 버튼 (가운데)
-    local howToPlayY = startBtnY + btnH + btnSpacing
-    buttonStates.howToPlay.rect = { x = btnX, y = howToPlayY, w = btnW, h = btnH }
-    local wasHowToPlayHovered = buttonStates.howToPlay.hovered
-    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
-    
-    -- How To Play 버튼 호버 사운드
-    if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
-        Audio.PlaySFX("buttonHovered")
-    end
-    
-    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
-    HUD:DrawImage(howToPlayTex, btnX, howToPlayY, btnW, btnH)
-
     -- EXIT 버튼 (아래)
-    local exitY = howToPlayY + btnH + btnSpacing
+    local exitY = startBtnY + btnH + btnSpacing
     buttonStates.exit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.exit.hovered
     buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
@@ -217,6 +224,15 @@ function M.UpdateStartScreen()
     local exitTex = buttonStates.exit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
     HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
+    -- How To Play 이미지 표시 (활성화되면)
+    if showHowToPlayImage then
+        local imgW = 700
+        local imgH = 400
+        local imgX = howToPlayBtnX + btnW + 80  -- 버튼 오른쪽에 위치
+        local imgY = screenH * 0.45  -- 중앙 정렬
+        HUD:DrawImage(UI_TEXTURES.HOW_TO_PLAY_IMG, imgX, imgY, imgW, imgH)
+    end
+
     -- 클릭 처리
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.start.hovered then
@@ -227,7 +243,8 @@ function M.UpdateStartScreen()
         elseif buttonStates.howToPlay.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] HOW TO PLAY clicked")
-            -- TODO: How To Play 화면 구현
+            -- How To Play 이미지 토글
+            showHowToPlayImage = not showHowToPlayImage
         elseif buttonStates.exit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
@@ -469,8 +486,7 @@ function M.UpdateGameOverScreen()
         if buttonStates.restart.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] RESTART clicked")
-            GameState.StartGame()  -- 게임 재시작
-            InputManager:SetCursorVisible(false)
+            GameState.ShowStartScreen()  -- 게임 재시작
         elseif buttonStates.gameOverExit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")

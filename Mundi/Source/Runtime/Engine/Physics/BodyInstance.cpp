@@ -324,11 +324,11 @@ void FBodyInstance::RemoveFromScene()
 		// 여기서는 명시적으로 유지하거나 초기화 정책에 따라 결정.
 		// OwnerScene = nullptr; 
 	}
-	else if (GWorld && GWorld->GetPhysicsScene())
-	{
-		// 혹시 모르니 월드 씬에서 시도
-		GWorld->GetPhysicsScene()->RemoveActor(RigidActor);
-	}
+	// else if (GWorld && GWorld->GetPhysicsScene())
+	// {
+	// 	// 혹시 모르니 월드 씬에서 시도
+	// 	GWorld->GetPhysicsScene()->RemoveActor(RigidActor);
+	// }
 }
 
 void FBodyInstance::PutToSleep()

@@ -95,17 +95,12 @@ function GeneralObjectManager:Tick()
 end
 
 --- 모든 오브젝트 풀 정리 (게임 재시작 시 호출)
-function GeneralObjectManager:destroy()
+function GeneralObjectManager:reset()
     for i=1, #self.objects do
-        if self.objects[i] and self.objects[i].destroy then
-            self.objects[i]:destroy()
+        if self.objects[i] and self.objects[i].despawn_all then
+            self.objects[i]:despawn_all()
         end
     end
-    self.objects = {}
-    self.objects_spawn_nums = {}
-    self.object_radius = {}
-    self.player = nil
-    self.object_placer = nil
 end
 
 return GeneralObjectManager

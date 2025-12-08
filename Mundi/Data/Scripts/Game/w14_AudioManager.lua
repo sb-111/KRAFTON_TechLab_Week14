@@ -67,6 +67,38 @@ function M.Init()
     return true
 end
 
+-- 오디오 풀 리셋 (게임 재시작 시 호출)
+function M.Reset()
+    -- 모든 사운드 정지
+    M.StopAll()
+
+    -- 풀 초기화
+    sfxPools = {}
+    bgmPools = {}
+    isInitialized = false
+
+    print("[AudioManager] Reset")
+end
+
+-- 기본 사운드 등록 (BGM, UI 사운드 등)
+function M.RegisterDefaults()
+    M.Init()
+    M.RegisterBGM("BGM", "BGMActor")
+    M.RegisterSFX("buttonClicked", "ButtonClickedActor")
+    M.RegisterSFX("buttonHovered", "ButtonHoveredActor")
+    M.RegisterSFX("gunshot", "GunShotActor")
+    M.RegisterSFX("gunreload", "GunReloadActor")
+    M.RegisterSFX("gundryfire", "GunDryFireActor")
+    M.RegisterSFX("ObstacleCollisionScream", "ObstacleCollisionScream")
+    M.RegisterSFX("ObstacleCollisionSmash", "ObstacleCollisionSmash")
+    M.RegisterSFX("MonsterCollisionScream", "MonsterCollisionScream")
+    M.RegisterSFX("MonsterCollisionSmash", "MonsterCollisionSmash")
+    M.RegisterSFX("GainedAidKit", "GainedAidKit")
+    M.RegisterSFX("GainedAmmo", "GainedAmmo")
+    M.RegisterSFX("GainedAdrenalin", "GainedAdrenalin")
+    print("[AudioManager] Default sounds registered")
+end
+
 -- ============ 등록 ============
 
 -- SFX 등록
