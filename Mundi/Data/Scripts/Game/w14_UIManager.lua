@@ -18,6 +18,7 @@ local UI_TEXTURES = {
     HOW_TO_PLAY_HOVER = "Data/Textures/UI/UI_HowToPlay_Hover.png",
     EXIT_BUTTON = "Data/Textures/UI/UI_ExitButton.png",
     EXIT_BUTTON_HOVER = "Data/Textures/UI/UI_ExitButton_Hover.png",
+    HOW_TO_PLAY_IMG = "Data/Textures/UI/HowToPlay.png",
     CROSSHAIR = "Data/Textures/CrossHair.png",
     AMMO_ICON = "Data/Textures/Ammo.png",
     HEADSHOT = "Data/Textures/HeadShot.png",
@@ -48,6 +49,8 @@ local HEADSHOT_DURATION = 0.1 -- 0.5초 동안 표시
 local TOP_MARGIN = 10
 local CROSSHAIR_SIZE = 64
 local HEADSHOT_SIZE = 16
+
+local showHowToPlayImage = false
 
 -- ===== 초기화 =====
 function M.Init()
@@ -152,7 +155,6 @@ function M.BeginHUDFrame()
         HUD:BeginFrame()
     end
 end
-
 -- ===== 시작 화면 렌더링 =====
 function M.UpdateStartScreen()
     if not HUD or not HUD:IsVisible() then return end
@@ -218,6 +220,15 @@ function M.UpdateStartScreen()
     local exitTex = buttonStates.exit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
     HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
+    -- How To Play 이미지 표시 (활성화되면)
+    if showHowToPlayImage then
+        local imgW = 700
+        local imgH = 400
+        local imgX = howToPlayBtnX + btnW + 80  -- 버튼 오른쪽에 위치
+        local imgY = screenH * 0.45  -- 중앙 정렬
+        HUD:DrawImage(UI_TEXTURES.HOW_TO_PLAY_IMG, imgX, imgY, imgW, imgH)
+    end
+
     -- 클릭 처리
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.start.hovered then
@@ -228,7 +239,8 @@ function M.UpdateStartScreen()
         elseif buttonStates.howToPlay.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] HOW TO PLAY clicked")
-            -- TODO: How To Play 화면 구현
+            -- How To Play 이미지 토글
+            showHowToPlayImage = not showHowToPlayImage
         elseif buttonStates.exit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
