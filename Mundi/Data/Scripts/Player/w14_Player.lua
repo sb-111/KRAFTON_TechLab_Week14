@@ -4,6 +4,7 @@ local PlayerSlowClass = require("Player/w14_PlayerSlow")
 local PlayerKnockBackClass = require("Player/w14_PlayerKnockBack")
 local ObstacleConfig = require("w14_ObstacleConfig")
 local MonsterConfig = require("w14_MonsterConfig")
+local GameState = require("Game/w14_GameStateManager")
 local Audio = require("Game/w14_AudioManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local ScoreManager = require("Game/w14_ScoreManager")
@@ -64,6 +65,11 @@ end
 
 function Tick(Delta)
     Particle.Tick(Delta)
+
+    -- 게임 오버 상태에서는 플레이어 동작 중지
+    if GameState.IsDead() then
+        return
+    end
 
     if bIsStarted then
         PlayerInput:Update(Delta)

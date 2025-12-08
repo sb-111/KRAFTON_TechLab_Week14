@@ -43,7 +43,8 @@ void FBodyInstance::AddForce(const FVector& InForce)
 {
 	PxRigidActor* Actor = RigidActor;
 	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InForce] {
-		if (Actor)
+		// userData가 nullptr이면 이미 삭제 대기 중인 액터이므로 무시
+		if (Actor && Actor->userData)
 		{
 			PxRigidBody* Body = Actor->is<PxRigidBody>();
 			if (Body)
@@ -60,7 +61,8 @@ void FBodyInstance::AddTorque(const FVector& InTorque)
 {
 	PxRigidActor* Actor = RigidActor;
 	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InTorque] {
-		if (Actor)
+		// userData가 nullptr이면 이미 삭제 대기 중인 액터이므로 무시
+		if (Actor && Actor->userData)
 		{
 			PxRigidBody* Body = Actor->is<PxRigidBody>();
 			if (Body)
@@ -77,7 +79,8 @@ void FBodyInstance::UpdateTransform(const FTransform& InTransform)
 {
 	PxRigidActor* Actor = RigidActor;
 	GWorld->GetPhysicsScene()->EnqueueCommand([Actor, InTransform] {
-		if (Actor)
+		// userData가 nullptr이면 이미 삭제 대기 중인 액터이므로 무시
+		if (Actor && Actor->userData)
 		{
 			PxRigidBody* Body = Actor->is<PxRigidBody>();
 			if (Body)
@@ -331,15 +334,16 @@ void FBodyInstance::RemoveFromScene()
 void FBodyInstance::PutToSleep()
 {
 	PxRigidActor* Actor = RigidActor;
-    
+
 	if (!Actor || !GWorld || !GWorld->GetPhysicsScene()) return;
 
 	GWorld->GetPhysicsScene()->EnqueueCommand([Actor] {
-	   if (Actor)
+	   // userData가 nullptr이면 이미 삭제 대기 중인 액터이므로 무시
+	   if (Actor && Actor->userData)
 	   {
 		  // Dynamic 액터인지 확인
 		  PxRigidDynamic* DynamicBody = Actor->is<PxRigidDynamic>();
-          
+
 		  // Kinematic이 아닌 경우(순수 물리 시뮬레이션 액터)에만 Sleep 처리
 		  if (DynamicBody && !(DynamicBody->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
 		  {
@@ -357,10 +361,11 @@ void FBodyInstance::WakeUp()
 	if (!Actor || !GWorld || !GWorld->GetPhysicsScene()) return;
 
 	GWorld->GetPhysicsScene()->EnqueueCommand([Actor] {
-	   if (Actor)
+	   // userData가 nullptr이면 이미 삭제 대기 중인 액터이므로 무시
+	   if (Actor && Actor->userData)
 	   {
 		  PxRigidDynamic* DynamicBody = Actor->is<PxRigidDynamic>();
-          
+
 		  // Kinematic이 아닌 경우에만 WakeUp 처리
 		  if (DynamicBody && !(DynamicBody->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
 		  {

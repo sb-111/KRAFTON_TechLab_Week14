@@ -147,19 +147,29 @@ end
 --- Pool의 모든 오브젝트를 삭제하고 정리 (게임 재시작 시 호출)
 --- @return void
 function Pool:destroy()
-    -- spawned 큐의 모든 오브젝트 삭제
+    -- spawned 큐의 모든 오브젝트 삭제 (물리 상태 먼저 비활성화)
     while not self.spawned:is_empty() do
         local obj = self.spawned:pop()
-        if obj and DeleteObject then
-            DeleteObject(obj)
+        if obj then
+            if obj.SetPhysicsState then
+                obj:SetPhysicsState(false)
+            end
+            if DeleteObject then
+                DeleteObject(obj)
+            end
         end
     end
 
-    -- despawned 큐의 모든 오브젝트 삭제
+    -- despawned 큐의 모든 오브젝트 삭제 (물리 상태 먼저 비활성화)
     while not self.despawned:is_empty() do
         local obj = self.despawned:pop()
-        if obj and DeleteObject then
-            DeleteObject(obj)
+        if obj then
+            if obj.SetPhysicsState then
+                obj:SetPhysicsState(false)
+            end
+            if DeleteObject then
+                DeleteObject(obj)
+            end
         end
     end
 
