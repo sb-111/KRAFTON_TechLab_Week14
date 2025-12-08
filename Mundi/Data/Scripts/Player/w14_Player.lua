@@ -12,6 +12,7 @@ local ScoreManager = require("Game/w14_ScoreManager")
 local HPManager = require("Game/w14_HPManager")
 local Particle = require("Game/w14_ParticleManager")
 local UI = require("Game/w14_UIManager")
+local AirstrikeManager = require("Game/w14_AirstrikeManager")
 
 local PlayerAnim = nil
 local PlayerInput = nil
@@ -39,6 +40,8 @@ function BeginPlay()
     local result = Audio.RegisterSFX("gunshot", "GunShotActor")
     local result = Audio.RegisterSFX("gunreload", "GunReloadActor")
     local result = Audio.RegisterSFX("gundryfire", "GunDryFireActor")
+    local result = Audio.RegisterSFX("GainedAirstrike", "GainedAirstrike")  -- 공중폭격 아이템 획득
+    -- local result = Audio.RegisterSFX("Jet", "JetSoundActor")         -- 제트 효과음
 
     Particle.Init()
     -- 피 파티클 등록 (Body/Head × Red/Green)
@@ -136,6 +139,12 @@ function Tick(Delta)
         -- R키 재장전
         if PlayerInput.ReloadTrigger then
             TryReload()
+        end
+
+        -- [테스트] T키 공중폭격
+        if InputManager:IsKeyPressed('T') then
+            AirstrikeManager.Execute(Obj.Location)
+            print("[TEST] Airstrike triggered!")
         end
     end
 end
@@ -430,6 +439,14 @@ function OnBeginOverlap(OtherActor)
         OtherActor.bIsActive = false
 
         Audio.PlaySFX("GainedAdrenalin")
+    end
+
+    -- 공중폭격 아이템 획득 (AirstrikeItem)
+    if OtherActor.Tag == "AirstrikeItem" then
+        print("[OnBeginOverlap] Airstrike 획득! 공중폭격 발동")
+        AirstrikeManager.Execute(Obj.Location)
+        OtherActor.bIsActive = false
+        Audio.PlaySFX("GainedAirstrike")
     end
 end
 

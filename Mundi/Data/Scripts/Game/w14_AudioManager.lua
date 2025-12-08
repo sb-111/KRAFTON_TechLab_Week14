@@ -96,6 +96,9 @@ function M.RegisterDefaults()
     M.RegisterSFX("GainedAidKit", "GainedAidKit")
     M.RegisterSFX("GainedAmmo", "GainedAmmo")
     M.RegisterSFX("GainedAdrenalin", "GainedAdrenalin")
+    M.RegisterSFX("GainedAirstrike", "GainedAirstrike")  -- 공중폭격 아이템 획득
+    M.RegisterSFX("Explosion", "ExplosionSoundActor")         -- 폭발 효과음
+    M.RegisterSFX("Jet", "JetSoundActor")                     -- 제트 효과음
     print("[AudioManager] Default sounds registered")
 end
 
