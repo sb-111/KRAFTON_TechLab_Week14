@@ -71,6 +71,7 @@ end
 function StartGame()
     if PlayerCamera then
         GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.0)
+        RestoreBaseVignette()
     end
 
     StartCoroutine(ToRun)
@@ -81,6 +82,7 @@ function Reset()
     bIsStarted = false
     HPManager.Reset()
     PlayerAnim:Reset()
+    ClearGameVignette()
 end
 
 function Tick(Delta)
@@ -319,24 +321,28 @@ function OnBeginOverlap(OtherActor)
     if not OtherActor then return end
 
     -- 장애물 충돌 처리
-    if OtherActor.Tag == "obstacle" and PlayerSlow then
+    if OtherActor.Tag == "obstacle" and PlayerSlow and not PlayerSlow:IsSlowed() then
         local obstacleName = OtherActor.Name
         local cfg = ObstacleConfig[obstacleName] or ObstacleConfig.Default
 
-        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName .. " (speedMult:" .. cfg.speedMult .. ", duration:" .. cfg.duration .. ")")
+        print("[OnBeginOverlap] 장애물 충돌: " .. obstacleName)
 
-        -- PlayerSlow 모듈로 속도 감소 적용 (카메라 셰이크 + 자동 복구 포함)
-        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration)
+        -- 방향 계산
+        local playerY = Obj.Location.Y
+        local obstacleY = OtherActor.Location.Y
+        local direction = (playerY < obstacleY) and -1 or 1
 
-        -- KnockBack 적용: 플레이어가 장애물 왼쪽에 있으면 왼쪽으로, 오른쪽에 있으면 오른쪽으로 밀어냄
+        -- [수정된 호출]
+        -- ApplySlow(속도배율, 지속시간, 넉백강도, 넉백방향)
+        -- 이제 이 함수가 비네트와 카메라 기울기를 모두 수행합니다.
+        PlayerSlow:ApplySlow(cfg.speedMult, cfg.duration, cfg.knockBackStrength, direction)
+        PlayObstacleHitVignette(cfg.duration * 0.6)
+
+        -- 물리적 밀려남(위치 이동) 처리는 별도 유지
         if PlayerKnockBack and cfg.knockBackStrength then
-            local playerY = Obj.Location.Y
-            local obstacleY = OtherActor.Location.Y
-            local direction = (playerY < obstacleY) and -1 or 1
             PlayerKnockBack:ApplyKnockBack(direction, cfg.knockBackStrength)
-            print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. cfg.knockBackStrength)
         end
-
+        
         -- 재장전 중이면 취소
         if AmmoManager.IsReloading() then
             Audio.StopSFX("gunreload")
@@ -366,6 +372,8 @@ function OnBeginOverlap(OtherActor)
             local direction = (playerY < monsterY) and -1 or 1
             PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
             print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. knockBackStrength)
+            
+            PlayHitVignette(0.5)
         end
 
         if died then
@@ -407,5 +415,123 @@ function OnBeginOverlap(OtherActor)
         OtherActor.bIsActive = false
 
         Audio.PlaySFX("GainedAdrenalin")
+    end
+end
+
+local BaseVignette = {
+    Duration = -1,          -- -1: 무한 지속 (삭제 안 됨)
+    Radius = 0.4,
+    Softness = 0.2,
+    Intensity = 0.6,        -- 평소 어두운 정도 (0.0 ~ 1.0)
+    Roundness = 2.0,        -- 원형
+    Color = Color(0, 0, 0, 1) -- ★ 검은색
+}
+
+-- [함수 1] 게임 시작 시 or 효과 종료 후 복구용
+function RestoreBaseVignette()
+    local cm = GetCameraManager()
+    if cm then
+        -- AdjustVignette는 없으면 만들고(Start), 있으면 갱신(Update)합니다.
+        -- LastVignetteIdx 하나만 계속 재활용하게 됩니다.
+        cm:AdjustVignette(
+            BaseVignette.Duration,
+            BaseVignette.Radius,
+            BaseVignette.Softness,
+            BaseVignette.Intensity,
+            BaseVignette.Roundness,
+            BaseVignette.Color,
+            0 -- 우선순위
+        )
+    end
+end
+
+local bIsHitEffectPlaying = false
+local bIsObstacleHitEffectPlaying = false
+
+-- [함수 2] 맞았을 때 호출 (적 피해)
+function PlayHitVignette(duration)
+    if bIsObstacleHitEffectPlaying or bIsHitEffectPlaying then return end
+    
+    local cm = GetCameraManager()
+    if not cm then return end
+    
+    bIsHitEffectPlaying = true
+    
+    StartCoroutine(function()
+        local elapsedTime = 0
+        local deltaTime = 0.016
+        
+        while elapsedTime < duration do
+            coroutine.yield("wait_time", deltaTime)
+            elapsedTime = elapsedTime + deltaTime
+            
+            -- 0 -> 1 -> 0 (사인파)
+            local t = math.min(elapsedTime / duration, 1.0)
+            local intensity = math.sin(t * math.pi) * 0.5 -- 최대 강도 0.5
+            
+            cm:AdjustVignette(
+                -1,   -- 지속시간은 무한으로 둠
+                0.4,  -- Radius (살짝 좁게)
+                0.2,  -- Softness
+                intensity, 
+                2.0, 
+                Color(1, 0, 0, 1), -- ★ 빨간색
+                0    -- 우선순위
+            )
+        end
+        
+        -- 효과가 끝났으면 원래 검은색으로 복구
+        RestoreBaseVignette()
+        
+        bIsHitEffectPlaying = false
+    end)
+end
+
+-- [함수 2-1] 장애물 맞았을 때 호출 (검은색 진하게)
+function PlayObstacleHitVignette(duration)
+    if bIsObstacleHitEffectPlaying or bIsHitEffectPlaying then return end
+    
+    local cm = GetCameraManager()
+    if not cm then return end
+    
+    bIsObstacleHitEffectPlaying = true
+    
+    StartCoroutine(function()
+        local elapsedTime = 0
+        local deltaTime = 0.016
+        
+        while elapsedTime < duration do
+            coroutine.yield("wait_time", deltaTime)
+            elapsedTime = elapsedTime + deltaTime
+            
+            -- 0 -> 1 -> 0 (사인파)
+            local t = math.min(elapsedTime / duration, 1.0)
+            -- BaseVignette.Intensity(0.6) + 사인파로 추가 (0 ~ 0.3)
+            local additionalIntensity = math.sin(t * math.pi) * 0.3
+            local intensity = BaseVignette.Intensity + additionalIntensity -- 0.6 -> 0.9 -> 0.6
+            
+            cm:AdjustVignette(
+                -1,   -- 지속시간은 무한으로 둠
+                0.4,  -- Radius
+                0.2,  -- Softness
+                intensity, 
+                2.0, 
+                Color(0, 0, 0, 1), -- ★ 검은색 (빨강 0, 초록 0, 파랑 0)
+                1    -- 우선순위 (조금 높게 해서 우선 적용)
+            )
+        end
+        
+        -- 효과가 끝났으면 원래 검은색으로 복구
+        RestoreBaseVignette()
+        
+        bIsObstacleHitEffectPlaying = false
+    end)
+end
+
+-- [함수 3] 게임 오버 / 스테이지 종료 시
+function ClearGameVignette()
+    local cm = GetCameraManager()
+    if cm then
+        cm:DeleteVignette() -- C++의 LastVignetteIdx를 찾아서 bEnabled = false 처리
     end
 end

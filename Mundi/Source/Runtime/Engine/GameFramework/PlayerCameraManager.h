@@ -95,5 +95,5 @@ private:
 
 	// TODO : 감싸기 or 배열로 관리, 현재 vignette 1개만 Update 가능
 	// Vignette 연속 효과를 위한 IDX
-	int LastVignetteIdx = 0;
+	int LastVignetteIdx = -1;
 };
