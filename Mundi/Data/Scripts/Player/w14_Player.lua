@@ -40,9 +40,8 @@ function BeginPlay()
     local result = Audio.RegisterSFX("gunshot", "GunShotActor")
     local result = Audio.RegisterSFX("gunreload", "GunReloadActor")
     local result = Audio.RegisterSFX("gundryfire", "GunDryFireActor")
-
-    M.RegisterSFX("GainedAirstrike", "GainedAirstrike")  -- 공중폭격 아이템 획득
-    -- M.RegisterSFX("Jet", "JetSoundActor")         -- 제트 효과음
+    local result = Audio.RegisterSFX("GainedAirstrike", "GainedAirstrike")  -- 공중폭격 아이템 획득
+    -- local result = Audio.RegisterSFX("Jet", "JetSoundActor")         -- 제트 효과음
 
     Particle.Init()
     -- 피 파티클 등록 (Body/Head × Red/Green)
