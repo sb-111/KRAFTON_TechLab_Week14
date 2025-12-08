@@ -3,7 +3,7 @@
   "OwnedComponents" : [{
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1200,
+      "Id" : 36373,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -24,7 +24,7 @@
       "ObjectName" : "USkeletalMeshComponent_2",
       "ParentId" : 0,
       "PhysicsAssetPathOverride" : "",
-      "RelativeLocation" : [6.634550, -5.716458, -1.744590],
+      "RelativeLocation" : [6.634550, -0.876060, -1.744590],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "SkeletalMesh" : "Data/GameJamMonster/copzombie_l_actisdato.fbx",
@@ -42,22 +42,14 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "BoxExtent" : [0.500000, 0.500000, 0.500000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1201,
+      "Id" : 36376,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "Head",
-      "ParentId" : 1200,
+      "ParentId" : 36373,
       "RelativeLocation" : [0.106304, 0.000000, 1.835304],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [0.320125, 0.336299, 0.349696],
@@ -75,14 +67,22 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_ChaserMonsterMain.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1203,
+      "Id" : 36375,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 1200,
+      "ParentId" : 36373,
       "RelativeLocation" : [0.000000, 0.000000, 0.895432],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [0.435166, 0.669746, 0.859563],
@@ -100,7 +100,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1200,
+  "RootComponentId" : 36373,
   "Tag" : "ChaserMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
