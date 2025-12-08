@@ -1,11 +1,11 @@
+local MobStat = require("Monster/w14_MobStat")
+
 --- ChaserMonster 클래스
 --- @class ChaserMonster
 --- @field stat MobStat 스탯 관리 객체
 --- @field obj userdata 게임 오브젝트
 --- @field anim_instance userdata 애니메이션 상태 머신
 --- @field is_permanently_idle boolean 영구 Idle 상태 여부
-local MobStat = require("Monster/w14_MobStat")
-
 local ChaserMonster = {}
 ChaserMonster.__index = ChaserMonster
 

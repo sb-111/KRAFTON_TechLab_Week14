@@ -14,6 +14,7 @@ local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
 local StageManagerClass = require("w14_StageManager")
 local DifficultyManagerClass = require("w14_DifficultyManager")
+local BossMonsterManagerClass = require("Monster/w14_BossMonsterManager")
 
 local MapManager = nil
 local GameStageManager = nil  -- StageManager.instance로 외부 접근 가능
@@ -25,6 +26,7 @@ local PlayerScript = nil
 local StartUICam = nil
 local BasicMonsterDifficultyManager = nil
 local ChaserMonsterDifficultyManager = nil
+local BossMonsterManager = nil
 
 --- 게임 정리 함수 (재시작 전에 호출)
 local function CleanupGame()
@@ -52,7 +54,11 @@ local function CleanupGame()
     if ChaserMonsterDifficultyManager then
         ChaserMonsterDifficultyManager:reset()
     end
-    
+
+    if BossMonsterManager then
+        BossMonsterManager:reset()
+    end
+
     PlayerScript.Reset()
 end
 
@@ -174,6 +180,14 @@ function BeginPlay()
     BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 30, 60)
     ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 24, 60)
 
+    -- BossMonsterManager 생성
+    -- 파라미터: 스폰시간(min, max, interval), HP(min, max, interval), 데미지(min, max, interval)
+    BossMonsterManager = BossMonsterManagerClass:new(
+            30, 15, 120,    -- 스폰 시간: 30초에서 15초까지, 120초 동안 감소
+            100, 300, 180,  -- HP: 100에서 300까지, 180초 동안 증가
+            10, 30, 180     -- 데미지: 10에서 30까지, 180초 동안 증가
+    )
+
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
 
@@ -287,6 +301,10 @@ function Tick(dt)
 
         if MonsterManager then
             MonsterManager:Tick()
+        end
+
+        if BossMonsterManager then
+            BossMonsterManager:Tick(dt)
         end
     end
 end
