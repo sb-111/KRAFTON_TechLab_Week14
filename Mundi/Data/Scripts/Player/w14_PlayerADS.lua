@@ -116,8 +116,8 @@ end
 
 --- 총/손 가시성 (ADS 중엔 숨김)
 function PlayerADS:UpdateGunVisibility()
-    -- ADS 진행도가 높으면 총과 손 숨김
-    local shouldHide = self.adsProgress > 0.5
+    -- 우클릭 누르면 바로 숨김, 떼면 0.2 이하일 때 보이기
+    local shouldHide = self.isAiming or self.adsProgress > 0.2
 
     if self.gunMesh then
         self.gunMesh.bIsVisible = not shouldHide
@@ -125,6 +125,12 @@ function PlayerADS:UpdateGunVisibility()
     if self.skeletalMesh then
         self.skeletalMesh.bIsVisible = not shouldHide
     end
+end
+
+--- 총을 쏠 수 있는 상태인지 (팔이 완전히 나왔을 때만)
+function PlayerADS:CanFire()
+    -- ADS 완전 상태이거나, 힙파이어 완전 상태에서만 발사 가능
+    return self.adsProgress < 0.01 or self.adsProgress > 0.99
 end
 
 --- 현재 감도 배수 반환
