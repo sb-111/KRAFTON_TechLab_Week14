@@ -206,8 +206,8 @@ function Rotate(DeltaTime)
     end
 
     -- Yaw 제한
-    if TargetYaw > 90.0 then TargetYaw = 90.0
-    elseif TargetYaw < -90.0 then TargetYaw = -90.0 end
+    if TargetYaw > 70.0 then TargetYaw = 70.0
+    elseif TargetYaw < -70.0 then TargetYaw = -70.0 end
 
     if TargetPitch > 70.0 then TargetPitch = 70.0
     elseif TargetPitch < -70.0 then TargetPitch = -70.0 end

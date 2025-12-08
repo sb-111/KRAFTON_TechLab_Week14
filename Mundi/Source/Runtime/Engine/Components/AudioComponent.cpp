@@ -25,7 +25,10 @@ UAudioComponent::UAudioComponent()
 
 UAudioComponent::~UAudioComponent()
 {
-    Stop();
+    if (bIsPlaying && SourceVoice)
+    {
+        Stop();
+    }
 }
 
 void UAudioComponent::BeginPlay()
@@ -79,15 +82,23 @@ void UAudioComponent::Play()
 
 void UAudioComponent::Stop()
 {
-    if (!bIsPlaying)
+    // 이미 멈췄거나 보이스가 없으면 리턴
+    if (!bIsPlaying || SourceVoice == nullptr)
         return;
 
-    if (SourceVoice)
-    {
-        FAudioDevice::StopSound(SourceVoice);
-        SourceVoice = nullptr;
-    }
+    // 1. 먼저 플래그를 꺼서 Tick이나 다른 로직에서의 접근을 차단
     bIsPlaying = false;
+
+    // 2. 멤버 변수를 먼저 nullptr로 만들어서 이 함수 내에서 재진입이나
+    //    다른 스레드/함수가 이 포인터에 접근하는 것을 방지 (Swap 방식)
+    IXAudio2SourceVoice* VoiceToDestroy = SourceVoice;
+    SourceVoice = nullptr;
+
+    // 3. 로컬 포인터를 이용해 안전하게 정리 요청
+    if (VoiceToDestroy)
+    {
+        FAudioDevice::StopSound(VoiceToDestroy);
+    }
 }
 
 void UAudioComponent::DuplicateSubObjects()
