@@ -401,8 +401,10 @@ function OnBeginOverlap(OtherActor)
         end
 
         if died then
+            PlayerAnim:Die()
             -- TODO: 게임 오버 처리
             print("[Player] Game Over!")
+
         else
             -- 충돌 효과음 출력
             Audio.PlaySFX("MonsterCollisionScream")
