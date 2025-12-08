@@ -53,6 +53,10 @@ local function CleanupGame()
         ChaserMonsterDifficultyManager:reset()
     end
     
+    if GameStageManager then
+        GameStageManager:reset()
+    end
+    
     PlayerScript.Reset()
 end
 

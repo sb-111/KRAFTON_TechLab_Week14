@@ -179,13 +179,14 @@ function StageManager:Tick()
 end
 
 --- 모든 테마 매니저 정리 (게임 재시작 시 호출)
-function StageManager:destroy()
+function StageManager:reset()
+    print("[StageManager] reset!")
+
     for _, theme in ipairs(self.obstacle_themes) do
-        if theme.manager and theme.manager.destroy then
-            theme.manager:destroy()
+        if theme.manager and theme.manager.reset then
+            theme.manager:reset()
         end
     end
-    self.obstacle_themes = {}
     self.current_theme_index = 1
     self.next_theme_change_x = 0
     self.current_stage = 1
