@@ -273,8 +273,16 @@ function Shoot()
         -- [몬스터 피격 로직]
         if HitResult.Actor and MonsterConfig.IsMonsterTag(HitResult.Actor.Tag) then
             local monsterScript = HitResult.Actor:GetScript()
-            
-            if monsterScript then
+
+            -- BossProjectile 사격 시 파괴
+            if HitResult.Actor.Tag == "BossProjectile" then
+                if monsterScript and monsterScript.DestroyProjectile then
+                    monsterScript.DestroyProjectile()
+                    print("[Shoot] BossProjectile destroyed!")
+                    UI.ShowShotFeedback()
+                end
+            elseif monsterScript then
+                -- 일반 몬스터 피격 처리
                 -- 1. 기본 데미지 설정
                 local finalDamage = 10
                 local isHeadshot = false
@@ -383,32 +391,65 @@ function OnBeginOverlap(OtherActor)
 
     -- 몹과 충돌 처리 (Tag 기반 데미지)
     if MonsterConfig.IsMonsterTag(OtherActor.Tag) then
-        local damage = MonsterConfig.GetDamage(OtherActor.Tag)
-        local died = HPManager.TakeDamage(damage)
+        -- BossProjectile 특수 처리
+        if OtherActor.Tag == "BossProjectile" then
+            -- 발사체 스크립트에서 데미지 가져오기
+            local proj_script = OtherActor:GetScript()
+            local damage = 10  -- 기본값
+            if proj_script and proj_script.GetDamageAmount then
+                damage = proj_script.GetDamageAmount()
+            end
 
-        print("[OnBeginOverlap] 몹 충돌! Tag: " .. OtherActor.Tag .. ", 데미지: " .. damage)
+            local died = HPManager.TakeDamage(damage)
+            print("[OnBeginOverlap] BossProjectile 피격! 데미지: " .. damage)
 
-        -- KnockBack 적용: 플레이어가 몹 왼쪽에 있으면 왼쪽으로, 오른쪽에 있으면 오른쪽으로 밀어냄
-        if PlayerKnockBack then
-            local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
-            local playerY = Obj.Location.Y
-            local monsterY = OtherActor.Location.Y
-            local direction = (playerY < monsterY) and -1 or 1
-            PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
-            print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. knockBackStrength)
-            
-            PlayHitVignette(0.5)
-        end
+            -- 발사체 파괴
+            if proj_script and proj_script.DestroyProjectile then
+                proj_script.DestroyProjectile()
+            end
 
-        if died then
-            PlayerAnim:Die()
-            -- TODO: 게임 오버 처리
-            print("[Player] Game Over!")
+            -- KnockBack 적용
+            if PlayerKnockBack then
+                local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
+                local playerY = Obj.Location.Y
+                local projectileY = OtherActor.Location.Y
+                local direction = (playerY < projectileY) and -1 or 1
+                PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
+                PlayHitVignette(0.5)
+            end
 
+            if died then
+                print("[Player] Game Over!")
+            else
+                Audio.PlaySFX("MonsterCollisionSmash")
+            end
         else
-            -- 충돌 효과음 출력
-            Audio.PlaySFX("MonsterCollisionScream")
-            Audio.PlaySFX("MonsterCollisionSmash")
+            -- 일반 몬스터 충돌 처리
+            local damage = MonsterConfig.GetDamage(OtherActor.Tag)
+            local died = HPManager.TakeDamage(damage)
+
+            print("[OnBeginOverlap] 몹 충돌! Tag: " .. OtherActor.Tag .. ", 데미지: " .. damage)
+
+            -- KnockBack 적용: 플레이어가 몹 왼쪽에 있으면 왼쪽으로, 오른쪽에 있으면 오른쪽으로 밀어냄
+            if PlayerKnockBack then
+                local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
+                local playerY = Obj.Location.Y
+                local monsterY = OtherActor.Location.Y
+                local direction = (playerY < monsterY) and -1 or 1
+                PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
+                print("[OnBeginOverlap] KnockBack 적용: direction=" .. direction .. ", strength=" .. knockBackStrength)
+
+                PlayHitVignette(0.5)
+            end
+
+            if died then
+                -- TODO: 게임 오버 처리
+                print("[Player] Game Over!")
+            else
+                -- 충돌 효과음 출력
+                Audio.PlaySFX("MonsterCollisionScream")
+                Audio.PlaySFX("MonsterCollisionSmash")
+            end
         end
     end
 
