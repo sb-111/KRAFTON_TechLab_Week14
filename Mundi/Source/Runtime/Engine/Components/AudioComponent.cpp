@@ -95,6 +95,17 @@ void UAudioComponent::DuplicateSubObjects()
     Super::DuplicateSubObjects();
 }
 
+void UAudioComponent::SetVolume(float InVolume)
+{
+    Volume = InVolume;
+
+    // 재생 중인 사운드가 있으면 즉시 볼륨 적용
+    if (bIsPlaying && SourceVoice)
+    {
+        SourceVoice->SetVolume(Volume);
+    }
+}
+
 
 void UAudioComponent::PlaySlot(uint32 SlotIndex)
 {

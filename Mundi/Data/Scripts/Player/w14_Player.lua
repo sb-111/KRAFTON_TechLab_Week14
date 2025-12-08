@@ -277,6 +277,12 @@ function OnBeginOverlap(OtherActor)
             AmmoManager.CancelReload()
             PlayerAnim:CancelReload()  -- ← 애니메이션 취소
         end
+        
+        -- 충돌 효과음 출력
+        Audio.PlaySFX("ObstacleCollisionScream")
+        -- Audio.SetSFXVolume("ObstacleCollisionScream", 50)
+        Audio.PlaySFX("ObstacleCollisionSmash")
+        -- Audio.SetSFXVolume("ObstacleCollisionSmash", 50)
     end
 
     -- 몹과 충돌 처리 (Tag 기반 데미지)
@@ -299,6 +305,10 @@ function OnBeginOverlap(OtherActor)
         if died then
             -- TODO: 게임 오버 처리
             print("[Player] Game Over!")
+        else
+            -- 충돌 효과음 출력
+            Audio.PlaySFX("MonsterCollisionScream")
+            Audio.PlaySFX("MonsterCollisionSmash")
         end
     end
 

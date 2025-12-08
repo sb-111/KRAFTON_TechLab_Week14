@@ -45,9 +45,9 @@ class UAudioComponent : public USceneComponent
     UFUNCTION(LuaBind, DisplayName="IsPlaying", Tooltip="Check if audio is playing")
     bool IsPlaying() const { return bIsPlaying; }
 
-    // Volume 설정
+    // Volume 설정 (재생 중인 사운드에도 즉시 적용)
     UFUNCTION(LuaBind, DisplayName="SetVolume", Tooltip="Set volume 0.0 to 1.0")
-    void SetVolume(float InVolume) { Volume = InVolume; }
+    void SetVolume(float InVolume);
 
     UFUNCTION(LuaBind, DisplayName="GetVolume", Tooltip="Get volume")
     float GetVolume() const { return Volume; }
