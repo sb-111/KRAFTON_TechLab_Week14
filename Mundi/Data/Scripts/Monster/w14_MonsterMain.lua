@@ -12,7 +12,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    Monster:Initialize(Obj, 3.0, 50, 1, 4.0)
+    Monster:Initialize(Obj, 3.0, 50, 1, 10.0)
 
     PrevActive = Obj.bIsActive
 end
@@ -50,6 +50,15 @@ end
 
 function GetDamage(Damage)
     Monster:GetDamage(Damage)
+end
+
+--- Pool에서 Respawn 시 호출됩니다.
+--- @return void
+function Reset()
+    if Monster then
+        Monster:Reset()
+    end
+    PrevActive = true
 end
 
 --- 게임 종료 시 호출됩니다.

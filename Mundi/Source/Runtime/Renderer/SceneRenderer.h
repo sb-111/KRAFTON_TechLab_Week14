@@ -114,6 +114,9 @@ private:
 	/** @brief 같은 메시+머티리얼 조합을 가진 배치들을 인스턴싱으로 합칩니다. */
 	void BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatches);
 
+	/** @brief 그림자 렌더링용 배치를 인스턴싱으로 합칩니다. */
+	void BatchShadowMeshes(TArray<FMeshBatchElement>& InOutShadowBatches);
+
 	/** @brief 데칼(Decal)을 렌더링하는 패스입니다. */
 	void RenderDecalPass();
 
@@ -179,6 +182,10 @@ private:
 	// static으로 선언하여 FSceneRenderer 인스턴스 간에 공유
 	static struct ID3D11Buffer* BatchingInstanceBuffer;
 	static uint32 BatchingInstanceBufferCapacity;
+
+	// 그림자 배칭용 단일 인스턴스 버퍼 (동적, 프레임간 재사용)
+	static struct ID3D11Buffer* ShadowBatchingInstanceBuffer;
+	static uint32 ShadowBatchingInstanceBufferCapacity;
 
 	// TODO : 자동으로 등록되게 바꾸기!, bloom 빼고 다 stateless해서 걔네는 static(etc..) 등 하이브리도 구조로 바꾸기
 	// PostProcessing

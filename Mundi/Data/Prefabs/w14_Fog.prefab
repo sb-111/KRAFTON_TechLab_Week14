@@ -1,0 +1,29 @@
+{
+  "ObjectName" : "Fog",
+  "OwnedComponents" : [{
+      "FogCutoffDistance" : 3000.000000,
+      "FogDensity" : 0.030000,
+      "FogHeightFalloff" : 0.100000,
+      "FogInscatteringColor" : [0.239216, 0.239216, 0.239216, 1.000000],
+      "FogMaxOpacity" : 1.000000,
+      "HeightFogShader" : "Shaders/PostProcess/HeightFog_PS.hlsl",
+      "Id" : 1107,
+      "ObjectName" : "UHeightFogComponent_1",
+      "ParentId" : 0,
+      "RelativeLocation" : [0.000000, 0.000000, 5.000000],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
+      "StartDistance" : 0.000000,
+      "Type" : "UHeightFogComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsVisible" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 1107,
+  "Tag" : "",
+  "Type" : "AHeightFogActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

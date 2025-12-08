@@ -365,7 +365,7 @@ void UShader::CreateInputLayout(ID3D11Device* Device, const FString& InShaderPat
 		}
 	}
 
-	if (bHasGPUInstancing && InShaderPath.find("UberLit") != FString::npos)
+	if (bHasGPUInstancing && (InShaderPath.find("UberLit") != FString::npos || InShaderPath.find("DepthOnly") != FString::npos))
 	{
 		// GPU 인스턴싱을 위한 추가 입력 요소 (슬롯 1, per-instance)
 		// FStaticMeshInstanceData: Transform0(16) + Transform1(16) + Transform2(16) = 48 bytes

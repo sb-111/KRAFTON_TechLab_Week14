@@ -739,7 +739,7 @@ AActor* UWorld::SpawnPrefabActor(const FWideString& PrefabPath)
 
 	// 1. 캐시 확인
 	auto It = PrefabCache.find(PrefabPath);
-	if (It == PrefabCache.end())
+	if (It == PrefabCache.end() || !bPie)
 	{
 		// --- 캐시에 없으므로 로드 시작 ---
 		JSON TempJson;
