@@ -21,16 +21,15 @@ function BeginPlay()
 end
 
 function Tick(dt)
-    -- 스페이스바: 상태 전환
+    -- 스페이스바: 상태 전환 테스트
+    -- START -> PLAYING -> DEAD -> START (순환)
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
         elseif GameState.IsPlaying() then
             GameState.PlayerDied()
-        elseif GameState.IsState(GameState.States.DEAD) then
-            GameState.EndGame()
-        elseif GameState.IsEnd() then
-            GameState.ShowStartScreen()  -- End -> Start 직접 전환
+        elseif GameState.IsDead() then
+            GameState.ShowStartScreen()  -- DEAD -> START 직접 전환
         end
     end
 end

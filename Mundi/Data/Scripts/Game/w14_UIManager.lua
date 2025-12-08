@@ -28,6 +28,9 @@ local buttonStates = {
     start = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
     howToPlay = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
     exit = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
+    -- 게임 오버 화면용 버튼
+    restart = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
+    gameOverExit = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
 }
 
 -- ===== HUD 상태 =====
@@ -397,6 +400,85 @@ function M.ResetHUD()
     hudState.targetDistance = 0
 end
 
+-- ===== 게임 오버 화면 렌더링 =====
+function M.UpdateGameOverScreen()
+    if not HUD or not HUD:IsVisible() then return end
+
+    local screenW = HUD:GetScreenWidth()
+    local screenH = HUD:GetScreenHeight()
+    local mouseX, mouseY = getMouseInHUDSpace()
+
+    -- 반투명 검은 배경
+    HUD:DrawRect(0, 0, screenW, screenH, Color(0, 0, 0, 0.7))
+
+    -- "GAME OVER" 텍스트 (화면 상단)
+    local gameOverText = "GAME OVER"
+    local gameOverY = screenH * 0.25
+    HUD:DrawText(gameOverText, screenW / 2 - 150, gameOverY, 72, Color(1, 0.2, 0.2, 1))
+
+    -- 최종 점수 표시
+    local distance = ScoreManager.GetDistance()
+    local kills = ScoreManager.GetKillCount()
+    local score = ScoreManager.GetScore()
+
+    local statsY = screenH * 0.40
+    local statsSpacing = 40
+    HUD:DrawText("Distance: " .. ScoreManager.FormatDistance(distance), screenW / 2 - 100, statsY, 28, Color(1, 1, 1, 1))
+    HUD:DrawText("Kills: " .. ScoreManager.FormatNumber(kills), screenW / 2 - 100, statsY + statsSpacing, 28, Color(1, 1, 1, 1))
+    HUD:DrawText("Score: " .. ScoreManager.FormatNumber(score), screenW / 2 - 100, statsY + statsSpacing * 2, 28, Color(1, 1, 1, 1))
+
+    -- 버튼 크기 설정
+    local btnW = 400
+    local btnH = 80
+    local btnSpacing = 20
+    local startY = screenH * 0.60
+    local btnX = (screenW - btnW) / 2
+
+    -- RESTART 버튼
+    local restartY = startY
+    buttonStates.restart.rect = { x = btnX, y = restartY, w = btnW, h = btnH }
+    local wasRestartHovered = buttonStates.restart.hovered
+    buttonStates.restart.hovered = isPointInRect(mouseX, mouseY, buttonStates.restart.rect)
+
+    if buttonStates.restart.hovered and not wasRestartHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+
+    -- RESTART 버튼 배경
+    local restartColor = buttonStates.restart.hovered and Color(0.3, 0.8, 0.3, 1) or Color(0.2, 0.6, 0.2, 1)
+    HUD:DrawRect(btnX, restartY, btnW, btnH, restartColor)
+    HUD:DrawText("RESTART", btnX + btnW / 2 - 70, restartY + 20, 40, Color(1, 1, 1, 1))
+
+    -- EXIT 버튼
+    local exitY = restartY + btnH + btnSpacing
+    buttonStates.gameOverExit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
+    local wasExitHovered = buttonStates.gameOverExit.hovered
+    buttonStates.gameOverExit.hovered = isPointInRect(mouseX, mouseY, buttonStates.gameOverExit.rect)
+
+    if buttonStates.gameOverExit.hovered and not wasExitHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+
+    -- EXIT 버튼 배경
+    local exitColor = buttonStates.gameOverExit.hovered and Color(0.8, 0.3, 0.3, 1) or Color(0.6, 0.2, 0.2, 1)
+    HUD:DrawRect(btnX, exitY, btnW, btnH, exitColor)
+    HUD:DrawText("EXIT", btnX + btnW / 2 - 40, exitY + 20, 40, Color(1, 1, 1, 1))
+
+    -- 클릭 처리
+    if InputManager:IsMouseButtonPressed(0) then
+        if buttonStates.restart.hovered then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] RESTART clicked")
+            GameState.StartGame()  -- 게임 재시작
+            InputManager:SetCursorVisible(false)
+        elseif buttonStates.gameOverExit.hovered then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] EXIT clicked")
+            QuitGame()
+        end
+    end
+end
+
 -- ===== 메인 업데이트 (상태에 따라 다른 UI 표시) =====
 function M.Update(dt)
     local state = GameState.GetState()
@@ -405,9 +487,8 @@ function M.Update(dt)
         M.UpdateStartScreen()
     elseif state == GameState.States.PLAYING then
         M.UpdateGameHUD(dt)
-    elseif state == GameState.States.END then
-        -- TODO: 게임 오버 화면
-        M.UpdateStartScreen()  -- 임시로 시작 화면 재사용
+    elseif state == GameState.States.DEAD then
+        M.UpdateGameOverScreen()
     end
 end
 
