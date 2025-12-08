@@ -49,6 +49,8 @@ function BeginPlay()
     --Particle.Register("blood_body_green", "Data/Prefabs/w14_Blood_Body_Green.prefab", 20, 1.0) -- 지금 없음 (색만 바꾸면 될듯)
     Particle.Register("blood_head_red", "Data/Prefabs/w14_Blood_Head_Red.prefab", 15, 1.2)
     --Particle.Register("blood_head_green", "Data/Prefabs/w14_Blood_Head_Green.prefab", 15, 1.2) -- 지금 없음
+    -- 보스 피격 파티클 등록 (황금색 폭발 효과)
+    Particle.Register("boss_hit", "Data/Prefabs/w14_BossHit.prefab", 10, 1.0)
 
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
@@ -298,9 +300,15 @@ function Shoot()
 
                 -- 피 색상과 부위에 따른 파티클 스폰
                 local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
-                local particleName = isHeadshot
-                    and ("blood_head_" .. bloodColor)
-                    or ("blood_body_" .. bloodColor)
+                local particleName
+                if bloodColor == "black" then
+                    -- 보스는 황금색 폭발 파티클 사용
+                    particleName = "boss_hit"
+                else
+                    particleName = isHeadshot
+                        and ("blood_head_" .. bloodColor)
+                        or ("blood_body_" .. bloodColor)
+                end
                 print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
                 local spawnResult = Particle.Spawn(particleName, TargetPoint)
                 if spawnResult then
