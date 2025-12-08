@@ -6,6 +6,7 @@ local MonsterConfig = {
     BasicMonster = {
         damage = 10,
         knockBackStrength = 6.0,
+        bloodColor = "red",  
         description = "기본 좀비"
     },
 
@@ -13,6 +14,7 @@ local MonsterConfig = {
     ChaserMonster = {
         damage = 15,
         knockBackStrength = 10.0,
+        bloodColor = "red",  
         description = "추격 좀비"
     },
 
@@ -20,6 +22,7 @@ local MonsterConfig = {
     Default = {
         damage = 5,
         knockBackStrength = 5.0,
+        bloodColor = "green",    
         description = "알 수 없는 몬스터"
     }
 }
@@ -38,6 +41,14 @@ end
 function MonsterConfig.GetKnockBackStrength(tag)
     local config = MonsterConfig[tag] or MonsterConfig.Default
     return config.knockBackStrength
+end
+
+--- 몬스터 태그로 피 색상 조회
+--- @param tag string 몬스터 태그
+--- @return string "red" 또는 "green"
+function MonsterConfig.GetBloodColor(tag)
+    local config = MonsterConfig[tag] or MonsterConfig.Default
+    return config.bloodColor
 end
 
 --- 몬스터 태그가 유효한 몬스터인지 확인

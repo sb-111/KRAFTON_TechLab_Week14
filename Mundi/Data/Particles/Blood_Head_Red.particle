@@ -1,0 +1,44 @@
+{
+  "Emitters" : [{
+      "LODLevels" : [{
+          "Level" : 0,
+          "Modules" : [{
+              "EmitterDelay" : 0.000000, "EmitterDuration" : 0.8, "EmitterLoops" : 0, "EmitterName" : "BloodBurst_Head",
+              "MaterialShader" : "Shaders/Particle/ParticleSprite.hlsl", "MaterialTexture" : "Data/Textures/Particles/Blood.png",
+              "Type" : "UParticleModuleRequired", "bEnabled" : true
+            }, {
+              "BurstList" : [{ "Count" : 170, "CountLow" : 170, "Time" : 0.0 }],
+              "Type" : "UParticleModuleSpawn", "bEnabled" : true, "bSpawnModule" : true
+            }, {
+              "Type" : "UParticleModuleTypeDataSprite", "bEnabled" : true
+            }, {
+              "Lifetime" : { "ConstantValue" : 0.42, "MaxValue" : 0.48, "MinValue" : 0.36, "Type" : 1 },
+              "Type" : "UParticleModuleLifetime", "bEnabled" : true, "bSpawnModule" : true
+            }, {
+              "SizeOverLife" : { "ConstantValue" : [0.12, 0.12, 1.0], "MaxValue" : [0.16, 0.16, 1.0], "MinValue" : [0.09, 0.09, 1.0], "Type" : 1 },
+              "Type" : "UParticleModuleSize", "bEnabled" : true, "bSpawnModule" : true, "bUpdateModule" : true
+            }, {
+              "ColorOverLife" : {
+                "Alpha" : { "ConstantCurve" : { "Points" : [ { "InVal" : 0.0, "OutVal" : 1.0 }, { "InVal" : 0.35, "OutVal" : 1.0 }, { "InVal" : 0.7, "OutVal" : 0.65 }, { "InVal" : 1.0, "OutVal" : 0.0 } ]}, "Type" : 2 },
+                "RGB" : { "ConstantValue" : [0.4, 0.01, 0.01], "MaxValue" : [0.55, 0.04, 0.02], "MinValue" : [0.28, 0.0, 0.0], "Type" : 1 }
+              },
+              "Type" : "UParticleModuleColor", "bEnabled" : true, "bSpawnModule" : true, "bUpdateModule" : true
+            }, {
+              "AccelerationOverLife" : { "MaxValue" : [2.0, 2.0, 2.0], "MinValue" : [-2.0, -2.0, -2.0], "Type" : 1 },
+              "GravityScale" : 2.8, "Type" : "UParticleModuleAcceleration", "bApplyGravity" : true, "bEnabled" : true, "bSpawnModule" : true, "bUpdateModule" : true
+            }, {
+              "Type" : "UParticleModuleLocation", "bEnabled" : true, "bSpawnModule" : true
+            }, {
+              "MaxScaleX" : 2.2, "MaxScaleY" : 1.0, "SpeedScaleX" : 0.9, "SpeedScaleY" : 1.6,
+              "Type" : "UParticleModuleSizeScaleBySpeed", "bEnabled" : true, "bUpdateModule" : true
+            }, {
+              "Angle" : { "ConstantValue" : 50.0, "MaxValue" : 65.0, "MinValue" : 35.0, "Type" : 1 },
+              "Type" : "UParticleModuleVelocityCone", "Velocity" : { "ConstantValue" : 10.0, "MaxValue" : 12.0, "MinValue" : 8.0, "Type" : 1 },
+              "bEnabled" : true, "bSpawnModule" : true
+            }],
+          "bEnabled" : true
+        }]
+    }],
+  "LODDistances" : [],
+  "bUseLOD" : false
+}

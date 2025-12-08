@@ -39,7 +39,11 @@ function BeginPlay()
     local result = Audio.RegisterSFX("gundryfire", "GunDryFireActor")
 
     Particle.Init()
-    Particle.Register("blood", "Data/Prefabs/Particle/BloodParticle.prefab", 20, 1.0)
+    -- 피 파티클 등록 (Body/Head × Red/Green)
+    Particle.Register("blood_body_red", "Data/Prefabs/Particle/w14_Blood_Body_Red.prefab", 20, 1.0)
+    --Particle.Register("blood_body_green", "Data/Prefabs/Particle/w14_Blood_Body_Green.prefab", 20, 1.0) -- 지금 없음 (색만 바꾸면 될듯)
+    Particle.Register("blood_head_red", "Data/Prefabs/Particle/w14_Blood_Head_Red.prefab", 15, 1.2)
+    --Particle.Register("blood_head_green", "Data/Prefabs/Particle/w14_Blood_Head_Green.prefab", 15, 1.2) -- 지금 없음
 
     Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     Gun = GetComponent(Obj, "UStaticMeshComponent")
@@ -208,7 +212,12 @@ function Shoot()
                     UI.ShowHeadshotFeedback()
                 end
 
-                Particle.Spawn("blood", TargetPoint)
+                -- 피 색상과 부위에 따른 파티클 스폰
+                local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
+                local particleName = isHeadshot
+                    and ("blood_head_" .. bloodColor)
+                    or ("blood_body_" .. bloodColor)
+                Particle.Spawn(particleName, TargetPoint)
 
                 -- 3. 데미지 적용
                 if monsterScript.GetDamage then
