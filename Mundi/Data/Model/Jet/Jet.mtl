@@ -1,0 +1,34 @@
+# Blender 5.0.0 MTL File: 'None'
+# www.blender.org
+
+newmtl Glass
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.581357 0.811224 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 0.358004
+illum 6
+
+newmtl f14a-airframe
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd f14a-airframe_baseColor.png
+map_Bump -bm 1.000000 f14a-airframe_normal.png
+
+newmtl f14a-cockpit
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd f14a-cockpit_baseColor.png
+map_Bump -bm 1.000000 f14a-cockpit_normal.png
