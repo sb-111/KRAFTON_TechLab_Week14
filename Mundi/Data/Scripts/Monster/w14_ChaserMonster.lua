@@ -1,3 +1,5 @@
+local MobStat = require("Monster/w14_MobStat")
+
 --- ChaserMonster 클래스
 --- @class ChaserMonster
 --- @field stat MobStat 스탯 관리 객체
@@ -5,6 +7,7 @@
 --- @field anim_instance userdata 애니메이션 상태 머신
 --- @field is_permanently_idle boolean 영구 Idle 상태 여부
 local MobStat = require("Monster/w14_MobStat")
+local ScoreManager = require("Game/w14_ScoreManager")
 
 local ChaserMonster = {}
 ChaserMonster.__index = ChaserMonster
@@ -78,10 +81,11 @@ function ChaserMonster:Initialize(obj, move_speed, health_point, attack_point, a
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/ChaserZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/ChaserZombieDying_mixamo.com", 1.0, false)
 
-    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/ChaserZombieIdle.wav", 3.0)
-    self.anim_instance:AddSoundNotify("Walk", 0.01, "WalkSound", "Data/Audio/ChaserZombieIdle.wav", 3.0)
-    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/ChaserZombieAttack.wav", 3.0)
-    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/ChaserZombieDeath.wav", 100.0)
+    -- 사운드 노티파이 추가 (마지막 파라미터: MaxDistance, 0이면 무제한)
+    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/ChaserZombieIdle.wav", 3.0, 12.0)
+    self.anim_instance:AddSoundNotify("Walk", 0.01, "WalkSound", "Data/Audio/ChaserZombieIdle.wav", 3.0, 12.0)
+    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/ChaserZombieAttack.wav", 3.0, 8.0)
+    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/ChaserZombieDeath.wav", 100.0, 20.0)
 
     -- 초기 상태 설정 (Walk로 시작)
     self.anim_instance:SetState("Walk", 0)
@@ -100,6 +104,7 @@ function ChaserMonster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
+        ScoreManager.AddKill(1)
         self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)

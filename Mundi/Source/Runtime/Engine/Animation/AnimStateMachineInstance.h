@@ -72,8 +72,9 @@ public:
     // NotifyName: 노티파이 식별자 (콜백에서 사용)
     // SoundPath: 재생할 사운드 경로 (비어있으면 사운드 재생 안 함)
     // Volume: 사운드 볼륨 (MasterVolume과 곱해져서 최종 볼륨 결정)
+    // MaxDistance: 플레이어와의 최대 거리 (0이면 무제한)
     UFUNCTION(LuaBind, DisplayName="AddSoundNotify")
-    bool Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath, float Volume);
+    bool Lua_AddSoundNotify(const FString& StateName, float TriggerTime, const FString& NotifyName, const FString& SoundPath, float Volume, float MaxDistance);
 
     // 특정 상태에서 노티파이 제거
     UFUNCTION(LuaBind, DisplayName="RemoveNotify")

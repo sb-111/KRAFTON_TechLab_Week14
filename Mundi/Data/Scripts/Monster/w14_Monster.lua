@@ -4,6 +4,7 @@
 --- @field obj userdata 게임 오브젝트
 --- @field anim_instance userdata 애니메이션 상태 머신
 local MobStat = require("Monster/w14_MobStat")
+local ScoreManager = require("Game/w14_ScoreManager")
 
 local Monster = {}
 Monster.__index = Monster
@@ -76,10 +77,10 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/BasicZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/BasicZombieDying_mixamo.com", 1.0, false)
 
-    -- Attack 상태에 사운드 노티파이 추가
-    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BasicZombieAttack.wav", 10.0)
-    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/BasicZombieIdle.wav", 1.0)
-    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/BasicZombieDeath.wav", 100.0)
+    -- 사운드 노티파이 추가 (마지막 파라미터: MaxDistance, 0이면 무제한)
+    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BasicZombieAttack.wav", 10.0, 8.0)
+    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/BasicZombieIdle.wav", 1.0, 12.0)
+    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/BasicZombieDeath.wav", 100.0, 20.0)
 
     -- 초기 상태 설정
     self.anim_instance:SetState("Idle", 0)
@@ -98,6 +99,7 @@ function Monster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
+        ScoreManager.AddKill(1)
         self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)
