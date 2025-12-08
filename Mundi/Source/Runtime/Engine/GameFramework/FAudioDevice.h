@@ -21,7 +21,7 @@ public:
     static void StopSound(IXAudio2SourceVoice* pSourceVoice);
 
     static void SetListenerPosition(const FVector& Position, const FVector& ForwardVec, const FVector& UpVec);
-    static void UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition);
+    static void UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition, float Volume = 1.0f);
 
     // Loads .wav files under GDataDir/Audio into resource manager
     static void Preload();

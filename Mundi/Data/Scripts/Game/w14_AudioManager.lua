@@ -90,6 +90,9 @@ function M.RegisterDefaults()
     M.RegisterSFX("ObstacleCollisionSmash", "ObstacleCollisionSmash")
     M.RegisterSFX("MonsterCollisionScream", "MonsterCollisionScream")
     M.RegisterSFX("MonsterCollisionSmash", "MonsterCollisionSmash")
+    M.RegisterSFX("GainedAidKit", "GainedAidKit")
+    M.RegisterSFX("GainedAmmo", "GainedAmmo")
+    M.RegisterSFX("GainedAdrenalin", "GainedAdrenalin")
     print("[AudioManager] Default sounds registered")
 end
 

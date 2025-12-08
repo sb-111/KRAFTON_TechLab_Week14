@@ -28,8 +28,9 @@ function PlayerAnim:new(Obj)
             Instance.AnimInstance:AddState("ShootEnd", "Data/GameJamAnim/Player/Rifle_ShootEnd_mixamo.com", 1.5, false)
             Instance.AnimInstance:AddState("Reload", "Data/GameJamAnim/Player/Rifle_Reload_mixamo.com", 1.0, false)
 
-            Instance.AnimInstance:AddSoundNotify("Run", 0.01, "RunSound", "Data/Audio/PlayerFootstep.wav", 5.0)
-            Instance.AnimInstance:AddSoundNotify("Run", 0.35, "RunSound", "Data/Audio/PlayerFootstep.wav", 5.0)
+            Instance.AnimInstance:AddSoundNotify("Run", 0.01, "RunSound", "Data/Audio/PlayerFootstep.wav", 10.0)
+            Instance.AnimInstance:AddSoundNotify("Run", 0.35, "RunSound", "Data/Audio/PlayerFootstep.wav", 10.0)
+            Instance.AnimInstance:AddSoundNotify("Run", 0.35, "BreathingSound", "Data/Audio/PlayerHeavyBreathing.wav", 100.0)
             
             -- 초기 상태
             Instance.AnimInstance:SetState("Idle", 0)

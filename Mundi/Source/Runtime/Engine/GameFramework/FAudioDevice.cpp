@@ -179,9 +179,8 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound3D(USound* SoundToPlay, const FVecto
         return nullptr;
     }
 
-    // Apply MasterVolume to the final volume
-    voice->SetVolume(Volume * MasterVolume);
-    UpdateSoundPosition(voice, EmitterPosition);
+    // UpdateSoundPosition에서 Volume * MasterVolume을 매트릭스에 적용
+    UpdateSoundPosition(voice, EmitterPosition, Volume);
 
     hr = voice->Start(0);
     if (FAILED(hr))
@@ -282,7 +281,9 @@ void FAudioDevice::SetListenerPosition(const FVector& Position, const FVector& F
     Listener.Position = X3DAUDIO_VECTOR{ Position.X, Position.Y, Position.Z };
     Listener.OrientFront = X3DAUDIO_VECTOR{ ForwardVec.X, ForwardVec.Y, ForwardVec.Z };
     Listener.OrientTop = X3DAUDIO_VECTOR{ UpVec.X, UpVec.Y, UpVec.Z };
-}void FAudioDevice::UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition)
+}
+
+void FAudioDevice::UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition, float Volume)
 {
     if (!pSourceVoice || !pMasteringVoice)
     {
@@ -414,23 +415,20 @@ void FAudioDevice::SetListenerPosition(const FVector& Position, const FVector& F
     }
 
     // === APPLY RESULTS ===
-    HRESULT hr = pSourceVoice->SetOutputMatrix(
-        pMasteringVoice,
-        Src.InputChannels,
-        Dst.InputChannels,
-        Dsp.pMatrixCoefficients
-    );
+    // 절대 볼륨 설정 - 3D 패닝 없이 순수 볼륨만 적용
+    float FinalVolume = Volume * MasterVolume;
+    pSourceVoice->SetVolume(FinalVolume);
 
-    if (FAILED(hr))
+    // 3D 패닝 대신 균등 스테레오 출력 (좌/우 동일)
+    // SetOutputMatrix를 사용하지 않으면 기본 1:1 매핑 유지
+    // 스테레오 출력: 모노 소스 -> 양쪽 채널에 동일하게
+    if (Src.InputChannels == 1 && Dst.InputChannels >= 2)
     {
-        UE_LOG("[Audio] SetOutputMatrix failed: 0x%08x", static_cast<UINT32>(hr));
-        return;
-    }
-
-    // Apply Doppler if valid
-    if (Dsp.DopplerFactor > 0.0f && Dsp.DopplerFactor < 4.0f)
-    {
-        pSourceVoice->SetFrequencyRatio(Dsp.DopplerFactor);
+        // 모노 -> 스테레오: 양쪽에 동일 볼륨
+        std::vector<float> EqualMatrix(matrixSize, 0.0f);
+        EqualMatrix[0] = 1.0f; // Left
+        EqualMatrix[1] = 1.0f; // Right
+        pSourceVoice->SetOutputMatrix(pMasteringVoice, Src.InputChannels, Dst.InputChannels, EqualMatrix.data());
     }
 }
 void FAudioDevice::StopSound(IXAudio2SourceVoice* pSourceVoice)

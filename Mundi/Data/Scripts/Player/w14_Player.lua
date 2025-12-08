@@ -319,6 +319,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] 탄약 획득! +" .. ammoAmount)
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+        
+        Audio.PlaySFX("GainedAmmo")
     end
 
     -- 회복 아이템 획득 (AidKit)
@@ -327,6 +329,8 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] AidKit 획득! HP +5")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAidKit")
     end
 
     -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
@@ -335,5 +339,7 @@ function OnBeginOverlap(OtherActor)
         print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        Audio.PlaySFX("GainedAdrenalin")
     end
 end

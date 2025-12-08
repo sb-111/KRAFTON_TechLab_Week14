@@ -47,7 +47,7 @@ void UAudioComponent::TickComponent(float DeltaTime)
         if (!bIs2D)
         {
             FVector CurrentLocation = GetWorldLocation();
-            FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation);
+            FAudioDevice::UpdateSoundPosition(SourceVoice, CurrentLocation, Volume);
         }
 
         if (!bIsLooping)
