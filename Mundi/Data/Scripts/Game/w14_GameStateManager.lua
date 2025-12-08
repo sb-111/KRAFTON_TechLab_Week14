@@ -9,8 +9,7 @@ M.States = {
     START = "Start",      -- 시작 화면
     PLAYING = "Playing",  -- 게임 중
     PAUSED = "Paused",    -- 일시정지
-    DEAD = "Dead",        -- 플레이어 사망
-    END = "End"           -- 종료 화면
+    DEAD = "Dead",        -- 게임 오버 (플레이어 사망 또는 게임 종료)
 }
 
 -- 현재 상태
@@ -65,8 +64,13 @@ function M.IsStart()
     return currentState == M.States.START
 end
 
+function M.IsDead()
+    return currentState == M.States.DEAD
+end
+
+-- 하위 호환성을 위해 IsEnd()는 IsDead()와 동일하게 동작
 function M.IsEnd()
-    return currentState == M.States.END
+    return currentState == M.States.DEAD
 end
 
 -- 사용법: GameState.OnStateChange(GameState.States.DEAD, function(prev) ... end)
@@ -92,8 +96,9 @@ function M.PlayerDied()
     M.SetState(M.States.DEAD)
 end
 
+-- 하위 호환성을 위해 EndGame()은 PlayerDied()와 동일하게 동작
 function M.EndGame()
-    M.SetState(M.States.END)
+    M.SetState(M.States.DEAD)
 end
 
 function M.Reset()

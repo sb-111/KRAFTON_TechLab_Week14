@@ -59,21 +59,18 @@ function Tick(dt)
 end
 
 function HandleInput()
-    -- 스페이스바: 상태 전환
+    -- 스페이스바: 시작 화면에서 게임 시작
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
             Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
-        elseif GameState.IsEnd() then
-            GameState.ShowStartScreen()
         end
     end
 
-    -- Q: 게임 중 종료
+    -- Q: 게임 중 종료 (게임 오버 화면으로 이동)
     if InputManager:IsKeyPressed('Q') then
         if GameState.IsPlaying() then
-            GameState.EndGame()
-            Audio.StopBGM("BGM")  -- 게임 종료 시 BGM 정지
+            GameState.EndGame()  -- DEAD 상태로 전환, BGM 정지는 콜백에서 처리
         end
     end
 

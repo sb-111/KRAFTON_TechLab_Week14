@@ -294,8 +294,11 @@ void UWorld::Tick(float DeltaSeconds)
 
 	if (bPie)
 	{
-		PhysicsScene->FetchAndUpdate();
+		// ProcessCommandQueue를 먼저 실행해야 함
+		// (FetchAndUpdate 내부의 PendingDestroyInDeathNote에서 Actor가 삭제되기 전에
+		// CommandQueue의 명령들을 처리해야 삭제된 Actor에 접근하는 크래시 방지)
 		PhysicsScene->ProcessCommandQueue();
+		PhysicsScene->FetchAndUpdate();
 	}
 
 	// Cloth 시뮬레이션 업데이트 (PIE와 에디터 모두에서 실행)

@@ -7,6 +7,7 @@ local UI = require("Game/w14_UIManager")
 local Audio = require("Game/w14_AudioManager")
 local ScoreManager = require("Game/w14_ScoreManager")
 local AmmoManager = require("Game/w14_AmmoManager")
+local HPManager = require("Game/w14_HPManager")
 local MapConfig = require("w14_MapConfig")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
@@ -43,9 +44,12 @@ local function CleanupGame()
         MonsterManager = nil
     end
 
-    -- 플레이어 삭제
-    if Player and DeleteObject then
-        DeleteObject(Player)
+    -- 플레이어 삭제 (물리 상태 먼저 비활성화)
+    if Player then
+        Player:SetPhysicsState(false)
+        if DeleteObject then
+            DeleteObject(Player)
+        end
         Player = nil
     end
 
@@ -68,9 +72,18 @@ function BeginPlay()
 
     -- 상태 변경 콜백 등록
     GameState.OnStateChange(GameState.States.PLAYING, GameStart)
-    GameState.OnStateChange(GameState.States.END, GameEnd)
     GameState.OnStateChange(GameState.States.START, function()
         InputManager:SetCursorVisible(true)  -- 시작 화면에서 커서 표시
+    end)
+    GameState.OnStateChange(GameState.States.DEAD, function()
+        InputManager:SetCursorVisible(true)  -- 게임 오버 화면에서 커서 표시
+        Audio.StopBGM("BGM")
+        print("[GameMain] Game Over")
+    end)
+
+    -- 플레이어 사망 시 게임 오버 상태로 전환
+    HPManager.OnDeath(function()
+        GameState.PlayerDied()
     end)
 
     -- 시작 화면 표시
@@ -84,9 +97,10 @@ function GameStart()
     -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
     UI.ResetHUD()
 
-    -- 점수/탄약 매니저 초기화
+    -- 점수/탄약/HP 매니저 초기화
     ScoreManager.Reset()
     AmmoManager.Reset()
+    HPManager.Reset()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
@@ -182,11 +196,6 @@ function GameStart()
     )
 end
 
-function GameEnd()
-    -- 게임 종료 시 정리는 다음 게임 시작 시 CleanupGame에서 처리
-    print("=== Game End ===")
-end
-
 function Tick(dt)
     -- HUD 프레임 시작 (D2D 렌더링 준비)
     UI.BeginHUDFrame()
@@ -199,8 +208,13 @@ function Tick(dt)
         ScoreManager.SetDistance(Player.Location.X)
     end
 
-    -- UI 업데이트 (상태에 따라 시작 화면 또는 게임 HUD 표시)
+    -- UI 업데이트 (모든 상태에서 호출되어야 함)
     UI.Update(dt)
+
+    -- 게임 오버 상태에서는 게임 로직 업데이트 스킵
+    if GameState.IsDead() then
+        return
+    end
 
     if GameState.IsPlaying() then
         -- 맵 업데이트
@@ -233,14 +247,12 @@ function Tick(dt)
 end
 
 function HandleInput()
-    -- 스페이스바: 상태 전환
+    -- 스페이스바: 시작 화면에서 게임 시작
     if InputManager:IsKeyPressed(' ') then
         if GameState.IsStart() then
             GameState.StartGame()
             InputManager:SetCursorVisible(false)  -- 게임 시작 시 커서 숨김
             Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
-        elseif GameState.IsEnd() then
-            GameState.ShowStartScreen()
         end
     end
 
@@ -258,12 +270,10 @@ function HandleInput()
         end
     end
 
-    -- Q: 게임 중 종료
+    -- Q: 게임 중 종료 (게임 오버 화면으로 이동)
     if InputManager:IsKeyPressed('Q') then
         if GameState.IsPlaying() then
-            GameState.EndGame()
-            InputManager:SetCursorVisible(true)  -- 게임 종료 시 커서 표시
-            Audio.StopBGM("BGM")  -- 게임 종료 시 BGM 정지
+            GameState.EndGame()  -- DEAD 콜백에서 커서 표시, BGM 정지 처리됨
         end
     end
 end
