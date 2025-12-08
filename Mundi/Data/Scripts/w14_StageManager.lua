@@ -65,7 +65,7 @@ function StageManager:_initialize_themes()
                 StageConfig.pool_standby_location,
                 theme_data.base_spawn_num or StageConfig.default_spawn_num,
                 obstacle.radius or StageConfig.default_radius,
-                0.5
+                0.25
             )
         end
 
