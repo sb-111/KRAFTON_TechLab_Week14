@@ -140,6 +140,12 @@ function Tick(Delta)
         if PlayerInput.ReloadTrigger then
             TryReload()
         end
+
+        -- [테스트] T키 공중폭격
+        if InputManager:IsKeyPressed('T') then
+            AirstrikeManager.Execute(Obj.Location)
+            print("[TEST] Airstrike triggered!")
+        end
     end
 end
 

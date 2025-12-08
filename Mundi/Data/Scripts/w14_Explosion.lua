@@ -15,6 +15,12 @@ function BeginPlay()
         SphereCollider.bIsActive = false
     end
 
+    -- 파티클 활성화 (bAutoActivate가 false이므로 수동으로)
+    local particleComp = GetComponent(Obj, "UParticleSystemComponent")
+    if particleComp then
+        particleComp:Activate()
+    end
+
     -- 카메라 쉐이크
     local cm = GetCameraManager()
     if cm and cm.StartCameraShake then

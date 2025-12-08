@@ -4,8 +4,8 @@
 local Audio = require("Game/w14_AudioManager")
 
 local BOMB_PREFAB = "Data/Prefabs/w14_Bomb.prefab"
-local SPEED = 50.0            -- 제트기 비행 속도 (단위: m/s)
-local DROP_THRESHOLD = 10.0    -- 이 Y좌표 차이 안으로 들어오면 폭탄 투하
+local SPEED = 60.0            -- 제트기 비행 속도 (단위: m/s)
+local DROP_THRESHOLD = 1.0     -- 이 Y좌표 차이 안으로 들어오면 폭탄 투하
 local DESTROY_DISTANCE = 200.0 -- 이 거리만큼 지나가면 액터 파괴
 
 local Player = nil

@@ -3,13 +3,8 @@
 
 local AirstrikeManager = {}
 
-local CONFIG = {
-    bombDistance = 40,   -- 플레이어 정면 거리 (m)
-    dropHeight = 60,     -- 폭탄 투하 높이
-    bombPrefab = "Data/Prefabs/w14_Bomb.prefab",
-}
 local JetCONFIG = {
-    jetX = 50,
+    jetX = 60,
     jetY = 80,
     jetZ = 40, 
     jetPrefab = "Data/Prefabs/w14_Jet.prefab"

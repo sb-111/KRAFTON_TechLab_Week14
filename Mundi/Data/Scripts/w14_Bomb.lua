@@ -1,7 +1,7 @@
 -- w14_Bomb.lua
 -- 폭탄 스크립트 - 떨어지다가 땅에 닿으면 폭발
 
-local FALL_SPEED = 30          -- 낙하 속도
+local FALL_SPEED = 50          -- 낙하 속도
 local GROUND_Z = 0.5           -- 지면 높이
 local EXPLOSION_PREFAB = "Data/Prefabs/w14_Explosion.prefab"
 

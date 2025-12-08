@@ -9,12 +9,12 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "Id" : 1281,
+      "Id" : 20710,
       "ObjectName" : "USceneComponent_Bomb",
       "ParentId" : 0,
-      "RelativeLocation" : [-7.135703, -0.005194, 22.720848],
+      "RelativeLocation" : [-52.790382, -25.627905, 15.988831],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [15.000000, 15.000000, 15.000000],
+      "RelativeScale" : [9.000000, 9.000000, 11.100000],
       "Type" : "USceneComponent",
       "bHiddenInGame" : false,
       "bIsActive" : true,
@@ -24,7 +24,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 1282,
+      "Id" : 20711,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -34,7 +34,7 @@
         }],
       "MobilityType" : 1,
       "ObjectName" : "UStaticMeshComponent_Bomb",
-      "ParentId" : 1281,
+      "ParentId" : 20710,
       "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
       "RelativeScale" : [0.500000, 0.500000, 0.500000],
@@ -52,7 +52,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1281,
+  "RootComponentId" : 20710,
   "Tag" : "Bomb",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
