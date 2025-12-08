@@ -11,10 +11,10 @@ local MapConfig = require("w14_MapConfig")
 local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
-local BiomeManagerClass = require("w14_BiomeManager")
+local StageManagerClass = require("w14_StageManager")
 
 local MapManager = nil
-local BiomeManager = nil
+local StageManager = nil
 local ItemManager = nil
 local MonsterManager = nil
 local ObjectPlacer = nil
@@ -28,9 +28,9 @@ local function CleanupGame()
         MapManager = nil
     end
 
-    if BiomeManager and BiomeManager.destroy then
-        BiomeManager:destroy()
-        BiomeManager = nil
+    if StageManager and StageManager.destroy then
+        StageManager:destroy()
+        StageManager = nil
     end
 
     if ItemManager and ItemManager.destroy then
@@ -126,15 +126,15 @@ function GameStart()
             1000
     )
 
-    -- BiomeManager 생성 (바이옴별 장애물 관리)
-    -- 바이옴 설정은 w14_BiomeConfig.lua에서 관리
-    BiomeManager = BiomeManagerClass:new(
+    -- StageManager 생성 (스테이지별 장애물 관리)
+    -- 스테이지 설정은 w14_StageConfig.lua에서 관리
+    StageManager = StageManagerClass:new(
             Player,
             ObjectPlacer,
-            MapConfig.map_chunk_x_size * 10  -- 바이옴 전환 간격
+            MapConfig.map_chunk_x_size * 10  -- 스테이지 전환 간격
     )
 
-    -- ItemManager 생성 (GeneralObjectManager 사용, 바이옴과 무관)
+    -- ItemManager 생성 (GeneralObjectManager 사용, 스테이지와 무관)
     ItemManager = GeneralObjectManagerClass:new(ObjectPlacer, Player)
     ItemManager:add_object(
             "Data/Prefabs/w14_AmmoItem.prefab",
@@ -217,9 +217,9 @@ function Tick(dt)
             )
         end
 
-        -- BiomeManager가 바이옴별 장애물 관리
-        if BiomeManager then
-            BiomeManager:Tick()
+        -- StageManager가 스테이지별 장애물 관리
+        if StageManager then
+            StageManager:Tick()
         end
 
         if ItemManager then
