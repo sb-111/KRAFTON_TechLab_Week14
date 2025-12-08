@@ -156,6 +156,9 @@ function Rotate(DeltaTime)
     TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity)
     TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity)
     
+    if TargetYaw > 90.0 then TargetYaw = 90.0
+    elseif TargetYaw < -90.0 then TargetYaw = -90.0 end
+
     if TargetPitch > 70.0 then TargetPitch = 70.0
     elseif TargetPitch < -70.0 then TargetPitch = -70.0 end
 
