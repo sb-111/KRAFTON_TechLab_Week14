@@ -38,6 +38,9 @@ local buttonStates = {
     gameOverExit = { hovered = false, rect = { x = 0, y = 0, w = 0, h = 0 } },
 }
 
+local currentButtonIndex = 1
+local lastDpadVertical = 0
+
 -- ===== HUD 상태 =====
 local hudState = {
     displayedDistance = 0,
@@ -172,6 +175,7 @@ function M.BeginHUDFrame()
         HUD:BeginFrame()
     end
 end
+
 -- ===== 시작 화면 렌더링 =====
 function M.UpdateStartScreen()
     if not HUD or not HUD:IsVisible() then return end
@@ -195,11 +199,34 @@ function M.UpdateStartScreen()
     local btnX = 55  -- 왼쪽 정렬
     local howToPlayBtnX = 100  -- 왼쪽 정렬
 
+    -- ===== 패드 십자키 네비게이션 =====
+    if InputManager:IsGamepadConnected(0) then
+        local dpadUp = InputManager:IsGamepadButtonPressed(GamepadButton.DPadUp, 0)
+        local dpadDown = InputManager:IsGamepadButtonPressed(GamepadButton.DPadDown, 0)
+        
+        -- 버튼 전환 (방향 입력이 새로 들어왔을 때만)
+        if dpadUp and lastDpadVertical <= 0 then
+            currentButtonIndex = math.max(1, currentButtonIndex - 1)
+            Audio.PlaySFX("buttonHovered")
+        elseif dpadDown and lastDpadVertical >= 0 then
+            currentButtonIndex = math.min(3, currentButtonIndex + 1)
+            Audio.PlaySFX("buttonHovered")
+        end
+        
+        lastDpadVertical = (dpadUp and 1) or (dpadDown and -1) or 0
+    end
+
     -- How To Play 버튼 (맨 위)
     local howToPlayY = startY
     buttonStates.howToPlay.rect = { x = howToPlayBtnX, y = howToPlayY, w = btnW, h = btnH }
     local wasHowToPlayHovered = buttonStates.howToPlay.hovered
-    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
+    
+    -- 마우스 호버 또는 패드 선택
+    if InputManager:IsGamepadConnected(0) then
+        buttonStates.howToPlay.hovered = (currentButtonIndex == 1)
+    else
+        buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
+    end
     
     -- How To Play 버튼 호버 사운드
     if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
@@ -213,7 +240,13 @@ function M.UpdateStartScreen()
     local startBtnY = howToPlayY + btnH + btnSpacing + 30
     buttonStates.start.rect = { x = btnX, y = startBtnY, w = btnW, h = btnH }
     local wasStartHovered = buttonStates.start.hovered
-    buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
+    
+    -- 마우스 호버 또는 패드 선택
+    if InputManager:IsGamepadConnected(0) then
+        buttonStates.start.hovered = (currentButtonIndex == 2)
+    else
+        buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
+    end
     
     -- START 버튼 호버 사운드
     if buttonStates.start.hovered and not wasStartHovered then
@@ -227,7 +260,13 @@ function M.UpdateStartScreen()
     local exitY = startBtnY + btnH + btnSpacing
     buttonStates.exit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.exit.hovered
-    buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
+    
+    -- 마우스 호버 또는 패드 선택
+    if InputManager:IsGamepadConnected(0) then
+        buttonStates.exit.hovered = (currentButtonIndex == 3)
+    else
+        buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
+    end
     
     -- EXIT 버튼 호버 사운드
     if buttonStates.exit.hovered and not wasExitHovered then
@@ -255,7 +294,7 @@ function M.UpdateStartScreen()
         Color(0.8, 0.8, 0.8, 1)  -- 밝은 회색
     )
 
-    -- 클릭 처리
+    -- 클릭 처리 (마우스 또는 패드)
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.start.hovered then
             Audio.PlaySFX("buttonClicked")
@@ -270,6 +309,24 @@ function M.UpdateStartScreen()
         elseif buttonStates.exit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
+            QuitGame()
+        end
+    end
+    
+    -- 패드 A 버튼으로 선택
+    if InputManager:IsGamepadConnected(0) and InputManager:IsGamepadButtonPressed(GamepadButton.A, 0) then
+        if currentButtonIndex == 1 then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] HOW TO PLAY clicked (Gamepad)")
+            showHowToPlayImage = not showHowToPlayImage
+        elseif currentButtonIndex == 2 then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] START clicked (Gamepad)")
+            GameState.StartGame()
+            InputManager:SetCursorVisible(false)
+        elseif currentButtonIndex == 3 then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] EXIT clicked (Gamepad)")
             QuitGame()
         end
     end
@@ -459,6 +516,8 @@ end
 function M.ResetHUD()
     hudState.displayedDistance = 0
     hudState.targetDistance = 0
+    currentButtonIndex = 1
+    lastDpadVertical = 0
 end
 
 -- ===== 게임 오버 화면 렌더링 =====
@@ -474,7 +533,7 @@ function M.UpdateGameOverScreen()
 
     -- "GAME OVER" 텍스트 (화면 상단)
     local gameOverText = "GAME OVER"
-    local gameOverY = screenH * 0.2
+    local gameOverY = screenH * 0.15
     HUD:DrawText(gameOverText, screenW / 2 - 150, gameOverY, 72, Color(1, 0.2, 0.2, 1))
 
     -- 최종 점수 표시
@@ -482,7 +541,7 @@ function M.UpdateGameOverScreen()
     local kills = ScoreManager.GetKillCount()
     local score = ScoreManager.GetScore()
 
-    local statsY = screenH * 0.35
+    local statsY = screenH * 0.3
     local statsSpacing = 40
     HUD:DrawText("Distance: " .. ScoreManager.FormatDistance(distance), screenW / 2 - 100, statsY, 40, Color(1, 1, 1, 1))
     HUD:DrawText("Kills: " .. ScoreManager.FormatNumber(kills), screenW / 2 - 100, statsY + statsSpacing, 40, Color(1, 1, 1, 1))
@@ -491,15 +550,38 @@ function M.UpdateGameOverScreen()
     -- 버튼 크기 설정
     local btnW = 400
     local btnH = 200
-    local btnSpacing = -50
-    local startY = screenH * 0.50
+    local btnSpacing = -40
+    local startY = screenH * 0.4
     local btnX = (screenW - btnW) / 2
+
+    -- ===== 패드 십자키 네비게이션 =====
+    if InputManager:IsGamepadConnected(0) then
+        local dpadUp = InputManager:IsGamepadButtonPressed(GamepadButton.DPadUp, 0)
+        local dpadDown = InputManager:IsGamepadButtonPressed(GamepadButton.DPadDown, 0)
+        
+        -- 버튼 전환 (방향 입력이 새로 들어왔을 때만)
+        if dpadUp and lastDpadVertical <= 0 then
+            currentButtonIndex = 1
+            Audio.PlaySFX("buttonHovered")
+        elseif dpadDown and lastDpadVertical >= 0 then
+            currentButtonIndex = 2
+            Audio.PlaySFX("buttonHovered")
+        end
+        
+        lastDpadVertical = (dpadUp and 1) or (dpadDown and -1) or 0
+    end
 
     -- RESTART 버튼
     local restartY = startY
     buttonStates.restart.rect = { x = btnX, y = restartY, w = btnW, h = btnH }
     local wasRestartHovered = buttonStates.restart.hovered
-    buttonStates.restart.hovered = isPointInRect(mouseX, mouseY, buttonStates.restart.rect)
+    
+    -- 마우스 호버 또는 패드 선택
+    if InputManager:IsGamepadConnected(0) then
+        buttonStates.restart.hovered = (currentButtonIndex == 1)
+    else
+        buttonStates.restart.hovered = isPointInRect(mouseX, mouseY, buttonStates.restart.rect)
+    end
 
     if buttonStates.restart.hovered and not wasRestartHovered then
         Audio.PlaySFX("buttonHovered")
@@ -513,7 +595,13 @@ function M.UpdateGameOverScreen()
     local exitY = restartY + btnH + btnSpacing
     buttonStates.gameOverExit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.gameOverExit.hovered
-    buttonStates.gameOverExit.hovered = isPointInRect(mouseX, mouseY, buttonStates.gameOverExit.rect)
+    
+    -- 마우스 호버 또는 패드 선택
+    if InputManager:IsGamepadConnected(0) then
+        buttonStates.gameOverExit.hovered = (currentButtonIndex == 2)
+    else
+        buttonStates.gameOverExit.hovered = isPointInRect(mouseX, mouseY, buttonStates.gameOverExit.rect)
+    end
 
     if buttonStates.gameOverExit.hovered and not wasExitHovered then
         Audio.PlaySFX("buttonHovered")
@@ -523,15 +611,28 @@ function M.UpdateGameOverScreen()
     local exitTex = buttonStates.gameOverExit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
     HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
-    -- 클릭 처리
+    -- 클릭 처리 (마우스 또는 패드)
     if InputManager:IsMouseButtonPressed(0) then
         if buttonStates.restart.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] RESTART clicked")
-            GameState.ShowStartScreen()  -- 게임 재시작
+            GameState.ShowStartScreen()
         elseif buttonStates.gameOverExit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
+            QuitGame()
+        end
+    end
+    
+    -- 패드 A 버튼으로 선택
+    if InputManager:IsGamepadConnected(0) and InputManager:IsGamepadButtonPressed(GamepadButton.A, 0) then
+        if currentButtonIndex == 1 then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] RESTART clicked (Gamepad)")
+            GameState.ShowStartScreen()
+        elseif currentButtonIndex == 2 then
+            Audio.PlaySFX("buttonClicked")
+            print("[UIManager] EXIT clicked (Gamepad)")
             QuitGame()
         end
     end
