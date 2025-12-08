@@ -76,10 +76,10 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
     self.anim_instance:AddState("Damaged", "Data/GameJamAnim/Monster/BasicZombieDamaged_mixamo.com", 1.0, false)
     self.anim_instance:AddState("Die", "Data/GameJamAnim/Monster/BasicZombieDying_mixamo.com", 1.0, false)
 
-    -- Attack 상태에 사운드 노티파이 추가
-    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BasicZombieAttack.wav", 10.0)
-    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/BasicZombieIdle.wav", 1.0)
-    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/BasicZombieDeath.wav", 100.0)
+    -- 사운드 노티파이 추가 (마지막 파라미터: MaxDistance, 0이면 무제한)
+    self.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BasicZombieAttack.wav", 10.0, 8.0)
+    self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/BasicZombieIdle.wav", 1.0, 12.0)
+    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/BasicZombieDeath.wav", 100.0, 20.0)
 
     -- 초기 상태 설정
     self.anim_instance:SetState("Idle", 0)

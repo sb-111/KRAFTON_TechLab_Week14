@@ -336,16 +336,20 @@ struct FAnimNotifyEvent
 	/** 사운드 볼륨 (0.0 ~ 무제한, 기본값 1.0) */
 	float Volume = 1.0f;
 
+	/** 사운드 최대 재생 거리 (플레이어와의 거리, 0이면 무제한) */
+	float MaxDistance = 0.f;
+
 	/** 에디터 시각화용 색상 */
 	FLinearColor Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	FAnimNotifyEvent() = default;
 
-	FAnimNotifyEvent(float InTriggerTime, const FName& InNotifyName, const FString& InSoundPath = "", float InVolume = 1.0f)
+	FAnimNotifyEvent(float InTriggerTime, const FName& InNotifyName, const FString& InSoundPath = "", float InVolume = 1.0f, float InMaxDistance = 0.f)
 		: TriggerTime(InTriggerTime)
 		, NotifyName(InNotifyName)
 		, SoundPath(InSoundPath)
 		, Volume(InVolume)
+		, MaxDistance(InMaxDistance)
 	{}
 };
 
