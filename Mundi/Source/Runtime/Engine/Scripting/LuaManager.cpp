@@ -802,17 +802,32 @@ void FLuaManager::ExposeGlobalFunctions()
         {
             if (Self) Self->DeleteVignette();
         },
-            
-        "SetViewTarget", [](APlayerCameraManager* self, LuaComponentProxy& Proxy)
+        
+        "GetCamera", [](APlayerCameraManager* Self)
         {
-            // 타입 안정성 확인
-            if (self && Proxy.Instance && Proxy.Class == UCameraComponent::StaticClass())
-            {
-                // 프록시에서 실제 컴포넌트 포인터 추출
-                auto* CameraComp = static_cast<UCameraComponent*>(Proxy.Instance);
-                self->SetViewCamera(CameraComp);
-            }
+            return Self->GetViewCamera();
         },
+            
+        "SetViewTarget", sol::overload(
+            // [Case 1] 기존 방식: LuaComponentProxy를 넘겼을 때
+            [](APlayerCameraManager* self, LuaComponentProxy& Proxy)
+            {
+                if (self && Proxy.Instance && Proxy.Class == UCameraComponent::StaticClass())
+                {
+                    auto* CameraComp = static_cast<UCameraComponent*>(Proxy.Instance);
+                    self->SetViewCamera(CameraComp);
+                }
+            },
+
+            // [Case 2] 해결책: UCameraComponent* (네이티브 포인터)를 직접 넘겼을 때
+            [](APlayerCameraManager* self, UCameraComponent* Camera)
+            {
+                if (self && Camera)
+                {
+                    self->SetViewCamera(Camera);
+                }
+            }
+        ),
 
         "SetViewTargetWithBlend", [](APlayerCameraManager* self, LuaComponentProxy& Proxy, float InBlendTime)
         {

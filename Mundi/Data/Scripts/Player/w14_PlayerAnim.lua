@@ -38,6 +38,13 @@ function PlayerAnim:new(Obj)
     return Instance
 end
 
+function PlayerAnim:Reset()
+    -- 초기 상태
+    self.AnimInstance:SetState("Idle", 0)
+    self.bIsShooting = false
+    self.bIsReloading = false
+end
+
 function PlayerAnim:StartReload()
     if not self.AnimInstance then return end
     

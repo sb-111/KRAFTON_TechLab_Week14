@@ -56,15 +56,25 @@ function BeginPlay()
     PlayerInput = PlayerInputClass:new(Obj)
     PlayerSlow = PlayerSlowClass:new(Obj)
     PlayerKnockBack = PlayerKnockBackClass:new(Obj)
-    HPManager.Reset()
-    StartCoroutine(ToRun)
 
     PlayerCamera = GetComponent(Obj, "UCameraComponent")
-    if PlayerCamera then
-        GetCameraManager():SetViewTarget(PlayerCamera)
-    end
 
+    Reset()
+end
+
+function StartGame()
+    if PlayerCamera then
+        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.0)
+    end
+    
+    StartCoroutine(ToRun)
+end
+
+function Reset()
+    Obj.Location = Vector(0, 0, 1.3)
     bIsStarted = false
+    HPManager.Reset()
+    PlayerAnim:Reset()
 end
 
 function Tick(Delta)

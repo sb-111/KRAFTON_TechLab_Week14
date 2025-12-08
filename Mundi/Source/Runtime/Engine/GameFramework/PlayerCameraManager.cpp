@@ -169,6 +169,7 @@ void APlayerCameraManager::Tick(float DeltaTime)
 
 void APlayerCameraManager::BuildForFrame(float DeltaTime)
 {
+	
 	// CurrentViewInfo를 현재 카메라를 기준으로 설정 (트렌지션 중에는 사이 값으로 설정)
 	UpdateViewInfo(DeltaTime);
 

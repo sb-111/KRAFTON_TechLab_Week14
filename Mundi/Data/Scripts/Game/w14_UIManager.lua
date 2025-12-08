@@ -144,7 +144,7 @@ local HEART_ICON_PATH = "Data/Textures/Heart.png"
 
 -- 크로스헤어 설정
 local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
-local CROSSHAIR_SIZE = 40  -- 크로스헤어 크기 (픽셀)
+local CROSSHAIR_SIZE = 60  -- 크로스헤어 크기 (픽셀)
 
 --- HUD 프레임 시작 (매 프레임 Tick 시작 시 호출)
 function M.BeginHUDFrame()
@@ -165,18 +165,33 @@ function M.UpdateStartScreen()
     local logoW = 1000
     local logoH = 600
     local logoX = (screenW - logoW) / 2
-    local logoY = 0
+    local logoY = -80
     HUD:DrawImage(UI_TEXTURES.LOGO, logoX, logoY, logoW, logoH)
 
     -- 버튼 크기 - 더 크게
-    local btnW = 500
+    local btnW = 350  -- 버튼 폭 조정 (이미지 길이 맞추기)
     local btnH = 150
-    local btnSpacing = -10  -- 버튼 간격
-    local startY = screenH * 0.50  -- 시작 Y 위치
-    local btnX = (screenW - btnW) / 2  -- 중앙 정렬
+    local btnSpacing = -50  -- 버튼 간격
+    local startY = screenH * 0.45  -- 시작 Y 위치
+    local btnX = 55  -- 왼쪽 정렬
+    local howToPlayBtnX = 100  -- 왼쪽 정렬
 
-    -- START 버튼 (위)
-    local startBtnY = startY
+    -- How To Play 버튼 (맨 위)
+    local howToPlayY = startY
+    buttonStates.howToPlay.rect = { x = howToPlayBtnX, y = howToPlayY, w = btnW, h = btnH }
+    local wasHowToPlayHovered = buttonStates.howToPlay.hovered
+    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
+    
+    -- How To Play 버튼 호버 사운드
+    if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
+        Audio.PlaySFX("buttonHovered")
+    end
+    
+    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
+    HUD:DrawImage(howToPlayTex, howToPlayBtnX, howToPlayY, btnW, btnH)
+
+    -- START 버튼 (가운데)
+    local startBtnY = howToPlayY + btnH + btnSpacing + 30
     buttonStates.start.rect = { x = btnX, y = startBtnY, w = btnW, h = btnH }
     local wasStartHovered = buttonStates.start.hovered
     buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
@@ -189,22 +204,8 @@ function M.UpdateStartScreen()
     local startTex = buttonStates.start.hovered and UI_TEXTURES.START_BUTTON_HOVER or UI_TEXTURES.START_BUTTON
     HUD:DrawImage(startTex, btnX, startBtnY, btnW, btnH)
 
-    -- How To Play 버튼 (가운데)
-    local howToPlayY = startBtnY + btnH + btnSpacing
-    buttonStates.howToPlay.rect = { x = btnX, y = howToPlayY, w = btnW, h = btnH }
-    local wasHowToPlayHovered = buttonStates.howToPlay.hovered
-    buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
-    
-    -- How To Play 버튼 호버 사운드
-    if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
-        Audio.PlaySFX("buttonHovered")
-    end
-    
-    local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
-    HUD:DrawImage(howToPlayTex, btnX, howToPlayY, btnW, btnH)
-
     -- EXIT 버튼 (아래)
-    local exitY = howToPlayY + btnH + btnSpacing
+    local exitY = startBtnY + btnH + btnSpacing
     buttonStates.exit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.exit.hovered
     buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
@@ -469,8 +470,7 @@ function M.UpdateGameOverScreen()
         if buttonStates.restart.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] RESTART clicked")
-            GameState.StartGame()  -- 게임 재시작
-            InputManager:SetCursorVisible(false)
+            GameState.ShowStartScreen()  -- 게임 재시작
         elseif buttonStates.gameOverExit.hovered then
             Audio.PlaySFX("buttonClicked")
             print("[UIManager] EXIT clicked")
