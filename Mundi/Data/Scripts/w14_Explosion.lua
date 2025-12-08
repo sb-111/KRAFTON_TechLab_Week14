@@ -1,7 +1,6 @@
 -- w14_Explosion.lua
 -- 폭발 스크립트 - Overlap으로 몬스터 처치
 
-local ScoreManager = require("Game/w14_ScoreManager")
 local MonsterConfig = require("w14_MonsterConfig")
 local Audio = require("Game/w14_AudioManager")
 
@@ -62,7 +61,6 @@ function OnBeginOverlap(OtherActor)
         local script = OtherActor:GetScript()
         if script and script.GetDamage then
             script.GetDamage(DAMAGE)
-            ScoreManager.AddKill(1)
             print("[Explosion] Monster killed: " .. OtherActor.Tag)
         end
     end

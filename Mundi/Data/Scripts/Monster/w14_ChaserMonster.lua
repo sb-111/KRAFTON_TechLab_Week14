@@ -5,6 +5,7 @@
 --- @field anim_instance userdata 애니메이션 상태 머신
 --- @field is_permanently_idle boolean 영구 Idle 상태 여부
 local MobStat = require("Monster/w14_MobStat")
+local ScoreManager = require("Game/w14_ScoreManager")
 
 local ChaserMonster = {}
 ChaserMonster.__index = ChaserMonster
@@ -100,6 +101,7 @@ function ChaserMonster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
+        ScoreManager.AddKill(1)
         self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)
