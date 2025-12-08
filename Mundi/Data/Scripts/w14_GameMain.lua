@@ -48,48 +48,6 @@ function BeginPlay()
     print("=== Game Main Start ===")
 
     StartUICam = GetCameraManager():GetCamera()
-    -- UI 초기화 (UIActor를 자동으로 찾음)
-    UI.Init()
-
-    -- 오디오 초기화 (기본 사운드 등록: BGM, 버튼 소리)
-    Audio.RegisterDefaults()
-
-    -- 상태 변경 콜백 등록
-    GameState.OnStateChange(GameState.States.PLAYING, GameStart)
-    GameState.OnStateChange(GameState.States.START, function()
-        InputManager:SetCursorVisible(true)  -- 시작 화면에서 커서 표시
-    end)
-    GameState.OnStateChange(GameState.States.DEAD, function()
-        InputManager:SetCursorVisible(true)  -- 게임 오버 화면에서 커서 표시
-        Audio.StopBGM("BGM")
-        print("[GameMain] Game Over")
-    end)
-
-    -- 플레이어 사망 시 게임 오버 상태로 전환
-    HPManager.OnDeath(function()
-        GameState.PlayerDied()
-    end)
-
-    -- 시작 화면 표시
-    GameState.ShowStartScreen()
-end
-
-function GameStart()
-    -- 기존 게임 정리 (재시작 시)
-    CleanupGame()
-
-    -- 오디오 재초기화 (재시작 시 풀 리셋 후 재등록)
-    Audio.Reset()
-    Audio.RegisterDefaults()
-    Audio.PlayBGM("BGM")
-
-    -- HUD 상태 초기화 (슬롯머신 애니메이션 리셋)
-    UI.ResetHUD()
-
-    -- 점수/탄약/HP 매니저 초기화
-    ScoreManager.Reset()
-    AmmoManager.Reset()
-    HPManager.Reset()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
@@ -235,6 +193,10 @@ end
 function GameStart()
     -- 플레이어에게 시작 알림
     PlayerScript.StartGame()
+
+    Audio.Reset()
+    Audio.RegisterDefaults() -- 기본 오디오 등록
+    Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
 end
 
 function Tick(dt)
@@ -293,7 +255,6 @@ function HandleInput()
         if GameState.IsStart() then
             GameState.StartGame()
             InputManager:SetCursorVisible(false)  -- 게임 시작 시 커서 숨김
-            Audio.PlayBGM("BGM")  -- 게임 시작 시 BGM 재생
         end
     end
 
