@@ -13,7 +13,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    ChaserMonster:Initialize(Obj, 0.1, 80, 3, 3.0)
+    ChaserMonster:Initialize(Obj, 0.1, 80, 3, 10.0)
 
     PrevActive = Obj.bIsActive
 end

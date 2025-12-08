@@ -23,14 +23,6 @@ local ObjectPlacer = nil
 local Player = nil
 local PlayerScript = nil
 local StartUICam = nil
-local Fence1DifficultyManager = nil
-local Fence2DifficultyManager = nil
-local Fence3DifficultyManager = nil
-local Fence4DifficultyManager = nil
-local Tree1DifficultyManager = nil
-local Tree2DifficultyManager = nil
-local Tree3DifficultyManager = nil
-local Tree4DifficultyManager = nil
 local BasicMonsterDifficultyManager = nil
 local ChaserMonsterDifficultyManager = nil
 
@@ -41,8 +33,8 @@ local function CleanupGame()
         MapManager:reset()
     end
 
-    if BiomeManager and BiomeManager.reset then
-        BiomeManager:reset()
+    if StageManager and StageManager.reset then
+        StageManager:reset()
     end
 
     if ItemManager and ItemManager.reset then
@@ -103,7 +95,7 @@ function BeginPlay()
     ObjectPlacer = ObjectPlacerClass:new(
             MapConfig.map_chunk_y_size * 0.5,
             MapConfig.map_chunk_x_size,
-            MapConfig.map_chunk_x_size,
+            MapConfig.map_chunk_x_size * 1.5,
             Obj.Location.Y,
             1000
     )
@@ -152,7 +144,7 @@ function BeginPlay()
             Vector(-2000, 100, 0),  -- pool_standby_location
             10,                     -- spawn_num (적게)
             2,                      -- radius
-            0.5                     -- 물체 스폰 z 위치
+            0.25                     -- 물체 스폰 z 위치
     )
     MonsterManager:add_object(
             "Data/Prefabs/w14_ChaserMonster.prefab",
@@ -160,7 +152,7 @@ function BeginPlay()
             Vector(-2000, 150, 0),  -- pool_standby_location
             5,                      -- spawn_num (기본보다 적게)
             2.5,                    -- radius
-            0.5                     -- 물체 스폰 z 위치
+            0.25                     -- 물체 스폰 z 위치
     )
     
     BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 280, 60)
@@ -254,7 +246,7 @@ function Tick(dt)
                     MapConfig.map_chunk_y_size * 0.5,                              -- area_width (Y축)
                     MapConfig.map_chunk_x_size,                              -- area_height (X축)
                     Player.Location.Y,                                          -- area_width_offset (Y축)
-                    Player.Location.X + MapConfig.map_chunk_x_size  -- area_height_offset (X축)
+                    Player.Location.X + MapConfig.map_chunk_x_size * 1.5  -- area_height_offset (X축)
             )
         end
 

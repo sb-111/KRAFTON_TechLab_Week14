@@ -37,6 +37,16 @@ struct VS_INPUT
 #endif
 };
 
+// GPU 인스턴싱용 인스턴스 입력 구조체
+#ifdef GPU_INSTANCING
+struct VS_INSTANCE_INPUT
+{
+    float4 Transform0 : TEXCOORD4;  // 3x4 행렬 row 0 (x축 + translation.x)
+    float4 Transform1 : TEXCOORD5;  // 3x4 행렬 row 1 (y축 + translation.y)
+    float4 Transform2 : TEXCOORD6;  // 3x4 행렬 row 2 (z축 + translation.z)
+};
+#endif
+
 // 출력은 오직 클립 공간 위치만 필요
 struct VS_OUT
 {
@@ -44,7 +54,11 @@ struct VS_OUT
     float3 WorldPosition : TEXCOORD0;
 };
 
+#ifdef GPU_INSTANCING
+VS_OUT mainVS(VS_INPUT Input, VS_INSTANCE_INPUT Inst)
+#else
 VS_OUT mainVS(VS_INPUT Input)
+#endif
 {
     VS_OUT Output = (VS_OUT) 0;
 
@@ -72,7 +86,18 @@ VS_OUT mainVS(VS_INPUT Input)
 #endif
 
     // 모델 좌표 -> 월드 좌표 -> 뷰 좌표 -> 클립 좌표
+#ifdef GPU_INSTANCING
+    // GPU 인스턴싱: 인스턴스별 트랜스폼 사용 (3x4 행렬을 4x4로 재구성)
+    float4x4 InstanceWorld = float4x4(
+        float4(Inst.Transform0.x, Inst.Transform1.x, Inst.Transform2.x, 0.0f),
+        float4(Inst.Transform0.y, Inst.Transform1.y, Inst.Transform2.y, 0.0f),
+        float4(Inst.Transform0.z, Inst.Transform1.z, Inst.Transform2.z, 0.0f),
+        float4(Inst.Transform0.w, Inst.Transform1.w, Inst.Transform2.w, 1.0f)
+    );
+    float4 WorldPos = mul(float4(localPosition, 1.0f), InstanceWorld);
+#else
     float4 WorldPos = mul(float4(localPosition, 1.0f), WorldMatrix);
+#endif
     float4 ViewPos = mul(WorldPos, ViewMatrix);
     Output.Position = mul(ViewPos, ProjectionMatrix);
     Output.WorldPosition = WorldPos.xyz;
