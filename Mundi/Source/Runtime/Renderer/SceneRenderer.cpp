@@ -1090,8 +1090,8 @@ void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 		float SortTimeMs = std::chrono::duration<float, std::milli>(SortEndTime - SortStartTime).count();
 		float AvgCollectTime = AccumulatedCollectTime / CollectSampleCount;
 
-		UE_LOG("[Batching] Before: %d, After: %d, Instanced: %d batches (%d instances)\n",
-			BeforeBatchCount, AfterBatchCount, InstancedBatches, TotalInstances);
+		// UE_LOG("[Batching] Before: %d, After: %d, Instanced: %d batches (%d instances)\n",
+		// 	BeforeBatchCount, AfterBatchCount, InstancedBatches, TotalInstances);
 
 		// 결과 배치 상태 확인
 		for (int32 i = 0; i < FMath::Min(5, MeshBatchElements.Num()); ++i)
@@ -2228,10 +2228,10 @@ void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatch
 
 	if (bShouldLog)
 	{
-		UE_LOG("[BatchStaticMeshes] Skip reasons - Single: %d, NoMat: %d, NotUberLit: %d, ShaderFail: %d\n",
-			SkippedSingleBatch, SkippedNoMaterial, SkippedNotUberLit, SkippedShaderFail);
-		UE_LOG("[BatchStaticMeshes] Valid groups: %d, TotalInstances: %d\n",
-			(int32)ValidBatchGroups.size(), TotalInstanceCount);
+		// UE_LOG("[BatchStaticMeshes] Skip reasons - Single: %d, NoMat: %d, NotUberLit: %d, ShaderFail: %d\n",
+		// 	SkippedSingleBatch, SkippedNoMaterial, SkippedNotUberLit, SkippedShaderFail);
+		// UE_LOG("[BatchStaticMeshes] Valid groups: %d, TotalInstances: %d\n",
+		// 	(int32)ValidBatchGroups.size(), TotalInstanceCount);
 	}
 
 	if (TotalInstanceCount == 0)
