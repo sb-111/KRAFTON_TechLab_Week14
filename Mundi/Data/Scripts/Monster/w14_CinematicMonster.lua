@@ -25,6 +25,6 @@ function Tick(Delta)
 end
 
 function Die()
-    coroutine.yield("wait_time", 5.5)
+    coroutine.yield("wait_time", 7.5)
     Obj.bIsActive = false
 end

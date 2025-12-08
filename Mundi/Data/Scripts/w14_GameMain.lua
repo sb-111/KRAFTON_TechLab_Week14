@@ -236,7 +236,7 @@ function BeginPlay()
 end
 
 function CinematicToStart()
-    coroutine.yield("wait_time", 5)
+    coroutine.yield("wait_time", 7)
     GetCameraManager():StartFade(0.5, 0, 1, Color(0, 0, 0, 1), 0)
     coroutine.yield("wait_time", 0.5)
 
