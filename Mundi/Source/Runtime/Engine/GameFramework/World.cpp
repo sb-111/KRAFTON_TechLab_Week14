@@ -574,14 +574,6 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
         }
     }
 
-	const TArray<AActor*> Actors = Level->GetActors();
-	for (AActor* Actor : Actors)
-	{
-		if (Actor)
-		{
-			Actor->BeginPlay();
-		}
-	}
 
 	// 씬에서 PCM 검색
 	this->PlayerCameraManager = FindActor<APlayerCameraManager>();
@@ -592,6 +584,15 @@ void UWorld::SetLevel(std::unique_ptr<ULevel> InLevel)
 		AActor* NewPlayerCameraManager = SpawnActor(APlayerCameraManager::StaticClass());
 		this->PlayerCameraManager = Cast<APlayerCameraManager>(NewPlayerCameraManager);
 		UE_LOG("[info] 씬에서 APlayerCameraManager를 찾지 못해, 비어있는 인스턴스를 새로 생성합니다.");
+	}
+	
+	const TArray<AActor*> Actors = Level->GetActors();
+	for (AActor* Actor : Actors)
+	{
+		if (Actor)
+		{
+			Actor->BeginPlay();
+		}
 	}
 
 	// 파티클 이벤트 매니저 생성 (Preview World 제외)
