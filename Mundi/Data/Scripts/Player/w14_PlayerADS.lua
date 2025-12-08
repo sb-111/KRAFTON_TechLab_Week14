@@ -168,6 +168,19 @@ function PlayerADS:SetIronSightScale(scale)
     end
 end
 
+--- ADS 상태에서의 머즐 플래시 위치 반환
+function PlayerADS:GetMuzzlePosition()
+    if not self.camera then return nil end
+
+    local camPos = self.camera:GetWorldLocation()
+    local camForward = self.camera:GetForward()
+
+    -- 아이언사이트보다 약간 더 앞에서 발사
+    local muzzleDistance = self.ironSightOffset.X + 0.3
+
+    return camPos + camForward * muzzleDistance
+end
+
 --- 정리
 function PlayerADS:Destroy()
     if self.ironSightActor then
