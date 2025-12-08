@@ -148,7 +148,13 @@ local CurrentYaw = 0.0
 local CurrentPitch = 0.0
 
 -- 보간 속도 (높을수록 빠릿하고, 낮을수록 부드럽지만 반응이 느림)
-local RotationSmoothSpeed = 20.0 
+local RotationSmoothSpeed = 20.0
+
+-- 카메라 리코일 설정
+local RecoilAmount = 2.0          -- 힙파이어 시 한 발당 Pitch 증가량 (도)
+local RecoilADSMult = 0.5         -- ADS 시 반동 배수 (50%)
+local RecoilRecoverySpeed = 5.0   -- 리코일 복구 속도
+local CurrentRecoil = 0.0         -- 현재 누적 리코일
 
 function Rotate(DeltaTime)
     local InputDelta = PlayerInput.RotateVector
@@ -157,17 +163,35 @@ function Rotate(DeltaTime)
     local SensMult = PlayerADS and PlayerADS:GetSensitivityMultiplier() or 1.0
     TargetYaw = TargetYaw + (InputDelta.X * MouseSensitivity * SensMult)
     TargetPitch = TargetPitch - (InputDelta.Y * MouseSensitivity * SensMult)
-    
+
+    -- 리코일 복구 (쏘지 않을 때 서서히 원래 조준점으로)
+    if CurrentRecoil > 0 then
+        local recovery = RecoilRecoverySpeed * DeltaTime
+        if recovery > CurrentRecoil then recovery = CurrentRecoil end
+        TargetPitch = TargetPitch + recovery  -- 아래로 복구 (Pitch 증가 = 아래)
+        CurrentRecoil = CurrentRecoil - recovery
+    end
+
     if TargetPitch > 70.0 then TargetPitch = 70.0
     elseif TargetPitch < -70.0 then TargetPitch = -70.0 end
 
     local SmoothFactor = math.min(RotationSmoothSpeed * DeltaTime, 1.0)
-    
+
     CurrentYaw = CurrentYaw + (TargetYaw - CurrentYaw) * SmoothFactor
     CurrentPitch = CurrentPitch + (TargetPitch - CurrentPitch) * SmoothFactor
-    
+
     local NewRotation = Vector(0, CurrentPitch, CurrentYaw)
     Obj.Rotation = NewRotation
+end
+
+-- 리코일 적용 (Shoot에서 호출)
+function ApplyRecoil()
+    local isADS = PlayerADS and PlayerADS:IsAiming()
+    local recoilMult = isADS and RecoilADSMult or 1.0
+    local actualRecoil = RecoilAmount * recoilMult
+
+    TargetPitch = TargetPitch - actualRecoil  -- 위로 튀게 (Pitch 감소 = 위)
+    CurrentRecoil = CurrentRecoil + actualRecoil
 end
 
 function Shoot()
@@ -181,6 +205,7 @@ function Shoot()
     end
 
     PlayerAnim:Fire()
+    ApplyRecoil()  -- 카메라 리코일 적용
 
     MuzzleParticle:Activate()
     Audio.PlaySFX("gunshot")
