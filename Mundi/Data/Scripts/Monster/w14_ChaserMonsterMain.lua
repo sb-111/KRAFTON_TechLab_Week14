@@ -53,11 +53,6 @@ function OnBeginOverlap(OtherActor)
         return
     end
 
-    -- 플레이어의 총알과 충돌 처리
-    if OtherActor.Tag == "bullet" then
-        ChaserMonster:GetDamage(10)
-    end
-
     -- obstacle 또는 다른 몬스터와 충돌 시 영구 Idle 상태로 전환
     if OtherActor.Tag == "obstacle" or MonsterConfig.IsMonsterTag(OtherActor.Tag) then
         ChaserMonster:SetPermanentIdle()

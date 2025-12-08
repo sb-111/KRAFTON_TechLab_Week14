@@ -194,6 +194,7 @@ public:
     void SetPhysicsAssetPreview(UPhysicsAsset* InAsset) { PhysicsAsset = InAsset; }
 
     // 래그돌 활성화/비활성화 (부모 UPrimitiveComponent의 bSimulatePhysics 사용)
+    UFUNCTION(LuaBind, DisplayName="SetSimulatePhysics")
     void SetSimulatePhysics(bool bEnable);
     bool IsSimulatingPhysics() const { return bIsRagdoll; }
 

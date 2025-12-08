@@ -4,6 +4,7 @@
 --- @field obj userdata 게임 오브젝트
 --- @field anim_instance userdata 애니메이션 상태 머신
 local MobStat = require("Monster/w14_MobStat")
+local ScoreManager = require("Game/w14_ScoreManager")
 
 local Monster = {}
 Monster.__index = Monster
@@ -98,6 +99,7 @@ function Monster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
+        ScoreManager.AddKill(1)
         self.anim_instance:SetState("Die", 0.2)
         self.stat.is_dead = true
         self.obj:SetPhysicsState(false)

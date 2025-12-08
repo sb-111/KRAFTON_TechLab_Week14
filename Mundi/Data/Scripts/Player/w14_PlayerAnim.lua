@@ -4,7 +4,8 @@ local PlayerAnim = {}
 local AnimDurations = {
     ShootStart = 0.05, -- Start 애니메이션 길이 (이 시간 지나면 Loop로)
     ShootEnd = 0.2,     -- End 애니메이션 길이 (이 시간 지나면 Run으로)
-    Reload = 1.5
+    Reload = 1.5,
+    Die = 2.0
 }
 
 function PlayerAnim:new(Obj)        
@@ -13,6 +14,7 @@ function PlayerAnim:new(Obj)
     Instance.AnimInstance = nil
     Instance.bIsShooting = false
     Instance.bIsReloading = false
+    Instance.bIsDying = false
 
     local Mesh = GetComponent(Obj, "USkeletalMeshComponent")
     if Mesh then
@@ -21,7 +23,8 @@ function PlayerAnim:new(Obj)
             -- [상태 등록]
             Instance.AnimInstance:AddState("Idle", "Data/GameJamAnim/Player/Rifle_Idle_mixamo.com", 1.0, true)
             Instance.AnimInstance:AddState("Run", "Data/GameJamAnim/Player/Rifle_Run_mixamo.com", 1.0, true)
-            
+            Instance.AnimInstance:AddState("Die", "Data/GameJamAnim/Player/Rifle_Die_mixamo.com", 1.0, false)
+
             -- FPS 사격 (Loop 속도 1.0이 적당, 너무 빠르면 재봉틀)
             Instance.AnimInstance:AddState("ShootStart", "Data/GameJamAnim/Player/Rifle_ShootStart_mixamo.com", 1.5, false)
             Instance.AnimInstance:AddState("ShootLoop", "Data/GameJamAnim/Player/Rifle_ShootLoop_mixamo.com", 1.0, true)
@@ -44,10 +47,32 @@ function PlayerAnim:Reset()
     self.AnimInstance:SetState("Idle", 0)
     self.bIsShooting = false
     self.bIsReloading = false
+    self.bIsDying = false
+end
+-- ===== 죽음 애니메이션 =====
+function PlayerAnim:Die()
+    if not self.AnimInstance then return end
+    
+    -- 이미 죽는 중이면 무시
+    if self.bIsDying then return end
+    
+    self.bIsDying = true
+    self.bIsShooting = false
+    self.bIsReloading = false
+    
+    -- 모든 상태에서 Die로 전환
+    self.AnimInstance:SetState("Die", 0)
+end
+
+function PlayerAnim:IsDying()
+    return self.bIsDying
 end
 
 function PlayerAnim:StartReload()
     if not self.AnimInstance then return end
+    
+    -- 죽는 중이면 재장전 불가
+    if self.bIsDying then return end
     
     local CurrentState = self.AnimInstance:GetCurrentStateName()
     
@@ -71,6 +96,9 @@ end
 function PlayerAnim:Fire()
     if not self.AnimInstance then return end
     
+    -- 죽는 중이면 발사 불가
+    if self.bIsDying then return end
+    
     local CurrentState = self.AnimInstance:GetCurrentStateName()
     
     -- 사격 관련 상태일 때만 반동 적용 (Run 상태에서 호출 방지)
@@ -82,6 +110,18 @@ end
 
 function PlayerAnim:Update(Delta, bIsFiring, bCanFire)
     if not self.AnimInstance then return end
+
+    -- 죽는 중이면 다른 업데이트 무시
+    if self.bIsDying then
+        local CurrentState = self.AnimInstance:GetCurrentStateName()
+        local CurrentTime = self.AnimInstance:GetStateTime(CurrentState)
+        
+        -- Die 애니메이션이 끝났는지 확인 (필요시 추가 처리)
+        if CurrentState == "Die" and CurrentTime >= AnimDurations.Die then
+            -- 선택사항: 여기서 추가 처리 가능
+        end
+        return
+    end
 
     local CurrentState = self.AnimInstance:GetCurrentStateName()
     local CurrentTime = self.AnimInstance:GetStateTime(CurrentState)
