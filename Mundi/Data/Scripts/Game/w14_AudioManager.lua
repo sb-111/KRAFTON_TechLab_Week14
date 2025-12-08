@@ -86,6 +86,8 @@ function M.RegisterDefaults()
     M.RegisterBGM("BGM", "BGMActor")
     M.RegisterSFX("buttonClicked", "ButtonClickedActor")
     M.RegisterSFX("buttonHovered", "ButtonHoveredActor")
+    M.RegisterSFX("ObstacleCollisionScream", "ObstacleCollisionScream")
+    M.RegisterSFX("ObstacleCollisionSmash", "ObstacleCollisionSmash")
     print("[AudioManager] Default sounds registered")
 end
 

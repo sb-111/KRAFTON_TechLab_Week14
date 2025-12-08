@@ -75,7 +75,43 @@ bool FAnimNode_StateMachine::SetStateTime(int32 Index, float TimeSeconds)
 {
     if (Index < 0 || Index >= States.Num()) return false;
     States[Index].Player.GetExtractContext().CurrentTime = TimeSeconds;
+    // 시간을 직접 설정할 때 PreviousTime도 동기화 (노티파이 중복 방지)
+    States[Index].PreviousTime = TimeSeconds;
     return true;
+}
+
+bool FAnimNode_StateMachine::AddNotify(int32 StateIndex, const FAnimNotifyEvent& Notify)
+{
+    if (StateIndex < 0 || StateIndex >= States.Num()) return false;
+    States[StateIndex].Notifies.Add(Notify);
+    return true;
+}
+
+bool FAnimNode_StateMachine::RemoveNotify(int32 StateIndex, const FName& NotifyName)
+{
+    if (StateIndex < 0 || StateIndex >= States.Num()) return false;
+    TArray<FAnimNotifyEvent>& Notifies = States[StateIndex].Notifies;
+    for (int32 i = Notifies.Num() - 1; i >= 0; --i)
+    {
+        if (Notifies[i].NotifyName == NotifyName)
+        {
+            Notifies.RemoveAt(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+void FAnimNode_StateMachine::ClearNotifies(int32 StateIndex)
+{
+    if (StateIndex < 0 || StateIndex >= States.Num()) return;
+    States[StateIndex].Notifies.Empty();
+}
+
+const TArray<FAnimNotifyEvent>* FAnimNode_StateMachine::GetNotifies(int32 StateIndex) const
+{
+    if (StateIndex < 0 || StateIndex >= States.Num()) return nullptr;
+    return &States[StateIndex].Notifies;
 }
 
 void FAnimNode_StateMachine::SetCurrentState(int32 StateIndex, float BlendTime)
@@ -116,6 +152,8 @@ void FAnimNode_StateMachine::SetCurrentState(int32 StateIndex, float BlendTime)
         Curr.Player.SetPlayRate(Curr.PlayRate);
         Curr.Player.SetLooping(Curr.bLooping);
         Curr.Player.SetInterpolationEnabled(true);
+        // 노티파이 트리거를 위한 시간 초기화
+        Curr.PreviousTime = 0.f;
         return;
     }
 
@@ -124,6 +162,8 @@ void FAnimNode_StateMachine::SetCurrentState(int32 StateIndex, float BlendTime)
         FAnimState& Curr = States[StateIndex];
         Curr.Player.GetExtractContext() = FAnimExtractContext{}; // 시간 초기화
         Curr.Player.SetPlayRate(Curr.PlayRate); // (옵션) 재생속도 재설정
+        // 노티파이 트리거를 위한 시간 초기화
+        Curr.PreviousTime = 0.f;
         return;
     }
 
@@ -144,6 +184,8 @@ void FAnimNode_StateMachine::SetCurrentState(int32 StateIndex, float BlendTime)
     Next.Player.SetPlayRate(Next.PlayRate);
     Next.Player.SetLooping(Next.bLooping);
     Next.Player.SetInterpolationEnabled(true);
+    // 노티파이 트리거를 위한 시간 초기화
+    Next.PreviousTime = 0.f;
 }
 
 const FAnimState* FAnimNode_StateMachine::GetStateChecked(int32 Index) const
@@ -181,15 +223,77 @@ void FAnimNode_StateMachine::Reset()
 void FAnimNode_StateMachine::Update(FAnimationBaseContext& Context)
 {
     const float DeltaSeconds = Context.GetDeltaSeconds();
+    USkeletalMeshComponent* OwningComp = Context.GetComponent();
+
+    // Helper lambda: 상태의 노티파이를 트리거하는 함수
+    auto TriggerStateNotifies = [OwningComp](FAnimState* State, float PrevTime, float CurrTime, float SeqLength)
+    {
+        if (!State || !OwningComp || State->Notifies.Num() == 0) return;
+
+        // 루핑 처리: CurrentTime이 PreviousTime보다 작으면 애니메이션이 루프됨
+        const bool bLooped = (CurrTime < PrevTime) && State->bLooping;
+
+        for (const FAnimNotifyEvent& Notify : State->Notifies)
+        {
+            bool bShouldTrigger = false;
+
+            if (bLooped)
+            {
+                // 루프: PrevTime ~ SeqLength 또는 0 ~ CurrTime 범위에 있으면 트리거
+                bShouldTrigger = (Notify.TriggerTime > PrevTime && Notify.TriggerTime <= SeqLength) ||
+                                 (Notify.TriggerTime >= 0.f && Notify.TriggerTime <= CurrTime);
+            }
+            else
+            {
+                // 일반: PrevTime ~ CurrTime 범위에 있으면 트리거
+                bShouldTrigger = (Notify.TriggerTime > PrevTime && Notify.TriggerTime <= CurrTime);
+            }
+
+            if (bShouldTrigger)
+            {
+                OwningComp->TriggerAnimNotify(Notify);
+            }
+        }
+    };
 
     // Advance current/next players
     if (FAnimState* Curr = (Runtime.CurrentState >= 0 && Runtime.CurrentState < States.Num()) ? &States[Runtime.CurrentState] : nullptr)
     {
+        // 노티파이 트리거를 위해 시간 저장
+        const float PrevTime = Curr->PreviousTime;
+
+        // 플레이어 업데이트 (시간 전진)
         Curr->Player.Update(Context);
+
+        // 현재 시간 및 시퀀스 길이 가져오기
+        const float CurrTime = Curr->Player.GetExtractContext().CurrentTime;
+        const UAnimSequenceBase* Seq = Curr->Player.GetSequence();
+        const float SeqLength = Seq ? Seq->GetPlayLength() : 0.f;
+
+        // 노티파이 트리거
+        TriggerStateNotifies(Curr, PrevTime, CurrTime, SeqLength);
+
+        // PreviousTime 업데이트
+        Curr->PreviousTime = CurrTime;
     }
     if (FAnimState* Next = (Runtime.NextState >= 0 && Runtime.NextState < States.Num()) ? &States[Runtime.NextState] : nullptr)
     {
+        // 노티파이 트리거를 위해 시간 저장
+        const float PrevTime = Next->PreviousTime;
+
+        // 플레이어 업데이트 (시간 전진)
         Next->Player.Update(Context);
+
+        // 현재 시간 및 시퀀스 길이 가져오기
+        const float CurrTime = Next->Player.GetExtractContext().CurrentTime;
+        const UAnimSequenceBase* Seq = Next->Player.GetSequence();
+        const float SeqLength = Seq ? Seq->GetPlayLength() : 0.f;
+
+        // 노티파이 트리거
+        TriggerStateNotifies(Next, PrevTime, CurrTime, SeqLength);
+
+        // PreviousTime 업데이트
+        Next->PreviousTime = CurrTime;
 
         // Advance blend alpha
         if (Runtime.BlendDuration <= 0.f)

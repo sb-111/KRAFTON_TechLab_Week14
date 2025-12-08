@@ -1,27 +1,13 @@
 ﻿#pragma once
 
+#include "AnimTypes.h"
+
 class UWorld; class FViewport; class FViewportClient; class ASkeletalMeshActor; class USkeletalMesh; class UAnimSequence;
 class UParticleSystem; class UParticleSystemComponent; class AActor; class UParticleModule;
 class UShapeAnchorComponent;
 class UConstraintAnchorComponent;
 
-struct FAnimNotifyEvent
-{
-    float TriggerTime;
-    float Duration;
-    FName NotifyName;
-    FString SoundPath;
-    FLinearColor Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
-};
-
-struct FNotifyTrack
-{
-    FString Name;
-    TArray<FAnimNotifyEvent> Notifies;
-
-    FNotifyTrack() = default;
-    FNotifyTrack(const FString& InName) : Name(InName) {}
-};
+// FAnimNotifyEvent, FNotifyTrack은 AnimTypes.h에 정의됨
 
 struct FSelectedNotify
 {
