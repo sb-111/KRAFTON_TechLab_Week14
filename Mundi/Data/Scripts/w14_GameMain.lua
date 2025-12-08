@@ -63,8 +63,8 @@ function BeginPlay()
 
     -- 플레이어 생성
     Player = SpawnPrefab("Data/Prefabs/w14_Player.prefab")
-    Player.Location = Vector(0, 0, 1.3)
     PlayerScript = Player:GetScript()
+    PlayerScript:Reset()
 
     -- MapManager 초기화
     MapManager = MapManagerClass:new(Player)
@@ -202,7 +202,8 @@ function BeginPlay()
     GameReset()
 end
 
-function GameReset()
+function GameReset()    
+    EnableDepthOfField()
     InputManager:SetCursorVisible(true)
     -- 기존 게임 정리 (재시작 시)
     CleanupGame()
@@ -222,6 +223,7 @@ function GameReset()
 end
 
 function GameStart()
+    DisableDepthOfField()
     -- 플레이어에게 시작 알림
     PlayerScript.StartGame()
 

@@ -70,7 +70,7 @@ end
 
 function StartGame()
     if PlayerCamera then
-        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.0)
+        GetCameraManager():SetViewTargetWithBlend(PlayerCamera, 1.2)
         RestoreBaseVignette()
     end
 
@@ -79,6 +79,7 @@ end
 
 function Reset()
     Obj.Location = Vector(0, 0, 1.3)
+    Obj.Rotation = Vector(0, 0, 0)
     bIsStarted = false
     HPManager.Reset()
     PlayerAnim:Reset()

@@ -749,6 +749,32 @@ void FLuaManager::ExposeAllComponentsToLua()
             SkelComp->ClearAnimNotifyCallback();
         }
     );
+
+    // ===== Render Settings 함수 =====
+    SharedLib.set_function("DisableDepthOfField",
+        [this]()
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().DisableShowFlag(EEngineShowFlags::SF_DepthOfField);
+                UE_LOG("[Lua] Depth of Field disabled\n");
+            }
+        }
+    );
+
+    SharedLib.set_function("EnableDepthOfField",
+        [this]()
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().EnableShowFlag(EEngineShowFlags::SF_DepthOfField);
+                UE_LOG("[Lua] Depth of Field enabled\n");
+            }
+        }
+    );
+
 }
 
 void FLuaManager::ExposeGlobalFunctions()
@@ -826,8 +852,7 @@ void FLuaManager::ExposeGlobalFunctions()
             {
                 return Self ? Self->StartVignette(InDuration, Radius, Softness, Intensity, Roundness) : -1;
             }
-        ),
-
+            ),
         // --- UpdateVignette (int 반환) ---
         "UpdateVignette", sol::overload(
             // (Full) 8개 인수

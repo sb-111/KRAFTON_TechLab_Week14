@@ -27,7 +27,7 @@ struct FMinimalViewInfo
 {
     FVector ViewLocation;
     FQuat ViewRotation;
-    float FieldOfView = 90.0f;
+    float FieldOfView = 60.0f;
     float ZoomFactor = 1.0f;
     float NearClip = 10.0f;
     float FarClip = 1000.0f;
