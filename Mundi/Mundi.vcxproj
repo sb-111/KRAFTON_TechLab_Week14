@@ -321,6 +321,8 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Monster\w14_BossMonster.lua" />
     <Content Include="Data\Scripts\Monster\w14_BossMonsterMain.lua" />
     <Content Include="Data\Scripts\Monster\w14_BossMonsterManager.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BossProjectile.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BossProjectileMain.lua" />
     <Content Include="Data\Scripts\Monster\w14_ChaserMonster.lua" />
     <Content Include="Data\Scripts\Monster\w14_ChaserMonsterMain.lua" />
     <Content Include="Data\Scripts\Monster\w14_MobStat.lua" />

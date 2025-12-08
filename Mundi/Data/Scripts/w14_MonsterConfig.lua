@@ -26,6 +26,14 @@ local MonsterConfig = {
         description = "보스 몬스터"
     },
 
+    -- BossProjectile (보스 발사체)
+    BossProjectile = {
+        damage = 15,
+        knockBackStrength = 8.0,
+        bloodColor = "red",
+        description = "보스 발사체"
+    },
+
     -- 기본값 (태그가 정의되지 않은 경우)
     Default = {
         damage = 5,

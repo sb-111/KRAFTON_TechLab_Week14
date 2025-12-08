@@ -181,11 +181,12 @@ function BeginPlay()
     ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 24, 60)
 
     -- BossMonsterManager 생성
-    -- 파라미터: 스폰시간(min, max, interval), HP(min, max, interval), 데미지(min, max, interval)
+    -- 파라미터: 스폰시간(min, max, interval), HP(min, max, interval), 데미지(min, max, interval), 발사체개수(min, max, interval)
     BossMonsterManager = BossMonsterManagerClass:new(
-            30, 15, 120,    -- 스폰 시간: 30초에서 15초까지, 120초 동안 감소
+            20, 15, 120,    -- 스폰 시간: 30초에서 15초까지, 120초 동안 감소
             100, 300, 180,  -- HP: 100에서 300까지, 180초 동안 증가
-            10, 30, 180     -- 데미지: 10에서 30까지, 180초 동안 증가
+            10, 30, 180,    -- 데미지: 10에서 30까지, 180초 동안 증가
+            1, 5, 120       -- 발사체 개수: 1개에서 5개까지, 120초 동안 증가
     )
 
     -- UI 초기화 (UIActor를 자동으로 찾음)

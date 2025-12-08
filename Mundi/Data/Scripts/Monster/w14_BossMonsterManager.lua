@@ -17,7 +17,10 @@ function BossMonsterManager:new(
         hp_difficulty_interval,
         damage_difficulty_min,
         damage_difficulty_max,
-        damage_difficulty_interval
+        damage_difficulty_interval,
+        projectile_count_min,
+        projectile_count_max,
+        projectile_count_interval
 )
     local instance = {}
     instance.current_spawn_time = 0
@@ -37,6 +40,12 @@ function BossMonsterManager:new(
             damage_difficulty_max,
             damage_difficulty_interval
     )
+    -- 발사체 개수 난이도 매니저
+    instance.projectile_count_difficulty_manager = DifficultyManagerClass:new(
+            projectile_count_min or 1,
+            projectile_count_max or 5,
+            projectile_count_interval or 120
+    )
     instance.current_boss = nil
     setmetatable(instance, BossMonsterManager)
     return instance
@@ -52,7 +61,7 @@ function BossMonsterManager:Tick(delta)
         end
 
         if boss_script.ShouldDestroy() then
-            DestroyObject(self.current_boss)
+            DeleteObject(self.current_boss)
             self.current_boss = nil
         else
             return  -- 보스가 살아있으면 새 보스 스폰 안 함
@@ -63,6 +72,7 @@ function BossMonsterManager:Tick(delta)
     local new_spawn_time = self.spawn_time_difficulty_manager:Tick(delta)
     local new_hp = self.hp_difficulty_manager:Tick(delta)
     local new_damage = self.damage_difficulty_manager:Tick(delta)
+    local new_projectile_count = math.floor(self.projectile_count_difficulty_manager:Tick(delta))
 
     -- 스폰 타이머 업데이트
     self.current_spawn_time = self.current_spawn_time + delta
@@ -79,7 +89,7 @@ function BossMonsterManager:Tick(delta)
             return
         end
 
-        boss_script.Initialize(new_hp, new_damage)
+        boss_script.Initialize(new_hp, new_damage, new_projectile_count)
     end
 end
 
@@ -87,11 +97,12 @@ function BossMonsterManager:reset()
     self.spawn_time_difficulty_manager:reset()
     self.hp_difficulty_manager:reset()
     self.damage_difficulty_manager:reset()
+    self.projectile_count_difficulty_manager:reset()
 
     self.current_spawn_time = 0
 
     if self.current_boss then
-        DestroyObject(self.current_boss)
+        DeleteObject(self.current_boss)
         self.current_boss = nil
     end
 end

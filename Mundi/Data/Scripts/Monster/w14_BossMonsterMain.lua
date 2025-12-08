@@ -52,9 +52,9 @@ function ShouldDestroy()
     return should_destroy
 end
 
-function Initialize(health_point, attack_point)
+function Initialize(health_point, attack_point, projectile_count)
     -- 스탯 초기화 (애니메이션은 BeginPlay에서 이미 설정됨)
-    BossMonster:Initialize(health_point, attack_point)
+    BossMonster:Initialize(health_point, attack_point, projectile_count)
 end
 
 --- BossMonster는 Pool에서 Respawn되지 않음

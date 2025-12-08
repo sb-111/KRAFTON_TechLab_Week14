@@ -52,6 +52,8 @@ setmetatable(Const, ConstValues)
 --- @field movement_time_total number 목표 지점까지 총 이동 시간
 --- @field attack_cool_time number 현재 공격 쿨타임 경과
 --- @field next_attack_time number 다음 공격까지 필요한 시간
+--- @field projectile_count number 한 번 공격 시 발사체 개수 (발사체는 자체 Tick에서 처리)
+--- @field projectile_speed number 발사체 이동 속도
 local BossMonster = {}
 BossMonster.__index = BossMonster
 BossMonster.Const = Const
@@ -80,6 +82,8 @@ function BossMonster:new(obj)
     instance.movement_time_total = 0
     instance.attack_cool_time = 0
     instance.next_attack_time = Const.MIN_ATTACK_COOLTIME  -- 초기 쿨타임 설정 (즉시 공격 방지)
+    instance.projectile_count = 1       -- 기본 발사체 개수
+    instance.projectile_speed = 8       -- 기본 발사체 속도
     setmetatable(instance, BossMonster)
 
     -- 애니메이션 상태 머신 초기화
@@ -103,10 +107,16 @@ end
 --- BossMonster 스탯을 초기화합니다.
 --- @param health_point number 체력
 --- @param attack_point number 공격력
+--- @param projectile_count number 발사체 개수 (옵션)
 --- @return void
-function BossMonster:Initialize(health_point, attack_point)
+function BossMonster:Initialize(health_point, attack_point, projectile_count)
     -- 스탯 초기화 (move_speed는 실시간 갱신, attack_range는 원거리라 불필요)
     self.stat:Initialize(0, health_point, attack_point, 0)
+
+    -- 발사체 개수 설정
+    if projectile_count then
+        self.projectile_count = projectile_count
+    end
 end
 
 --- 데미지를 받습니다.
@@ -120,9 +130,12 @@ function BossMonster:GetDamage(damage_amount)
     local died = self.stat:TakeDamage(damage_amount)
 
     if died then
-        -- RagDoll 처리
+        -- RagDoll 처리 (물리 시뮬레이션 활성화)
         self.stat.is_dead = true
-        self.obj:SetPhysicsState(false)
+        local mesh = GetComponent(self.obj, "USkeletalMeshComponent")
+        if mesh then
+            mesh:SetSimulatePhysics(true)
+        end
     end
 end
 
@@ -204,6 +217,40 @@ function BossMonster:GetNextAttackCooltime()
     self.next_attack_time = Math:RandomInRange(Const.MIN_ATTACK_COOLTIME, Const.MAX_ATTACK_COOLTIME)
 end
 
+--- 발사체를 스폰합니다.
+--- 발사체는 자체적으로 플레이어 추적 및 파괴를 처리합니다.
+--- @return void
+function BossMonster:SpawnProjectiles()
+    local boss_pos = self.obj.Location
+    local count = self.projectile_count
+
+    -- 발사체 간 이격 거리 설정
+    local spacing_y = 3.0  -- Y축 간격
+    local spacing_z = 2.0  -- Z축 간격
+
+    -- 발사체들의 총 범위 계산 (중앙 기준 대칭 배치)
+    local total_spread_y = spacing_y * (count - 1)
+    local start_offset_y = -total_spread_y / 2
+
+    for i = 1, count do
+        -- 균등 이격 배치 (Y축 기준)
+        local offset_y = start_offset_y + spacing_y * (i - 1)
+        -- Z축은 약간의 랜덤 변화 추가
+        local offset_z = Math:RandomInRange(-0.5, 0.5)
+        local spawn_pos = boss_pos + Vector(-2, offset_y, offset_z)
+
+        local projectile = SpawnPrefab("Data/Prefabs/w14_BossProjectile.prefab")
+        if projectile then
+            projectile.Location = spawn_pos
+
+            local proj_script = projectile:GetScript()
+            if proj_script and proj_script.Initialize then
+                proj_script.Initialize(self.projectile_speed, self.stat.attack_point)
+            end
+        end
+    end
+end
+
 --- 매 프레임 공격 쿨타임 체크 및 공격 실행
 --- @param delta number 델타 타임
 --- @return void
@@ -211,7 +258,8 @@ function BossMonster:Attack(delta)
     self.attack_cool_time = self.attack_cool_time + delta
 
     if (self.attack_cool_time > self.next_attack_time) then
-        -- TODO: 원거리 발사체 소환 코드 삽입
+        -- 발사체 소환
+        self:SpawnProjectiles()
         self.anim_instance:SetState("Attack", 0)
         self.attack_cool_time = 0
         self:GetNextAttackCooltime()
