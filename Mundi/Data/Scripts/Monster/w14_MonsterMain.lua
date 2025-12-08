@@ -12,7 +12,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    Monster:Initialize(Obj, 3.0, 50, 1, 10.0)
+    Monster:Initialize(Obj, 3.0, 20, 1, 7.0)
 
     PrevActive = Obj.bIsActive
 end

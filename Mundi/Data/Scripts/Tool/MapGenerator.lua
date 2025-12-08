@@ -8,16 +8,16 @@
 --   5. "To Prefab" 버튼으로 프리팹 저장
 
 -- ===== 여기서 설정값 수정 =====
-local xScale = 20.0           -- X축 스케일
-local yScale = 20.0           -- Y축 스케일
-local xCount = 3             -- X축 방향 타일 개수
-local yCount = 20          -- Y축 방향 타일 개수
+local xScale = 30.0           -- X축 스케일
+local yScale = 30.0           -- Y축 스케일
+local xCount = 1             -- X축 방향 타일 개수
+local yCount = 8          -- Y축 방향 타일 개수
 local tileSpacingX = 1.0    -- X축 타일 간격
 local tileSpacingY = 1.0    -- Y축 타일 간격
 
 -- 메시 가중치 설정 (A:B 비율)
-local weightA = 6            -- 메시 A 가중치
-local weightB = 4            -- 메시 B 가중치
+local weightA = 2            -- 메시 A 가중치
+local weightB = 8            -- 메시 B 가중치
 -- ==============================
 
 -- 내부 상태

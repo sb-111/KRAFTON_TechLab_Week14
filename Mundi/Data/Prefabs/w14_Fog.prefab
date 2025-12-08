@@ -1,13 +1,13 @@
 {
-  "ObjectName" : "Fog",
+  "ObjectName" : "w14_Fog",
   "OwnedComponents" : [{
-      "FogCutoffDistance" : 3000.000000,
-      "FogDensity" : 0.030000,
+      "FogCutoffDistance" : 300.000000,
+      "FogDensity" : 0.040000,
       "FogHeightFalloff" : 0.100000,
-      "FogInscatteringColor" : [0.239216, 0.239216, 0.239216, 1.000000],
+      "FogInscatteringColor" : [0.096525, 0.096525, 0.096525, 1.000000],
       "FogMaxOpacity" : 1.000000,
       "HeightFogShader" : "Shaders/PostProcess/HeightFog_PS.hlsl",
-      "Id" : 1107,
+      "Id" : 1323,
       "ObjectName" : "UHeightFogComponent_1",
       "ParentId" : 0,
       "RelativeLocation" : [0.000000, 0.000000, 5.000000],
@@ -21,7 +21,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1107,
+  "RootComponentId" : 1323,
   "Tag" : "",
   "Type" : "AHeightFogActor",
   "bActorHiddenInGame" : false,
