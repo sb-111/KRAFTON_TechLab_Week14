@@ -84,7 +84,20 @@ function PlayerInput:Update(DT)
     end
 
     -- 줌 입력 (우클릭)
-    self.ZoomTrigger = InputManager:IsMouseButtonDown(1)
+    local isMouseZooming = InputManager:IsMouseButtonDown(1)
+    local isGamepadZooming = false
+
+    if InputManager:IsGamepadConnected(0) then
+        if InputManager:IsGamepadButtonDown(GamepadButton.LeftShoulder, 0) then
+            isGamepadZooming = true
+        end
+    end
+
+    if isMouseZooming or isGamepadZooming then
+        self.ZoomTrigger = true
+    else
+        self.ZoomTrigger = false
+    end
 end
 
 return PlayerInput
