@@ -4,8 +4,8 @@
 local M = {}
 
 -- HP 설정
-local maxHP = 10
-local currentHP = 10
+local maxHP = 100
+local currentHP = 100
 local bInvincible = false
 local bDead = false
 local invincibleDuration = 1.5

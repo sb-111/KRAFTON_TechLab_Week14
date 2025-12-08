@@ -311,8 +311,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\FireballSpawnArea.lua" />
     <Content Include="Data\Scripts\Fireballtest.lua" />
     <Content Include="Data\Scripts\FMath.lua" />
+    <Content Include="Data\Scripts\Game\w14_AmmoManager.lua" />
     <Content Include="Data\Scripts\Game\w14_AudioManager.lua" />
     <Content Include="Data\Scripts\Game\w14_GameStateManager.lua" />
+    <Content Include="Data\Scripts\Game\w14_HPManager.lua" />
     <Content Include="Data\Scripts\Game\w14_ParticleManager.lua" />
     <Content Include="Data\Scripts\Game\w14_ScoreManager.lua" />
     <Content Include="Data\Scripts\Game\w14_UIManager.lua" />

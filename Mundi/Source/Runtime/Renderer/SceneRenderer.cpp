@@ -1097,8 +1097,8 @@ void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 		for (int32 i = 0; i < FMath::Min(5, MeshBatchElements.Num()); ++i)
 		{
 			const FMeshBatchElement& Batch = MeshBatchElements[i];
-			UE_LOG("[ResultBatch %d] NumInst=%d, InstBuf=%p, InstStride=%d, StartInstLoc=%d\n",
-				i, Batch.NumInstances, Batch.InstanceBuffer, Batch.InstanceStride, Batch.StartInstanceLocation);
+			// UE_LOG("[ResultBatch %d] NumInst=%d, InstBuf=%p, InstStride=%d, StartInstLoc=%d\n",
+			// 	i, Batch.NumInstances, Batch.InstanceBuffer, Batch.InstanceStride, Batch.StartInstanceLocation);
 		}
 	}
 
@@ -1114,8 +1114,8 @@ void FSceneRenderer::RenderOpaquePass(EViewMode InRenderViewMode)
 		float DrawTimeMs = std::chrono::duration<float, std::milli>(DrawEndTime - DrawStartTime).count();
 		float AvgCollectTime = AccumulatedCollectTime / CollectSampleCount;
 
-		UE_LOG("[Timing] Collect: %.2fms, Batch: %.2fms, Sort: %.2fms, Draw: %.2fms\n",
-			AvgCollectTime, BatchTimeMs, SortTimeMs, DrawTimeMs);
+		// UE_LOG("[Timing] Collect: %.2fms, Batch: %.2fms, Sort: %.2fms, Draw: %.2fms\n",
+		// 	AvgCollectTime, BatchTimeMs, SortTimeMs, DrawTimeMs);
 
 		// 리셋
 		AccumulatedCollectTime = 0.0f;
@@ -2151,8 +2151,8 @@ void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatch
 
 	if (bShouldLog)
 	{
-		UE_LOG("[BatchStaticMeshes] Total batches: %d, Groups: %d, SkippedInstanced: %d, SkippedSkinned: %d\n",
-			InOutMeshBatches.Num(), (int32)TempGroups.size(), SkippedAlreadyInstanced, SkippedSkinned);
+		// UE_LOG("[BatchStaticMeshes] Total batches: %d, Groups: %d, SkippedInstanced: %d, SkippedSkinned: %d\n",
+		// 	InOutMeshBatches.Num(), (int32)TempGroups.size(), SkippedAlreadyInstanced, SkippedSkinned);
 
 		// 각 그룹의 크기 출력 (상위 5개)
 		int32 GroupLogCount = 0;
@@ -2161,10 +2161,10 @@ void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatch
 			if (GroupLogCount++ >= 5) break;
 			const FMeshBatchElement& FirstBatch = InOutMeshBatches[Pair.second[0]];
 			FString MatName = FirstBatch.Material ? FirstBatch.Material->GetName() : "NULL";
-			UE_LOG("[BatchStaticMeshes] Group[%d]: count=%d, VB=%p, IB=%p, Mat=%s, IdxCnt=%d, StartIdx=%d, Stride=%d\n",
-				GroupLogCount, Pair.second.Num(),
-				Pair.first.VertexBuffer, Pair.first.IndexBuffer, MatName.c_str(),
-				Pair.first.IndexCount, Pair.first.StartIndex, Pair.first.VertexStride);
+			// UE_LOG("[BatchStaticMeshes] Group[%d]: count=%d, VB=%p, IB=%p, Mat=%s, IdxCnt=%d, StartIdx=%d, Stride=%d\n",
+			// 	GroupLogCount, Pair.second.Num(),
+			// 	Pair.first.VertexBuffer, Pair.first.IndexBuffer, MatName.c_str(),
+			// 	Pair.first.IndexCount, Pair.first.StartIndex, Pair.first.VertexStride);
 		}
 	}
 
