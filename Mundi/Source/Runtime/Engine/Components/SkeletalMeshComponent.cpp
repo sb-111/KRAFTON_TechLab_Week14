@@ -13,6 +13,10 @@
 #include "ResourceManager.h"
 #include "Sound.h"
 
+// 거리 기반 사운드 재생을 위한 World/Actor 접근
+#include "World.h"
+#include "Actor.h"
+
 // 래그돌 관련
 #include "BodyInstance.h"
 #include "PhysicsAsset.h"
@@ -548,11 +552,40 @@ void USkeletalMeshComponent::TriggerAnimNotify(const FAnimNotifyEvent& NotifyEve
     // SoundPath가 설정되어 있으면 자동으로 사운드 재생
     if (!NotifyEvent.SoundPath.empty())
     {
-        USound* Sound = UResourceManager::GetInstance().Load<USound>(NotifyEvent.SoundPath);
-        if (Sound)
+        bool bShouldPlaySound = true;
+
+        // MaxDistance가 설정되어 있으면 플레이어와의 거리 체크
+        if (NotifyEvent.MaxDistance > 0.f)
         {
-            // Volume을 적용하여 사운드 재생 (MasterVolume은 PlaySound3D 내부에서 적용됨)
-            FAudioDevice::PlaySound3D(Sound, GetWorldLocation(), NotifyEvent.Volume);
+            UWorld* World = GetWorld();
+            if (World)
+            {
+                AActor* Player = World->FindActorByName(FName("player"));
+                if (Player)
+                {
+                    FVector SoundLocation = GetWorldLocation();
+                    FVector PlayerLocation = Player->GetActorLocation();
+                    FVector Diff = SoundLocation - PlayerLocation;
+                    float DistanceSquared = Diff.X * Diff.X + Diff.Y * Diff.Y + Diff.Z * Diff.Z;
+                    float MaxDistSquared = NotifyEvent.MaxDistance * NotifyEvent.MaxDistance;
+
+                    // 거리가 MaxDistance보다 멀면 사운드 재생하지 않음
+                    if (DistanceSquared > MaxDistSquared)
+                    {
+                        bShouldPlaySound = false;
+                    }
+                }
+            }
+        }
+
+        if (bShouldPlaySound)
+        {
+            USound* Sound = UResourceManager::GetInstance().Load<USound>(NotifyEvent.SoundPath);
+            if (Sound)
+            {
+                // Volume을 적용하여 사운드 재생 (MasterVolume은 PlaySound3D 내부에서 적용됨)
+                FAudioDevice::PlaySound3D(Sound, GetWorldLocation(), NotifyEvent.Volume);
+            }
         }
     }
 
