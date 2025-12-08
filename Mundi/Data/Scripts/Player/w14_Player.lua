@@ -313,6 +313,7 @@ end
 
 function ShootCoolEnd()
     coroutine.yield("wait_time", ShootCoolTime)
+    MuzzleParticle:Deactivate()
     IsShootCool = false
 end
 
