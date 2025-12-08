@@ -10,8 +10,8 @@
 -- ===== 여기서 설정값 수정 =====
 local xScale = 20.0           -- X축 스케일
 local yScale = 20.0           -- Y축 스케일
-local xCount = 2             -- X축 방향 타일 개수
-local yCount = 30          -- Y축 방향 타일 개수
+local xCount = 3             -- X축 방향 타일 개수
+local yCount = 20          -- Y축 방향 타일 개수
 local tileSpacingX = 1.0    -- X축 타일 간격
 local tileSpacingY = 1.0    -- Y축 타일 간격
 
@@ -95,18 +95,19 @@ function GenerateTiles()
     local actualSpacingX = tileSpacingX * xScale
     local actualSpacingY = tileSpacingY * yScale
 
-    -- 중심 기준으로 생성하기 위한 오프셋 계산
-    local halfX = math.floor(xCount / 2)
-    local halfY = math.floor(yCount / 2)
+    -- 중심 정렬을 위한 오프셋 계산
+    -- 전체 크기의 절반에서 타일 반개 크기를 빼서 첫 타일의 중심 위치 계산
+    local offsetX = (xCount - 1) * actualSpacingX / 2
+    local offsetY = (yCount - 1) * actualSpacingY / 2
 
     -- 통계용 카운터
     local count = 0
     local countA = 0
     local countB = 0
 
-    -- n x m 타일 전부 생성 (루트 위치 기준으로 배치)
-    for ix = -halfX, xCount - 1 - halfX do
-        for iy = -halfY, yCount - 1 - halfY do
+    -- n x m 타일 전부 생성 (원점이 중앙이 되도록 배치)
+    for ix = 0, xCount - 1 do
+        for iy = 0, yCount - 1 do
             -- 가중치 기반으로 템플릿 선택
             local selectedTemplate = SelectTemplate()
 
@@ -122,9 +123,9 @@ function GenerateTiles()
                 -- 스케일 설정
                 newComp.RelativeScale = Vector(xScale, yScale, 1.0)
 
-                -- 상대 위치 설정 (루트 기준, (0,0) = 루트 위치)
-                local relX = ix * actualSpacingX
-                local relY = iy * actualSpacingY
+                -- 상대 위치 설정 (원점 중앙 정렬)
+                local relX = ix * actualSpacingX - offsetX
+                local relY = iy * actualSpacingY - offsetY
                 newComp.RelativeLocation = Vector(relX, relY, 0)
 
                 table.insert(generatedComponents, newComp)
@@ -142,7 +143,7 @@ function GenerateTiles()
         end
     end
 
-    print(string.format("[MapGenerator] Loop range: ix=[%d,%d], iy=[%d,%d]", -halfX, xCount-1-halfX, -halfY, yCount-1-halfY))
+    print(string.format("[MapGenerator] Offset: X=%.2f, Y=%.2f", offsetX, offsetY))
 
     -- 원본 템플릿들 숨기기 (스케일 0으로)
     templateA.RelativeScale = Vector(0, 0, 0)

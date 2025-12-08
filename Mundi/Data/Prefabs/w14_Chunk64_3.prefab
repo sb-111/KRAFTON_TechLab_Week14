@@ -1,12 +1,74 @@
 {
-  "ObjectName" : "w14_Chunk64_3",
+  "ObjectName" : "빈 액터_0",
   "OwnedComponents" : [{
-      "Id" : 38460,
-      "ObjectName" : "USceneComponent_18",
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1540,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_239",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 60.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1529,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_228",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 80.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "Id" : 1489,
+      "ObjectName" : "USceneComponent_466",
       "ParentId" : 0,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeLocation" : [-10.336998, -4.879938, 9.405947],
       "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 1.000000, 6.500000],
+      "RelativeScale" : [1.000000, 1.000000, 1.000000],
       "Type" : "USceneComponent",
       "bHiddenInGame" : false,
       "bIsActive" : true,
@@ -16,7 +78,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38464,
+      "Id" : 1546,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -29,9 +91,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10819",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 20.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_245",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -50,16 +112,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38461,
+      "Id" : 1510,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10807",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -220.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_209",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, -60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -76,9 +138,17 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
+      "ObjectName" : "ULuaScriptComponent_1523",
+      "ScriptFilePath" : "Data/Scripts/Tool/MapGenerator.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38491,
+      "Id" : 1498,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -91,9 +161,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10811",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -140.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_197",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -112,35 +182,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38467,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10824",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 120.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38462,
+      "Id" : 1496,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -153,9 +195,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10825",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 140.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_195",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -100.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -174,35 +216,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38463,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "EmptyTile",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [0.000000, 0.000000, 0.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38488,
+      "Id" : 1491,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -215,213 +229,8 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10848",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38465,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10810",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -160.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38516,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10835",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -260.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38507,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10856",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 160.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "BoxExtent" : [20.000000, 300.000000, 0.500000],
-      "CollisionType" : 3,
-      "Density" : 10.000000,
-      "Id" : 38523,
-      "Mass" : 10.000000,
-      "MobilityType" : 1,
-      "ObjectName" : "UBoxComponent_4",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-10.000000, -10.000000, -0.005320],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
-      "RelativeScale" : [1.000000, 1.000000, 0.028854],
-      "Type" : "UBoxComponent",
-      "bBlockComponent" : false,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : true,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bShapeHiddenInGame" : true,
-      "bShapeIsVisible" : true,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38466,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10853",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 100.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38514,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10851",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 60.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38468,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "Grass",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_27505",
+      "ParentId" : 1489,
       "RelativeLocation" : [0.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [0.000000, 0.000000, 0.000000],
@@ -441,7 +250,35 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38501,
+      "Id" : 1492,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_27507",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [0.000000, 0.000000, 0.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1497,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -454,9 +291,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10850",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 40.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_196",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -80.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -475,7 +312,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38499,
+      "Id" : 1495,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -488,9 +325,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10858",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 200.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_194",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -120.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -509,7 +346,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38486,
+      "Id" : 1554,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -522,9 +359,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10823",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 100.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_253",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 100.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -543,50 +380,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38469,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10836",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -240.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38503,
+      "Id" : 1515,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10830",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 240.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_214",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, 40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -605,16 +408,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38489,
+      "Id" : 1499,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10831",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 260.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_198",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -633,16 +436,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38494,
+      "Id" : 1550,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10840",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -160.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_249",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 20.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -661,488 +464,52 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38470,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10805",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -260.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38471,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10852",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 80.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38490,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10859",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 220.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38472,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10827",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 180.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38479,
+      "Id" : 1523,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10803",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -300.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38473,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10861",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 260.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38474,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10855",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 140.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38475,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10806",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -240.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38521,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10849",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 20.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38476,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10828",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 200.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38477,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10857",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 180.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38478,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10826",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 160.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38480,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10839",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -180.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38481,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10804",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -280.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38520,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10846",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_222",
+      "ParentId" : 1489,
       "RelativeLocation" : [0.000000, -40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1500,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_199",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, -20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
@@ -1159,16 +526,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38482,
+      "Id" : 1501,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10833",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -300.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_200",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1187,7 +554,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38483,
+      "Id" : 1534,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1200,9 +567,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10822",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 80.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_233",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1221,16 +588,50 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38518,
+      "Id" : 1502,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_201",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1547,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10841",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -140.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_246",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1249,50 +650,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38484,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10808",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -200.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38485,
+      "Id" : 1503,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10809",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -180.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_202",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1311,16 +678,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38487,
+      "Id" : 1533,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10862",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 280.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_232",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -80.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1339,84 +706,16 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38492,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10829",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 220.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38508,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10844",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -80.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38522,
+      "Id" : 1504,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10860",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 240.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_203",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1435,7 +734,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38493,
+      "Id" : 1505,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1448,9 +747,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10847",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -20.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_204",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 80.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1469,7 +768,35 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38495,
+      "Id" : 1535,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_234",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -40.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1506,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1482,9 +809,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10854",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, 120.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_205",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-40.000000, 100.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1503,25 +830,19 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38496,
+      "Id" : 1539,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10843",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -100.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_238",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
@@ -1537,15 +858,15 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38497,
+      "Id" : 1507,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10812",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_206",
+      "ParentId" : 1489,
       "RelativeLocation" : [-20.000000, -120.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
@@ -1565,7 +886,35 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38498,
+      "Id" : 1508,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_207",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, -100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1536,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1578,9 +927,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10813",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -100.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_235",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -20.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1599,7 +948,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38500,
+      "Id" : 1509,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1612,8 +961,8 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10814",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_208",
+      "ParentId" : 1489,
       "RelativeLocation" : [-20.000000, -80.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
@@ -1633,7 +982,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38502,
+      "Id" : 1553,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1646,9 +995,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10815",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, -60.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_252",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 80.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1667,7 +1016,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38519,
+      "Id" : 1511,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1680,104 +1029,8 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10842",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -120.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38504,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10845",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -60.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38505,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10818",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 0.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38506,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }, {
-          "AssetPath" : "grass1",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10816",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_210",
+      "ParentId" : 1489,
       "RelativeLocation" : [-20.000000, -40.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
@@ -1797,19 +1050,53 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38509,
+      "Id" : 1552,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10817",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_251",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 60.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1512,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_211",
+      "ParentId" : 1489,
       "RelativeLocation" : [-20.000000, -20.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
       "Type" : "UStaticMeshComponent",
       "bBlockComponent" : false,
       "bCastShadows" : true,
@@ -1825,35 +1112,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38515,
-      "Mass" : 10.000000,
-      "MaterialSlots" : [{
-          "AssetPath" : "ground",
-          "Type" : "UMaterial"
-        }],
-      "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10832",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 280.000000, 0.000000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [20.000000, 20.000000, 1.000000],
-      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
-      "Type" : "UStaticMeshComponent",
-      "bBlockComponent" : false,
-      "bCastShadows" : true,
-      "bGenerateOverlapEvents" : true,
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bIsTrigger" : false,
-      "bIsVisible" : true,
-      "bOverrideMass" : false,
-      "bSimulatePhysics" : false,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
-      "CollisionType" : 0,
-      "Density" : 10.000000,
-      "Id" : 38510,
+      "Id" : 1513,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1866,9 +1125,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10838",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -200.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_212",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1887,7 +1146,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38511,
+      "Id" : 1549,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1900,9 +1159,9 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10820",
-      "ParentId" : 38460,
-      "RelativeLocation" : [-20.000000, 40.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_248",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
@@ -1921,7 +1180,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38512,
+      "Id" : 1514,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
@@ -1934,8 +1193,70 @@
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10821",
-      "ParentId" : 38460,
+      "ObjectName" : "UStaticMeshComponent_213",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, 20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1551,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_250",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, 40.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1516,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_215",
+      "ParentId" : 1489,
       "RelativeLocation" : [-20.000000, 60.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
@@ -1955,16 +1276,50 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38513,
+      "Id" : 1517,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_216",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, 80.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1518,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10834",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -280.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_217",
+      "ParentId" : 1489,
+      "RelativeLocation" : [-20.000000, 100.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -1983,16 +1338,50 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 38517,
+      "Id" : 1545,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_244",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -80.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1519,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "AssetPath" : "ground",
           "Type" : "UMaterial"
         }],
       "MobilityType" : 0,
-      "ObjectName" : "UStaticMeshComponent_10837",
-      "ParentId" : 38460,
-      "RelativeLocation" : [0.000000, -220.000000, 0.000000],
+      "ObjectName" : "UStaticMeshComponent_218",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, -120.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [20.000000, 20.000000, 1.000000],
       "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
@@ -2008,8 +1397,596 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1520,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_219",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, -100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1543,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_242",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -120.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1521,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_220",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, -80.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1542,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_241",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1522,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_221",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, -60.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1541,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_240",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 80.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1524,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_223",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, -20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1544,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_243",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1525,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_224",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1537,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_236",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 0.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1526,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_225",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1527,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_226",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 40.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1528,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_227",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 60.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1548,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_247",
+      "ParentId" : 1489,
+      "RelativeLocation" : [40.000000, -20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/EmptyTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1530,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_229",
+      "ParentId" : 1489,
+      "RelativeLocation" : [0.000000, 100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1531,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_230",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -120.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1538,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_237",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, 20.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1532,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "ground",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "grass1",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_231",
+      "ParentId" : 1489,
+      "RelativeLocation" : [20.000000, -100.000000, 0.000000],
+      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
+      "RelativeScale" : [20.000000, 20.000000, 1.000000],
+      "StaticMesh" : "Data/Model/Tiles/GrassTile.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }],
-  "RootComponentId" : 38460,
+  "RootComponentId" : 1489,
   "Tag" : "",
   "Type" : "AEmptyActor",
   "bActorHiddenInGame" : false,

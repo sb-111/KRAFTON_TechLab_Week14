@@ -13,6 +13,7 @@ local MapManagerClass = require("w14_MapManager")
 local GeneralObjectManagerClass = require("w14_GeneralObjectManager")
 local ObjectPlacerClass = require("w14_ObjectPlacer")
 local StageManagerClass = require("w14_StageManager")
+local DifficultyManagerClass = require("w14_DifficultyManager")
 
 local MapManager = nil
 local StageManager = nil
@@ -22,6 +23,16 @@ local ObjectPlacer = nil
 local Player = nil
 local PlayerScript = nil
 local StartUICam = nil
+local Fence1DifficultyManager = nil
+local Fence2DifficultyManager = nil
+local Fence3DifficultyManager = nil
+local Fence4DifficultyManager = nil
+local Tree1DifficultyManager = nil
+local Tree2DifficultyManager = nil
+local Tree3DifficultyManager = nil
+local Tree4DifficultyManager = nil
+local BasicMonsterDifficultyManager = nil
+local ChaserMonsterDifficultyManager = nil
 
 --- 게임 정리 함수 (재시작 전에 호출)
 local function CleanupGame()
@@ -41,6 +52,15 @@ local function CleanupGame()
     if MonsterManager and MonsterManager.reset then
         MonsterManager:reset()
     end
+
+    if BasicMonsterDifficultyManager then
+        BasicMonsterDifficultyManager:reset()
+    end
+    
+    if ChaserMonsterDifficultyManager then
+        ChaserMonsterDifficultyManager:reset()
+    end
+    
     PlayerScript.Reset()
 end
 
@@ -57,23 +77,23 @@ function BeginPlay()
     -- MapManager 초기화
     MapManager = MapManagerClass:new(Player)
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk64_1.prefab", --풀6:땅4로 미리 구워놓은 프리팹 바리에이션 4가지임.
+            "Data/Prefabs/w14_Chunk_3_x_20_1.prefab", --풀6:땅4로 미리 구워놓은 프리팹 바리에이션 4가지임.
             100,
             Vector(-1000, 0, 0)
     )
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk64_2.prefab",
+            "Data/Prefabs/w14_Chunk_3_x_20_3.prefab",
             100,
             Vector(-1000, 0, 0)
     )
     MapManager:add_biom(
-            "Data/Prefabs/w14_Chunk64_3.prefab",
+            "Data/Prefabs/w14_Chunk_3_x_20_1.prefab",
             100,
             Vector(-1000, 0, 0)
     )
 
     MapManager:add_biom(
-             "Data/Prefabs/w14_Chunk64_4.prefab",
+             "Data/Prefabs/w14_Chunk_3_x_20_3.prefab",
              100,
              Vector(-1000, 0, 0)
      )
@@ -81,9 +101,9 @@ function BeginPlay()
     -- ObjectPlacer 인스턴스 생성
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
     ObjectPlacer = ObjectPlacerClass:new(
-            MapConfig.map_chunk_y_size,
-            MapConfig.map_chunk_x_size * 0.5,
-            MapConfig.map_chunk_x_size * 1.5,
+            MapConfig.map_chunk_y_size * 0.5,
+            MapConfig.map_chunk_x_size,
+            MapConfig.map_chunk_x_size,
             Obj.Location.Y,
             1000
     )
@@ -102,7 +122,7 @@ function BeginPlay()
             "Data/Prefabs/w14_AmmoItem.prefab",
             10,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            1,                      -- spawn_num (적게)
+            3,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
@@ -111,7 +131,7 @@ function BeginPlay()
             "Data/Prefabs/w14_AidKit.prefab",
             10,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            1,                      -- spawn_num (적게)
+            3,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
@@ -120,7 +140,7 @@ function BeginPlay()
             "Data/Prefabs/w14_Adrenalin.prefab",
             10,                    -- pool_size
             Vector(-2000, 100, 0),  -- pool_standby_location
-            1,                      -- spawn_num (적게)
+            3,                      -- spawn_num (적게)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
@@ -142,6 +162,9 @@ function BeginPlay()
             2.5,                    -- radius
             0.5                     -- 물체 스폰 z 위치
     )
+    
+    BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 80, 60)
+    ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 50, 60)
 
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
@@ -227,10 +250,11 @@ function Tick(dt)
 
         if ObjectPlacer and Player and Player.Location.X >= ObjectPlacer.area_height_offset then
             ObjectPlacer:update_area(
-                    MapConfig.map_chunk_y_size,                              -- area_width (Y축)
+                    -- 플레이어 근처의 좁은 영역에만 소환
+                    MapConfig.map_chunk_y_size * 0.5,                              -- area_width (Y축)
                     MapConfig.map_chunk_x_size,                              -- area_height (X축)
                     Player.Location.Y,                                          -- area_width_offset (Y축)
-                    Player.Location.X + MapConfig.map_chunk_x_size * 2.5  -- area_height_offset (X축)
+                    Player.Location.X + MapConfig.map_chunk_x_size  -- area_height_offset (X축)
             )
         end
 
@@ -241,6 +265,16 @@ function Tick(dt)
 
         if ItemManager then
             ItemManager:Tick()
+        end
+
+        if BasicMonsterDifficultyManager then
+            local new_spawn_num = BasicMonsterDifficultyManager:Tick(dt)
+            MonsterManager:set_spawn_num("Data/Prefabs/w14_BasicMonster.prefab", new_spawn_num)
+        end
+
+        if ChaserMonsterDifficultyManager then
+            local new_spawn_num = ChaserMonsterDifficultyManager:Tick(dt)
+            MonsterManager:set_spawn_num("Data/Prefabs/w14_ChaserMonster.prefab", new_spawn_num)
         end
 
         if MonsterManager then

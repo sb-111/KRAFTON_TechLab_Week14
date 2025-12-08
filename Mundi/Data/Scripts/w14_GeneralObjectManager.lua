@@ -46,8 +46,8 @@ function GeneralObjectManager:add_object(
     radius = radius or 1.0
 
     local new_object = Pool:new()
-    --- 오브젝트 이름은 단순히 # + number로 설정
-    local name = "#" .. tostring(#self.objects + 1)
+    --- 오브젝트 이름은 프리팹 이름으로 설정
+    local name = prefab_path
     new_object:initialize(prefab_path, name, pool_size, pool_standby_location)
 
     self.objects_spawn_nums[name] = object_spawn_num
@@ -101,6 +101,10 @@ function GeneralObjectManager:reset()
             self.objects[i]:despawn_all()
         end
     end
+end
+
+function GeneralObjectManager:set_spawn_num(pool_name, new_spawn_num)
+    self.objects_spawn_nums[pool_name] = new_spawn_num
 end
 
 return GeneralObjectManager
