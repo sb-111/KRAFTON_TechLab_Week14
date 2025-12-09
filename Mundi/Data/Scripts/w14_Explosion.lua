@@ -24,7 +24,7 @@ function BeginPlay()
     -- BlendOut을 0.3으로 설정하여 부드럽게 회복
     local cm = GetCameraManager()
     if cm and cm.StartCameraShake then
-        cm:StartCameraShake(1.5, 1.5, 3.0, 15.0, 0, 0.02, 0.3)
+        cm:StartCameraShake(0.8, 0.8, 1.5, 12.0, 0, 0.02, 0.3)
     end
 
     -- 폭발 사운드 재생
