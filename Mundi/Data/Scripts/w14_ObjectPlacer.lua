@@ -51,8 +51,8 @@ function ObjectPlacer:place_object(radius)
                 self.area_width * 0.5 + self.area_width_offset
         )
         local x_pos = Math:RandomInRange(
-                -self.area_height * 0.5 + self.area_height_offset,
-                self.area_height * 0.5 + self.area_height_offset
+                self.area_height_offset,
+                self.area_height_offset + self.area_height
         )
 
         -- ok가 true면 현재 좌표에서 기존에 배치된 것들과 충돌이 없는 상태
