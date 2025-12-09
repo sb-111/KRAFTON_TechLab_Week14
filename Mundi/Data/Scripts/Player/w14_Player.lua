@@ -491,7 +491,7 @@ function OnBeginOverlap(OtherActor)
 
     -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
     if OtherActor.Tag == "Adrenalin" then
-        SetSlomo(10.0, 0.5)  -- 10초 동안 0.5배속 (슬로우 모션)
+        SetSlomo(7.0, 0.5)  -- 7초 동안 0.5배속 (슬로우 모션)
         print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
