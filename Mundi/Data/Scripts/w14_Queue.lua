@@ -85,6 +85,15 @@ function Queue:is_empty()
     return self.first > self.last
 end
 
+--- 큐의 크기를 반환합니다.
+--- @return number
+function Queue:get_size()
+    if self.first > self.last then
+        return 0
+    end
+    return self.last - self.first + 1
+end
+
 -- 모든 메서드 정의 후 클래스 프로토타입 보호
 -- (__newindex는 클래스 수정만 방지, 인스턴스는 자유롭게 수정 가능)
 do

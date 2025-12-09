@@ -18,7 +18,10 @@ public:
 
     static IXAudio2SourceVoice* PlaySound3D(USound* SoundToPlay, const FVector& EmitterPosition, float Volume = 1.0f, bool bIsLooping = false);
     static IXAudio2SourceVoice* PlaySound2D(USound* SoundToPlay, float Volume = 1.0f, bool bIsLooping = false);
+    static void RegisterVoice(IXAudio2SourceVoice* pVoice);
+    static void UnregisterVoice(IXAudio2SourceVoice* pVoice);
     static void StopSound(IXAudio2SourceVoice* pSourceVoice);
+    static void StopAllSounds();
 
     static void SetListenerPosition(const FVector& Position, const FVector& ForwardVec, const FVector& UpVec);
     static void UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const FVector& EmitterPosition, float Volume = 1.0f);
@@ -37,5 +40,6 @@ private:
     static X3DAUDIO_LISTENER        Listener;
     static DWORD                    dwChannelMask;
     static float                    MasterVolume;
+    static std::vector<IXAudio2SourceVoice*> ActiveVoices;
 };
 

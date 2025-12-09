@@ -11,6 +11,7 @@ X3DAUDIO_HANDLE         FAudioDevice::X3DInstance = {};
 X3DAUDIO_LISTENER       FAudioDevice::Listener = {};
 DWORD                   FAudioDevice::dwChannelMask = 0;
 float                   FAudioDevice::MasterVolume = 1.0f;
+std::vector<IXAudio2SourceVoice*> FAudioDevice::ActiveVoices = {};
 
 UINT32 FAudioDevice::GetOutputChannelCount()
 {
@@ -100,6 +101,7 @@ bool FAudioDevice::Initialize()
 }
 void FAudioDevice::Shutdown()
 {
+    StopAllSounds();
     if (pMasteringVoice)
     {
         pMasteringVoice->DestroyVoice();
@@ -189,7 +191,8 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound3D(USound* SoundToPlay, const FVecto
         voice->DestroyVoice();
         return nullptr;
     }
-
+    
+    RegisterVoice(voice);
     return voice;
 }
 
@@ -262,7 +265,44 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound2D(USound* SoundToPlay, float Volume
         return nullptr;
     }
 
+    RegisterVoice(voice);
     return voice;
+}
+
+void FAudioDevice::RegisterVoice(IXAudio2SourceVoice* pVoice)
+{
+    if (pVoice)
+    {
+        ActiveVoices.push_back(pVoice);
+    }
+}
+
+// [보이스 등록 해제] StopSound 시 호출
+void FAudioDevice::UnregisterVoice(IXAudio2SourceVoice* pVoice)
+{
+    auto it = std::find(ActiveVoices.begin(), ActiveVoices.end(), pVoice);
+    if (it != ActiveVoices.end())
+    {
+        ActiveVoices.erase(it);
+    }
+}
+
+// [전체 정지] 게임 종료, 씬 전환 시 호출
+void FAudioDevice::StopAllSounds()
+{
+    // 리스트에 있는 모든 보이스 강제 종료
+    for (IXAudio2SourceVoice* voice : ActiveVoices)
+    {
+        if (voice)
+        {
+            voice->Stop(0);
+            voice->FlushSourceBuffers();
+            voice->DestroyVoice();
+        }
+    }
+    
+    // 리스트 비우기
+    ActiveVoices.clear();
 }
 
 void FAudioDevice::SetMasterVolume(float Volume)
@@ -434,6 +474,10 @@ void FAudioDevice::UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const 
 void FAudioDevice::StopSound(IXAudio2SourceVoice* pSourceVoice)
 {
     if (!pSourceVoice) return;
+    
+
+    // 1. 관리 리스트에서 제거 (중요: Destroy 전에 뺍니다)
+    UnregisterVoice(pSourceVoice);
     pSourceVoice->Stop(0);
     pSourceVoice->FlushSourceBuffers();
     pSourceVoice->DestroyVoice();

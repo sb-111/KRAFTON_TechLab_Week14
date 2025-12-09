@@ -369,6 +369,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\w14_Obstacle.lua" />
     <Content Include="Data\Scripts\w14_ObstacleConfig.lua" />
     <Content Include="Data\Scripts\w14_ParticlePool.lua" />
+    <Content Include="Data\Scripts\w14_PriorityQueue.lua" />
     <Content Include="Data\Scripts\w14_Queue.lua" />
     <Content Include="Data\Scripts\w14_ObjectDestroyer.lua" />
     <Content Include="Data\Scripts\w14_StageConfig.lua" />

@@ -1,9 +1,11 @@
 --- @type Queue
 local Queue = require("w14_Queue")
+--- @type PriorityQueue
+local PriorityQueue = require("w14_PriorityQueue")
 
 --- @class Pool
 --- @field name string
---- @field spawned Queue
+--- @field spawned PriorityQueue
 --- @field despawned Queue
 --- @field pool_size number
 --- @field pool_standby_location userdata
@@ -19,7 +21,7 @@ function Pool:new()
     -- 인스턴스 생성 (필드 수정 제약 없음)
     local instance = {
         name = nil,
-        spawned = Queue:new(),
+        spawned = PriorityQueue:new(),
         despawned = Queue:new(),
         pool_size = nil,
         pool_standby_location = nil,
