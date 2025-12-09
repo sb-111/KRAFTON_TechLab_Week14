@@ -304,7 +304,7 @@ function Tick(dt)
             MapManager:Tick()
         end
 
-        if ObjectPlacer and Player and Player.Location.X >= ObjectPlacer.area_height_offset then
+        if ObjectPlacer and Player then
             ObjectPlacer:update_area(
                     -- 플레이어 근처의 좁은 영역에만 소환
                     MapConfig.map_chunk_y_size * 0.5,                              -- area_width (Y축)
