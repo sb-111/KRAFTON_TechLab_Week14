@@ -6,7 +6,6 @@ local ScoreManager = require("Game/w14_ScoreManager")
 local AmmoManager = require("Game/w14_AmmoManager")
 local HPManager = require("Game/w14_HPManager")
 local Audio = require("Game/w14_AudioManager")
-local StageManager = require("w14_StageManager")
 
 local M = {}
 
@@ -433,13 +432,27 @@ function M.UpdateGameHUD(dt)
     )
 
     -- HP 텍스트 (바 오른쪽에 표시, Bullet 스타일과 동일)
-    local hpText = currentHP .. " | " .. maxHP  -- "10 | 10" 형식
     local hpTextX = barX + barMaxWidth + 15  -- 바 오른쪽
     local hpTextY = barY - 12  -- 세로 중앙 정렬
+
+    -- HP가 30 이하면 빨간색, 아니면 흰색
+    local hpNumberColor = currentHP <= 30 and Color(1, 0.2, 0.2, 1) or Color(1, 1, 1, 1)
+
+    -- 현재 HP (조건부 색상)
     HUD:DrawText(
-        hpText,
+        tostring(currentHP),
         hpTextX, hpTextY,
-        36,  -- Bullet과 동일한 폰트 크기
+        36,
+        hpNumberColor
+    )
+
+    -- " | maxHP" 부분 (항상 흰색)
+    local separatorText = " | " .. maxHP
+    local currentHPWidth = #tostring(currentHP) * 18  -- 대략적인 글자 너비
+    HUD:DrawText(
+        separatorText,
+        hpTextX + currentHPWidth, hpTextY,
+        36,
         Color(1, 1, 1, 1)
     )
 
@@ -462,19 +475,6 @@ function M.UpdateGameHUD(dt)
         40, 40
     )
 
-    -- 스테이지 표시 (우측 상단, 탄약과 동일 라인/크기)
-    local stageName = "Stage ?"
-    if StageManager.instance then
-        stageName = StageManager.instance:get_current_stage_name()
-    end
-    local rightMargin = screenW * 0.02
-    local stageTextWidth = 150  -- 대략적인 텍스트 너비
-    HUD:DrawText(
-        stageName,
-        screenW - rightMargin - stageTextWidth, TOP_MARGIN,
-        36,
-        Color(1, 1, 1, 1)
-    )
 
     -- 크로스헤어 (화면 정중앙)
     local centerOffsetY = 15

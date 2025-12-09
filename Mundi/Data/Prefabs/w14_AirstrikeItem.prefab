@@ -3,12 +3,12 @@
   "OwnedComponents" : [{
       "AttenuationRadius" : 5.000000,
       "FalloffExponent" : 2.000000,
-      "Id" : 1275,
+      "Id" : 12390,
       "Intensity" : 15.000000,
       "LightColor" : [1.000000, 0.300000, 0.000000, 1.000000],
       "ObjectName" : "UPointLightComponent_Airstrike",
       "OverrideCameraLightNum" : 0,
-      "ParentId" : 1272,
+      "ParentId" : 12391,
       "RelativeLocation" : [0.000000, 0.000000, 0.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -30,7 +30,7 @@
     }, {
       "CollisionType" : 0,
       "Density" : 10.000000,
-      "Id" : 1272,
+      "Id" : 12391,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -41,8 +41,8 @@
       "MobilityType" : 1,
       "ObjectName" : "UStaticMeshComponent_Airstrike",
       "ParentId" : 0,
-      "RelativeLocation" : [-6.341827, -6.317073, 7.287826],
-      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeLocation" : [-45.000000, -1.574598, 6.821141],
+      "RelativeRotationEuler" : [180.000000, -60.200001, -90.000000],
       "RelativeScale" : [0.300000, 0.300000, 0.300000],
       "StaticMesh" : "Data/Model/walkie-talkie/source/model/wt01/wt01.fbx",
       "Type" : "UStaticMeshComponent",
@@ -58,24 +58,14 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "URotatingMovementComponent_Airstrike",
-      "PivotTranslation" : [0.000000, 0.000000, 0.000000],
-      "RotationRate" : [0.000000, 0.000000, 60.000000],
-      "Type" : "URotatingMovementComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bRotationInLocalSpace" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "BoxExtent" : [0.700000, 0.500000, 0.250000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1273,
+      "Id" : 12393,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_Airstrike",
-      "ParentId" : 1272,
+      "ParentId" : 12391,
       "RelativeLocation" : [2.000000, 0.000000, 0.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [6.200000, 3.500000, 3.500000],
@@ -92,8 +82,18 @@
       "bSimulatePhysics" : false,
       "bTickEnabled" : true,
       "bTickInEditor" : false
+    }, {
+      "ObjectName" : "URotatingMovementComponent_Airstrike",
+      "PivotTranslation" : [0.000000, 0.000000, 0.000000],
+      "RotationRate" : [60.000000, 0.000000, 0.000000],
+      "Type" : "URotatingMovementComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bRotationInLocalSpace" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
     }],
-  "RootComponentId" : 1272,
+  "RootComponentId" : 12391,
   "Tag" : "AirstrikeItem",
   "Type" : "AStaticMeshActor",
   "bActorHiddenInGame" : false,
