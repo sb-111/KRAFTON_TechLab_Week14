@@ -129,8 +129,8 @@ function BeginPlay()
     --- 초기 한정으로 ObjectPlacer의 소환 위치를 플레이어로부터 떨어지게 둔다.
     ObjectPlacer = ObjectPlacerClass:new(
             MapConfig.map_chunk_y_size * 0.5,
-            MapConfig.map_chunk_x_size,
-            MapConfig.map_chunk_x_size * 1.5,
+            MapConfig.map_chunk_x_size * 2,
+            MapConfig.map_chunk_x_size * 2.5,
             Obj.Location.Y,
             1000
     )
@@ -308,9 +308,9 @@ function Tick(dt)
             ObjectPlacer:update_area(
                     -- 플레이어 근처의 좁은 영역에만 소환
                     MapConfig.map_chunk_y_size * 0.5,                              -- area_width (Y축)
-                    MapConfig.map_chunk_x_size,                              -- area_height (X축)
+                    MapConfig.map_chunk_x_size * 2,                              -- area_height (X축)
                     Player.Location.Y,                                          -- area_width_offset (Y축)
-                    Player.Location.X + MapConfig.map_chunk_x_size * 1.5  -- area_height_offset (X축)
+                    Player.Location.X + MapConfig.map_chunk_x_size * 2.5  -- area_height_offset (X축)
             )
         end
 
