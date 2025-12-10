@@ -68,7 +68,7 @@ function BeginPlay()
 
     -- ADS 시스템 초기화 (카메라, 총, 플레이어, 스켈레탈메시)
     PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
-    PlayerADS:InitIronSight("Data/Prefabs/w14_IronSight.prefab")
+    PlayerADS:InitIronSight("Data/Prefabs/w14_RedDotSight.prefab")
 
     Reset()
 end
