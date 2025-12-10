@@ -299,6 +299,11 @@ function Shoot()
                     isHeadshot = true
                     print("!!! HEADSHOT !!!")
                     UI.ShowHeadshotFeedback()
+
+                    -- 전역 짧은 히트스탑 (임팩트)
+                    HitStop(0.03, 0.0)
+                    -- 몬스터만 슬로모 (천천히 쓰러짐)
+                    TargetHitStop(HitResult.Actor, 10, 0.5)
                 else
                     UI.ShowShotFeedback()
                 end
