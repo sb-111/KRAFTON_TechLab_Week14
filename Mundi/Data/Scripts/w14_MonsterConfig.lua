@@ -14,10 +14,27 @@ local MonsterConfig = {
     ChaserMonster = {
         damage = 15,
         knockBackStrength = 10.0,
-        bloodColor = "red",  
+        bloodColor = "red",
         description = "추격 좀비"
     },
-    
+
+    -- BoomerMonster
+    BoomerMonster = {
+        damage = 25,
+        knockBackStrength = 12.0,
+        bloodColor = "green",
+        description = "폭발 좀비"
+    },
+
+    -- BoomerExplosion (폭발 범위)
+    BoomerExplosion = {
+        damage = 30,
+        knockBackStrength = 15.0,
+        bloodColor = "green",
+        bloodless = true,
+        description = "폭발 좀비 폭발"
+    },
+
     -- BossMonster
     BossMonster = {
         damage = 20,
@@ -65,6 +82,14 @@ end
 function MonsterConfig.GetBloodColor(tag)
     local config = MonsterConfig[tag] or MonsterConfig.Default
     return config.bloodColor
+end
+
+--- 몬스터 태그가 피가 없는(bloodless) 타입인지 확인
+--- @param tag string 몬스터 태그
+--- @return boolean
+function MonsterConfig.IsBloodless(tag)
+    local config = MonsterConfig[tag] or MonsterConfig.Default
+    return config.bloodless == true
 end
 
 --- 몬스터 태그가 유효한 몬스터인지 확인
