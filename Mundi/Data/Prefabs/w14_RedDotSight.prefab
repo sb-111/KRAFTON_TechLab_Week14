@@ -1,0 +1,43 @@
+{
+  "ObjectName" : "스태틱 메시_0",
+  "OwnedComponents" : [{
+      "CollisionType" : 0,
+      "Density" : 10.000000,
+      "Id" : 1531,
+      "Mass" : 10.000000,
+      "MaterialSlots" : [{
+          "AssetPath" : "Sight_RedDot",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "M_Red_dot",
+          "Type" : "UMaterial"
+        }, {
+          "AssetPath" : "wire_115115115.001",
+          "Type" : "UMaterial"
+        }],
+      "MobilityType" : 0,
+      "ObjectName" : "UStaticMeshComponent_134",
+      "ParentId" : 0,
+      "RelativeLocation" : [7.480014, -8.396376, 8.097708],
+      "RelativeRotationEuler" : [0.000000, -0.000000, 0.000000],
+      "RelativeScale" : [0.075000, 0.075000, 0.075000],
+      "StaticMesh" : "Data/Model/sight_red_dot/sight_red_dot.obj",
+      "Type" : "UStaticMeshComponent",
+      "bBlockComponent" : false,
+      "bCastShadows" : true,
+      "bGenerateOverlapEvents" : true,
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bIsTrigger" : false,
+      "bIsVisible" : true,
+      "bOverrideMass" : false,
+      "bSimulatePhysics" : false,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }],
+  "RootComponentId" : 1531,
+  "Tag" : "",
+  "Type" : "AStaticMeshActor",
+  "bActorHiddenInGame" : false,
+  "bActorIsActive" : true
+}

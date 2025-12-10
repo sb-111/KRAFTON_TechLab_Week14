@@ -68,7 +68,7 @@ function BeginPlay()
 
     -- ADS 시스템 초기화 (카메라, 총, 플레이어, 스켈레탈메시)
     PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
-    PlayerADS:InitIronSight("Data/Prefabs/w14_IronSight.prefab")
+    PlayerADS:InitIronSight("Data/Prefabs/w14_RedDotSight.prefab")
 
     Reset()
 end
@@ -128,6 +128,8 @@ function Tick(Delta)
         -- ADS 업데이트 (FOV, 아이언사이트, 총 가시성)
         if PlayerADS then
             PlayerADS:Update(Delta, PlayerInput.ZoomTrigger)
+            -- ADS 상태를 UI에 전달 (크로스헤어 숨김용)
+            UI.SetADS(PlayerADS:GetProgress() > 0.1)
         end
 
         -- ADS 보간 중에는 발사 불가
