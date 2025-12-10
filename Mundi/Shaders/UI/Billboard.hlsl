@@ -17,7 +17,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorId : register(b3)
 {
     float4 Color;
-    uint UUID;
+    uint PackedUUID;
 }
 struct VS_INPUT
 {
@@ -34,7 +34,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;
-    uint UUID : SV_Target1;
+    uint PackedData : SV_Target1;
 };
 
 Texture2D BillboardTex : register(t0);
@@ -68,6 +68,6 @@ PS_OUTPUT mainPS(PS_INPUT i)
         discard;
     c = c * Color;
     Output.Color = c;
-    Output.UUID = UUID;
+    Output.PackedData = PackedUUID;
     return Output;
 }

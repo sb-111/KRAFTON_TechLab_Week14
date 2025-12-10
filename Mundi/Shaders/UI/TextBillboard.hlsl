@@ -17,7 +17,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorId : register(b3)
 {
     float4 Color;
-    uint UUID;
+    uint PackedUUID;
 }
 
 struct VS_INPUT
@@ -37,7 +37,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;
-    uint UUID : SV_Target1;
+    uint PackedData : SV_Target1;
 };
 
 Texture2D fontAtlas : register(t0);
@@ -74,6 +74,6 @@ PS_OUTPUT mainPS(PS_INPUT input)
     clip(color.a - 0.5f); // alpha - 0.5f < 0 이면 해당픽셀 렌더링 중단
 
     Output.Color = color;
-    Output.UUID = UUID;
+    Output.PackedData = PackedUUID;
     return Output;
 }

@@ -17,7 +17,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorBuffer : register(b3)
 {
     float4 LerpColor; // 블렌드할 색상 (알파가 블렌드 양 제어)
-    uint UUID;
+    uint PackedUUID;
 }; 
 
 cbuffer FireballCB : register(b6)
@@ -90,7 +90,7 @@ VS_OUT FireballVS(VS_IN In)
 struct PS_OUT
 {
     float4 Color : SV_Target0;
-    uint UUID : SV_Target1;
+    uint PackedData : SV_Target1;
 };
 
 float3 FireColor(float x)
@@ -124,7 +124,7 @@ float get_layer_scale(float layer_index)
 PS_OUT FireballPS(VS_OUT In)
 { 
     PS_OUT o;
-    o.UUID = UUID; 
+    o.PackedData = PackedUUID;
     // Base 2D flow
     float2 uvBase = In.UV + UVScrollSpeed * Time;
     uvBase = rot2(uvBase, UVRotateRad.x);

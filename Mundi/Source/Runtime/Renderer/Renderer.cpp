@@ -147,11 +147,12 @@ UPrimitiveComponent* URenderer::GetPrimitiveCollided(int MouseX, int MouseY) con
 	D3D11_MAPPED_SUBRESOURCE MapResource{};
 	if (SUCCEEDED(DeviceContext->Map(RHIDevice->GetIdStagingBuffer(), 0, D3D11_MAP_READ, 0, &MapResource)))
 	{
-		PickedId = *static_cast<uint32*>(MapResource.pData);
+		uint32 RawValue = *static_cast<uint32*>(MapResource.pData);
+		PickedId = RawValue & 0x00FFFFFF;
 		DeviceContext->Unmap(RHIDevice->GetIdStagingBuffer(), 0);
 	}
 
-	if (PickedId == 0)
+	if (PickedId == 0 || PickedId >= GUObjectArray.Num())
 		return nullptr;
 	return Cast<UPrimitiveComponent>(GUObjectArray[PickedId]);
 }

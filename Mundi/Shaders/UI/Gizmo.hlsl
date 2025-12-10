@@ -28,7 +28,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorBuffer : register(b3)
 {
     float4 LerpColor;   // Base color for the gizmo component
-    uint UUID;          // Object ID for picking
+    uint PackedUUID;
 }
 
 // --- Input/Output Structures ---
@@ -50,7 +50,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;      // Final color output
-    uint UUID : SV_Target1;         // Object ID for picking
+    uint PackedData : SV_Target1;         // Object ID for picking
 };
 
 //================================================================================================
@@ -100,7 +100,7 @@ PS_OUTPUT mainPS(PS_INPUT input)
     
     // Final color is base color modulated by lighting
     Output.Color = input.color * diffuse;
-    Output.UUID = UUID;
+    Output.PackedData = PackedUUID;
 
     return Output;
 }

@@ -29,6 +29,9 @@ public:
 
     // ===== Lua-Bindable Properties (Auto-moved from protected/private) =====
 
+    UPROPERTY(EditAnywhere, Category="Render")
+    bool bExcludeFog = false;
+    
     UPROPERTY(EditAnywhere, Category="Shape")
     bool bGenerateOverlapEvents;
 

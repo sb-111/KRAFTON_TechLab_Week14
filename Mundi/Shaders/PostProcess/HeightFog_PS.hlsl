@@ -1,5 +1,6 @@
 Texture2D g_DepthTex : register(t0);
 Texture2D g_PrePathResultTex : register(t1);
+Texture2D<uint> g_UUIDTex : register(t2);
 
 SamplerState g_LinearClampSample : register(s0);
 SamplerState g_PointClampSample : register(s1);
@@ -40,6 +41,19 @@ cbuffer FogCB : register(b2)
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float4 color = g_PrePathResultTex.Sample(g_LinearClampSample, input.texCoord);
+
+    uint width, height;
+    g_UUIDTex.GetDimensions(width, height);
+
+    int3 pixelCoord = int3(input.texCoord.x * width, input.texCoord.y * height, 0);
+    uint packedValue = g_UUIDTex.Load(pixelCoord);
+
+    uint fogFlag = (packedValue >> 24); // 24비트 오른쪽으로 밀어서 상위 비트값만 가져옴
+    if (fogFlag > 0) // 1이면 포그 제외
+    {
+        return color; 
+    }
+    
     float depth = g_DepthTex.Sample(g_PointClampSample, input.texCoord).r;
 
     // -----------------------------

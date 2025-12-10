@@ -28,7 +28,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorBuffer : register(b3)
 {
     float4 DebugColor;  // RGBA color (alpha for transparency)
-    uint UUID;          // Object ID for picking
+    uint PackedUUID;          // Object ID for picking
 }
 
 // --- Input/Output Structures ---
@@ -52,7 +52,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;      // Final color output
-    uint UUID : SV_Target1;         // Object ID for picking
+    uint PackedData : SV_Target1;         // Object ID for picking
 };
 
 //================================================================================================
@@ -101,7 +101,8 @@ PS_OUTPUT mainPS(PS_INPUT input)
 
     // Final color is debug color modulated by lighting, preserving alpha
     Output.Color = float4(DebugColor.rgb * diffuse, DebugColor.a);
-    Output.UUID = UUID;
+    
+    Output.PackedData = PackedUUID;
 
     return Output;
 }

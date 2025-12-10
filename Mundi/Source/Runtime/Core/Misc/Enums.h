@@ -115,6 +115,7 @@ enum class RHI_SRV_Index : uint32
 {
 	SceneDepth,  // 장면 깊이
     SceneColorSource,
+    SceneUUID
 };
 
 enum class RHI_Sampler_Index : uint32

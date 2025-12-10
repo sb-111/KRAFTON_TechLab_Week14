@@ -30,6 +30,8 @@ void FHeightFogPass::Execute(const FPostProcessModifier& M, FSceneView* View, D3
     // 4) SRV/Sampler (깊이 + 현재 SceneColorSource)
     ID3D11ShaderResourceView* DepthSRV = RHIDevice->GetSRV(RHI_SRV_Index::SceneDepth);
     ID3D11ShaderResourceView* SceneSRV   = RHIDevice->GetSRV(RHI_SRV_Index::SceneColorSource);
+    ID3D11ShaderResourceView* UUIDSRV   = RHIDevice->GetSRV(RHI_SRV_Index::SceneUUID);
+    
     ID3D11SamplerState* LinearClampSamplerState = RHIDevice->GetSamplerState(RHI_Sampler_Index::LinearClamp);
     ID3D11SamplerState* PointClampSamplerState  = RHIDevice->GetSamplerState(RHI_Sampler_Index::PointClamp);
     
@@ -39,8 +41,8 @@ void FHeightFogPass::Execute(const FPostProcessModifier& M, FSceneView* View, D3
         return;
     }
     
-    ID3D11ShaderResourceView* Srvs[2]  = { DepthSRV, SceneSRV };
-    RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 2, Srvs);
+    ID3D11ShaderResourceView* Srvs[3]  = { DepthSRV, SceneSRV, UUIDSRV };
+    RHIDevice->GetDeviceContext()->PSSetShaderResources(0, 3, Srvs);
     
     ID3D11SamplerState* Smps[2] = { LinearClampSamplerState, PointClampSamplerState };
     RHIDevice->GetDeviceContext()->PSSetSamplers(0, 2, Smps);
@@ -64,4 +66,7 @@ void FHeightFogPass::Execute(const FPostProcessModifier& M, FSceneView* View, D3
 
     // 8) 확정
     Swap.Commit();
+
+    ID3D11ShaderResourceView* nullSRV = nullptr;
+    RHIDevice->GetDeviceContext()->PSSetShaderResources(2, 1, &nullSRV);
 }

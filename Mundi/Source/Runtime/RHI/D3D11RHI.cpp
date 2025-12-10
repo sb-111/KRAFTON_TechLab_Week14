@@ -429,6 +429,9 @@ ID3D11ShaderResourceView* D3D11RHI::GetSRV(RHI_SRV_Index SRVIndex) const
     case RHI_SRV_Index::SceneDepth:
         TempSRV = DepthSRV;
         break;
+    case RHI_SRV_Index::SceneUUID:
+        TempSRV = IdBufferSRV;
+        break;
     default:
         TempSRV = nullptr;
         break;
@@ -816,7 +819,15 @@ void D3D11RHI::CreateIdBuffer()
     Desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     Desc.Format = DXGI_FORMAT_R32_UINT;
     Device->CreateRenderTargetView(IdBuffer, &Desc, &IdBufferRTV);
+    
+    D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+    SRVDesc.Format = DXGI_FORMAT_R32_UINT; // UINT 포맷 그대로 읽음
+    SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    SRVDesc.Texture2D.MipLevels = 1;
+    SRVDesc.Texture2D.MostDetailedMip = 0;
 
+    Device->CreateShaderResourceView(IdBuffer, &SRVDesc, &IdBufferSRV);
+    
     TextureDesc = {};
 
     TextureDesc.Format = DXGI_FORMAT_R32_UINT;

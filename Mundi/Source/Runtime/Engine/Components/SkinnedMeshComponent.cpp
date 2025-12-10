@@ -247,7 +247,11 @@ void USkinnedMeshComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMes
        BatchElement.StartIndex = StartIndex;
        BatchElement.BaseVertexIndex = 0;
        BatchElement.WorldMatrix = GetWorldMatrix();
-       BatchElement.ObjectID = InternalIndex;
+		
+       uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+       uint32 FogFlag = bExcludeFog ? 1 : 0; 
+       BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+       
        BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
        // GPU 스키닝 모드일 때 본 버퍼 설정 (전역 설정 적용)

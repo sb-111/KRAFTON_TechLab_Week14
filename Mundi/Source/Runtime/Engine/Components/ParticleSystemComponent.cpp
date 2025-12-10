@@ -1609,7 +1609,11 @@ void UParticleSystemComponent::CreateMeshParticleBatch(TArray<FMeshBatchElement>
 			BatchElement.BaseVertexIndex = 0;
 
 			BatchElement.WorldMatrix = FMatrix::Identity();
-			BatchElement.ObjectID = InternalIndex;
+		
+			uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+			uint32 FogFlag = bExcludeFog ? 1 : 0; 
+			BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+			
 			BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			BatchElement.RenderMode = EBatchRenderMode::Opaque;
 
@@ -1825,7 +1829,11 @@ void UParticleSystemComponent::CreateSpriteParticleBatch(TArray<FMeshBatchElemen
 
 		// 월드 행렬은 항등 행렬
 		BatchElement.WorldMatrix = FMatrix::Identity();
-		BatchElement.ObjectID = InternalIndex;
+		
+		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+		uint32 FogFlag = bExcludeFog ? 1 : 0; 
+		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 		// 스프라이트 파티클: 반투명 렌더링 (no culling, depth read-only, alpha blend)
@@ -2051,7 +2059,11 @@ void UParticleSystemComponent::CreateBeamParticleBatch(TArray<FMeshBatchElement>
 		BatchElement.BaseVertexIndex = VertexOffset;
 
 		BatchElement.WorldMatrix = FMatrix::Identity();
-		BatchElement.ObjectID = InternalIndex;
+		
+		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+		uint32 FogFlag = bExcludeFog ? 1 : 0; 
+		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 		// 빔 파티클: 반투명 렌더링 (no culling, depth read-only, alpha blend)
@@ -2293,7 +2305,11 @@ void UParticleSystemComponent::CreateRibbonParticleBatch(TArray<FMeshBatchElemen
 		BatchElement.BaseVertexIndex = VertexOffset;
 
 		BatchElement.WorldMatrix = FMatrix::Identity();
-		BatchElement.ObjectID = InternalIndex;
+		
+		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+		uint32 FogFlag = bExcludeFog ? 1 : 0; 
+		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 		// 리본 파티클: 반투명 렌더링 (알파 블렌딩, 깊이 읽기 전용)

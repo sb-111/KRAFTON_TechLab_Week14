@@ -48,7 +48,7 @@ cbuffer ViewProjBuffer : register(b1)
 cbuffer ColorBuffer : register(b3)
 {
     float4 LerpColor;   // 블렌드할 색상 (알파가 블렌드 양 제어)
-    uint UUID;
+    uint PackedUUID;
 };
 
 // b4: PixelConstBuffer (VS+PS) - OBJ 파일의 머티리얼 정보
@@ -142,7 +142,7 @@ struct PS_INPUT
 struct PS_OUTPUT
 {
     float4 Color : SV_Target0;
-    uint UUID : SV_Target1;
+    uint PackedData : SV_Target1; // Fog Mask 8비트(사실 1비트만 씀) + UUID 24비트
 };
 
 //================================================================================================
@@ -313,7 +313,7 @@ PS_INPUT mainVS(VS_INPUT Input)
 PS_OUTPUT mainPS(PS_INPUT Input)
 {
     PS_OUTPUT Output;
-    Output.UUID = UUID;
+    Output.PackedData = PackedUUID;
     
     //CSM 구간 시각화
     float3 Color[2] =

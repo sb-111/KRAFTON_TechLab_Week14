@@ -142,7 +142,11 @@ void UBillboardComponent::CollectMeshBatches(TArray<FMeshBatchElement>& OutMeshB
 	float Scale = GetRelativeScale().GetMaxValue();
 	BatchElement.WorldMatrix = FMatrix::MakeScale(Scale) * FMatrix::MakeTranslation(GetWorldLocation());
 
-	BatchElement.ObjectID = InternalIndex;
+		
+	uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
+	uint32 FogFlag = bExcludeFog ? 1 : 0; 
+	BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+	
 	BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	BatchElement.InstanceShaderResourceView = Texture->GetShaderResourceView();
