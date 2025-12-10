@@ -13,7 +13,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    BoomerMonster:Initialzie(Obj, 0.1, 20, 3, 3.5)
+    BoomerMonster:Initialzie(Obj, 0.1, 20, 3, 16)
 
     PrevActive = Obj.bIsActive
 end
@@ -33,7 +33,7 @@ function Tick(Delta)
         return
     end
 
-    -- 애니메이션 상태 업데이트 (Damaged 끝나면 Walk/Idle로 복귀)
+    -- 애니메이션 상태 업데이트 (Boom 끝나면 폭발)
     BoomerMonster:UpdateAnimationState()
 
     -- 플레이어 위치 기반 공격 체크

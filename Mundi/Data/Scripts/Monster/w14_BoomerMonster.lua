@@ -2,6 +2,8 @@ local MobStat = require("Monster/w14_MobStat")
 local MonsterUtil = require("Monster/w14_MonsterUtil")
 local ScoreManager = require("Game/w14_ScoreManager")
 
+local EXPLOSION_PREFAB = "Data/Prefabs/w14_BoomerExplosion.prefab"
+
 --- BoomerMonster 클래스
 --- @class BoomerMonster
 --- @field stat MobStat 스탯 관리 객체
@@ -15,7 +17,7 @@ BoomerMonster.__index = BoomerMonster
 local AnimDurations = {
     IdleDuration = 2.0,
     WalkDuration = 2.0,     -- 실측 후 변경 필요
-    BoomDuration = 3.0,     -- 공격 애니메이션 길이
+    BoomDuration = 1.0,     -- 공격 애니메이션 길이
     DamagedDuration = 2.0,   -- 피격 애니메이션 길이
     DyingDuration = 3.33
 }
@@ -128,6 +130,12 @@ function BoomerMonster:UpdateAnimationState()
     local current_state = self.anim_instance:GetCurrentStateName()
     local current_time = self.anim_instance:GetStateTime(current_state)
 
+    -- Boom 애니메이션이 끝나면 폭발
+    if current_state == "Boom" and current_time >= AnimDurations.BoomDuration then
+        self:Explode()
+        return
+    end
+
     -- Damaged 애니메이션이 끝나면 복귀
     if current_state == "Damaged" and current_time >= AnimDurations.DamagedDuration then
         if self.is_idle then
@@ -137,6 +145,20 @@ function BoomerMonster:UpdateAnimationState()
         end
         return
     end
+end
+
+--- 폭발 처리: 파티클 스폰 후 자신을 비활성화합니다.
+--- @return void
+function BoomerMonster:Explode()
+    -- 폭발 파티클 프리팹 스폰
+    local explosion = SpawnPrefab(EXPLOSION_PREFAB)
+    if explosion then
+        explosion.Location = self.obj.Location
+        explosion.bIsActive = true
+    end
+
+    -- 자신을 비활성화
+    self.obj.bIsActive = false
 end
 
 --- Idle 상태로 전환합니다 (장애물/다른 몬스터와 충돌 시).

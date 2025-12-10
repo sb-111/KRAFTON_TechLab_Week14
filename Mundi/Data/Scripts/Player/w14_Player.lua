@@ -303,23 +303,25 @@ function Shoot()
                     UI.ShowShotFeedback()
                 end
 
-                -- 피 색상과 부위에 따른 파티클 스폰
-                local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
-                local particleName
-                if bloodColor == "black" then
-                    -- 보스는 황금색 폭발 파티클 사용
-                    particleName = "boss_hit"
-                else
-                    particleName = isHeadshot
-                        and ("blood_head_" .. bloodColor)
-                        or ("blood_body_" .. bloodColor)
-                end
-                print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
-                local spawnResult = Particle.Spawn(particleName, TargetPoint)
-                if spawnResult then
-                    print("[DEBUG] Particle spawned successfully")
-                else
-                    print("[DEBUG] Particle spawn FAILED - pool exhausted?")
+                -- 피 색상과 부위에 따른 파티클 스폰 (bloodless가 아닌 경우만)
+                if not MonsterConfig.IsBloodless(HitResult.Actor.Tag) then
+                    local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
+                    local particleName
+                    if bloodColor == "black" then
+                        -- 보스는 황금색 폭발 파티클 사용
+                        particleName = "boss_hit"
+                    else
+                        particleName = isHeadshot
+                            and ("blood_head_" .. bloodColor)
+                            or ("blood_body_" .. bloodColor)
+                    end
+                    print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
+                    local spawnResult = Particle.Spawn(particleName, TargetPoint)
+                    if spawnResult then
+                        print("[DEBUG] Particle spawned successfully")
+                    else
+                        print("[DEBUG] Particle spawn FAILED - pool exhausted?")
+                    end
                 end
 
                 -- 3. 데미지 적용
