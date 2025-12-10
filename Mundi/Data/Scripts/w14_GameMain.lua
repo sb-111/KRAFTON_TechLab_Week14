@@ -26,6 +26,7 @@ local PlayerScript = nil
 local StartUICam = nil
 local BasicMonsterDifficultyManager = nil
 local ChaserMonsterDifficultyManager = nil
+local BoomerMonsterDifficultyManager = nil
 local BossMonsterManager = nil
 local IntroCamera = nil
 
@@ -54,6 +55,10 @@ local function CleanupGame()
     
     if ChaserMonsterDifficultyManager then
         ChaserMonsterDifficultyManager:reset()
+    end
+
+    if BoomerMonsterDifficultyManager then
+        BoomerMonsterDifficultyManager:reset()
     end
 
     if BossMonsterManager then
@@ -194,9 +199,18 @@ function BeginPlay()
             2.5,                    -- radius
             0.25                     -- 물체 스폰 z 위치
     )
-    
+    MonsterManager:add_object(
+            "Data/Prefabs/w14_BoomerMonster.prefab",
+            15,
+            Vector(-2000, 20, 0),  -- pool_standby_location
+            2,                      -- spawn_num (희귀)
+            3,                      -- radius
+            0.25                    -- 물체 스폰 z 위치
+    )
+
     BasicMonsterDifficultyManager = DifficultyManagerClass:new(10, 30, 60)
     ChaserMonsterDifficultyManager = DifficultyManagerClass:new(5, 24, 60)
+    BoomerMonsterDifficultyManager = DifficultyManagerClass:new(2, 10, 90)
 
     -- BossMonsterManager 생성
     -- 파라미터: 스폰시간(min, max, interval), HP(min, max, interval), 데미지(min, max, interval), 발사체개수(min, max, interval)
@@ -331,6 +345,11 @@ function Tick(dt)
         if ChaserMonsterDifficultyManager then
             local new_spawn_num = ChaserMonsterDifficultyManager:Tick(dt)
             MonsterManager:set_spawn_num("Data/Prefabs/w14_ChaserMonster.prefab", new_spawn_num)
+        end
+
+        if BoomerMonsterDifficultyManager then
+            local new_spawn_num = BoomerMonsterDifficultyManager:Tick(dt)
+            MonsterManager:set_spawn_num("Data/Prefabs/w14_BoomerMonster.prefab", new_spawn_num)
         end
 
         if MonsterManager then
