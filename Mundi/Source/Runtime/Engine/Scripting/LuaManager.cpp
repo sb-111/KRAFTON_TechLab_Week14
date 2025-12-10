@@ -550,6 +550,19 @@ FLuaManager::FLuaManager()
     (*Lua)["StartCoroutine"] = SharedLib["StartCoroutine"];
     (*Lua)["SetAnimNotifyCallback"] = SharedLib["SetAnimNotifyCallback"];
     (*Lua)["ClearAnimNotifyCallback"] = SharedLib["ClearAnimNotifyCallback"];
+    // DoF 관련 함수
+    (*Lua)["EnableDepthOfField"] = SharedLib["EnableDepthOfField"];
+    (*Lua)["DisableDepthOfField"] = SharedLib["DisableDepthOfField"];
+    (*Lua)["SetDOFFocalDistance"] = SharedLib["SetDOFFocalDistance"];
+    (*Lua)["GetDOFFocalDistance"] = SharedLib["GetDOFFocalDistance"];
+    (*Lua)["SetDOFNearTransitionRange"] = SharedLib["SetDOFNearTransitionRange"];
+    (*Lua)["GetDOFNearTransitionRange"] = SharedLib["GetDOFNearTransitionRange"];
+    (*Lua)["SetDOFFarTransitionRange"] = SharedLib["SetDOFFarTransitionRange"];
+    (*Lua)["GetDOFFarTransitionRange"] = SharedLib["GetDOFFarTransitionRange"];
+    (*Lua)["SetDOFMaxCoCRadius"] = SharedLib["SetDOFMaxCoCRadius"];
+    (*Lua)["GetDOFMaxCoCRadius"] = SharedLib["GetDOFMaxCoCRadius"];
+    (*Lua)["SetDOFBlurPassCount"] = SharedLib["SetDOFBlurPassCount"];
+    (*Lua)["GetDOFBlurPassCount"] = SharedLib["GetDOFBlurPassCount"];
 
     // 게임 종료 함수
     Lua->set_function("QuitGame", []() {
@@ -758,7 +771,6 @@ void FLuaManager::ExposeAllComponentsToLua()
             if (World)
             {
                 World->GetRenderSettings().DisableShowFlag(EEngineShowFlags::SF_DepthOfField);
-                UE_LOG("[Lua] Depth of Field disabled\n");
             }
         }
     );
@@ -770,8 +782,123 @@ void FLuaManager::ExposeAllComponentsToLua()
             if (World)
             {
                 World->GetRenderSettings().EnableShowFlag(EEngineShowFlags::SF_DepthOfField);
-                UE_LOG("[Lua] Depth of Field enabled\n");
             }
+        }
+    );
+
+    // ===== DoF 파라미터 제어 함수 =====
+    SharedLib.set_function("SetDOFFocalDistance",
+        [this](float Value)
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().SetDOFFocalDistance(Value);
+            }
+        }
+    );
+
+    SharedLib.set_function("GetDOFFocalDistance",
+        [this]() -> float
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                return World->GetRenderSettings().GetDOFFocalDistance();
+            }
+            return 0.0f;
+        }
+    );
+
+    SharedLib.set_function("SetDOFNearTransitionRange",
+        [this](float Value)
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().SetDOFNearTransitionRange(Value);
+            }
+        }
+    );
+
+    SharedLib.set_function("GetDOFNearTransitionRange",
+        [this]() -> float
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                return World->GetRenderSettings().GetDOFNearTransitionRange();
+            }
+            return 0.0f;
+        }
+    );
+
+    SharedLib.set_function("SetDOFFarTransitionRange",
+        [this](float Value)
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().SetDOFFarTransitionRange(Value);
+            }
+        }
+    );
+
+    SharedLib.set_function("GetDOFFarTransitionRange",
+        [this]() -> float
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                return World->GetRenderSettings().GetDOFFarTransitionRange();
+            }
+            return 0.0f;
+        }
+    );
+
+    SharedLib.set_function("SetDOFMaxCoCRadius",
+        [this](float Value)
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().SetDOFMaxCoCRadius(Value);
+            }
+        }
+    );
+
+    SharedLib.set_function("GetDOFMaxCoCRadius",
+        [this]() -> float
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                return World->GetRenderSettings().GetDOFMaxCoCRadius();
+            }
+            return 0.0f;
+        }
+    );
+
+    SharedLib.set_function("SetDOFBlurPassCount",
+        [this](int32 Value)
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                World->GetRenderSettings().SetDOFBlurPassCount(Value);
+            }
+        }
+    );
+
+    SharedLib.set_function("GetDOFBlurPassCount",
+        [this]() -> int32
+        {
+            UWorld* World = GWorld;
+            if (World)
+            {
+                return World->GetRenderSettings().GetDOFBlurPassCount();
+            }
+            return 1;
         }
     );
 

@@ -54,12 +54,15 @@ float LinearDepth(float zBufferDepth)
 // CoC 계산 (DownsampleCoC와 동일한 로직)
 float CalculateCoC(float depth)
 {
-    float nearStart = FocalDistance - NearTransitionRange;
-    float nearBlur = saturate((nearStart - depth) / max(NearTransitionRange, 0.01f));
+    // Near focus range: [FocalDistance - NearTransitionRange, FocalDistance]
+    // 포그라운드 흐림: 포커스 거리보다 가까운 곳
+    float nearBlur = saturate((FocalDistance - depth) / max(NearTransitionRange, 0.01f));
 
-    float farEnd = FocalDistance + FarTransitionRange;
+    // Far focus range: [FocalDistance, FocalDistance + FarTransitionRange]
+    // 백그라운드 흐림: 포커스 거리보다 먼 곳
     float farBlur = saturate((depth - FocalDistance) / max(FarTransitionRange, 0.01f));
 
+    // 합성 (0.0 = 선명, 1.0 = 최대 흐림)
     float blur = saturate(nearBlur + farBlur);
 
     return blur;
