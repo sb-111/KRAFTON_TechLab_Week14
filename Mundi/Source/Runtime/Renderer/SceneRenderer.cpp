@@ -2255,8 +2255,8 @@ void FSceneRenderer::BatchStaticMeshes(TArray<FMeshBatchElement>& InOutMeshBatch
 		{
 			if (bShouldLog)
 			{
-				UE_LOG("[BatchStaticMeshes] Not UberLit: %s (count: %d)\n",
-					Shader->GetFilePath().c_str(), Pair.second.Num());
+				// UE_LOG("[BatchStaticMeshes] Not UberLit: %s (count: %d)\n",
+				// 	Shader->GetFilePath().c_str(), Pair.second.Num());
 			}
 			++SkippedNotUberLit;
 			continue;

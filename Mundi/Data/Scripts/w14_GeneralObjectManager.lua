@@ -68,6 +68,10 @@ function GeneralObjectManager:add_object(
     --- 오브젝트가 맵에 지정된 개수보다 적게 존재하면 추가로 스폰하도록 지정
     new_object:set_spawn_condition_checker(
             function()
+                if self.player and self.player.Location.X < 25 then
+                    return false
+                end
+                
                 local spawned_count = new_object.spawned:get_size()
                 return self.objects_spawn_nums[new_object.name] > spawned_count
             end
