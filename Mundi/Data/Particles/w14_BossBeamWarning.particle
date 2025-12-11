@@ -167,55 +167,25 @@
                 "Alpha" : {
                   "ConstantCurve" : {
                     "LoopKeyOffset" : 0.000000,
-                    "Points" : [{
-                        "ArriveTangent" : 0.000000,
-                        "InVal" : 0.000000,
-                        "InterpMode" : 2,
-                        "LeaveTangent" : 0.000000,
-                        "OutVal" : 0.300000
-                      }, {
-                        "ArriveTangent" : 0.000000,
-                        "InVal" : 0.150000,
-                        "InterpMode" : 2,
-                        "LeaveTangent" : 0.000000,
-                        "OutVal" : 0.850000
-                      }, {
-                        "ArriveTangent" : 0.000000,
-                        "InVal" : 0.500000,
-                        "InterpMode" : 2,
-                        "LeaveTangent" : 0.000000,
-                        "OutVal" : 0.700000
-                      }, {
-                        "ArriveTangent" : 0.000000,
-                        "InVal" : 0.850000,
-                        "InterpMode" : 2,
-                        "LeaveTangent" : 0.000000,
-                        "OutVal" : 0.900000
-                      }, {
-                        "ArriveTangent" : 0.000000,
-                        "InVal" : 1.000000,
-                        "InterpMode" : 2,
-                        "LeaveTangent" : 0.000000,
-                        "OutVal" : 0.500000
-                      }],
+                    "Points" : [],
                     "bIsLooped" : false
                   },
-                  "ConstantValue" : 0.800000,
+                  "ConstantValue" : 0.900000,
                   "MaxCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "MaxValue" : 0.800000,
+                  "MaxValue" : 0.900000,
                   "MinCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "MinValue" : 0.800000,
-                  "ParameterDefaultValue" : 0.800000,
+                  "MinValue" : 0.900000,
+                  "ParameterDefaultValue" : 0.900000,
                   "ParameterName" : "",
-                  "Type" : 2
+                  "Type" : 0
                 },
                 "RGB" : {
                   "ConstantCurve" : {
@@ -223,20 +193,20 @@
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "ConstantValue" : [1.000000, 0.050000, 0.000000],
+                  "ConstantValue" : [1.000000, 0.000000, 0.000000],
                   "MaxCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "MaxValue" : [1.000000, 0.050000, 0.000000],
+                  "MaxValue" : [1.000000, 0.000000, 0.000000],
                   "MinCurve" : {
                     "LoopKeyOffset" : 0.000000,
                     "Points" : [],
                     "bIsLooped" : false
                   },
-                  "MinValue" : [1.000000, 0.050000, 0.000000],
-                  "ParameterDefaultValue" : [1.000000, 0.050000, 0.000000],
+                  "MinValue" : [1.000000, 0.000000, 0.000000],
+                  "ParameterDefaultValue" : [1.000000, 0.000000, 0.000000],
                   "ParameterName" : "",
                   "Type" : 0
                 }

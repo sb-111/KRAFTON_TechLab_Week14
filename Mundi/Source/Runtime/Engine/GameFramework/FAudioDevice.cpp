@@ -11,7 +11,7 @@ X3DAUDIO_HANDLE         FAudioDevice::X3DInstance = {};
 X3DAUDIO_LISTENER       FAudioDevice::Listener = {};
 DWORD                   FAudioDevice::dwChannelMask = 0;
 float                   FAudioDevice::MasterVolume = 1.0f;
-uint32                  FAudioDevice::MaxActiveVoices = 64;  // 기본 최대 음성 수
+uint32                  FAudioDevice::MaxActiveVoices = 512;  // 기본 최대 음성 수
 std::vector<IXAudio2SourceVoice*> FAudioDevice::ActiveVoices = {};
 
 UINT32 FAudioDevice::GetOutputChannelCount()
