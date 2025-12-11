@@ -31,6 +31,7 @@ function ChaserMonster:new()
     instance.obj = nil
     instance.anim_instance = nil
     instance.is_permanently_idle = false
+    instance.mesh = nil
     setmetatable(instance, ChaserMonster)
     return instance
 end
@@ -51,15 +52,15 @@ function ChaserMonster:Initialize(obj, move_speed, health_point, attack_point, a
     self.stat:Initialize(move_speed, health_point, attack_point, attack_range)
 
     self.obj = obj
-    local mesh = GetComponent(self.obj, "USkeletalMeshComponent")
+    self.mesh = GetComponent(self.obj, "USkeletalMeshComponent")
 
-    if not mesh then
+    if not self.mesh then
         return
     end
 
     -- 애니메이션 상태 머신 활성화 및 생성
-    mesh:UseStateMachine()
-    self.anim_instance = mesh:GetOrCreateStateMachine()
+    self.mesh:UseStateMachine()
+    self.anim_instance = self.mesh:GetOrCreateStateMachine()
     if not self.anim_instance then
         return
     end
@@ -234,6 +235,31 @@ function ChaserMonster:MoveToPlayer(Delta)
 
     local offset = player_pos - self.obj.Location
     local distance_squared = offset.X * offset.X + offset.Y * offset.Y
+
+    -- ==========================================================
+    local current_dist = math.sqrt(distance_squared)
+    
+    local max_exclusion = 0.4     -- 가까울 때 최대값 (0.4)
+    local threshold_dist = 10.0   -- 이 거리 안에서는 최대값 유지
+    local fade_length = 20.0      -- 멀어질 때 서서히 0으로 변하는 구간의 길이
+
+    if current_dist <= threshold_dist then
+        -- 1. 일정 거리(10) 보다 가까우면: 0.4 고정
+        self.mesh.FogExclusion = max_exclusion
+    else
+        -- 2. 일정 거리보다 멀면: 거리에 비례해서 0.4 -> 0으로 줄어듦
+        local fade_ratio = (current_dist - threshold_dist) / fade_length
+        local calculated_fog = max_exclusion * (1.0 - fade_ratio)
+
+        -- 0 미만 방어 코드
+        if calculated_fog < 0.0 then 
+            calculated_fog = 0.0 
+        end
+        
+        self.mesh.FogExclusion = calculated_fog
+    end
+    -- ==========================================================
+
     local attack_range_squared = self.stat.attack_range * self.stat.attack_range
 
     -- 공격 범위 밖이면 플레이어를 향해 이동

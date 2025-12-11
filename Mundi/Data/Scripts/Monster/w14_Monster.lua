@@ -28,6 +28,7 @@ function Monster:new()
     instance.obj = nil
     instance.anim_instance = nil
     instance.is_hit_cooldown = false
+    instance.mesh = nil
     setmetatable(instance, Monster)
     return instance
 end
@@ -58,15 +59,15 @@ function Monster:Initialize(obj, move_speed, health_point, attack_point, attack_
     self.stat:Initialize(move_speed, health_point, attack_point, attack_range)
 
     self.obj = obj
-    local mesh = GetComponent(self.obj, "USkeletalMeshComponent")
+    self.mesh = GetComponent(self.obj, "USkeletalMeshComponent")
 
-    if not mesh then
+    if not self.mesh then
         return
     end
 
     -- 애니메이션 상태 머신 활성화 및 생성
-    mesh:UseStateMachine()
-    self.anim_instance = mesh:GetOrCreateStateMachine()
+    self.mesh:UseStateMachine()
+    self.anim_instance = self.mesh:GetOrCreateStateMachine()
     if not self.anim_instance then
         return
     end
@@ -181,6 +182,31 @@ function Monster:CheckPlayerPositionAndAttack()
     -- 그렇지 않으면 idle 상태로 돌아간다.
     --else
     --    self.anim_instance:SetState("Idle", 0)
+    end
+
+    local current_distance = math.sqrt(distance_squared)
+    local max_exclusion = 0.4     -- 가까울 때 최대값
+    local threshold_dist = 10.0   -- "일정 이상"의 기준 거리 (이 거리까진 0.4 유지)
+    local fade_length = 30.0      -- 기준 거리로부터 얼마나 더 멀어지면 0이 될지 (감쇠 거리)
+
+    if current_distance <= threshold_dist then
+        -- 1. 일정 거리(10) 보다 가까우면: 무조건 0.4
+        self.mesh.FogExclusion = max_exclusion
+    else
+        -- 2. 일정 거리보다 멀면: 거리에 비례해서 0.4 -> 0으로 줄어듦
+        
+        -- (현재거리 - 기준거리) / 감쇠거리 = 0.0 ~ 1.0 비율 계산
+        local fade_ratio = (current_distance - threshold_dist) / fade_length
+        
+        -- 비율만큼 최대값에서 뺌
+        local calculated_fog = max_exclusion * (1.0 - fade_ratio)
+
+        -- 0 미만으로 떨어지지 않게 방어 (math.max 사용 가능하면 사용)
+        if calculated_fog < 0.0 then 
+            calculated_fog = 0.0 
+        end
+        
+        self.mesh.FogExclusion = calculated_fog
     end
 end
 
