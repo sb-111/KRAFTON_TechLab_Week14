@@ -75,6 +75,15 @@ function BeginPlay()
     PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
     PlayerADS:InitIronSight("Data/Prefabs/w14_RedDotSight.prefab")
 
+    -- 게임 재시작 시 포스트 프로세스 정리
+    GameState.OnStateChange(GameState.States.START, function(prevState)
+        local cm = GetCameraManager()
+        if cm then
+            cm:ClearAllModifiers()
+            print("[Player] ClearAllModifiers called on game restart")
+        end
+    end)
+
     Reset()
 end
 

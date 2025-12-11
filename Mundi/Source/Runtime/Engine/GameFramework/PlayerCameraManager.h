@@ -57,6 +57,9 @@ public:
 
 	void StartSlime(float InDuration, float Intensity = 0.7f, float Coverage = 0.6f, const FLinearColor& InColor = FLinearColor(0.2f, 0.8f, 0.1f, 1.0f), int32 InPriority = 0);
 
+	// 모든 카메라 모디파이어 제거 (게임 재시작 시 호출)
+	void ClearAllModifiers();
+
 public:
 	TArray<UCameraModifierBase*> ActiveModifiers;
 

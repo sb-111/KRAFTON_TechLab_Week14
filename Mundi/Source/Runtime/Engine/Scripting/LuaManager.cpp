@@ -1086,6 +1086,12 @@ void FLuaManager::ExposeGlobalFunctions()
             }
         ),
 
+        // --- ClearAllModifiers (모든 모디파이어 제거) ---
+        "ClearAllModifiers", [](APlayerCameraManager* Self)
+        {
+            if (Self) Self->ClearAllModifiers();
+        },
+
         "GetCamera", [](APlayerCameraManager* Self)
         {
             return Self->GetViewCamera();

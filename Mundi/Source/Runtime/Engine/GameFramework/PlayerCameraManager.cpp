@@ -365,6 +365,20 @@ void APlayerCameraManager::StartSlime(float InDuration, float Intensity, float C
 	ActiveModifiers.Add(SlimeModifier);
 }
 
+void APlayerCameraManager::ClearAllModifiers()
+{
+	// 모든 모디파이어 객체를 삭제
+	for (UCameraModifierBase* Modifier : ActiveModifiers)
+	{
+		if (Modifier)
+		{
+			delete Modifier;
+		}
+	}
+	ActiveModifiers.Empty();
+	LastVignetteIdx = -1;
+}
+
 // CurrentViewInfo를 현재 카메라를 기준으로 설정 (트렌지션 중에는 사이 값으로 설정)
 void APlayerCameraManager::UpdateViewInfo(float DeltaTime)
 {
