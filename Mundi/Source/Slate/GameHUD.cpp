@@ -461,6 +461,28 @@ void UGameHUD::DrawRect(float x, float y, float width, float height, const FLine
     D2dCtx->FillRectangle(rect, CachedBrush);
 }
 
+void UGameHUD::DrawCircle(float centerX, float centerY, float radius, const FLinearColor& color)
+{
+    DrawEllipse(centerX, centerY, radius, radius, color);
+}
+
+void UGameHUD::DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, const FLinearColor& color)
+{
+    if (!bFrameActive || !D2dCtx || !CachedBrush)
+        return;
+
+    // 뷰포트 오프셋 적용
+    centerX += ScreenOffsetX;
+    centerY += ScreenOffsetY;
+
+    // 브러시 색상 설정
+    CachedBrush->SetColor(D2D1::ColorF(color.R, color.G, color.B, color.A));
+
+    // 타원 그리기
+    D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F(centerX, centerY), radiusX, radiusY);
+    D2dCtx->FillEllipse(ellipse, CachedBrush);
+}
+
 void UGameHUD::DrawImage(const FString& imagePath, float x, float y, float width, float height)
 {
     if (!bFrameActive || !D2dCtx)
