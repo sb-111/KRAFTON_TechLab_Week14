@@ -530,6 +530,9 @@
     <ClCompile Include="Source\Runtime\Engine\GameFramework\Camera\CamMod_Vignette.cpp">
       <Filter>Source\Runtime\Engine\GameFramework\Camera</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Engine\GameFramework\Camera\CamMod_Fire.cpp">
+      <Filter>Source\Runtime\Engine\GameFramework\Camera</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Runtime\Engine\GameFramework\Camera\CameraModifierBase.cpp">
       <Filter>Source\Runtime\Engine\GameFramework\Camera</Filter>
     </ClCompile>
@@ -690,6 +693,9 @@
       <Filter>Source\Runtime\Renderer\PostProcessing</Filter>
     </ClCompile>
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\VignettePass.cpp">
+      <Filter>Source\Runtime\Renderer\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Runtime\Renderer\PostProcessing\FirePass.cpp">
       <Filter>Source\Runtime\Renderer\PostProcessing</Filter>
     </ClCompile>
     <ClCompile Include="Source\Runtime\InputCore\InputManager.cpp">

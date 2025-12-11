@@ -104,6 +104,18 @@ struct alignas(16) FGammaCorrectionBufferType
 };
 static_assert(sizeof(FGammaCorrectionBufferType) % 16 == 0, "CB must be 16-byte aligned");
 
+struct alignas(16) FFireBufferType // b2
+{
+    FLinearColor FireColor;      // 불꽃 색상 (주황/빨강)
+    float Intensity;             // 불꽃 강도 (0~1)
+    float EdgeStart;             // 화면 가장자리에서 시작 위치 (0~1)
+    float NoiseScale;            // 노이즈 스케일
+    float Time;                  // 애니메이션 시간
+    float Weight;
+    float _Pad[3];
+};
+static_assert(sizeof(FFireBufferType) % 16 == 0, "CB must be 16-byte aligned");
+
 struct FXAABufferType // b2
 {
     FVector2D ScreenSize; // 화면 해상도 (e.g., float2(1920.0f, 1080.0f))
@@ -266,6 +278,7 @@ MACRO(FSubUVBufferType)             \
 MACRO(FFadeInOutBufferType)         \
 MACRO(FGammaCorrectionBufferType)   \
 MACRO(FVinetteBufferType)           \
+MACRO(FFireBufferType)              \
 MACRO(FXAABufferType)               \
 MACRO(DOFBufferType)                \
 MACRO(FPixelConstBufferType)        \
@@ -292,6 +305,7 @@ CONSTANT_BUFFER_INFO(FSubUVBufferType, 2, true, false) // b2 VS only - Sub-UV �
 CONSTANT_BUFFER_INFO(FFadeInOutBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FGammaCorrectionBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FVinetteBufferType, 2, false, true)
+CONSTANT_BUFFER_INFO(FFireBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FXAABufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(DOFBufferType, 2, false, true)  // b2, PS only - Depth of Field
 CONSTANT_BUFFER_INFO(ColorBufferType, 3, true, true)   // b3 color

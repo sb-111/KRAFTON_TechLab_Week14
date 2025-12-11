@@ -1510,6 +1510,9 @@ void FSceneRenderer::RenderPostProcessingPasses()
 		case EPostProcessEffectType::Gamma:
 			GammaPass.Execute(Modifier, View, RHIDevice);
 			break;
+		case EPostProcessEffectType::Fire:
+			FirePass.Execute(Modifier, View, RHIDevice);
+			break;
 		}
 	}
 }

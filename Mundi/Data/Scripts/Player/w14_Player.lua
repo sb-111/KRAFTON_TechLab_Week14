@@ -437,7 +437,8 @@ function OnBeginOverlap(OtherActor)
                 local projectileY = OtherActor.Location.Y
                 local direction = (playerY < projectileY) and -1 or 1
                 PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
-                PlayHitVignette(0.5)
+                -- Fire 효과 (불타는 느낌)
+                PlayFireHitEffect(0.5)
             end
 
             if died then
@@ -652,6 +653,21 @@ function PlayObstacleHitVignette(duration)
         
         bIsObstacleHitEffectPlaying = false
     end)
+end
+
+-- [함수 3] Fireball 피격 시 불타는 효과
+function PlayFireHitEffect(duration)
+    local cm = GetCameraManager()
+    if not cm then return end
+
+    -- Fire 포스트 프로세스 효과 시작
+    -- StartFire(duration, intensity, edgeStart, color, priority)
+    cm:StartFire(
+        duration,           -- 지속 시간
+        0.8,                -- 불꽃 강도
+        0.15,               -- 화면 가장자리에서 시작 위치
+        Color(1, 0.3, 0, 1) -- 주황색
+    )
 end
 
 -- [함수 3] 게임 오버 / 스테이지 종료 시

@@ -51,7 +51,9 @@ public:
 	void AdjustVignette(float InDuration, float Radius, float Softness, float Intensity, float Roundness, const FLinearColor& InColor = FLinearColor::Zero(), int32 InPriority = 0);
 	void DeleteVignette();
 	
-	void StartGamma(float Gamma); 
+	void StartGamma(float Gamma);
+
+	void StartFire(float InDuration, float Intensity, float EdgeStart = 0.15f, const FLinearColor& InColor = FLinearColor(1.0f, 0.3f, 0.0f, 1.0f), int32 InPriority = 0);
 
 public:
 	TArray<UCameraModifierBase*> ActiveModifiers;
