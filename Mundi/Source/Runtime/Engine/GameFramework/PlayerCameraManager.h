@@ -57,6 +57,8 @@ public:
 
 	void StartSlime(float InDuration, float Intensity = 0.7f, float Coverage = 0.6f, const FLinearColor& InColor = FLinearColor(0.2f, 0.8f, 0.1f, 1.0f), int32 InPriority = 0);
 
+	void StartElectric(float InDuration, float Intensity = 0.8f, const FLinearColor& InColor = FLinearColor(1.0f, 0.7f, 0.3f, 1.0f), int32 InPriority = 0);
+
 	// 모든 카메라 모디파이어 제거 (게임 재시작 시 호출)
 	void ClearAllModifiers();
 

@@ -572,6 +572,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\VignettePass.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\FirePass.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\SlimePass.cpp" />
+    <ClCompile Include="Source\Runtime\Renderer\PostProcessing\ElectricPass.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\SceneView.cpp" />
     <ClCompile Include="Source\Runtime\Renderer\TileLightCuller.cpp" />
     <ClCompile Include="Source\Slate\GameHUD.cpp" />

@@ -704,6 +704,9 @@
     <ClCompile Include="Source\Runtime\Renderer\PostProcessing\SlimePass.cpp">
       <Filter>Source\Runtime\Renderer\PostProcessing</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Runtime\Renderer\PostProcessing\ElectricPass.cpp">
+      <Filter>Source\Runtime\Renderer\PostProcessing</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Runtime\InputCore\InputManager.cpp">
       <Filter>Source\Runtime\InputCore</Filter>
     </ClCompile>

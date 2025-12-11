@@ -504,6 +504,9 @@ function OnBeginOverlap(OtherActor)
                 PlayHitVignette(0.5)
             end
 
+            -- 감전 효과 적용 (0.8초 동안)
+            PlayElectricHitEffect(0.8)
+
             if died then
                 PlayerAnim:Die()
                 print("[Player] Game Over!")
@@ -773,6 +776,20 @@ function PlaySlimeHitEffect(duration)
         0.7,                 -- 효과 강도
         0.6,                 -- 화면 덮는 정도
         Color(0.2, 0.8, 0.1, 1)  -- 녹색
+    )
+end
+
+-- [함수 4-1] Boss Beam 피격 시 감전 효과
+function PlayElectricHitEffect(duration)
+    local cm = GetCameraManager()
+    if not cm then return end
+
+    -- Electric 포스트 프로세스 효과 시작
+    -- StartElectric(duration, intensity, color, priority)
+    cm:StartElectric(
+        duration,            -- 지속 시간
+        0.8,                 -- 효과 강도
+        Color(1.0, 0.7, 0.3, 1)  -- 주황-노랑 (CoreBeam 색상)
     )
 end
 

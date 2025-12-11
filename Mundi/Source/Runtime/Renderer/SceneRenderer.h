@@ -8,6 +8,7 @@
 #include "PostProcessing/GammaPass.h"
 #include "PostProcessing/FirePass.h"
 #include "PostProcessing/SlimePass.h"
+#include "PostProcessing/ElectricPass.h"
 
 // 전방 선언 (헤더 파일 의존성 최소화)
 class UWorld;
@@ -197,4 +198,5 @@ private:
 	FGammaPass GammaPass;
 	FFirePass FirePass;
 	FSlimePass SlimePass;
+	FElectricPass ElectricPass;
 };

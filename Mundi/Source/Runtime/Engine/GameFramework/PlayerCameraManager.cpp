@@ -8,6 +8,7 @@
 #include "Camera/CamMod_Gamma.h"
 #include "Camera/CamMod_Fire.h"
 #include "Camera/CamMod_Slime.h"
+#include "Camera/CamMod_Electric.h"
 #include "SceneView.h"
 #include "CameraActor.h"
 #include "CameraComponent.h"
@@ -363,6 +364,18 @@ void APlayerCameraManager::StartSlime(float InDuration, float Intensity, float C
 	SlimeModifier->ElapsedTime = 0.0f;  // 타이머 초기화
 
 	ActiveModifiers.Add(SlimeModifier);
+}
+
+void APlayerCameraManager::StartElectric(float InDuration, float Intensity, const FLinearColor& InColor, int32 InPriority)
+{
+	UCamMod_Electric* ElectricModifier = new UCamMod_Electric();
+	ElectricModifier->Duration = InDuration;
+	ElectricModifier->Priority = InPriority;
+	ElectricModifier->Intensity = Intensity;
+	ElectricModifier->Color = InColor;
+	ElectricModifier->ElapsedTime = 0.0f;  // 타이머 초기화
+
+	ActiveModifiers.Add(ElectricModifier);
 }
 
 void APlayerCameraManager::ClearAllModifiers()

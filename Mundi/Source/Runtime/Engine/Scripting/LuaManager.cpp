@@ -1086,6 +1086,30 @@ void FLuaManager::ExposeGlobalFunctions()
             }
         ),
 
+        // --- StartElectric (감전 효과) ---
+        "StartElectric", sol::overload(
+            // (Full) 4개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity, const FLinearColor& InColor, int32 InPriority)
+            {
+                if (Self) Self->StartElectric(InDuration, Intensity, InColor, InPriority);
+            },
+            // (Priority 기본값 사용) 3개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity, const FLinearColor& InColor)
+            {
+                if (Self) Self->StartElectric(InDuration, Intensity, InColor);
+            },
+            // (Color, Priority 기본값 사용) 2개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity)
+            {
+                if (Self) Self->StartElectric(InDuration, Intensity);
+            },
+            // (Intensity, Color, Priority 기본값 사용) 1개 인수
+            [](APlayerCameraManager* Self, float InDuration)
+            {
+                if (Self) Self->StartElectric(InDuration);
+            }
+        ),
+
         // --- ClearAllModifiers (모든 모디파이어 제거) ---
         "ClearAllModifiers", [](APlayerCameraManager* Self)
         {

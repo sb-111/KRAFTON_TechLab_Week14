@@ -1516,6 +1516,9 @@ void FSceneRenderer::RenderPostProcessingPasses()
 		case EPostProcessEffectType::Slime:
 			SlimePass.Execute(Modifier, View, RHIDevice);
 			break;
+		case EPostProcessEffectType::Electric:
+			ElectricPass.Execute(Modifier, View, RHIDevice);
+			break;
 		}
 	}
 }
