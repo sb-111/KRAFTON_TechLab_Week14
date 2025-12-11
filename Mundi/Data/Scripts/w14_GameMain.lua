@@ -228,6 +228,12 @@ function BeginPlay()
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
 
+    -- BossManager를 UI에 연결 (보스 타이머/정보 표시용)
+    UI.SetBossManager(BossMonsterManager)
+
+    -- Player를 UI에 연결 (아드레날린 부스트 표시용)
+    UI.SetPlayer(Player)
+
     -- 오디오 초기화
     -- 씬에 필요한 Actor:
     --   BGMActor (AudioComponent 1개 + Sounds[0]에 BGM)

@@ -32,6 +32,11 @@ local ShootCoolTime = 0.1
 local IsShootCool = false
 local MovementSpeed = 6.0
 
+-- 아드레날린 부스트 상태
+local AdrenalineBoostTime = 0      -- 남은 부스트 시간
+local AdrenalineBoostDuration = 7  -- 총 부스트 지속 시간
+local AdrenalineSlomoScale = 0.5   -- 슬로모션 배율
+
 function BeginPlay()
     Obj:SetPhysicsState(false)
     Obj:SetPhysicsState(true)
@@ -96,10 +101,33 @@ function Reset()
     CurrentYaw = 0.0
     CurrentPitch = 0.0
     CurrentRecoil = 0.0
+
+    -- 아드레날린 상태 초기화
+    AdrenalineBoostTime = 0
+end
+
+-- 아드레날린 부스트 상태 반환 (UI용)
+function GetAdrenalineBoostRatio()
+    if AdrenalineBoostDuration <= 0 then return 0 end
+    return AdrenalineBoostTime / AdrenalineBoostDuration
+end
+
+function GetAdrenalineBoostTime()
+    return AdrenalineBoostTime
 end
 
 function Tick(Delta)
     Particle.Tick(Delta)
+
+    -- 아드레날린 부스트 타이머 감소 (슬로모션 보정)
+    -- Delta는 게임 시간이므로, 슬로모션 중에는 실제 시간으로 환산
+    if AdrenalineBoostTime > 0 then
+        local realDelta = Delta / AdrenalineSlomoScale  -- 실제 시간으로 환산
+        AdrenalineBoostTime = AdrenalineBoostTime - realDelta
+        if AdrenalineBoostTime < 0 then
+            AdrenalineBoostTime = 0
+        end
+    end
 
     -- 게임 오버 상태에서는 플레이어 동작 중지
     if GameState.IsDead() then
@@ -526,9 +554,12 @@ function OnBeginOverlap(OtherActor)
         Audio.PlaySFX("GainedAidKit")
     end
 
-    -- 아드레날린 아이템 획득 (Adrenalin) - 몬스터만 슬로모
+    -- 아드레날린 아이템 획득 (Adrenalin) - 7초 슬로모
     if OtherActor.Tag == "Adrenalin" then
+        SetSlomo(7.0, 0.5)  -- 7초 동안 0.5배속 (슬로우 모션)
+        AdrenalineBoostTime = AdrenalineBoostDuration  -- UI용 부스트 타이머 시작
         print("[OnBeginOverlap] Adrenalin 획득! 7초간 몬스터 슬로모션")
+
         -- 아이템 비활성화
         OtherActor.bIsActive = false
 
