@@ -68,6 +68,10 @@ function GeneralObjectManager:add_object(
     --- 오브젝트가 맵에 지정된 개수보다 적게 존재하면 추가로 스폰하도록 지정
     new_object:set_spawn_condition_checker(
             function()
+                if self.player and self.player.Location.X < 25 then
+                    return false
+                end
+                
                 local spawned_count = new_object.spawned:get_size()
                 return self.objects_spawn_nums[new_object.name] > spawned_count
             end
@@ -105,6 +109,23 @@ end
 
 function GeneralObjectManager:set_spawn_num(pool_name, new_spawn_num)
     self.objects_spawn_nums[pool_name] = new_spawn_num
+end
+
+--- 모든 활성화된 오브젝트에 대해 콜백 함수 실행
+--- @param callback function 각 오브젝트에 대해 실행할 함수
+function GeneralObjectManager:foreach_active(callback)
+    for i = 1, #self.objects do
+        local pool = self.objects[i]
+        if pool and pool.spawned and pool.spawned.heap then
+            -- PriorityQueue의 heap을 직접 순회
+            for j = 1, pool.spawned.size do
+                local obj = pool.spawned.heap[j]
+                if obj then
+                    callback(obj)
+                end
+            end
+        end
+    end
 end
 
 return GeneralObjectManager

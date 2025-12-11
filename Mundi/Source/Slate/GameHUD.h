@@ -104,6 +104,25 @@ public:
     void DrawRect(float x, float y, float width, float height, const FLinearColor& color);
 
     /**
+     * @brief 원 렌더링 (절대 좌표, 중심점 기준)
+     * @param centerX 중심 X 좌표 (픽셀)
+     * @param centerY 중심 Y 좌표 (픽셀)
+     * @param radius 반지름 (픽셀)
+     * @param color 원 색상
+     */
+    void DrawCircle(float centerX, float centerY, float radius, const FLinearColor& color);
+
+    /**
+     * @brief 타원 렌더링 (절대 좌표, 중심점 기준)
+     * @param centerX 중심 X 좌표 (픽셀)
+     * @param centerY 중심 Y 좌표 (픽셀)
+     * @param radiusX X축 반지름 (픽셀)
+     * @param radiusY Y축 반지름 (픽셀)
+     * @param color 타원 색상
+     */
+    void DrawEllipse(float centerX, float centerY, float radiusX, float radiusY, const FLinearColor& color);
+
+    /**
      * @brief 이미지 렌더링 (절대 좌표)
      * @param imagePath 이미지 경로
      * @param x X 좌표 (픽셀)

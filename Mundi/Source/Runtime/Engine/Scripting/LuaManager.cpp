@@ -448,6 +448,10 @@ FLuaManager::FLuaManager()
         "DrawTextWithBgRel", &UGameHUD::DrawTextWithBgRel,
         // 사각형 렌더링 (절대 좌표)
         "DrawRect", &UGameHUD::DrawRect,
+        // 원 렌더링 (절대 좌표, 중심점 기준)
+        "DrawCircle", &UGameHUD::DrawCircle,
+        // 타원 렌더링 (절대 좌표, 중심점 기준)
+        "DrawEllipse", &UGameHUD::DrawEllipse,
         // 이미지 렌더링 (절대 좌표)
         "DrawImage", &UGameHUD::DrawImage,
         // 이미지 렌더링 (상대 좌표)

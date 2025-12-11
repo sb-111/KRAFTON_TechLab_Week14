@@ -166,9 +166,9 @@ function BeginPlay()
 
     ItemManager:add_object(
             "Data/Prefabs/w14_Adrenalin.prefab",
-            5,                    -- pool_size
+            5,                     -- pool_size (테스트용 증가)
             Vector(-2000, 100, 0),  -- pool_standby_location
-            1,                      -- spawn_num (적게)
+            1,                      -- spawn_num (테스트용 증가: 1 → 5)
             3,                      -- radius
             0.8                     -- 물체 스폰 z 위치
     )
@@ -221,8 +221,18 @@ function BeginPlay()
             1, 5, 120       -- 발사체 개수: 1개에서 5개까지, 120초 동안 증가
     )
 
+    -- GlobalConfig에 MonsterManager 등록 (Player에서 접근 가능하도록)
+    GlobalConfig.MonsterManager = MonsterManager
+    GlobalConfig.BossMonsterManager = BossMonsterManager
+
     -- UI 초기화 (UIActor를 자동으로 찾음)
     UI.Init()
+
+    -- BossManager를 UI에 연결 (보스 타이머/정보 표시용)
+    UI.SetBossManager(BossMonsterManager)
+
+    -- Player를 UI에 연결 (아드레날린 부스트 표시용)
+    UI.SetPlayer(Player)
 
     -- 오디오 초기화
     -- 씬에 필요한 Actor:

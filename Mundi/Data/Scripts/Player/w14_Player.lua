@@ -32,6 +32,11 @@ local ShootCoolTime = 0.1
 local IsShootCool = false
 local MovementSpeed = 6.0
 
+-- 아드레날린 부스트 상태
+local AdrenalineBoostTime = 0      -- 남은 부스트 시간
+local AdrenalineBoostDuration = 7  -- 총 부스트 지속 시간
+local AdrenalineSlomoScale = 0.5   -- 슬로모션 배율
+
 function BeginPlay()
     Obj:SetPhysicsState(false)
     Obj:SetPhysicsState(true)
@@ -96,10 +101,32 @@ function Reset()
     CurrentYaw = 0.0
     CurrentPitch = 0.0
     CurrentRecoil = 0.0
+
+    -- 아드레날린 상태 초기화
+    AdrenalineBoostTime = 0
+end
+
+-- 아드레날린 부스트 상태 반환 (UI용)
+function GetAdrenalineBoostRatio()
+    if AdrenalineBoostDuration <= 0 then return 0 end
+    return AdrenalineBoostTime / AdrenalineBoostDuration
+end
+
+function GetAdrenalineBoostTime()
+    return AdrenalineBoostTime
 end
 
 function Tick(Delta)
     Particle.Tick(Delta)
+
+    -- 아드레날린 부스트 타이머 감소
+    -- 몬스터만 슬로모가 걸리므로 플레이어 Delta는 영향받지 않음
+    if AdrenalineBoostTime > 0 then
+        AdrenalineBoostTime = AdrenalineBoostTime - Delta
+        if AdrenalineBoostTime < 0 then
+            AdrenalineBoostTime = 0
+        end
+    end
 
     -- 게임 오버 상태에서는 플레이어 동작 중지
     if GameState.IsDead() then
@@ -551,12 +578,42 @@ function OnBeginOverlap(OtherActor)
         Audio.PlaySFX("GainedAidKit")
     end
 
-    -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
+    -- 아드레날린 아이템 획득 (Adrenalin) - 7초간 몬스터만 슬로모
     if OtherActor.Tag == "Adrenalin" then
-        SetSlomo(7.0, 0.5)  -- 7초 동안 0.5배속 (슬로우 모션)
-        print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
+        AdrenalineBoostTime = AdrenalineBoostDuration  -- UI용 부스트 타이머 시작
+        print("[OnBeginOverlap] Adrenalin 획득! 7초간 몬스터 슬로모션")
+
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        -- 코루틴으로 7초 동안 몬스터들에게 슬로모 적용
+        StartCoroutine(function()
+            local duration = 7.0        -- 총 지속 시간
+            local interval = 0.5        -- 적용 간격
+            local dilation = 0.5        -- 슬로모 속도 (50%)
+            local elapsed = 0
+
+            while elapsed < duration do
+                -- 남은 시간 계산 (정확히 duration에 끝나도록)
+                local remaining = duration - elapsed
+                local applyTime = math.min(interval + 0.1, remaining)
+
+                -- 일반 몬스터들에게 슬로모 적용
+                if GlobalConfig.MonsterManager then
+                    GlobalConfig.MonsterManager:foreach_active(function(monster)
+                        TargetHitStop(monster, applyTime, dilation)
+                    end)
+                end
+
+                -- 보스 몬스터에게 슬로모 적용
+                if GlobalConfig.BossMonsterManager and GlobalConfig.BossMonsterManager.current_boss then
+                    TargetHitStop(GlobalConfig.BossMonsterManager.current_boss, applyTime, dilation)
+                end
+
+                coroutine.yield("wait_time", interval)
+                elapsed = elapsed + interval
+            end
+        end)
 
         Audio.PlaySFX("GainedAdrenalin")
     end

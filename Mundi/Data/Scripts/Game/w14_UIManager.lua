@@ -25,6 +25,15 @@ local UI_TEXTURES = {
     AMMO_ICON = "Data/Textures/Ammo.png",
     SHOT = "Data/Textures/Shot.png",
     HEADSHOT = "Data/Textures/HeadShot.png",
+    -- 보스 관련 아이콘
+    BOSS_ICON = "Data/Textures/UI/UI_BossIcon.png",
+    BOSS_HP_ICON = "Data/Textures/UI/UI_BossHPIcon.png",
+    BOSS_ATK_ICON = "Data/Textures/UI/UI_BossAtkIcon.png",
+    -- 아드레날린 아이콘
+    ADRENALINE_ICON = "Data/Textures/UI/UI_ItemAdrenalineIcon.png",
+    -- 플레이어 HP/탄약 아이콘
+    PLAYER_HP_ICON = "Data/Textures/UI/UI_PlayerHPIcon.png",
+    PLAYER_AMMO_ICON = "Data/Textures/UI/UI_PlayerAmmoIcon.png",
 }
 
 -- ===== 버튼 상태 =====
@@ -68,6 +77,18 @@ local showHowToPlayImage = false
 -- 초기화 플래그
 local isInitialized = false
 
+-- ===== 보스 매니저 참조 (외부에서 설정) =====
+local bossManagerRef = nil
+local playerRef = nil
+
+function M.SetBossManager(bossManager)
+    bossManagerRef = bossManager
+end
+
+function M.SetPlayer(player)
+    playerRef = player
+end
+
 -- ===== 초기화 =====
 function M.Init()
     if isInitialized then return true end
@@ -109,67 +130,29 @@ local function getMouseInHUDSpace()
     return mousePos.X - offsetX, mousePos.Y - offsetY
 end
 
--- 매 프레임 업데이트 (카메라 앞에 위치 유지)
-local debugPrinted = false
-function M.Update()
-    -- Lazy init: 아직 초기화 안됐으면 시도
-    if not isInitialized then
-        M.Init()
-        return
-    end
-
-    if not billboardComp or not uiObject then return end
-
-    local camera = GetCamera()
-    if not camera then
-        if not debugPrinted then
-            print("[UIManager] Camera not found!")
-            debugPrinted = true
-        end
-        return
-    end
-
-    local camPos = camera:GetActorLocation()
-    local camForward = camera:GetActorForward()
-
-    uiObject.Location = camPos + (camForward * uiDistance)
-
-    -- 디버그: 위치 출력 (한 번만)
-    if not debugPrinted then
-        print("[UIManager] Camera Pos: " .. camPos.X .. ", " .. camPos.Y .. ", " .. camPos.Z)
-        print("[UIManager] Camera Forward: " .. camForward.X .. ", " .. camForward.Y .. ", " .. camForward.Z)
-        print("[UIManager] UI Pos: " .. uiObject.Location.X .. ", " .. uiObject.Location.Y .. ", " .. uiObject.Location.Z)
-        debugPrinted = true
-    end
+-- HP 비율에 따른 테마 색상 계산 (흰색 -> 붉은색)
+local function getThemeColor(hpRatio, baseAlpha)
+    baseAlpha = baseAlpha or 1.0
+    -- HP 100%: 흰색(1,1,1), HP 0%: 붉은색(1,0.3,0.3)
+    local r = 1.0
+    local g = 0.3 + 0.7 * hpRatio  -- 1.0 -> 0.3
+    local b = 0.3 + 0.7 * hpRatio  -- 1.0 -> 0.3
+    return Color(r, g, b, baseAlpha)
 end
 
--- 카메라 거리 설정
-function M.SetDistance(dist)
-    uiDistance = dist
+-- HP 비율에 따른 배경 색상 (어두운 버전)
+local function getThemeBgColor(hpRatio, baseAlpha)
+    baseAlpha = baseAlpha or 0.7
+    local r = 0.1 + 0.1 * (1 - hpRatio)  -- 0.1 -> 0.2
+    local g = 0.12 * hpRatio             -- 0.12 -> 0
+    local b = 0.15 * hpRatio             -- 0.15 -> 0
+    return Color(r, g, b, baseAlpha)
 end
+
 
 -- ===== GameHUD API (D2D 기반) =====
 -- HUD:BeginFrame()은 매 프레임 시작 시 호출되어야 합니다.
 -- HUD:EndFrame()은 D3D11RHI::Present()에서 자동 호출됩니다.
-
--- HUD 상태 (슬롯머신 애니메이션용)
-local hudState = {
-    displayedDistance = 0,      -- 화면에 표시되는 거리 (애니메이션)
-    targetDistance = 0,         -- 실제 거리
-    animationSpeed = 50,        -- 초당 증가량 (m/s)
-}
-
--- 상단 여백 (픽셀)
-local TOP_MARGIN = 10
-
--- 탄환 아이콘 경로
-local AMMO_ICON_PATH = "Data/Textures/Ammo.png"
--- 하트 아이콘 경로
-local HEART_ICON_PATH = "Data/Textures/Heart.png"
-
--- 크로스헤어 설정
-local CROSSHAIR_PATH = "Data/Textures/CrossHair.png"
-local CROSSHAIR_SIZE = 80  -- 크로스헤어 크기 (픽셀)
 
 --- HUD 프레임 시작 (매 프레임 Tick 시작 시 호출)
 function M.BeginHUDFrame()
@@ -205,7 +188,7 @@ function M.UpdateStartScreen()
     if InputManager:IsGamepadConnected(0) then
         local dpadUp = InputManager:IsGamepadButtonPressed(GamepadButton.DPadUp, 0)
         local dpadDown = InputManager:IsGamepadButtonPressed(GamepadButton.DPadDown, 0)
-        
+
         -- 버튼 전환 (방향 입력이 새로 들어왔을 때만)
         if dpadUp and lastDpadVertical <= 0 then
             currentButtonIndex = math.max(1, currentButtonIndex - 1)
@@ -214,7 +197,7 @@ function M.UpdateStartScreen()
             currentButtonIndex = math.min(3, currentButtonIndex + 1)
             Audio.PlaySFX("buttonHovered")
         end
-        
+
         lastDpadVertical = (dpadUp and 1) or (dpadDown and -1) or 0
     end
 
@@ -222,19 +205,19 @@ function M.UpdateStartScreen()
     local howToPlayY = startY
     buttonStates.howToPlay.rect = { x = howToPlayBtnX, y = howToPlayY, w = btnW, h = btnH }
     local wasHowToPlayHovered = buttonStates.howToPlay.hovered
-    
+
     -- 마우스 호버 또는 패드 선택
     if InputManager:IsGamepadConnected(0) then
         buttonStates.howToPlay.hovered = (currentButtonIndex == 1)
     else
         buttonStates.howToPlay.hovered = isPointInRect(mouseX, mouseY, buttonStates.howToPlay.rect)
     end
-    
+
     -- How To Play 버튼 호버 사운드
     if buttonStates.howToPlay.hovered and not wasHowToPlayHovered then
         Audio.PlaySFX("buttonHovered")
     end
-    
+
     local howToPlayTex = buttonStates.howToPlay.hovered and UI_TEXTURES.HOW_TO_PLAY_HOVER or UI_TEXTURES.HOW_TO_PLAY
     HUD:DrawImage(howToPlayTex, howToPlayBtnX, howToPlayY, btnW, btnH)
 
@@ -242,19 +225,19 @@ function M.UpdateStartScreen()
     local startBtnY = howToPlayY + btnH + btnSpacing + 30
     buttonStates.start.rect = { x = btnX, y = startBtnY, w = btnW, h = btnH }
     local wasStartHovered = buttonStates.start.hovered
-    
+
     -- 마우스 호버 또는 패드 선택
     if InputManager:IsGamepadConnected(0) then
         buttonStates.start.hovered = (currentButtonIndex == 2)
     else
         buttonStates.start.hovered = isPointInRect(mouseX, mouseY, buttonStates.start.rect)
     end
-    
+
     -- START 버튼 호버 사운드
     if buttonStates.start.hovered and not wasStartHovered then
         Audio.PlaySFX("buttonHovered")
     end
-    
+
     local startTex = buttonStates.start.hovered and UI_TEXTURES.START_BUTTON_HOVER or UI_TEXTURES.START_BUTTON
     HUD:DrawImage(startTex, btnX, startBtnY, btnW, btnH)
 
@@ -262,19 +245,19 @@ function M.UpdateStartScreen()
     local exitY = startBtnY + btnH + btnSpacing
     buttonStates.exit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.exit.hovered
-    
+
     -- 마우스 호버 또는 패드 선택
     if InputManager:IsGamepadConnected(0) then
         buttonStates.exit.hovered = (currentButtonIndex == 3)
     else
         buttonStates.exit.hovered = isPointInRect(mouseX, mouseY, buttonStates.exit.rect)
     end
-    
+
     -- EXIT 버튼 호버 사운드
     if buttonStates.exit.hovered and not wasExitHovered then
         Audio.PlaySFX("buttonHovered")
     end
-    
+
     local exitTex = buttonStates.exit.hovered and UI_TEXTURES.EXIT_BUTTON_HOVER or UI_TEXTURES.EXIT_BUTTON
     HUD:DrawImage(exitTex, btnX, exitY, btnW, btnH)
 
@@ -314,7 +297,7 @@ function M.UpdateStartScreen()
             QuitGame()
         end
     end
-    
+
     -- 패드 A 버튼으로 선택
     if InputManager:IsGamepadConnected(0) and InputManager:IsGamepadButtonPressed(GamepadButton.A, 0) then
         if currentButtonIndex == 1 then
@@ -334,7 +317,86 @@ function M.UpdateStartScreen()
     end
 end
 
--- ===== 게임 HUD 렌더링 =====
+-- ===== GTFO 스타일 HP 바 그리기 헬퍼 함수 =====
+-- 세그먼트로 나눠진 HP 바 (GTFO 스타일)
+local function drawSegmentedBar(x, y, width, height, fillRatio, segments, fillColor, bgColor, borderColor)
+    segments = segments or 10
+    local segmentGap = 2
+    local totalGap = segmentGap * (segments - 1)
+    local segmentWidth = (width - totalGap) / segments
+
+    -- 배경 (전체 바 영역)
+    HUD:DrawRect(x - 2, y - 2, width + 4, height + 4, borderColor or Color(0.3, 0.3, 0.3, 0.5))
+
+    -- 각 세그먼트 그리기
+    for i = 0, segments - 1 do
+        local segX = x + i * (segmentWidth + segmentGap)
+        local segmentRatio = i / segments
+        local nextSegmentRatio = (i + 1) / segments
+
+        -- 이 세그먼트가 채워져야 하는지 확인
+        if fillRatio >= nextSegmentRatio then
+            -- 완전히 채워진 세그먼트
+            HUD:DrawRect(segX, y, segmentWidth, height, fillColor)
+        elseif fillRatio > segmentRatio then
+            -- 부분적으로 채워진 세그먼트
+            local partialFill = (fillRatio - segmentRatio) / (nextSegmentRatio - segmentRatio)
+            HUD:DrawRect(segX, y, segmentWidth, height, bgColor)
+            HUD:DrawRect(segX, y, segmentWidth * partialFill, height, fillColor)
+        else
+            -- 빈 세그먼트
+            HUD:DrawRect(segX, y, segmentWidth, height, bgColor)
+        end
+    end
+end
+
+-- GTFO 스타일 단순 바 (세그먼트 없이)
+local function drawSimpleBar(x, y, width, height, fillRatio, fillColor, bgColor)
+    -- 배경
+    HUD:DrawRect(x, y, width, height, bgColor)
+    -- 채워진 부분
+    if fillRatio > 0 then
+        HUD:DrawRect(x, y, width * fillRatio, height, fillColor)
+    end
+end
+
+-- 양쪽에서 중앙으로 감소하는 HP 바 (이미지 참고 형식)
+-- [====== GAP ======] 형식 - 중앙에 텍스트 공간 확보
+local function drawCenterHPBar(centerX, y, totalWidth, height, fillRatio, fillColor, bgColor, centerGap)
+    centerGap = centerGap or 0  -- 중앙 간격 (텍스트용)
+    local halfGap = centerGap / 2
+    local barWidth = (totalWidth - centerGap) / 2  -- 각 바의 너비
+    local filledBarWidth = barWidth * fillRatio
+
+    -- 왼쪽 바 (왼쪽 끝에서 중앙 방향으로)
+    local leftBarX = centerX - halfGap - barWidth
+    HUD:DrawRect(leftBarX, y, barWidth, height, bgColor)
+    if fillRatio > 0 then
+        -- 왼쪽 바는 오른쪽 끝(중앙 근처)에서부터 채워짐
+        HUD:DrawRect(centerX - halfGap - filledBarWidth, y, filledBarWidth, height, fillColor)
+    end
+
+    -- 오른쪽 바 (중앙에서 오른쪽 끝 방향으로)
+    local rightBarX = centerX + halfGap
+    HUD:DrawRect(rightBarX, y, barWidth, height, bgColor)
+    if fillRatio > 0 then
+        -- 오른쪽 바는 왼쪽 끝(중앙 근처)에서부터 채워짐
+        HUD:DrawRect(centerX + halfGap, y, filledBarWidth, height, fillColor)
+    end
+end
+
+-- 세로 바 (아드레날린 부스트용)
+local function drawVerticalBar(x, y, width, height, fillRatio, fillColor, bgColor)
+    -- 배경
+    HUD:DrawRect(x, y, width, height, bgColor)
+    -- 채워진 부분 (아래에서 위로)
+    if fillRatio > 0 then
+        local filledHeight = height * fillRatio
+        HUD:DrawRect(x, y + height - filledHeight, width, filledHeight, fillColor)
+    end
+end
+
+-- ===== 게임 HUD 렌더링 (미니멀 스타일 - 2배 사이즈) =====
 function M.UpdateGameHUD(dt)
     if not HUD or not HUD:IsVisible() then return end
 
@@ -350,6 +412,14 @@ function M.UpdateGameHUD(dt)
     local ammo = AmmoManager.GetCurrentAmmo()
     local currentHP = HPManager.GetCurrentHP()
     local maxHP = HPManager.GetMaxHP()
+    local totalAmmo = AmmoManager.GetTotalAmmo()
+
+    -- HP 비율 계산 (테마 색상용)
+    local hpRatio = math.max(0, math.min(1, currentHP / maxHP))
+
+    -- 테마 색상 (HP에 따라 흰색 -> 붉은색)
+    local themeColor = getThemeColor(hpRatio, 1.0)
+    local themeDimColor = getThemeColor(hpRatio, 0.6)
 
     -- 슬롯머신 애니메이션
     hudState.targetDistance = distance
@@ -362,157 +432,192 @@ function M.UpdateGameHUD(dt)
         )
     end
 
-    local leftMargin = screenW * 0.02
+    -- ===== 좌측 상단: 거리/킬/점수 (미니멀, 2배 사이즈) =====
+    local leftMargin = 40
+    local topMargin = 30
 
-    -- 거리 표시 (좌측 상단)
+    -- 거리 표시 (큰 숫자)
     HUD:DrawText(
         ScoreManager.FormatDistance(hudState.displayedDistance),
-        leftMargin, TOP_MARGIN,
-        36,
-        Color(1, 1, 1, 1)
+        leftMargin, topMargin,
+        48,  -- 2배
+        themeColor
     )
 
-    -- 킬수 표시
-    HUD:DrawText(
-        "Kills: " .. ScoreManager.FormatNumber(kills),
-        leftMargin, TOP_MARGIN + 45,
-        28,
-        Color(1, 1, 1, 1)
-    )
+    -- 킬수 & 점수 (수평 배치, 간격 줄임)
+    local statsY = topMargin + 60
+    HUD:DrawText("KILLS " .. ScoreManager.FormatNumber(kills), leftMargin, statsY, 24, themeColor)
+    HUD:DrawText("SCORE " .. ScoreManager.FormatNumber(score), leftMargin + 120, statsY, 24, themeColor)
 
-    -- 점수 표시
-    HUD:DrawText(
-        "Score: " .. ScoreManager.FormatNumber(score),
-        leftMargin, TOP_MARGIN + 75,
-        28,
-        Color(1, 1, 1, 1)
-    )
+    -- ===== 상단 중앙: 보스 정보 (수평 배치, 2배 사이즈) =====
+    local bossInfo = nil
+    local timeToNextBoss = nil
+    local isBossAlive = false
 
-    -- HP 바 (화면 하단 중앙) - 업그레이드 디자인
-    local hpRatio = currentHP / maxHP
-    local barMaxWidth = 450  -- 최대 바 너비 (증가)
-    local barHeight = 35     -- 바 높이 (증가)
-    local barWidth = barMaxWidth * hpRatio  -- 현재 HP에 따른 바 너비
-
-    -- HP 바 위치 (화면 하단 중앙)
-    local barBottomMargin = 50  -- 하단 여백
-    local barX = (screenW - barMaxWidth) / 2  -- 중앙 정렬
-    local barY = screenH - barBottomMargin - barHeight
-
-    -- HP 비율에 따른 색상 결정 (빨간색 → 검은색)
-    -- HP가 높을수록 빨간색, 낮을수록 검은색
-    local hpColor = Color(
-        1.0,                    -- R: 항상 최대
-        hpRatio * 0.1,          -- G: HP가 낮을수록 어두워짐
-        hpRatio * 0.1,          -- B: HP가 낮을수록 어두워짐
-        1.0                     -- A: 불투명
-    )
-
-    -- 외부 테두리 (검은색, 두껍게)
-    local borderSize = 3
-    HUD:DrawRect(barX - borderSize, barY - borderSize, barMaxWidth + borderSize * 2, barHeight + borderSize * 2, Color(0, 0, 0, 0.9))
-
-    -- 배경 바 (어두운 회색)
-    HUD:DrawRect(barX, barY, barMaxWidth, barHeight, Color(0.2, 0.2, 0.2, 0.9))
-
-    -- 현재 HP 바 (색상 변화)
-    if barWidth > 0 then
-        HUD:DrawRect(barX, barY, barWidth, barHeight, hpColor)
-
-        -- HP 바 위에 밝은 하이라이트 효과 (상단 절반)
-        local highlightHeight = barHeight * 0.4
-        HUD:DrawRect(barX, barY, barWidth, highlightHeight, Color(1, 1, 1, 0.2))
+    if bossManagerRef then
+        isBossAlive = bossManagerRef.current_boss ~= nil
+        if isBossAlive and bossManagerRef.current_boss then
+            local bossScript = bossManagerRef.current_boss:GetScript()
+            if bossScript then
+                bossInfo = {
+                    hp = bossScript.GetCurrentHP and bossScript.GetCurrentHP() or 0,
+                    maxHp = bossScript.GetMaxHP and bossScript.GetMaxHP() or 100,
+                    damage = bossScript.GetDamageValue and bossScript.GetDamageValue() or 0
+                }
+            end
+        else
+            timeToNextBoss = bossManagerRef.next_spawn_time - bossManagerRef.current_spawn_time
+        end
     end
 
-    -- 하트 아이콘 (HP 바 왼쪽)
-    local heartSize = 45
-    local heartX = barX - heartSize - 15
-    local heartY = barY - 5
-    HUD:DrawImage(
-        HEART_ICON_PATH,
-        heartX, heartY,
-        heartSize, heartSize
-    )
+    local topCenterX = screenW / 2
+    local topCenterY = 30
 
-    -- HP 텍스트 (바 오른쪽에 표시, Bullet 스타일과 동일)
-    local hpTextX = barX + barMaxWidth + 15  -- 바 오른쪽
-    local hpTextY = barY - 12  -- 세로 중앙 정렬
+    if isBossAlive and bossInfo then
+        -- 보스 HP 비율
+        local bossHpRatio = math.max(0, math.min(1, bossInfo.hp / bossInfo.maxHp))
 
-    -- HP가 30 이하면 빨간색, 아니면 흰색
-    local hpNumberColor = currentHP <= 30 and Color(1, 0.2, 0.2, 1) or Color(1, 1, 1, 1)
+        -- 보스 아이콘 (크게 강조) - 상단 중앙
+        local iconSize = 64  -- 2배 이상
+        HUD:DrawImage(UI_TEXTURES.BOSS_ICON, topCenterX - iconSize / 2, topCenterY, iconSize, iconSize)
 
-    -- 현재 HP (조건부 색상)
-    HUD:DrawText(
-        tostring(currentHP),
-        hpTextX, hpTextY,
-        36,
-        hpNumberColor
-    )
+        -- 보스 HP 바 (양쪽에서 중앙으로 감소, 중앙에 텍스트)
+        local bossBarW = 500
+        local bossBarH = 8
+        local bossBarY = topCenterY + iconSize + 15
+        local bossTextGap = 70  -- 텍스트를 위한 중앙 간격
+        local bossHpColor = Color(1, 0.2 + 0.3 * bossHpRatio, 0.2, 1)
+        local bossHpBgColor = Color(0.3, 0.3, 0.3, 0.5)
+        drawCenterHPBar(topCenterX, bossBarY, bossBarW, bossBarH, bossHpRatio, bossHpColor, bossHpBgColor, bossTextGap)
 
-    -- " | maxHP" 부분 (항상 흰색)
-    local separatorText = " | " .. maxHP
-    local currentHPWidth = #tostring(currentHP) * 18  -- 대략적인 글자 너비
-    HUD:DrawText(
-        separatorText,
-        hpTextX + currentHPWidth, hpTextY,
-        36,
-        Color(1, 1, 1, 1)
-    )
+        -- 보스 HP 퍼센트 (두 바 사이 중앙)
+        local bossHpPercent = math.floor(bossHpRatio * 100)
+        HUD:DrawText(bossHpPercent .. "%", topCenterX - 25, bossBarY - 14, 24, Color(1, 1, 1, 1))
 
-    -- 탄약 수 표시 (화면 중앙 상단) - 탄창/예비탄약 형식 (30|120)
-    local totalAmmo = AmmoManager.GetTotalAmmo()
-    local ammoText = ammo .. " | " .. totalAmmo
-    local ammoCenterX = screenW * 0.5 - 50
-    HUD:DrawText(
-        ammoText,
-        ammoCenterX, TOP_MARGIN,
-        36,
-        Color(1, 1, 1, 1)
-    )
+        -- 보스 정보 수평 배치 (HP 아이콘 - 수치 | ATK 아이콘 - 수치)
+        local infoY = bossBarY + 15
+        local hpIconSize = 36  -- 2배
+        local atkIconSize = 36
+
+        -- HP 정보 (왼쪽)
+        local hpInfoX = topCenterX - 180
+        HUD:DrawImage(UI_TEXTURES.BOSS_HP_ICON, hpInfoX, infoY, hpIconSize, hpIconSize)
+        HUD:DrawText(math.floor(bossInfo.hp) .. "/" .. math.floor(bossInfo.maxHp), hpInfoX + hpIconSize + 8, infoY - 3, 22, Color(1, 0.8, 0.8, 1))
+
+        -- ATK 정보 (오른쪽)
+        local atkInfoX = topCenterX + 50
+        HUD:DrawImage(UI_TEXTURES.BOSS_ATK_ICON, atkInfoX, infoY, atkIconSize, atkIconSize)
+        HUD:DrawText(tostring(math.floor(bossInfo.damage)), atkInfoX + atkIconSize + 8, infoY - 3, 22, Color(1, 0.5, 0.5, 1))
+
+    elseif timeToNextBoss and timeToNextBoss > 0 then
+        -- 보스 등장까지 남은 시간 (미니멀)
+        HUD:DrawText("NEXT BOSS  " .. string.format("%.0f", timeToNextBoss) .. "s", topCenterX - 80, topCenterY + 10, 28, themeColor)
+    end
+
+    -- ===== 하단 중앙: 플레이어 HP 바 (양쪽에서 중앙으로 감소, 1.5배 길이) =====
+    local playerBarW = 750   -- 1.5배 길이 (500 * 1.5)
+    local playerBarH = 6
+    local playerBarY = screenH - 70
+    local hpTextGap = 120    -- 아이콘 + 텍스트를 위한 중앙 간격
+
+    -- HP 바 (양쪽에서 중앙으로 감소, 중앙에 아이콘+텍스트 간격)
+    local hpBarColor = hpRatio > 0.3 and themeColor or Color(1, 0.3, 0.3, 1)
+    local hpBarBgColor = Color(0.3, 0.3, 0.3, 0.5)
+    drawCenterHPBar(topCenterX, playerBarY, playerBarW, playerBarH, hpRatio, hpBarColor, hpBarBgColor, hpTextGap)
+
+    -- 플레이어 HP 아이콘 (바 중앙, 텍스트 왼쪽)
+    local hpIconSize = 36
+    local hpIconX = topCenterX - 55
+    local hpIconY = playerBarY - hpIconSize / 2 + playerBarH / 2
+    HUD:DrawImage(UI_TEXTURES.PLAYER_HP_ICON, hpIconX, hpIconY, hpIconSize, hpIconSize)
+
+    -- HP 퍼센트 텍스트 (아이콘 오른쪽, 3px 위로)
+    local hpPercent = math.floor(hpRatio * 100)
+    local hpTextColor = hpRatio > 0.3 and themeColor or Color(1, 0.3, 0.3, 1)
+    HUD:DrawText(hpPercent .. "%", hpIconX + hpIconSize + 8, playerBarY - 18, 28, hpTextColor)
+
+    -- ===== 우측 하단: 탄약 정보 (아이콘 + 수치 수평 배치) =====
+    local ammoIconSize = 48
+    local ammoY = screenH - 80
+    local ammoIconX = screenW - 220
 
     -- 탄약 아이콘
-    local ammoIconX = ammoCenterX + 150
-    HUD:DrawImage(
-        UI_TEXTURES.AMMO_ICON,
-        ammoIconX, TOP_MARGIN + 10,
-        40, 40
-    )
+    HUD:DrawImage(UI_TEXTURES.PLAYER_AMMO_ICON, ammoIconX, ammoY - ammoIconSize / 2, ammoIconSize, ammoIconSize)
 
+    -- 탄약 수치 (아이콘 오른쪽, 수평 배치, 3px 위로)
+    local ammoColor = ammo <= 10 and Color(1, 0.3, 0.3, 1) or themeColor
+    local ammoTextX = ammoIconX + ammoIconSize + 10
+    local ammoTextY = ammoY - 21
+    HUD:DrawText(tostring(ammo) .. " / " .. tostring(totalAmmo), ammoTextX, ammoTextY, 28, ammoColor)
 
-    -- 크로스헤어 (화면 정중앙) - ADS 중이 아닐 때만 표시
+    -- ===== 우측: 아드레날린 부스트 바 (세로) =====
+    local adrenalineRatio = 0
+    if playerRef then
+        local playerScript = playerRef:GetScript()
+        if playerScript and playerScript.GetAdrenalineBoostRatio then
+            adrenalineRatio = playerScript.GetAdrenalineBoostRatio()
+        end
+    end
+
+    if adrenalineRatio > 0 then
+        local boostBarX = screenW - 60
+        local boostBarY = screenH / 2 - 100
+        local boostBarW = 12      -- 2배
+        local boostBarH = 200     -- 2배
+
+        -- 아드레날린 아이콘 (바 위)
+        local adrIconSize = 48
+        HUD:DrawImage(UI_TEXTURES.ADRENALINE_ICON, boostBarX - adrIconSize / 2 + boostBarW / 2, boostBarY - adrIconSize - 10, adrIconSize, adrIconSize)
+
+        -- 세로 바
+        local boostColor = Color(0.2, 1, 0.4, 1)  -- 녹색
+        local boostBgColor = Color(0.1, 0.3, 0.15, 0.6)
+        drawVerticalBar(boostBarX, boostBarY, boostBarW, boostBarH, adrenalineRatio, boostColor, boostBgColor)
+    end
+
+    -- ===== 크로스헤어 (미니멀, 2배 사이즈) =====
     local centerOffsetY = 15
     local centerX = screenW / 2
-    local centerY = screenH / 2
+    local centerY = screenH / 2 - centerOffsetY
+
     if not isADS then
-        HUD:DrawImage(
-            UI_TEXTURES.CROSSHAIR,
-            centerX - CROSSHAIR_SIZE / 2,
-            (centerY - CROSSHAIR_SIZE / 2) - centerOffsetY,
-            CROSSHAIR_SIZE,
-            CROSSHAIR_SIZE
-        )
+        local crossGap = 10     -- 2배
+        local lineLen = 20      -- 2배
+        local lineThick = 3     -- 2배
+
+        -- 상하좌우 라인
+        HUD:DrawRect(centerX - lineThick/2, centerY - crossGap - lineLen, lineThick, lineLen, themeColor)
+        HUD:DrawRect(centerX - lineThick/2, centerY + crossGap, lineThick, lineLen, themeColor)
+        HUD:DrawRect(centerX - crossGap - lineLen, centerY - lineThick/2, lineLen, lineThick, themeColor)
+        HUD:DrawRect(centerX + crossGap, centerY - lineThick/2, lineLen, lineThick, themeColor)
+
+        -- 중앙 점
+        HUD:DrawRect(centerX - 2, centerY - 2, 4, 4, themeColor)
     end
 
+    -- 헤드샷 피드백
     if headshotTimer > 0 then
         headshotTimer = headshotTimer - dt
+        local hsSize = HEADSHOT_SIZE * 2  -- 2배
         HUD:DrawImage(
             UI_TEXTURES.HEADSHOT,
-            centerX - HEADSHOT_SIZE / 2,
-            (centerY - HEADSHOT_SIZE / 2) - centerOffsetY,
-            HEADSHOT_SIZE,
-            HEADSHOT_SIZE
+            centerX - hsSize / 2,
+            centerY - hsSize / 2,
+            hsSize,
+            hsSize
         )
     end
 
-    -- 일반 샷 표시 (헤드샷이 아닐 때만)
+    -- 일반 샷 피드백
     if shotTimer > 0 and headshotTimer <= 0 then
         shotTimer = shotTimer - dt
+        local shotSize = SHOT_SIZE * 2  -- 2배
         HUD:DrawImage(
             UI_TEXTURES.SHOT,
-            centerX - SHOT_SIZE / 2,
-            (centerY - SHOT_SIZE / 2) - centerOffsetY,
-            SHOT_SIZE,
-            SHOT_SIZE
+            centerX - shotSize / 2,
+            centerY - shotSize / 2,
+            shotSize,
+            shotSize
         )
     end
 end
@@ -563,7 +668,7 @@ function M.UpdateGameOverScreen()
     if InputManager:IsGamepadConnected(0) then
         local dpadUp = InputManager:IsGamepadButtonPressed(GamepadButton.DPadUp, 0)
         local dpadDown = InputManager:IsGamepadButtonPressed(GamepadButton.DPadDown, 0)
-        
+
         -- 버튼 전환 (방향 입력이 새로 들어왔을 때만)
         if dpadUp and lastDpadVertical <= 0 then
             currentButtonIndex = 1
@@ -572,7 +677,7 @@ function M.UpdateGameOverScreen()
             currentButtonIndex = 2
             Audio.PlaySFX("buttonHovered")
         end
-        
+
         lastDpadVertical = (dpadUp and 1) or (dpadDown and -1) or 0
     end
 
@@ -580,7 +685,7 @@ function M.UpdateGameOverScreen()
     local restartY = startY
     buttonStates.restart.rect = { x = btnX, y = restartY, w = btnW, h = btnH }
     local wasRestartHovered = buttonStates.restart.hovered
-    
+
     -- 마우스 호버 또는 패드 선택
     if InputManager:IsGamepadConnected(0) then
         buttonStates.restart.hovered = (currentButtonIndex == 1)
@@ -600,7 +705,7 @@ function M.UpdateGameOverScreen()
     local exitY = restartY + btnH + btnSpacing
     buttonStates.gameOverExit.rect = { x = btnX, y = exitY, w = btnW, h = btnH }
     local wasExitHovered = buttonStates.gameOverExit.hovered
-    
+
     -- 마우스 호버 또는 패드 선택
     if InputManager:IsGamepadConnected(0) then
         buttonStates.gameOverExit.hovered = (currentButtonIndex == 2)
@@ -628,7 +733,7 @@ function M.UpdateGameOverScreen()
             QuitGame()
         end
     end
-    
+
     -- 패드 A 버튼으로 선택
     if InputManager:IsGamepadConnected(0) and InputManager:IsGamepadButtonPressed(GamepadButton.A, 0) then
         if currentButtonIndex == 1 then
