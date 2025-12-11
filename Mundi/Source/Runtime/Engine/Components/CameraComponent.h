@@ -70,7 +70,11 @@ public:
     
     UFUNCTION(LuaBind, DisplayName="GetForward")
     FVector GetForward() const;
+
+    UFUNCTION(LuaBind, DisplayName="GetRight")
     FVector GetRight() const;
+
+    UFUNCTION(LuaBind, DisplayName="GetUp")
     FVector GetUp() const;
 
     // ───── 복사 관련 ────────────────────────────

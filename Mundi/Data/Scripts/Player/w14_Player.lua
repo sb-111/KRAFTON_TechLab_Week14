@@ -68,7 +68,7 @@ function BeginPlay()
 
     -- ADS 시스템 초기화 (카메라, 총, 플레이어, 스켈레탈메시)
     PlayerADS = PlayerADSClass:new(PlayerCamera, Gun, Obj, Mesh)
-    PlayerADS:InitIronSight("Data/Prefabs/w14_IronSight.prefab")
+    PlayerADS:InitIronSight("Data/Prefabs/w14_RedDotSight.prefab")
 
     Reset()
 end
@@ -128,6 +128,8 @@ function Tick(Delta)
         -- ADS 업데이트 (FOV, 아이언사이트, 총 가시성)
         if PlayerADS then
             PlayerADS:Update(Delta, PlayerInput.ZoomTrigger)
+            -- ADS 상태를 UI에 전달 (크로스헤어 숨김용)
+            UI.SetADS(PlayerADS:GetProgress() > 0.1)
         end
 
         -- ADS 보간 중에는 발사 불가
@@ -299,27 +301,34 @@ function Shoot()
                     isHeadshot = true
                     print("!!! HEADSHOT !!!")
                     UI.ShowHeadshotFeedback()
+
+                    -- 전역 짧은 히트스탑 (임팩트)
+                    HitStop(0.03, 0.0)
+                    -- 몬스터만 슬로모 (천천히 쓰러짐)
+                    TargetHitStop(HitResult.Actor, 10, 0.5)
                 else
                     UI.ShowShotFeedback()
                 end
 
-                -- 피 색상과 부위에 따른 파티클 스폰
-                local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
-                local particleName
-                if bloodColor == "black" then
-                    -- 보스는 황금색 폭발 파티클 사용
-                    particleName = "boss_hit"
-                else
-                    particleName = isHeadshot
-                        and ("blood_head_" .. bloodColor)
-                        or ("blood_body_" .. bloodColor)
-                end
-                print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
-                local spawnResult = Particle.Spawn(particleName, TargetPoint)
-                if spawnResult then
-                    print("[DEBUG] Particle spawned successfully")
-                else
-                    print("[DEBUG] Particle spawn FAILED - pool exhausted?")
+                -- 피 색상과 부위에 따른 파티클 스폰 (bloodless가 아닌 경우만)
+                if not MonsterConfig.IsBloodless(HitResult.Actor.Tag) then
+                    local bloodColor = MonsterConfig.GetBloodColor(HitResult.Actor.Tag)
+                    local particleName
+                    if bloodColor == "black" then
+                        -- 보스는 황금색 폭발 파티클 사용
+                        particleName = "boss_hit"
+                    else
+                        particleName = isHeadshot
+                            and ("blood_head_" .. bloodColor)
+                            or ("blood_body_" .. bloodColor)
+                    end
+                    print("[DEBUG] Spawning particle: " .. particleName .. " at " .. tostring(TargetPoint))
+                    local spawnResult = Particle.Spawn(particleName, TargetPoint)
+                    if spawnResult then
+                        print("[DEBUG] Particle spawned successfully")
+                    else
+                        print("[DEBUG] Particle spawn FAILED - pool exhausted?")
+                    end
                 end
 
                 -- 3. 데미지 적용

@@ -136,14 +136,19 @@ void mainCS(uint3 dispatchThreadID : SV_DispatchThreadID)
         float2 offsetUV = dirUnit * (radialFactor * radiusPixels) * TexelSize;
         float2 sampleUV = uv + offsetUV;
 
-        // 텍스처 샘플링
-        float3 sampleColor = g_InputTexture.SampleLevel(g_LinearSampler, sampleUV, 0).rgb;
+        // 텍스처 샘플링 (RGBA, A=CoC)
+        float4 sampleData = g_InputTexture.SampleLevel(g_LinearSampler, sampleUV, 0);
+        float3 sampleColor = sampleData.rgb;
+        float sampleCoC = sampleData.a;
 
         // 정규화된 반경 r=0..1
         float rNorm = saturate(radialFactor);
 
-        // 가중치 계산
+        // 가중치 계산: 기본 가우시안 + CoC 기반 가중치
+        // 샘플의 CoC가 낮으면 (선명해야 할 영역) 가중치를 낮춤
+        // 이렇게 하면 배경이 블러 영역으로 번지는 것을 방지
         float sampleWeight = RadialGaussianWeight(rNorm, sigma);
+        sampleWeight *= saturate(sampleCoC / max(centerCoC, 0.01f));  // CoC 비율로 가중치 조절
 
         // 누적
         accumulatedColor += sampleColor * sampleWeight;

@@ -318,6 +318,10 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Game\w14_ParticleManager.lua" />
     <Content Include="Data\Scripts\Game\w14_ScoreManager.lua" />
     <Content Include="Data\Scripts\Game\w14_UIManager.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BoomerExplosion.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BoomerExplosionCrater.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BoomerMonster.lua" />
+    <Content Include="Data\Scripts\Monster\w14_BoomerMonsterMain.lua" />
     <Content Include="Data\Scripts\Monster\w14_BossMonster.lua" />
     <Content Include="Data\Scripts\Monster\w14_BossMonsterMain.lua" />
     <Content Include="Data\Scripts\Monster\w14_BossMonsterManager.lua" />
@@ -328,6 +332,7 @@ xcopy /y /d "$(ProjectDir)ThirdParty\lib\NvCloth\x64\Release\*.dll" "$(OutDir)"<
     <Content Include="Data\Scripts\Monster\w14_MobStat.lua" />
     <Content Include="Data\Scripts\Monster\w14_Monster.lua" />
     <Content Include="Data\Scripts\Monster\w14_MonsterMain.lua" />
+    <Content Include="Data\Scripts\Monster\w14_MonsterUtil.lua" />
     <Content Include="Data\Scripts\Monster\w14_Monster_State_Enum.lua" />
     <Content Include="Data\Scripts\names.lua" />
     <Content Include="Data\Scripts\NewScript.lua" />

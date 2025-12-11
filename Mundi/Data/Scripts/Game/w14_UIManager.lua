@@ -55,6 +55,9 @@ local HEADSHOT_DURATION = 0.1 -- 0.1초 동안 표시
 local shotTimer = 0
 local SHOT_DURATION = 0.08 -- 0.08초 동안 표시
 
+-- ADS 상태 (줌 중일 때 크로스헤어 숨김)
+local isADS = false
+
 -- ===== 설정 상수 =====
 local TOP_MARGIN = 10
 local CROSSHAIR_SIZE = 64
@@ -476,17 +479,19 @@ function M.UpdateGameHUD(dt)
     )
 
 
-    -- 크로스헤어 (화면 정중앙)
+    -- 크로스헤어 (화면 정중앙) - ADS 중이 아닐 때만 표시
     local centerOffsetY = 15
     local centerX = screenW / 2
     local centerY = screenH / 2
-    HUD:DrawImage(
-        UI_TEXTURES.CROSSHAIR,
-        centerX - CROSSHAIR_SIZE / 2,
-        (centerY - CROSSHAIR_SIZE / 2) - centerOffsetY,
-        CROSSHAIR_SIZE,
-        CROSSHAIR_SIZE
-    )
+    if not isADS then
+        HUD:DrawImage(
+            UI_TEXTURES.CROSSHAIR,
+            centerX - CROSSHAIR_SIZE / 2,
+            (centerY - CROSSHAIR_SIZE / 2) - centerOffsetY,
+            CROSSHAIR_SIZE,
+            CROSSHAIR_SIZE
+        )
+    end
 
     if headshotTimer > 0 then
         headshotTimer = headshotTimer - dt
@@ -680,6 +685,11 @@ function M.SetHUDScreenSize(width, height)
     if HUD then
         HUD:SetScreenSize(width, height)
     end
+end
+
+--- ADS 상태 설정 (줌 중일 때 크로스헤어 숨김)
+function M.SetADS(bIsADS)
+    isADS = bIsADS
 end
 
 return M

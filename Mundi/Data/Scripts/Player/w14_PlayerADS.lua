@@ -25,14 +25,39 @@ function PlayerADS:new(playerCamera, gunMesh, playerObj, skeletalMesh)
     instance.adsSpeed = 10.0
     instance.sensitivityMult = 0.5
 
-    -- 아이언사이트 위치 (카메라 기준 오프셋: X=앞, Y=좌우, Z=상하)
-    instance.ironSightOffset = Vector(0.6, 0, -0.15)  -- 카메라 앞, 약간 아래로
-    instance.ironSightScale = Vector(0.01, 0.01, 0.01)  -- 스케일 조정 필요
+    -- 사이트 위치 (카메라 기준 오프셋: X=앞, Y=좌우, Z=상하)
+    instance.ironSightOffset = Vector(0.9, 0.0005, -0.1525)  -- 카메라 앞, 약간 아래로
+    instance.ironSightScale = Vector(0.075, 0.075, 0.075)  -- 스케일 조정 필요
+
+    -- DoF 설정값
+    -- 스코프 거리: ironSightOffset.X = 0.9 (카메라에서 0.9 단위 앞)
+    -- CoC 공식: nearBlur = (FocalDistance - depth) / NearTransitionRange
+    --          farBlur = (depth - FocalDistance) / FarTransitionRange
+    --
+    -- Red Dot Scope DoF: 스코프 바로 뒤에 초점, 스코프만 블러
+    -- FocalDistance = 1.5m (스코프 0.9m 바로 뒤)
+    -- NearRange = 0.9m → 0~0.9m 범위가 블러됨
+    instance.dofEnabled = true  -- DoF 효과 사용 여부
+    instance.dofProgress = 0.0  -- DoF 블러 강도 (0~1), adsProgress와 별도로 관리
+    instance.dofSpeedIn = 15.0  -- DoF 진입 속도 (빠르게)
+    instance.dofSpeedOut = 3.0  -- DoF 해제 속도 (느리게)
+    instance.dofSettings = {
+        -- 힙파이어 상태 (DoF 비활성화)
+        baseFocalDistance = 100.0,
+        baseNearRange = 50.0,
+        baseFarRange = 1000.0,
+        baseMaxCoC = 0.0,  -- 0 = 블러 없음
+        -- ADS 완료 상태 (스코프 바로 뒤에 초점)
+        adsFocalDistance = 1.5,     -- 스코프(0.7m) 바로 뒤에 초점
+        adsNearRange = 0.9,         -- 0~0.9m만 블러 (스코프 포함)
+        adsFarRange = 10000.0,      -- 배경은 블러 없음
+        adsMaxCoC = 25.0,           -- 최대 블러 반경 (15 → 25로 증가)
+    }
 
     return instance
 end
 
---- 아이언사이트 액터 초기화
+--- 사이트 액터 초기화
 function PlayerADS:InitIronSight(prefabPath)
     self.ironSightActor = SpawnPrefab(prefabPath)
     if self.ironSightActor then
@@ -60,11 +85,14 @@ function PlayerADS:Update(deltaTime, isZoomPressed)
     -- FOV 업데이트
     self:UpdateFOV()
 
-    -- 아이언사이트 위치/가시성 업데이트
+    -- 사이트 위치/가시성 업데이트
     self:UpdateIronSight()
 
     -- 총 가시성 업데이트
     self:UpdateGunVisibility()
+
+    -- DoF 업데이트
+    self:UpdateDoF(deltaTime)
 end
 
 --- FOV 보간
@@ -75,7 +103,44 @@ function PlayerADS:UpdateFOV()
     self.camera.FieldOfView = currentFOV
 end
 
---- 아이언사이트 위치/가시성
+--- DoF (Depth of Field) 업데이트
+function PlayerADS:UpdateDoF(deltaTime)
+    if not self.dofEnabled then return end
+
+    local s = self.dofSettings
+
+    -- DoF 목표값: ADS 진행도가 0.9 이상이면 DoF 활성화
+    local enableThreshold = 0.9
+    local targetDofProgress = (self.adsProgress >= enableThreshold) and 1.0 or 0.0
+
+    -- dofProgress 보간 (현재 값에서 부드럽게 전환)
+    -- 진입/해제 속도를 다르게 적용
+    local dofSpeed
+    if targetDofProgress > self.dofProgress then
+        dofSpeed = self.dofSpeedIn   -- DoF 켜질 때 (빠르게)
+    else
+        dofSpeed = self.dofSpeedOut  -- DoF 꺼질 때 (느리게)
+    end
+
+    self.dofProgress = self.dofProgress + (targetDofProgress - self.dofProgress) * dofSpeed * deltaTime
+
+    -- 아주 작은 값 정리
+    if self.dofProgress < 0.01 then self.dofProgress = 0.0 end
+    if self.dofProgress > 0.99 then self.dofProgress = 1.0 end
+
+    -- DoF 적용
+    if self.dofProgress > 0.01 then
+        SetDOFFocalDistance(s.adsFocalDistance)
+        SetDOFNearTransitionRange(s.adsNearRange)
+        SetDOFFarTransitionRange(s.adsFarRange)
+        SetDOFMaxCoCRadius(s.adsMaxCoC * self.dofProgress)
+        EnableDepthOfField()
+    else
+        DisableDepthOfField()
+    end
+end
+
+--- 사이트 위치/가시성
 function PlayerADS:UpdateIronSight()
     if not self.ironSightActor or not self.camera then return end
 
@@ -84,21 +149,14 @@ function PlayerADS:UpdateIronSight()
     self.ironSightActor.bIsActive = shouldShow
 
     if shouldShow then
-        -- 카메라 앞에 위치시키기
+        -- 카메라 위치와 방향 벡터
         local camPos = self.camera:GetWorldLocation()
         local camForward = self.camera:GetForward()
+        local camRight = self.camera:GetRight()
+        local camUp = self.camera:GetUp()
 
-        -- 플레이어 회전에서 Right/Up 벡터 계산
-        local playerRot = self.playerObj and self.playerObj.Rotation or Vector(0, 0, 0)
-        local yawRad = math.rad(playerRot.Z)
-        local pitchRad = math.rad(playerRot.Y)
-
-        -- Right 벡터 (Yaw 기준)
-        local camRight = Vector(math.sin(yawRad), -math.cos(yawRad), 0)
-        -- Up 벡터 (간단히 월드 Up 사용)
-        local camUp = Vector(0, 0, 1)
-
-        -- 오프셋 적용: X=앞, Y=오른쪽, Z=위
+        -- 오프셋 적용: 카메라 로컬 좌표계 기준
+        -- X=앞(forward), Y=오른쪽(right), Z=위(up)
         local offset = self.ironSightOffset
         local worldPos = camPos
             + camForward * offset.X
@@ -174,6 +232,21 @@ function PlayerADS:SetIronSightScale(scale)
     end
 end
 
+function PlayerADS:SetDoFEnabled(enabled)
+    self.dofEnabled = enabled
+    if not enabled then
+        DisableDepthOfField()
+    end
+end
+
+function PlayerADS:SetDoFSettings(settings)
+    -- settings: { adsFocalDistance, adsNearRange, adsFarRange, adsMaxCoC }
+    if settings.adsFocalDistance then self.dofSettings.adsFocalDistance = settings.adsFocalDistance end
+    if settings.adsNearRange then self.dofSettings.adsNearRange = settings.adsNearRange end
+    if settings.adsFarRange then self.dofSettings.adsFarRange = settings.adsFarRange end
+    if settings.adsMaxCoC then self.dofSettings.adsMaxCoC = settings.adsMaxCoC end
+end
+
 --- ADS 상태에서의 머즐 플래시 위치 반환
 function PlayerADS:GetMuzzlePosition()
     if not self.camera then return nil end
@@ -181,7 +254,7 @@ function PlayerADS:GetMuzzlePosition()
     local camPos = self.camera:GetWorldLocation()
     local camForward = self.camera:GetForward()
 
-    -- 아이언사이트보다 약간 더 앞에서 발사
+    -- 사이트보다 약간 더 앞에서 발사
     local muzzleDistance = self.ironSightOffset.X + 0.3
 
     return camPos + camForward * muzzleDistance
@@ -193,6 +266,8 @@ function PlayerADS:Destroy()
         DeleteObject(self.ironSightActor)
         self.ironSightActor = nil
     end
+    -- DoF 비활성화
+    DisableDepthOfField()
 end
 
 return PlayerADS

@@ -1,4 +1,6 @@
 local MobStat = require("Monster/w14_MobStat")
+local ScoreManager = require("Game/w14_ScoreManager")
+local MonsterUtil = require("Monster/w14_MonsterUtil")
 
 --- ChaserMonster 클래스
 --- @class ChaserMonster
@@ -6,8 +8,6 @@ local MobStat = require("Monster/w14_MobStat")
 --- @field obj userdata 게임 오브젝트
 --- @field anim_instance userdata 애니메이션 상태 머신
 --- @field is_permanently_idle boolean 영구 Idle 상태 여부
-local MobStat = require("Monster/w14_MobStat")
-local ScoreManager = require("Game/w14_ScoreManager")
 
 local ChaserMonster = {}
 ChaserMonster.__index = ChaserMonster
@@ -33,16 +33,6 @@ function ChaserMonster:new()
     instance.is_permanently_idle = false
     setmetatable(instance, ChaserMonster)
     return instance
-end
-
---- 월드에서 플레이어를 찾아 위치를 반환합니다.
---- @return userdata 플레이어 위치 (찾지 못하면 Vector(0, 0, 0))
-function ChaserMonster:FindPlayerPosition()
-    local playerObj = FindObjectByName("player")
-    if playerObj ~= nil then
-        return playerObj.Location
-    end
-    return Vector(0, 0, 0)
 end
 
 --- ChaserMonster를 초기화합니다 (스탯 설정 및 애니메이션 상태 머신 설정).
@@ -146,7 +136,7 @@ function ChaserMonster:UpdateAnimationState()
     -- Attack 애니메이션이 끝났을 때
     if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
         -- 플레이어가 여전히 공격 범위 안에 있는지 확인
-        local player_pos = self:FindPlayerPosition()
+        local player_pos = MonsterUtil:FindPlayerPosition()
         local offset = self.obj.Location - player_pos
         local distance_squared = offset.X * offset.X + offset.Y * offset.Y
         local attack_range_squared = self.stat.attack_range * self.stat.attack_range
@@ -196,7 +186,7 @@ end
 --- 플레이어 위치를 확인하고 공격 범위 내에 있으면 공격합니다.
 --- @return void
 function ChaserMonster:CheckPlayerPositionAndAttack()
-    local player_pos = self:FindPlayerPosition()
+    local player_pos = MonsterUtil:FindPlayerPosition()
     local offset = self.obj.Location - player_pos
     local distance_squared = offset.X * offset.X + offset.Y * offset.Y
     local attack_range_squared = self.stat.attack_range * self.stat.attack_range
@@ -229,7 +219,7 @@ function ChaserMonster:MoveToPlayer(Delta)
         return
     end
 
-    local player_pos = self:FindPlayerPosition()
+    local player_pos = MonsterUtil:FindPlayerPosition()
 
     -- 플레이어를 찾지 못했으면 이동 안함
     if player_pos.X == 0 and player_pos.Y == 0 and player_pos.Z == 0 then
