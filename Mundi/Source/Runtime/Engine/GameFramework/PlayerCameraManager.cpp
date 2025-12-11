@@ -7,6 +7,7 @@
 #include "Camera/CamMod_Vignette.h"
 #include "Camera/CamMod_Gamma.h"
 #include "Camera/CamMod_Fire.h"
+#include "Camera/CamMod_Slime.h"
 #include "SceneView.h"
 #include "CameraActor.h"
 #include "CameraComponent.h"
@@ -349,6 +350,33 @@ void APlayerCameraManager::StartFire(float InDuration, float Intensity, float Ed
 	FireModifier->ElapsedTime = 0.0f;  // 타이머 초기화
 
 	ActiveModifiers.Add(FireModifier);
+}
+
+void APlayerCameraManager::StartSlime(float InDuration, float Intensity, float Coverage, const FLinearColor& InColor, int32 InPriority)
+{
+	UCamMod_Slime* SlimeModifier = new UCamMod_Slime();
+	SlimeModifier->Duration = InDuration;
+	SlimeModifier->Priority = InPriority;
+	SlimeModifier->Intensity = Intensity;
+	SlimeModifier->Coverage = Coverage;
+	SlimeModifier->Color = InColor;
+	SlimeModifier->ElapsedTime = 0.0f;  // 타이머 초기화
+
+	ActiveModifiers.Add(SlimeModifier);
+}
+
+void APlayerCameraManager::ClearAllModifiers()
+{
+	// 모든 모디파이어 객체를 삭제
+	for (UCameraModifierBase* Modifier : ActiveModifiers)
+	{
+		if (Modifier)
+		{
+			delete Modifier;
+		}
+	}
+	ActiveModifiers.Empty();
+	LastVignetteIdx = -1;
 }
 
 // CurrentViewInfo를 현재 카메라를 기준으로 설정 (트렌지션 중에는 사이 값으로 설정)

@@ -116,6 +116,19 @@ struct alignas(16) FFireBufferType // b2
 };
 static_assert(sizeof(FFireBufferType) % 16 == 0, "CB must be 16-byte aligned");
 
+struct alignas(16) FSlimeBufferType // b2
+{
+    FLinearColor SlimeColor;     // 슬라임 색상 (녹색)
+    float Intensity;             // 효과 강도 (0~1)
+    float DrippingSpeed;         // 흘러내리는 속도
+    float Time;                  // 애니메이션 시간
+    float Weight;                // 모디파이어 가중치
+    float Coverage;              // 화면 덮는 정도 (0~1)
+    float DistortionStrength;    // 왜곡 강도
+    float _Pad[2];
+};
+static_assert(sizeof(FSlimeBufferType) % 16 == 0, "CB must be 16-byte aligned");
+
 struct FXAABufferType // b2
 {
     FVector2D ScreenSize; // 화면 해상도 (e.g., float2(1920.0f, 1080.0f))
@@ -279,6 +292,7 @@ MACRO(FFadeInOutBufferType)         \
 MACRO(FGammaCorrectionBufferType)   \
 MACRO(FVinetteBufferType)           \
 MACRO(FFireBufferType)              \
+MACRO(FSlimeBufferType)             \
 MACRO(FXAABufferType)               \
 MACRO(DOFBufferType)                \
 MACRO(FPixelConstBufferType)        \
@@ -306,6 +320,7 @@ CONSTANT_BUFFER_INFO(FFadeInOutBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FGammaCorrectionBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FVinetteBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FFireBufferType, 2, false, true)
+CONSTANT_BUFFER_INFO(FSlimeBufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(FXAABufferType, 2, false, true)
 CONSTANT_BUFFER_INFO(DOFBufferType, 2, false, true)  // b2, PS only - Depth of Field
 CONSTANT_BUFFER_INFO(ColorBufferType, 3, true, true)   // b3 color
