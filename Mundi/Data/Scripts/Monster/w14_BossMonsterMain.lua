@@ -52,6 +52,28 @@ function ShouldDestroy()
     return should_destroy
 end
 
+--- UI용 getter 함수들
+function GetCurrentHP()
+    if BossMonster and BossMonster.stat then
+        return BossMonster.stat.current_health
+    end
+    return 0
+end
+
+function GetMaxHP()
+    if BossMonster and BossMonster.stat then
+        return BossMonster.stat.max_health
+    end
+    return 100
+end
+
+function GetDamageValue()
+    if BossMonster and BossMonster.stat then
+        return BossMonster.stat.attack_point
+    end
+    return 0
+end
+
 function Initialize(health_point, attack_point, projectile_count)
     -- 스탯 초기화 (애니메이션은 BeginPlay에서 이미 설정됨)
     BossMonster:Initialize(health_point, attack_point, projectile_count)
