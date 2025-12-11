@@ -40,6 +40,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Particle System")
 	EDebugParticleType DebugParticleType = EDebugParticleType::Sprite;
 
+	// 빔 파티클 타겟 위치 (bUseTarget = true일 때 사용)
+	UPROPERTY(EditAnywhere, Category="Beam")
+	FVector BeamTargetPosition = FVector(50.0f, 0.0f, 0.0f);
+
 	// 이미터 인스턴스 (런타임)
 	TArray<FParticleEmitterInstance*> EmitterInstances;
 

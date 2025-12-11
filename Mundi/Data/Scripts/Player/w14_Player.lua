@@ -446,6 +446,33 @@ function OnBeginOverlap(OtherActor)
             else
                 Audio.PlaySFX("MonsterCollisionSmash")
             end
+        elseif OtherActor.Tag == "BossBeamBreathHitBox" then
+            -- 보스 빔 공격 히트박스 충돌 처리
+            local hitbox_script = OtherActor:GetScript()
+            local damage = MonsterConfig.GetDamage(OtherActor.Tag)  -- 기본값
+            if hitbox_script and hitbox_script.GetDamageAmount then
+                damage = hitbox_script.GetDamageAmount()
+            end
+            local died = HPManager.TakeDamage(damage)
+
+            print("[OnBeginOverlap] BossBeamBreathHitBox 피격! 데미지: " .. damage)
+
+            -- KnockBack 적용
+            if PlayerKnockBack then
+                local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
+                local playerY = Obj.Location.Y
+                local hitboxY = OtherActor.Location.Y
+                local direction = (playerY < hitboxY) and -1 or 1
+                PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
+                PlayHitVignette(0.5)
+            end
+
+            if died then
+                PlayerAnim:Die()
+                print("[Player] Game Over!")
+            else
+                Audio.PlaySFX("MonsterCollisionSmash")
+            end
         else
             -- 일반 몬스터 충돌 처리
             local damage = MonsterConfig.GetDamage(OtherActor.Tag)

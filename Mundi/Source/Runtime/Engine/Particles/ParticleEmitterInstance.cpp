@@ -936,7 +936,20 @@ bool FParticleEmitterInstance::BuildBeamDynamicData(FDynamicBeamEmitterData* Dat
 	FDynamicBeamEmitterReplayDataBase& Source = Data->Source;
 	Source.Width = BeamType->BeamWidth;
 	Source.TileU = BeamType->TileU;
-	Source.Color = FLinearColor(0.5f, 0.9f, 1.0f, 1.0f);
+
+	// 활성 파티클이 있으면 파티클 색상 사용, 없으면 기본값
+	if (ActiveParticles > 0 && ParticleData && ParticleIndices)
+	{
+		const uint16 ParticleIndex = ParticleIndices[0];
+		const uint8* ParticleBasePtr = ParticleData + ParticleIndex * ParticleStride;
+		const FBaseParticle& Particle = *reinterpret_cast<const FBaseParticle*>(ParticleBasePtr);
+		Source.Color = Particle.Color;
+	}
+	else
+	{
+		Source.Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);  // 기본 흰색
+	}
+
 	Source.Material = (CurrentLODLevel && CurrentLODLevel->RequiredModule)
 		? CurrentLODLevel->RequiredModule->Material
 		: nullptr;
