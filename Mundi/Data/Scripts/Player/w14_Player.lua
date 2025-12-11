@@ -119,11 +119,10 @@ end
 function Tick(Delta)
     Particle.Tick(Delta)
 
-    -- 아드레날린 부스트 타이머 감소 (슬로모션 보정)
-    -- Delta는 게임 시간이므로, 슬로모션 중에는 실제 시간으로 환산
+    -- 아드레날린 부스트 타이머 감소
+    -- 몬스터만 슬로모가 걸리므로 플레이어 Delta는 영향받지 않음
     if AdrenalineBoostTime > 0 then
-        local realDelta = Delta / AdrenalineSlomoScale  -- 실제 시간으로 환산
-        AdrenalineBoostTime = AdrenalineBoostTime - realDelta
+        AdrenalineBoostTime = AdrenalineBoostTime - Delta
         if AdrenalineBoostTime < 0 then
             AdrenalineBoostTime = 0
         end
@@ -554,9 +553,8 @@ function OnBeginOverlap(OtherActor)
         Audio.PlaySFX("GainedAidKit")
     end
 
-    -- 아드레날린 아이템 획득 (Adrenalin) - 7초 슬로모
+    -- 아드레날린 아이템 획득 (Adrenalin) - 7초간 몬스터만 슬로모
     if OtherActor.Tag == "Adrenalin" then
-        SetSlomo(7.0, 0.5)  -- 7초 동안 0.5배속 (슬로우 모션)
         AdrenalineBoostTime = AdrenalineBoostDuration  -- UI용 부스트 타이머 시작
         print("[OnBeginOverlap] Adrenalin 획득! 7초간 몬스터 슬로모션")
 

@@ -507,7 +507,7 @@ function M.UpdateGameHUD(dt)
         -- ATK 정보 (오른쪽)
         local atkInfoX = topCenterX + 50
         HUD:DrawImage(UI_TEXTURES.BOSS_ATK_ICON, atkInfoX, infoY, atkIconSize, atkIconSize)
-        HUD:DrawText(math.floor(bossInfo.damage), atkInfoX + atkIconSize + 8, infoY - 3, 22, Color(1, 0.5, 0.5, 1))
+        HUD:DrawText(tostring(math.floor(bossInfo.damage)), atkInfoX + atkIconSize + 8, infoY - 3, 22, Color(1, 0.5, 0.5, 1))
 
     elseif timeToNextBoss and timeToNextBoss > 0 then
         -- 보스 등장까지 남은 시간 (미니멀)
