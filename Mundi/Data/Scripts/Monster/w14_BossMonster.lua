@@ -295,7 +295,7 @@ function BossMonster:CalculateBeamTargetPosition()
 
     -- 랜덤 오프셋 추가
     local random_x = Math:RandomInRange(3.0, 5.0)   -- 전후 랜덤
-    local random_y = Math:RandomInRange(2.0, 2.0)   -- 좌우 랜덤
+    local random_y = Math:RandomInRange(-1.5, 1.5)   -- 좌우 랜덤
     local random_z = 0  -- 바닥에 맞춤
 
     local target_pos = Vector(
