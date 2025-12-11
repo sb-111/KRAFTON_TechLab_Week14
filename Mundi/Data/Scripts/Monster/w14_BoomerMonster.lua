@@ -71,7 +71,8 @@ function BoomerMonster:Initialzie(obj, move_speed, health_point, attack_point, a
     -- 사운드 노티파이 추가 (마지막 파라미터: MaxDistance, 0이면 무제한)
     self.anim_instance:AddSoundNotify("Idle", 0.01, "IdleSound", "Data/Audio/BoomerZombieIdle.wav", 3.0, 12.0)
     self.anim_instance:AddSoundNotify("Walk", 0.01, "WalkSound", "Data/Audio/BoomerZombieIdle.wav", 3.0, 12.0)
-    self.anim_instance:AddSoundNotify("Boom", 0.01, "BoomSound", "Data/Audio/BoomerZombieBoom.wav", 3.0, 8.0)
+    self.anim_instance:AddSoundNotify("Boom", 0.01, "BoomSound", "Data/Audio/BoomerZombieBoom.wav", 3.0, 20.0)
+    self.anim_instance:AddSoundNotify("Die", 0.01, "DieSound", "Data/Audio/BoomerZombieDying.wav", 100.0, 20.0)
 
     -- 초기 상태 설정 (Walk로 시작)
     self.anim_instance:SetState("Walk", 0)
