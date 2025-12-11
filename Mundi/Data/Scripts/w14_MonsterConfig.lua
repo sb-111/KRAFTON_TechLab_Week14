@@ -48,7 +48,17 @@ local MonsterConfig = {
         damage = 15,
         knockBackStrength = 8.0,
         bloodColor = "red",
+        bloodless = true,
         description = "보스 발사체"
+    },
+
+    -- BossBeamBreathHitBox (보스 빔 공격 히트박스)
+    BossBeamBreathHitBox = {
+        damage = 25,
+        knockBackStrength = 10.0,
+        bloodColor = "red",
+        bloodless = true,
+        description = "보스 빔 공격"
     },
 
     -- 기본값 (태그가 정의되지 않은 경우)

@@ -622,6 +622,9 @@ void UParticleSystemComponent::TickComponent(float DeltaTime)
 {
 	USceneComponent::TickComponent(DeltaTime);
 
+	// BeamTargetPosition 프로퍼티를 InstanceParameters에 동기화
+	SetVectorParameter("BeamTarget", BeamTargetPosition);
+
 	// === 테스트: 디버그 파티클 자동 이동 ===
 	// PIE에서도 동작하도록 Template과 EmitterInstances로 체크
 	if (Template && EmitterInstances.Num() > 0)
@@ -630,21 +633,7 @@ void UParticleSystemComponent::TickComponent(float DeltaTime)
 
 		if (DebugParticleType == EDebugParticleType::Beam)
 		{
-			// Beam: 타겟 위치를 원형으로 회전
-			/*float Radius = 50.0f;
-			float Speed = 2.0f;
-
-			FVector TargetOffset(
-			  cos(TestTime * Speed) * Radius,
-			  sin(TestTime * Speed) * Radius,
-			  0.0f
-			);
-
-			SetVectorParameter("BeamTarget", GetWorldTransform().TransformPosition(TargetOffset));*/
-
-			// 타겟을 월드 원점에 고정 (시작점은 기즈모로 직접 이동 가능)
-			FVector WorldOrigin(0.0f, 0.0f, 0.0f);
-			SetVectorParameter("BeamTarget", WorldOrigin);
+			// Beam: 디테일 패널의 BeamTargetPosition 사용 (위에서 이미 동기화됨)
 		}
 		else if (DebugParticleType == EDebugParticleType::Ribbon)
 		{

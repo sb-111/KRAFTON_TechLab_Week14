@@ -9,6 +9,7 @@
 
 local MobStat = require("Monster/w14_MobStat")
 local Math = require("w14_Math")
+local Audio = require("Game/w14_AudioManager")
 
 ---------------------------------------------------------------------------
 -- 상수 정의 (불변 테이블)
@@ -62,6 +63,7 @@ BossMonster.Const = Const
 local AnimDurations = {
     FloatingDuration = 3.66,    -- Floating 애니메이션 길이
     AttackDuration = 2.3,       -- Attack 애니메이션 길이
+    BeamBreathDuration = 4.0   -- 빔 공격 애니메이션 길이
     -- DamagedDuration = 2.0    -- 피격 애니메이션 길이 (미사용)
 }
 
@@ -72,10 +74,10 @@ function BossMonster:new(obj)
     local instance = {}
     instance.stat = MobStat:new()
     instance.obj = obj
-    
+
     -- 초기 위치 지정
     obj.Location = self:FindPlayerPosition() + Vector(10, 0, 10)
-    
+
     instance.anim_instance = nil
     instance.next_dir = Vector(1, 0, 0)         -- 초기 이동 방향 (nil 방지)
     instance.movement_time = 0
@@ -84,6 +86,11 @@ function BossMonster:new(obj)
     instance.next_attack_time = Const.MIN_ATTACK_COOLTIME  -- 초기 쿨타임 설정 (즉시 공격 방지)
     instance.projectile_count = 1       -- 기본 발사체 개수
     instance.projectile_speed = 8       -- 기본 발사체 속도
+
+    -- 빔 파티클 컴포넌트 캐싱
+    instance.beam_warning_particle = nil
+    instance.beam_particle = nil
+
     setmetatable(instance, BossMonster)
 
     -- 애니메이션 상태 머신 초기화
@@ -95,8 +102,26 @@ function BossMonster:new(obj)
             if instance.anim_instance then
                 instance.anim_instance:AddState("Floating", "Data/GameJamAnim/Monster/BossFloating_mixamo.com", 1.0, true)
                 instance.anim_instance:AddState("Attack", "Data/GameJamAnim/Monster/BossAttack_mixamo.com", 1.0, false)
+                instance.anim_instance:AddState("BeamBreath", "Data/GameJamAnim/Monster/BossBeamBreath_mixamo.com", 1.0, false)
+
                 instance.anim_instance:AddSoundNotify("Attack", 0.01, "AttackSound", "Data/Audio/BossAttack.wav", 10.0, 40.0)
                 instance.anim_instance:SetState("Floating", 0)
+            end
+        end
+
+        -- 파티클 컴포넌트 가져오기 (GetComponents로 배열 가져와서 필터링)
+        local particle_comps = GetComponents(obj, "UParticleSystemComponent")
+        if particle_comps and type(particle_comps) == "table" then
+            for i = 1, #particle_comps do
+                local comp = particle_comps[i]
+                if comp and comp.ObjectName then
+                    local name = tostring(comp.ObjectName)
+                    if name and string.find(name, "Warning") then
+                        instance.beam_warning_particle = comp
+                    elseif name and string.find(name, "BossBeamBreath") and not string.find(name, "Warning") then
+                        instance.beam_particle = comp
+                    end
+                end
             end
         end
     end
@@ -254,16 +279,94 @@ end
 --- 매 프레임 공격 쿨타임 체크 및 공격 실행
 --- @param delta number 델타 타임
 --- @return void
-function BossMonster:Attack(delta)
-    self.attack_cool_time = self.attack_cool_time + delta
+function BossMonster:Attack()
+    -- 발사체 소환
+    self:SpawnProjectiles()
+    self.anim_instance:SetState("Attack", 0)
+end
 
-    if (self.attack_cool_time > self.next_attack_time) then
-        -- 발사체 소환
-        self:SpawnProjectiles()
-        self.anim_instance:SetState("Attack", 0)
-        self.attack_cool_time = 0
-        self:GetNextAttackCooltime()
+--- 빔 공격 타겟 위치를 계산합니다 (플레이어 전방 + 랜덤 오프셋)
+--- @return userdata 타겟 위치 벡터
+function BossMonster:CalculateBeamTargetPosition()
+    local player_pos = self:FindPlayerPosition()
+
+    -- 플레이어 전방 예측 (플레이어가 앞으로 달린다고 가정)
+    local forward_prediction = 8.0  -- 전방 예측 거리
+
+    -- 랜덤 오프셋 추가
+    local random_x = Math:RandomInRange(3.0, 5.0)   -- 전후 랜덤
+    local random_y = Math:RandomInRange(-1.5, 1.5)   -- 좌우 랜덤
+    local random_z = 0  -- 바닥에 맞춤
+
+    local target_pos = Vector(
+        player_pos.X + forward_prediction + random_x,
+        player_pos.Y + random_y,
+        player_pos.Z + random_z
+    )
+
+    return target_pos
+end
+
+--- 빔 공격 특수 패턴
+--- 경고 파티클 -> 0.5초 후 빔 공격 파티클 + 히트박스 소환
+--- @return void
+function BossMonster:BeamBreath()
+    self.anim_instance:SetState("BeamBreath", 0)
+
+    -- 캐싱된 파티클 컴포넌트 사용
+    local warning_particle = self.beam_warning_particle
+    local beam_particle = self.beam_particle
+
+    if not warning_particle or not beam_particle then
+        print("[BossMonster] BeamBreath: Particle components not found")
+        return
     end
+
+    -- 타겟 위치 계산
+    local target_pos = self:CalculateBeamTargetPosition()
+
+    -- 두 파티클의 타겟 위치 설정
+    warning_particle.BeamTargetPosition = target_pos
+    beam_particle.BeamTargetPosition = target_pos
+
+    -- 경고 파티클 활성화
+    warning_particle.bIsActive = true
+
+    -- 경고 음성 재생
+    Audio.PlaySFX("BossBeamBreathWarning")
+
+    -- 코루틴으로 타이밍 처리
+    StartCoroutine(function()
+        -- 0.5초 대기 (경고 표시)
+        coroutine.yield("wait_time", 1)
+
+        -- 경고 파티클 비활성화
+        warning_particle.bIsActive = false
+
+        -- 빔 파티클 활성화
+        beam_particle.bIsActive = true
+
+        -- 히트박스 소환 및 공격력 전달
+        local hitbox = SpawnPrefab("Data/Prefabs/w14_BossBeamBreathHitBox.prefab")
+        if hitbox then
+            hitbox.Location = target_pos
+
+            -- 히트박스에 보스 공격력 전달
+            local hitbox_script = hitbox:GetScript()
+            if hitbox_script and hitbox_script.Initialize then
+                hitbox_script.Initialize(self.stat.attack_point)
+            end
+        end
+
+        -- 빔 효과 음성
+        Audio.PlaySFX("BossBeamBreath")
+
+        -- 빔 지속 시간 대기
+        coroutine.yield("wait_time", 2.0)
+
+        -- 빔 파티클 비활성화
+        beam_particle.bIsActive = false
+    end)
 end
 
 ---------------------------------------------------------------------------
@@ -285,7 +388,8 @@ function BossMonster:UpdateAnimationState()
     local current_time = self.anim_instance:GetStateTime(current_state)
 
     -- Attack 애니메이션이 끝나면 Floating으로 복귀
-    if current_state == "Attack" and current_time >= AnimDurations.AttackDuration then
+    if (current_state == "Attack" and current_time >= AnimDurations.AttackDuration) or
+            (current_state == "BeamBreath" and current_time >= AnimDurations.BeamBreathDuration) then
         self.anim_instance:SetState("Floating", 0.2)
         return
     end
@@ -306,7 +410,21 @@ function BossMonster:Tick(delta)
 
     self:UpdateAnimationState()  -- 애니메이션 상태 전환 체크
     self:Move(delta)             -- 이동 처리
-    self:Attack(delta)           -- 공격 쿨타임 체크 및 공격
+    
+    self.attack_cool_time = self.attack_cool_time + delta
+    if (self.attack_cool_time > self.next_attack_time) then
+        local PatternNum = Math:RandomIntInRange(0, 1)
+
+        if PatternNum == 0 then
+            -- 발사체 소환
+            self:Attack()           -- 공격 쿨타임 체크 및 공격
+        elseif PatternNum == 1 then
+            self:BeamBreath()
+        end
+
+        self.attack_cool_time = 0
+        self:GetNextAttackCooltime()
+    end
 end
 
 return BossMonster
