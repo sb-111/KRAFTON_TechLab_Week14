@@ -526,12 +526,40 @@ function OnBeginOverlap(OtherActor)
         Audio.PlaySFX("GainedAidKit")
     end
 
-    -- 아드레날린 아이템 획득 (Adrenalin) - 10초 슬로모
+    -- 아드레날린 아이템 획득 (Adrenalin) - 몬스터만 슬로모
     if OtherActor.Tag == "Adrenalin" then
-        SetSlomo(7.0, 0.5)  -- 7초 동안 0.5배속 (슬로우 모션)
-        print("[OnBeginOverlap] Adrenalin 획득! 10초간 슬로모션")
+        print("[OnBeginOverlap] Adrenalin 획득! 7초간 몬스터 슬로모션")
         -- 아이템 비활성화
         OtherActor.bIsActive = false
+
+        -- 코루틴으로 7초 동안 몬스터들에게 슬로모 적용
+        StartCoroutine(function()
+            local duration = 7.0        -- 총 지속 시간
+            local interval = 0.5        -- 적용 간격
+            local dilation = 0.5        -- 슬로모 속도 (50%)
+            local elapsed = 0
+
+            while elapsed < duration do
+                -- 남은 시간 계산 (정확히 duration에 끝나도록)
+                local remaining = duration - elapsed
+                local applyTime = math.min(interval + 0.1, remaining)
+
+                -- 일반 몬스터들에게 슬로모 적용
+                if GlobalConfig.MonsterManager then
+                    GlobalConfig.MonsterManager:foreach_active(function(monster)
+                        TargetHitStop(monster, applyTime, dilation)
+                    end)
+                end
+
+                -- 보스 몬스터에게 슬로모 적용
+                if GlobalConfig.BossMonsterManager and GlobalConfig.BossMonsterManager.current_boss then
+                    TargetHitStop(GlobalConfig.BossMonsterManager.current_boss, applyTime, dilation)
+                end
+
+                coroutine.yield("wait_time", interval)
+                elapsed = elapsed + interval
+            end
+        end)
 
         Audio.PlaySFX("GainedAdrenalin")
     end
