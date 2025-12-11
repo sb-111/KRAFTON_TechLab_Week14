@@ -11,6 +11,7 @@ X3DAUDIO_HANDLE         FAudioDevice::X3DInstance = {};
 X3DAUDIO_LISTENER       FAudioDevice::Listener = {};
 DWORD                   FAudioDevice::dwChannelMask = 0;
 float                   FAudioDevice::MasterVolume = 1.0f;
+uint32                  FAudioDevice::MaxActiveVoices = 512;  // 기본 최대 음성 수
 std::vector<IXAudio2SourceVoice*> FAudioDevice::ActiveVoices = {};
 
 UINT32 FAudioDevice::GetOutputChannelCount()
@@ -269,10 +270,59 @@ IXAudio2SourceVoice* FAudioDevice::PlaySound2D(USound* SoundToPlay, float Volume
     return voice;
 }
 
+void FAudioDevice::SetMaxVoices(uint32 InMaxVoices)
+{
+    MaxActiveVoices = std::max(8u, InMaxVoices);  // 최소 8개
+    UE_LOG("[Audio] Max voices set to: %u", MaxActiveVoices);
+}
+
+uint32 FAudioDevice::GetMaxVoices()
+{
+    return MaxActiveVoices;
+}
+
+uint32 FAudioDevice::GetActiveVoiceCount()
+{
+    return static_cast<uint32>(ActiveVoices.size());
+}
+
+void FAudioDevice::CleanupFinishedVoices()
+{
+    // 재생 완료된 음성들을 찾아서 정리
+    auto it = ActiveVoices.begin();
+    while (it != ActiveVoices.end())
+    {
+        IXAudio2SourceVoice* voice = *it;
+        if (voice)
+        {
+            XAUDIO2_VOICE_STATE state;
+            voice->GetState(&state);
+
+            // BuffersQueued가 0이면 재생 완료
+            if (state.BuffersQueued == 0)
+            {
+                voice->DestroyVoice();
+                it = ActiveVoices.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+}
+
+void FAudioDevice::EnforceVoiceLimit()
+{
+    // 재생 완료된 음성만 정리 (안전하게)
+    // 강제 정리는 하지 않음 - AudioComponent의 dangling pointer 문제 방지
+    CleanupFinishedVoices();
+}
+
 void FAudioDevice::RegisterVoice(IXAudio2SourceVoice* pVoice)
 {
     if (pVoice)
     {
+        // 등록 전에 한도 체크 및 정리
+        EnforceVoiceLimit();
         ActiveVoices.push_back(pVoice);
     }
 }
@@ -474,10 +524,17 @@ void FAudioDevice::UpdateSoundPosition(IXAudio2SourceVoice* pSourceVoice, const 
 void FAudioDevice::StopSound(IXAudio2SourceVoice* pSourceVoice)
 {
     if (!pSourceVoice) return;
-    
+
+    // 이미 정리된 voice인지 확인 (dangling pointer 방지)
+    auto it = std::find(ActiveVoices.begin(), ActiveVoices.end(), pSourceVoice);
+    if (it == ActiveVoices.end())
+    {
+        // ActiveVoices에 없으면 이미 정리된 것
+        return;
+    }
 
     // 1. 관리 리스트에서 제거 (중요: Destroy 전에 뺍니다)
-    UnregisterVoice(pSourceVoice);
+    ActiveVoices.erase(it);
     pSourceVoice->Stop(0);
     pSourceVoice->FlushSourceBuffers();
     pSourceVoice->DestroyVoice();

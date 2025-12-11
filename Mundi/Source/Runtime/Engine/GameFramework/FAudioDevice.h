@@ -33,13 +33,24 @@ public:
     static void SetMasterVolume(float Volume);
     static float GetMasterVolume();
 
+    // 최대 동시 재생 음성 수 설정
+    static void SetMaxVoices(uint32 MaxVoices);
+    static uint32 GetMaxVoices();
+    static uint32 GetActiveVoiceCount();
+
 private:
+    // 음성 한도 초과 시 가장 오래된 음성 정리
+    static void EnforceVoiceLimit();
+    // 재생 완료된 음성 정리
+    static void CleanupFinishedVoices();
+
     static IXAudio2*                pXAudio2;
     static IXAudio2MasteringVoice*  pMasteringVoice;
     static X3DAUDIO_HANDLE          X3DInstance;
     static X3DAUDIO_LISTENER        Listener;
     static DWORD                    dwChannelMask;
     static float                    MasterVolume;
+    static uint32                   MaxActiveVoices;
     static std::vector<IXAudio2SourceVoice*> ActiveVoices;
 };
 

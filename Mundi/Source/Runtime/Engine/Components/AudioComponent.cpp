@@ -123,7 +123,6 @@ void UAudioComponent::PlaySlot(uint32 SlotIndex)
     if (SlotIndex >= (uint32)Sounds.Num()) return;
     USound* Selected = Sounds[SlotIndex];
     if (!Selected) return;
-    //if (bIsPlaying) return;
 
     if (bIs2D)
     {
