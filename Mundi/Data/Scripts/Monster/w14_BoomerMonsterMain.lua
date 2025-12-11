@@ -13,7 +13,7 @@ function BeginPlay()
 
     -- 몬스터 초기화 (스탯 + 애니메이션 상태 머신 설정)
     -- Initialize(obj, move_speed, health_point, attack_point, attack_range)
-    BoomerMonster:Initialzie(Obj, 0.1, 20, 3, 16)
+    BoomerMonster:Initialzie(Obj, 0.1, 20, 3, 14)
 
     PrevActive = Obj.bIsActive
 end

@@ -1,8 +1,8 @@
 {
-  "ObjectName" : "BoomerBloodDecal",
+  "ObjectName" : "w14_BoomerBloodDecal",
   "OwnedComponents" : [{
       "CollisionType" : 0,
-      "DecalTexture" : "Data/Textures/Monster/GreenBlood_big.png",
+      "DecalTexture" : "Data/Textures/Monster/BoomerMonsterExplosionDecal.png",
       "Density" : 10.000000,
       "FadeProperty" : {
         "ElapsedFadeTime" : 0.000000,
@@ -17,14 +17,14 @@
         "bIsFadingIn" : false,
         "bIsFadingOut" : false
       },
-      "Id" : 1234,
+      "Id" : 1619,
       "Mass" : 10.000000,
       "MobilityType" : 0,
       "ObjectName" : "UDecalComponent_1",
       "ParentId" : 0,
-      "RelativeLocation" : [0.000000, 0.000000, 0.100000],
-      "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
-      "RelativeScale" : [3.000000, 3.000000, 1.000000],
+      "RelativeLocation" : [-2.553409, 4.043386, 5.433490],
+      "RelativeRotationEuler" : [0.000000, 90.000000, -0.000000],
+      "RelativeScale" : [1.000000, 9.000000, 9.000000],
       "Type" : "UDecalComponent",
       "bBlockComponent" : false,
       "bGenerateOverlapEvents" : false,
@@ -37,7 +37,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1234,
+  "RootComponentId" : 1619,
   "Tag" : "BoomerBlood",
   "Type" : "ADecalActor",
   "bActorHiddenInGame" : false,

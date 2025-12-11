@@ -3,6 +3,7 @@ local MonsterUtil = require("Monster/w14_MonsterUtil")
 local ScoreManager = require("Game/w14_ScoreManager")
 
 local EXPLOSION_PREFAB = "Data/Prefabs/w14_BoomerExplosion.prefab"
+local EXPLOSION_CRATER_PREFAB = "Data/Prefabs/w14_BoomerBloodDecal.prefab"
 
 --- BoomerMonster 클래스
 --- @class BoomerMonster
@@ -156,6 +157,13 @@ function BoomerMonster:Explode()
     if explosion then
         explosion.Location = self.obj.Location
         explosion.bIsActive = true
+    end
+
+    -- 폭발 자국 데칼 프리팹 스폰
+    local explosion_crater = SpawnPrefab(EXPLOSION_CRATER_PREFAB)
+    if explosion_crater then
+        explosion_crater.Location = self.obj.Location
+        explosion_crater.bIsActive = true
     end
 
     -- 자신을 비활성화
