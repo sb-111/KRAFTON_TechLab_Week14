@@ -1611,8 +1611,8 @@ void UParticleSystemComponent::CreateMeshParticleBatch(TArray<FMeshBatchElement>
 			BatchElement.WorldMatrix = FMatrix::Identity();
 		
 			uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
-			uint32 FogFlag = bExcludeFog ? 1 : 0; 
-			BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+			uint32 FogIntensityByte = static_cast<uint32>(FogExclusion * 255.0f);
+			BatchElement.ObjectID = (FogIntensityByte << 24) | SafeUUID;
 			
 			BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			BatchElement.RenderMode = EBatchRenderMode::Opaque;
@@ -1831,8 +1831,8 @@ void UParticleSystemComponent::CreateSpriteParticleBatch(TArray<FMeshBatchElemen
 		BatchElement.WorldMatrix = FMatrix::Identity();
 		
 		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
-		uint32 FogFlag = bExcludeFog ? 1 : 0; 
-		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		uint32 FogIntensityByte = static_cast<uint32>(FogExclusion * 255.0f);
+		BatchElement.ObjectID = (FogIntensityByte << 24) | SafeUUID;
 		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -2061,8 +2061,8 @@ void UParticleSystemComponent::CreateBeamParticleBatch(TArray<FMeshBatchElement>
 		BatchElement.WorldMatrix = FMatrix::Identity();
 		
 		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
-		uint32 FogFlag = bExcludeFog ? 1 : 0; 
-		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		uint32 FogIntensityByte = static_cast<uint32>(FogExclusion * 255.0f);
+		BatchElement.ObjectID = (FogIntensityByte << 24) | SafeUUID;
 		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -2307,8 +2307,8 @@ void UParticleSystemComponent::CreateRibbonParticleBatch(TArray<FMeshBatchElemen
 		BatchElement.WorldMatrix = FMatrix::Identity();
 		
 		uint32 SafeUUID = InternalIndex & 0x00FFFFFF; 
-		uint32 FogFlag = bExcludeFog ? 1 : 0; 
-		BatchElement.ObjectID = (FogFlag << 24) | SafeUUID;
+		uint32 FogIntensityByte = static_cast<uint32>(FogExclusion * 255.0f);
+		BatchElement.ObjectID = (FogIntensityByte << 24) | SafeUUID;
 		
 		BatchElement.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 

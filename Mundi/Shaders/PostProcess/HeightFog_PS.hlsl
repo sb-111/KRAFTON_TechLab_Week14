@@ -48,12 +48,11 @@ float4 mainPS(PS_INPUT input) : SV_TARGET
     int3 pixelCoord = int3(input.texCoord.x * width, input.texCoord.y * height, 0);
     uint packedValue = g_UUIDTex.Load(pixelCoord);
 
-    uint fogFlag = (packedValue >> 24); // 24비트 오른쪽으로 밀어서 상위 비트값만 가져옴
-    if (fogFlag > 0) // 1이면 포그 제외
-    {
-        return color; 
-    }
+    uint fogExclusionByte = (packedValue >> 24); 
     
+    // 0이면 -> 0.0 -> 1.0 - 0.0 = 1.0 (포그 100% 적용)
+    // 255면 -> 1.0 -> 1.0 - 1.0 = 0.0 (포그 0% 적용)
+    float fogApplyRate = 1.0f - ((float)fogExclusionByte / 255.0f);
     float depth = g_DepthTex.Sample(g_PointClampSample, input.texCoord).r;
 
     // -----------------------------
@@ -112,9 +111,10 @@ float4 mainPS(PS_INPUT input) : SV_TARGET
     // 최대 불투명도 적용
     fogFactor = clamp(fogFactor, 1 - FogMaxOpacity, 1.0);
     
-    // 최종 색상
-    //color.rgb = lerp(color.rgb, FogInscatteringColor.rgb, fogFactor);
-    color.rgb = color.rgb * fogFactor + FogInscatteringColor.rgb * (1 - fogFactor);
+    float originalFogAlpha = 1.0 - fogFactor;
+    float finalFogAlpha = originalFogAlpha * fogApplyRate;
+
+    color.rgb = lerp(color.rgb, FogInscatteringColor.rgb, finalFogAlpha);
 
     return color;
 }

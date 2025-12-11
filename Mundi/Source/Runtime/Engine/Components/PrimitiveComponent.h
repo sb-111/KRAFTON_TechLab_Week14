@@ -29,8 +29,8 @@ public:
 
     // ===== Lua-Bindable Properties (Auto-moved from protected/private) =====
 
-    UPROPERTY(EditAnywhere, Category="Render")
-    bool bExcludeFog = false;
+	UPROPERTY(EditAnywhere, DisplayName="포그 저항 비율", Category="Render", Range="0.0, 1.0")
+    float FogExclusion = 0.0f;
     
     UPROPERTY(EditAnywhere, Category="Shape")
     bool bGenerateOverlapEvents;

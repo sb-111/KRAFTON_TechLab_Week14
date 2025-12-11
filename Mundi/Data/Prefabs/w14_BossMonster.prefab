@@ -3,7 +3,8 @@
   "OwnedComponents" : [{
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1262,
+      "FogExclusion" : 0.400000,
+      "Id" : 5065,
       "Mass" : 10.000000,
       "MaterialSlots" : [{
           "Type" : "None"
@@ -33,22 +34,15 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
-      "ObjectName" : "ULuaScriptComponent_2",
-      "ScriptFilePath" : "Data/Scripts/Monster/w14_BossMonsterMain.lua",
-      "Type" : "ULuaScriptComponent",
-      "bHiddenInGame" : false,
-      "bIsActive" : true,
-      "bTickEnabled" : true,
-      "bTickInEditor" : false
-    }, {
       "BoxExtent" : [0.500000, 0.500000, 1.000000],
       "CollisionType" : 3,
       "Density" : 10.000000,
-      "Id" : 1263,
+      "FogExclusion" : 0.000000,
+      "Id" : 5067,
       "Mass" : 10.000000,
       "MobilityType" : 1,
       "ObjectName" : "UBoxComponent_2",
-      "ParentId" : 1262,
+      "ParentId" : 5065,
       "RelativeLocation" : [0.000000, 0.000000, 1.000000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -66,14 +60,23 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }, {
+      "ObjectName" : "ULuaScriptComponent_2",
+      "ScriptFilePath" : "Data/Scripts/Monster/w14_BossMonsterMain.lua",
+      "Type" : "ULuaScriptComponent",
+      "bHiddenInGame" : false,
+      "bIsActive" : true,
+      "bTickEnabled" : true,
+      "bTickInEditor" : false
+    }, {
       "CollisionType" : 0,
       "DebugParticleType" : 0,
       "Density" : 10.000000,
-      "Id" : 1264,
+      "FogExclusion" : 0.000000,
+      "Id" : 5068,
       "Mass" : 10.000000,
       "MobilityType" : 0,
       "ObjectName" : "UParticleSystemComponent_BossAura",
-      "ParentId" : 1262,
+      "ParentId" : 5065,
       "RelativeLocation" : [0.000000, 0.000000, 0.500000],
       "RelativeRotationEuler" : [0.000000, 0.000000, 0.000000],
       "RelativeScale" : [1.000000, 1.000000, 1.000000],
@@ -91,7 +94,7 @@
       "bTickEnabled" : true,
       "bTickInEditor" : false
     }],
-  "RootComponentId" : 1262,
+  "RootComponentId" : 5065,
   "Tag" : "BossMonster",
   "Type" : "ASkeletalMeshActor",
   "bActorHiddenInGame" : false,
