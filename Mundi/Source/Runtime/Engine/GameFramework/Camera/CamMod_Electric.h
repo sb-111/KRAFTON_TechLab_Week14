@@ -14,9 +14,9 @@ public:
     // 주황-노랑 색상 (CoreBeam 기반)
     FLinearColor Color = FLinearColor(1.0f, 0.7f, 0.3f, 1.0f);
     float Intensity = 0.8f;           // 효과 강도
-    float FlickerSpeed = 20.0f;       // 번쩍임 속도 (더 빠르게)
+    float FlickerSpeed = 10.0f;       // 번쩍임 속도 (눈 피로 방지를 위해 감소)
     float BoltCount = 12.0f;          // 번개 줄기 개수 (가지 포함 시 더 많아짐)
-    float ChromaticStrength = 0.015f; // 색수차 강도
+    float ChromaticStrength = 0.012f; // 색수차 강도 (약간 감소)
     float ElapsedTime = 0.0f;         // 경과 시간 (애니메이션용)
     float FadeOutRatio = 0.6f;        // Duration의 몇 %부터 페이드 아웃 시작
 

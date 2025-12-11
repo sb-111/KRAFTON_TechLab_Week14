@@ -100,24 +100,21 @@ float sharpNoise(float2 p, float t)
     return (n - 0.5) * 2.0;
 }
 
-// 불규칙한 번쩍임 생성 - 더 빠르고 급격하게
+// 불규칙한 번쩍임 생성 - 부드럽게 조정
 float getFlicker(float t, float seed)
 {
-    // 빠른 불규칙 펄스
-    float f1 = sin(t * FlickerSpeed * 2.0 + seed * 100.0);
-    float f2 = sin(t * FlickerSpeed * 5.7 + seed * 200.0);
-    float f3 = sin(t * FlickerSpeed * 11.3 + seed * 300.0);
-    float f4 = sin(t * FlickerSpeed * 17.9 + seed * 400.0);
+    // 느린 불규칙 펄스 (속도 감소)
+    float f1 = sin(t * FlickerSpeed * 0.5 + seed * 100.0);
+    float f2 = sin(t * FlickerSpeed * 1.2 + seed * 200.0);
+    float f3 = sin(t * FlickerSpeed * 2.1 + seed * 300.0);
 
-    float combined = f1 * 0.3 + f2 * 0.3 + f3 * 0.25 + f4 * 0.15;
+    float combined = f1 * 0.4 + f2 * 0.35 + f3 * 0.25;
 
-    // 더 급격한 온/오프
-    float flicker = smoothstep(0.1, 0.3, combined);
+    // 부드러운 전환 (급격한 온/오프 제거)
+    float flicker = smoothstep(-0.2, 0.5, combined);
 
-    // 랜덤 스파이크 추가
-    float spike = step(0.92, hash(floor(t * FlickerSpeed * 3.0) + seed));
-
-    return saturate(flicker + spike * 0.5);
+    // 랜덤 스파이크 제거 (눈 피로 방지)
+    return saturate(flicker * 0.6 + 0.2); // 항상 최소 0.2, 최대 0.8 정도
 }
 
 // 세그먼트 기반 번개 - 실제 번개처럼 꺾이는 효과
@@ -307,20 +304,20 @@ float generateLightningWithBranches(float2 uv, int boltIndex, float t)
     return lightning;
 }
 
-// 전기 아크 노이즈 (화면 전체에 지직거리는 효과)
+// 전기 아크 노이즈 (화면 전체에 지직거리는 효과 - 부드럽게)
 float electricArcNoise(float2 uv, float t)
 {
     float2 p = uv * 15.0;
-    p.x += t * 8.0;
-    p.y += sin(t * 3.0 + uv.x * 5.0) * 2.0;
+    p.x += t * 4.0;  // 속도 감소
+    p.y += sin(t * 2.0 + uv.x * 5.0) * 2.0;
 
     float n = noise(p);
     n = pow(n, 3.0); // 밝은 점들만 남김
 
-    // 빠른 깜빡임
-    float flicker = step(0.7, sin(t * 30.0 + uv.x * 20.0 + uv.y * 15.0));
+    // 부드러운 깜빡임 (급격한 온/오프 대신 부드러운 전환)
+    float flicker = smoothstep(0.3, 0.7, sin(t * 12.0 + uv.x * 10.0 + uv.y * 8.0));
 
-    return n * flicker;
+    return n * flicker * 0.7;  // 전체 강도 감소
 }
 
 // 화면 가장자리 전기 글로우
@@ -397,21 +394,21 @@ float4 mainPS(PS_INPUT input) : SV_Target
     // 2. 전기 아크 노이즈
     finalColor += mainColor * arcNoise * mainFlicker * effectStrength * 0.4;
 
-    // 3. 가장자리 전기 글로우
-    float3 edgeEffect = glowColor * edgeGlow * (mainFlicker * 0.7 + secondaryFlicker * 0.3) * effectStrength * 0.6;
+    // 3. 가장자리 전기 글로우 (강도 감소)
+    float3 edgeEffect = glowColor * edgeGlow * (mainFlicker * 0.5 + secondaryFlicker * 0.2) * effectStrength * 0.3;
     finalColor += edgeEffect;
 
-    // 4. 전체 화면 플래시 (급격한 번쩍임)
-    float flashIntensity = mainFlicker * effectStrength * 0.25;
-    flashIntensity += step(0.95, mainFlicker) * effectStrength * 0.3; // 강한 플래시
+    // 4. 전체 화면 플래시 (크게 감소 - 눈 피로 방지)
+    float flashIntensity = mainFlicker * effectStrength * 0.08;
+    // 급격한 강한 플래시 제거
     finalColor += mainColor * flashIntensity;
 
-    // 5. 화면 전체 색조 (감전 느낌)
-    float globalTint = effectStrength * 0.15;
-    finalColor = lerp(finalColor, finalColor * float3(1.15, 0.95, 0.8), globalTint);
+    // 5. 화면 전체 색조 (감전 느낌) - 약간 감소
+    float globalTint = effectStrength * 0.1;
+    finalColor = lerp(finalColor, finalColor * float3(1.1, 0.97, 0.85), globalTint);
 
-    // 6. 약간의 노출 과다 효과 (번쩍일 때)
-    finalColor *= 1.0 + mainFlicker * effectStrength * 0.2;
+    // 6. 노출 과다 효과 제거 (눈 피로의 주요 원인)
+    // finalColor *= 1.0 + mainFlicker * effectStrength * 0.2;
 
     return float4(finalColor, sceneAlpha);
 }
