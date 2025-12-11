@@ -6,6 +6,7 @@
 #include "Camera/CamMod_LetterBox.h"
 #include "Camera/CamMod_Vignette.h"
 #include "Camera/CamMod_Gamma.h"
+#include "Camera/CamMod_Fire.h"
 #include "SceneView.h"
 #include "CameraActor.h"
 #include "CameraComponent.h"
@@ -335,6 +336,19 @@ void APlayerCameraManager::StartGamma(float Gamma)
 	GammaModifier->Gamma = Gamma;
 
 	ActiveModifiers.Add(GammaModifier);
+}
+
+void APlayerCameraManager::StartFire(float InDuration, float Intensity, float EdgeStart, const FLinearColor& InColor, int32 InPriority)
+{
+	UCamMod_Fire* FireModifier = new UCamMod_Fire();
+	FireModifier->Duration = InDuration;
+	FireModifier->Priority = InPriority;
+	FireModifier->Intensity = Intensity;
+	FireModifier->EdgeStart = EdgeStart;
+	FireModifier->Color = InColor;
+	FireModifier->ElapsedTime = 0.0f;  // 타이머 초기화
+
+	ActiveModifiers.Add(FireModifier);
 }
 
 // CurrentViewInfo를 현재 카메라를 기준으로 설정 (트렌지션 중에는 사이 값으로 설정)
