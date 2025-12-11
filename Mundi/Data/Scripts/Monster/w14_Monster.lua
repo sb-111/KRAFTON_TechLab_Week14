@@ -185,7 +185,7 @@ function Monster:CheckPlayerPositionAndAttack()
     end
 
     local current_distance = math.sqrt(distance_squared)
-    local max_exclusion = 0.4     -- 가까울 때 최대값
+    local max_exclusion = 0.6     -- 가까울 때 최대값
     local threshold_dist = 10.0   -- "일정 이상"의 기준 거리 (이 거리까진 0.4 유지)
     local fade_length = 30.0      -- 기준 거리로부터 얼마나 더 멀어지면 0이 될지 (감쇠 거리)
 

@@ -239,7 +239,7 @@ function ChaserMonster:MoveToPlayer(Delta)
     -- ==========================================================
     local current_dist = math.sqrt(distance_squared)
     
-    local max_exclusion = 0.4     -- 가까울 때 최대값 (0.4)
+    local max_exclusion = 0.6     -- 가까울 때 최대값 (0.4)
     local threshold_dist = 10.0   -- 이 거리 안에서는 최대값 유지
     local fade_length = 20.0      -- 멀어질 때 서서히 0으로 변하는 구간의 길이
 
