@@ -55,6 +55,8 @@ public:
 
 	void StartFire(float InDuration, float Intensity, float EdgeStart = 0.15f, const FLinearColor& InColor = FLinearColor(1.0f, 0.3f, 0.0f, 1.0f), int32 InPriority = 0);
 
+	void StartSlime(float InDuration, float Intensity = 0.7f, float Coverage = 0.6f, const FLinearColor& InColor = FLinearColor(0.2f, 0.8f, 0.1f, 1.0f), int32 InPriority = 0);
+
 public:
 	TArray<UCameraModifierBase*> ActiveModifiers;
 

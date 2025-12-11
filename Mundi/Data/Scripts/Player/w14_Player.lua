@@ -474,6 +474,31 @@ function OnBeginOverlap(OtherActor)
             else
                 Audio.PlaySFX("MonsterCollisionSmash")
             end
+        elseif OtherActor.Tag == "BoomerExplosion" then
+            -- Boomer 폭발 피격 처리
+            local damage = MonsterConfig.GetDamage(OtherActor.Tag)
+            local died = HPManager.TakeDamage(damage)
+
+            print("[OnBeginOverlap] Boomer 폭발 피격! 데미지: " .. damage)
+
+            -- KnockBack 적용
+            if PlayerKnockBack then
+                local knockBackStrength = MonsterConfig.GetKnockBackStrength(OtherActor.Tag)
+                local playerY = Obj.Location.Y
+                local explosionY = OtherActor.Location.Y
+                local direction = (playerY < explosionY) and -1 or 1
+                PlayerKnockBack:ApplyKnockBack(direction, knockBackStrength)
+            end
+
+            -- 슬라임 효과 적용 (3초 동안)
+            PlaySlimeHitEffect(3.0)
+
+            if died then
+                PlayerAnim:Die()
+                print("[Player] Game Over!")
+            else
+                Audio.PlaySFX("MonsterCollisionSmash")
+            end
         else
             -- 일반 몬스터 충돌 처리
             local damage = MonsterConfig.GetDamage(OtherActor.Tag)
@@ -670,7 +695,22 @@ function PlayFireHitEffect(duration)
     )
 end
 
--- [함수 3] 게임 오버 / 스테이지 종료 시
+-- [함수 4] Boomer 폭발 피격 시 슬라임 효과
+function PlaySlimeHitEffect(duration)
+    local cm = GetCameraManager()
+    if not cm then return end
+
+    -- Slime 포스트 프로세스 효과 시작
+    -- StartSlime(duration, intensity, coverage, color, priority)
+    cm:StartSlime(
+        duration,            -- 지속 시간
+        0.7,                 -- 효과 강도
+        0.6,                 -- 화면 덮는 정도
+        Color(0.2, 0.8, 0.1, 1)  -- 녹색
+    )
+end
+
+-- [함수 5] 게임 오버 / 스테이지 종료 시
 function ClearGameVignette()
     local cm = GetCameraManager()
     if cm then

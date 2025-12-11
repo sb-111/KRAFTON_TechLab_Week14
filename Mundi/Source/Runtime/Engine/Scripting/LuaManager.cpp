@@ -1058,6 +1058,30 @@ void FLuaManager::ExposeGlobalFunctions()
             }
         ),
 
+        // --- StartSlime (슬라임 효과) ---
+        "StartSlime", sol::overload(
+            // (Full) 5개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity, float Coverage, const FLinearColor& InColor, int32 InPriority)
+            {
+                if (Self) Self->StartSlime(InDuration, Intensity, Coverage, InColor, InPriority);
+            },
+            // (Priority 기본값 사용) 4개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity, float Coverage, const FLinearColor& InColor)
+            {
+                if (Self) Self->StartSlime(InDuration, Intensity, Coverage, InColor);
+            },
+            // (Color, Priority 기본값 사용) 3개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity, float Coverage)
+            {
+                if (Self) Self->StartSlime(InDuration, Intensity, Coverage);
+            },
+            // (Coverage, Color, Priority 기본값 사용) 2개 인수
+            [](APlayerCameraManager* Self, float InDuration, float Intensity)
+            {
+                if (Self) Self->StartSlime(InDuration, Intensity);
+            }
+        ),
+
         "GetCamera", [](APlayerCameraManager* Self)
         {
             return Self->GetViewCamera();

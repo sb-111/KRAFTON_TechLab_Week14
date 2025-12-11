@@ -7,6 +7,7 @@
 #include "PostProcessing/HeightFogPass.h"
 #include "PostProcessing/GammaPass.h"
 #include "PostProcessing/FirePass.h"
+#include "PostProcessing/SlimePass.h"
 
 // 전방 선언 (헤더 파일 의존성 최소화)
 class UWorld;
@@ -195,4 +196,5 @@ private:
 	FVignettePass VignettePass;
 	FGammaPass GammaPass;
 	FFirePass FirePass;
+	FSlimePass SlimePass;
 };

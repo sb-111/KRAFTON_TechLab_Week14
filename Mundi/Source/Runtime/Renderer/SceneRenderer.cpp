@@ -1513,6 +1513,9 @@ void FSceneRenderer::RenderPostProcessingPasses()
 		case EPostProcessEffectType::Fire:
 			FirePass.Execute(Modifier, View, RHIDevice);
 			break;
+		case EPostProcessEffectType::Slime:
+			SlimePass.Execute(Modifier, View, RHIDevice);
+			break;
 		}
 	}
 }

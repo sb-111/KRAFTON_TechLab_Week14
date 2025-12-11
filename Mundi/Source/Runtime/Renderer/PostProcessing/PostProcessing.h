@@ -9,6 +9,7 @@ enum class EPostProcessEffectType : uint8
     Fade,
     Gamma,
     Fire,
+    Slime,
 };
 
 struct FPostProcessPayload
