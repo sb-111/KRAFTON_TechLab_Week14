@@ -469,3 +469,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# FBX SDK (proprietary license - hosted on Google Drive)
+Mundi/ThirdParty/include/FBXSDK/
+Mundi/ThirdParty/lib/FBXSDK/
