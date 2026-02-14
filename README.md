@@ -45,7 +45,15 @@ FObjImporter::LoadObjModel(... , bIsRightHanded = true) // 기본값
 | 좌표계    | Z-Up, Left-Handed | Z-Up, Right-Handed | Z-Up, Left-Handed |
 | 버텍스 순서 | CW (시계 방향)        | CCW (반시계 방향)       | CW |
 
+---
+
+## 📦 빌드 환경 설정
+
 ### [데모 씬용 FBX 파일](https://drive.google.com/file/d/14UviD0dfo2LsvJltEeCxywRB8f0m156E/view?usp=sharing)
-- ```..\Mundi\Data```에 FBX 파일을 넣어주세요. 폴더 통째로 넣어도 됩니다.
-### [라이브러리 파일](https://drive.google.com/drive/folders/1qx43_dPUkTwrVW24hCGSW4p3gvrBxdmk?usp=sharing)
-- ```..\Mundi\ThirdParty```에 라이브러리 파일인 lib.zip 압축을 풀어 lib폴더를 넣어주세요. 그리고 Physx와 NvCloth도 lib 하위로 넣어주세요
+- `..\Mundi\Data`에 FBX 파일을 넣어주세요. 폴더 통째로 넣어도 됩니다.
+
+### [FBX SDK](https://drive.google.com/file/d/19uMB1mBlP87taLnv7AqOR2NPWRDphwrP/view?usp=drive_link)
+- 압축 해제 후 아래와 같이 배치해주세요:
+  - FBXSDK_Package/include/FBXSDK/ → ..\Mundi\ThirdParty\include\FBXSDK\
+  - FBXSDK_Package/lib/FBXSDK/ → ..\Mundi\ThirdParty\lib\FBXSDK\
+- 독점 라이센스로 인해 레포에 직접 포함하지 않고 별도 배포합니다.
